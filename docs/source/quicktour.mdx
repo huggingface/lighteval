@@ -60,7 +60,18 @@ The syntax for the task specification might be a bit hard to grasp at first. The
 If the fourth value is set to 1, Lighteval will check if the prompt (including the few-shot examples) is too long for the context size of the task or the model.
 If so, the number of few-shot examples is automatically reduced.
 
-All officially supported tasks can be found in the [tasks list](available-tasks) and in the
+Tasks have a function applied at the sample level and one at the corpus level. For example,
+- an exact match can be applied per sample, then averaged over the corpus to give the final score
+- samples can be left untouched before applying Corpus BLEU at the corpus level
+etc.
+
+If the task you are looking at has a sample level function (`sample_level_fn`) which can be parametrized, you can pass parameters in the CLI.
+For example
+```txt
+{suite}|{task}@{parameter_name1}={value1},{parameter_name2}={value2},...|0|0
+```
+
+All officially supported tasks can be found at the [tasks_list](available-tasks) and in the
 [extended folder](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks/extended).
 Moreover, community-provided tasks can be found in the
 [community](https://github.com/huggingface/lighteval/tree/main/community_tasks) folder.

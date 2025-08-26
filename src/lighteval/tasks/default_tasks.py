@@ -21,6 +21,13 @@
 # SOFTWARE.
 import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.normalizations import (
+    LogProbCharNorm,
+    gsm8k_normalizer,
+    harness_triviaqa_normalizer,
+    helm_normalizer,
+    math_normalizer,
+)
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.templates.qa import get_qa_prompt_function
 from lighteval.utils.language import Language
@@ -97,7 +104,10 @@ agieval_aqua_rat_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -112,7 +122,10 @@ agieval_gaokao_biology_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -127,7 +140,10 @@ agieval_gaokao_chemistry_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -142,7 +158,10 @@ agieval_gaokao_chinese_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -157,7 +176,10 @@ agieval_gaokao_english_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -172,7 +194,10 @@ agieval_gaokao_geography_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -187,7 +212,10 @@ agieval_gaokao_history_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -202,7 +230,10 @@ agieval_gaokao_mathqa_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -217,7 +248,10 @@ agieval_gaokao_physics_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -232,7 +266,10 @@ agieval_logiqa_en_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -247,7 +284,10 @@ agieval_logiqa_zh_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -262,7 +302,10 @@ agieval_lsat_ar_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -277,7 +320,10 @@ agieval_lsat_lr_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -292,7 +338,10 @@ agieval_lsat_rc_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -307,7 +356,10 @@ agieval_sat_en_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -322,7 +374,10 @@ agieval_sat_en_without_passage_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -337,7 +392,10 @@ agieval_sat_math_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=None,
     version=0,
 )
@@ -352,14 +410,7 @@ aime24 = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[
-        Metrics.math_pass_at_1_1n,
-        Metrics.math_pass_at_1_4n,
-        Metrics.math_pass_at_1_8n,
-        Metrics.math_pass_at_1_16n,
-        Metrics.math_pass_at_1_32n,
-        Metrics.math_pass_at_1_64n,
-    ],
+    metrics=[Metrics.pass_at_k_math(sample_params={"k": 1})],
     version=2,
 )
 aime24_avg = LightevalTaskConfig(
@@ -373,9 +424,7 @@ aime24_avg = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[
-        Metrics.math_avg_at_64,
-    ],
+    metrics=[Metrics.avg_at_k_math(sample_params={"k": 64})],
     version=2,
 )
 aime24_gpassk = LightevalTaskConfig(
@@ -389,7 +438,7 @@ aime24_gpassk = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=8192,
-    metrics=[Metrics.g_pass_at_16_expr_gold],
+    metrics=[Metrics.g_pass_at_k_math(sample_params={"k": 16, "n": 48})],
     version=1,
 )
 aime25 = LightevalTaskConfig(
@@ -403,14 +452,7 @@ aime25 = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=10000,
-    metrics=[
-        Metrics.math_pass_at_1_1n,
-        # Metrics.math_pass_at_1_4n,
-        # Metrics.math_pass_at_1_8n,
-        # Metrics.math_pass_at_1_16n,
-        # Metrics.math_pass_at_1_32n,
-        # Metrics.math_pass_at_1_64n,
-    ],
+    metrics=[Metrics.pass_at_k_math(sample_params={"k": 1, "n": 1})],
     version=2,
 )
 aime25_gpassk = LightevalTaskConfig(
@@ -424,7 +466,7 @@ aime25_gpassk = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=8192,
-    metrics=[Metrics.g_pass_at_16_expr_gold],
+    metrics=[Metrics.g_pass_at_k_math(sample_params={"k": 16, "n": 48})],
     version=1,
 )
 anachronisms_bigbench = LightevalTaskConfig(
@@ -558,7 +600,10 @@ arc_c_options_original = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -573,7 +618,10 @@ arc_c_simple_original = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -588,7 +636,10 @@ arc_challenge_leaderboard = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling_from_train",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -603,7 +654,10 @@ arc_easy_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling_from_train",
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -768,7 +822,7 @@ arithmetic_bb_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
+    metrics=[Metrics.loglikelihood_acc, Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -783,7 +837,7 @@ ascii_word_recognition_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -843,7 +897,7 @@ auto_debugging_bigbench_lite = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=100,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=None,
     version=0,
 )
@@ -860,9 +914,15 @@ babi_qa_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -1148,7 +1208,10 @@ bigbench_causal_judgment_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1164,7 +1227,10 @@ bigbench_date_understanding_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1180,7 +1246,10 @@ bigbench_disambiguation_qa_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1196,7 +1265,10 @@ bigbench_geometric_shapes_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1212,7 +1284,10 @@ bigbench_logical_deduction_five_objects_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1228,7 +1303,10 @@ bigbench_logical_deduction_seven_objects_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1244,7 +1322,10 @@ bigbench_logical_deduction_three_objects_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1260,7 +1341,10 @@ bigbench_movie_recommendation_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1276,7 +1360,10 @@ bigbench_navigate_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1292,7 +1379,10 @@ bigbench_reasoning_about_colored_objects_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1308,7 +1398,10 @@ bigbench_ruin_names_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1324,7 +1417,10 @@ bigbench_salient_translation_error_detection_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1340,7 +1436,10 @@ bigbench_snarks_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1356,7 +1455,10 @@ bigbench_sports_understanding_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1372,7 +1474,10 @@ bigbench_temporal_sequences_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1388,7 +1493,10 @@ bigbench_tracking_shuffled_objects_five_objects_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1404,7 +1512,10 @@ bigbench_tracking_shuffled_objects_seven_objects_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1420,7 +1531,10 @@ bigbench_tracking_shuffled_objects_three_objects_harness = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     must_remove_duplicate_docs=True,
     version=0,
@@ -1438,10 +1552,16 @@ bbh_boolean_expressions_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1459,10 +1579,16 @@ bbh_causal_judgment_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1480,10 +1606,16 @@ bbh_date_understanding_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1501,10 +1633,16 @@ bbh_disambiguation_qa_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1522,10 +1660,16 @@ bbh_dyck_languages_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1543,10 +1687,16 @@ bbh_formal_fallacies_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1564,10 +1714,16 @@ bbh_geometric_shapes_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1585,10 +1741,16 @@ bbh_hyperbaton_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1606,10 +1768,16 @@ bbh_logical_deduction_five_objects_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1627,10 +1795,16 @@ bbh_logical_deduction_seven_objects_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1648,10 +1822,16 @@ bbh_logical_deduction_three_objects_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1669,10 +1849,16 @@ bbh_movie_recommendation_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1690,10 +1876,16 @@ bbh_multistep_arithmetic_two_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1711,10 +1903,16 @@ bbh_navigate_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1732,10 +1930,16 @@ bbh_object_counting_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1753,10 +1957,16 @@ bbh_penguins_in_a_table_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1774,10 +1984,16 @@ bbh_reasoning_about_colored_objects_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1795,10 +2011,16 @@ bbh_ruin_names_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1816,10 +2038,16 @@ bbh_salient_translation_error_detection_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1837,10 +2065,16 @@ bbh_snarks_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1858,10 +2092,16 @@ bbh_sports_understanding_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1879,10 +2119,16 @@ bbh_temporal_sequences_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1900,10 +2146,16 @@ bbh_tracking_shuffled_objects_five_objects_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1921,10 +2173,16 @@ bbh_tracking_shuffled_objects_seven_objects_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1942,10 +2200,16 @@ bbh_tracking_shuffled_objects_three_objects_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1963,10 +2227,16 @@ bbh_web_of_lies_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -1984,10 +2254,16 @@ bbh_word_sorting_harness = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
@@ -2005,10 +2281,16 @@ bbq_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2026,10 +2308,16 @@ bbq_Age_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2047,10 +2335,16 @@ bbq_Disability_status_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2068,10 +2362,16 @@ bbq_Gender_identity_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2089,10 +2389,16 @@ bbq_Nationality_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2110,10 +2416,16 @@ bbq_Physical_appearance_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2131,10 +2443,16 @@ bbq_Race_ethnicity_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2152,10 +2470,16 @@ bbq_Race_x_SES_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2173,10 +2497,16 @@ bbq_Race_x_gender_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2194,10 +2524,16 @@ bbq_Religion_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2215,10 +2551,16 @@ bbq_SES_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2236,10 +2578,16 @@ bbq_Sexual_orientation_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
-        Metrics.perfect_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.exact_match(sample_params={"strip_strings": False}),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2270,7 +2618,10 @@ bigbench_auto_debugging_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=100,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -2287,9 +2638,15 @@ bigbench_bbq_lite_json_age_ambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2307,9 +2664,15 @@ bigbench_bbq_lite_json_age_disambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2327,9 +2690,15 @@ bigbench_bbq_lite_json_disability_status_ambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2347,9 +2716,15 @@ bigbench_bbq_lite_json_disability_status_disambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2367,9 +2742,15 @@ bigbench_bbq_lite_json_gender_identity_ambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2387,9 +2768,15 @@ bigbench_bbq_lite_json_gender_identity_disambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2407,9 +2794,15 @@ bigbench_bbq_lite_json_nationality_ambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2427,9 +2820,15 @@ bigbench_bbq_lite_json_nationality_disambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2447,9 +2846,15 @@ bigbench_bbq_lite_json_physical_appearance_ambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2467,9 +2872,15 @@ bigbench_bbq_lite_json_physical_appearance_disambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2487,9 +2898,15 @@ bigbench_bbq_lite_json_race_ethnicity_ambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2507,9 +2924,15 @@ bigbench_bbq_lite_json_race_ethnicity_disambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2527,9 +2950,15 @@ bigbench_bbq_lite_json_religion_ambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2547,9 +2976,15 @@ bigbench_bbq_lite_json_religion_disambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2567,9 +3002,15 @@ bigbench_bbq_lite_json_ses_ambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2587,9 +3028,15 @@ bigbench_bbq_lite_json_ses_disambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2607,9 +3054,15 @@ bigbench_bbq_lite_json_sexual_orientation_ambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2627,9 +3080,15 @@ bigbench_bbq_lite_json_sexual_orientation_disambig_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2647,9 +3106,15 @@ bigbench_code_line_description_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2667,9 +3132,15 @@ bigbench_conceptual_combinations_contradictions_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2687,9 +3158,15 @@ bigbench_conceptual_combinations_emergent_properties_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2707,9 +3184,15 @@ bigbench_conceptual_combinations_fanciful_fictional_combinations_helm = Lighteva
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2727,9 +3210,15 @@ bigbench_conceptual_combinations_homonyms_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -2747,9 +3236,15 @@ bigbench_conceptual_combinations_invented_words_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3007,9 +3502,15 @@ bigbench_emoji_movie_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3027,9 +3528,15 @@ bigbench_formal_fallacies_syllogisms_negation_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3047,9 +3554,15 @@ bigbench_hindu_knowledge_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3067,9 +3580,15 @@ bigbench_known_unknowns_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3087,9 +3606,15 @@ bigbench_language_identification_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3105,7 +3630,10 @@ bigbench_linguistics_puzzles_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=100,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3122,9 +3650,15 @@ bigbench_logic_grid_puzzle_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3142,9 +3676,15 @@ bigbench_logical_deduction_five_objects_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3162,9 +3702,15 @@ bigbench_logical_deduction_seven_objects_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3182,9 +3728,15 @@ bigbench_logical_deduction_three_objects_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3202,9 +3754,15 @@ bigbench_misconceptions_russian_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3222,9 +3780,15 @@ bigbench_novel_concepts_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3240,7 +3804,10 @@ bigbench_operators_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=100,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3255,7 +3822,10 @@ bigbench_parsinlu_reading_comprehension_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=100,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3272,9 +3842,15 @@ bigbench_play_dialog_same_or_different_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3290,7 +3866,10 @@ bigbench_repeat_copy_logic_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=100,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3307,9 +3886,15 @@ bigbench_strange_stories_boolean_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3327,9 +3912,15 @@ bigbench_strange_stories_multiple_choice_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3347,9 +3938,15 @@ bigbench_strategyqa_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3367,9 +3964,15 @@ bigbench_symbol_interpretation_adversarial_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3387,9 +3990,15 @@ bigbench_symbol_interpretation_emoji_agnostic_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3407,9 +4016,15 @@ bigbench_symbol_interpretation_name_agnostic_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3427,9 +4042,15 @@ bigbench_symbol_interpretation_plain_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3447,9 +4068,15 @@ bigbench_symbol_interpretation_tricky_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3467,9 +4094,15 @@ bigbench_vitaminc_fact_verification_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3487,9 +4120,15 @@ bigbench_winowhy_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -3520,7 +4159,10 @@ blimp_adjunct_island_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3550,7 +4192,10 @@ blimp_anaphor_gender_agreement_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3580,7 +4225,10 @@ blimp_anaphor_number_agreement_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3610,7 +4258,10 @@ blimp_animate_subject_passive_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3640,7 +4291,10 @@ blimp_animate_subject_trans_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3670,7 +4324,10 @@ blimp_causative_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3700,7 +4357,10 @@ blimp_complex_NP_island_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3730,7 +4390,10 @@ blimp_coordinate_structure_constraint_complex_left_branch_helm = LightevalTaskCo
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3760,7 +4423,10 @@ blimp_coordinate_structure_constraint_object_extraction_helm = LightevalTaskConf
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3790,7 +4456,10 @@ blimp_determiner_noun_agreement_1_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3820,7 +4489,10 @@ blimp_determiner_noun_agreement_2_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3850,7 +4522,10 @@ blimp_determiner_noun_agreement_irregular_1_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3880,7 +4555,10 @@ blimp_determiner_noun_agreement_irregular_2_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3910,7 +4588,10 @@ blimp_determiner_noun_agreement_with_adj_2_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3940,7 +4621,10 @@ blimp_determiner_noun_agreement_with_adj_irregular_1_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -3970,7 +4654,10 @@ blimp_determiner_noun_agreement_with_adj_irregular_2_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4000,7 +4687,10 @@ blimp_determiner_noun_agreement_with_adjective_1_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4030,7 +4720,10 @@ blimp_distractor_agreement_relational_noun_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4060,7 +4753,10 @@ blimp_distractor_agreement_relative_clause_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4090,7 +4786,10 @@ blimp_drop_argument_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4120,7 +4819,10 @@ blimp_ellipsis_n_bar_1_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4150,7 +4852,10 @@ blimp_ellipsis_n_bar_2_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4180,7 +4885,10 @@ blimp_existential_there_object_raising_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4210,7 +4918,10 @@ blimp_existential_there_quantifiers_1_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4240,7 +4951,10 @@ blimp_existential_there_quantifiers_2_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4270,7 +4984,10 @@ blimp_existential_there_subject_raising_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4300,7 +5017,10 @@ blimp_expletive_it_object_raising_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4330,7 +5050,10 @@ blimp_inchoative_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4360,7 +5083,10 @@ blimp_intransitive_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4390,7 +5116,10 @@ blimp_irregular_past_participle_adjectives_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4420,7 +5149,10 @@ blimp_irregular_past_participle_verbs_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4450,7 +5182,10 @@ blimp_irregular_plural_subject_verb_agreement_1_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4480,7 +5215,10 @@ blimp_irregular_plural_subject_verb_agreement_2_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4510,7 +5248,10 @@ blimp_left_branch_island_echo_question_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4540,7 +5281,10 @@ blimp_left_branch_island_simple_question_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4570,7 +5314,10 @@ blimp_matrix_question_npi_licensor_present_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4600,7 +5347,10 @@ blimp_npi_present_1_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4630,7 +5380,10 @@ blimp_npi_present_2_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4660,7 +5413,10 @@ blimp_only_npi_licensor_present_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4690,7 +5446,10 @@ blimp_only_npi_scope_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4720,7 +5479,10 @@ blimp_passive_1_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4750,7 +5512,10 @@ blimp_passive_2_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4780,7 +5545,10 @@ blimp_principle_A_c_command_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4810,7 +5578,10 @@ blimp_principle_A_case_1_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4840,7 +5611,10 @@ blimp_principle_A_case_2_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4870,7 +5644,10 @@ blimp_principle_A_domain_1_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4900,7 +5677,10 @@ blimp_principle_A_domain_2_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4930,7 +5710,10 @@ blimp_principle_A_domain_3_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4960,7 +5743,10 @@ blimp_principle_A_reconstruction_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -4990,7 +5776,10 @@ blimp_regular_plural_subject_verb_agreement_1_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5020,7 +5809,10 @@ blimp_regular_plural_subject_verb_agreement_2_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5050,7 +5842,10 @@ blimp_sentential_negation_npi_licensor_present_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5080,7 +5875,10 @@ blimp_sentential_negation_npi_scope_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5110,7 +5908,10 @@ blimp_sentential_subject_island_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5140,7 +5941,10 @@ blimp_superlative_quantifiers_1_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5170,7 +5974,10 @@ blimp_superlative_quantifiers_2_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5200,7 +6007,10 @@ blimp_tough_vs_raising_1_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5230,7 +6040,10 @@ blimp_tough_vs_raising_2_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5260,7 +6073,10 @@ blimp_transitive_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5290,7 +6106,10 @@ blimp_wh_island_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5320,7 +6139,10 @@ blimp_wh_questions_object_gap_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5350,7 +6172,10 @@ blimp_wh_questions_subject_gap_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5380,7 +6205,10 @@ blimp_wh_questions_subject_gap_long_distance_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5410,7 +6238,10 @@ blimp_wh_vs_that_no_gap_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5440,7 +6271,10 @@ blimp_wh_vs_that_no_gap_long_distance_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5470,7 +6304,10 @@ blimp_wh_vs_that_with_gap_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5500,7 +6337,10 @@ blimp_wh_vs_that_with_gap_long_distance_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5607,9 +6447,15 @@ boolq_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -5627,9 +6473,15 @@ boolq_contrastset_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -5645,7 +6497,7 @@ bridging_anaphora_resolution_barqa_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5690,7 +6542,7 @@ checkmate_in_one_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
+    metrics=[Metrics.loglikelihood_acc, Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5705,7 +6557,7 @@ chess_state_tracking_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5720,7 +6572,7 @@ chinese_remainder_theorem_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -5752,9 +6604,15 @@ civil_comments_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -5774,9 +6632,15 @@ civil_comments_LGBTQ_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -5796,9 +6660,15 @@ civil_comments_black_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -5818,9 +6688,15 @@ civil_comments_christian_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -5840,9 +6716,15 @@ civil_comments_female_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -5862,9 +6744,15 @@ civil_comments_male_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -5884,9 +6772,15 @@ civil_comments_muslim_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -5906,9 +6800,15 @@ civil_comments_other_religions_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -5928,9 +6828,15 @@ civil_comments_white_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -5978,7 +6884,12 @@ color_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.rouge_t5, Metrics.bleu, Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
+    metrics=[
+        Metrics.rouge_t5,
+        Metrics.bleu,
+        Metrics.loglikelihood_acc,
+        Metrics.exact_match(sample_params={"strip_strings": False}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -6010,9 +6921,15 @@ commonsenseqa_helm = LightevalTaskConfig(
     generation_size=1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -6043,7 +6960,7 @@ conlang_translation_bigbench_lite = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=100,
-    metrics=[Metrics.rouge_t5, Metrics.bleu, Metrics.perfect_exact_match],
+    metrics=[Metrics.rouge_t5, Metrics.bleu, Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=[".", ";", "!", "?"],
     version=0,
 )
@@ -6058,7 +6975,7 @@ contextual_parametric_knowledge_conflicts_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.rouge_t5, Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
+    metrics=[Metrics.rouge_t5, Metrics.loglikelihood_acc, Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -6327,7 +7244,7 @@ coqa_first_question = LightevalTaskConfig(
             "choices": [line["answers"]["input_text"][0]],
         },
     ),
-    suite=("lighteval",),
+    suite=["lighteval"],
     hf_repo="stanfordnlp/coqa",
     hf_subset="default",
     hf_avail_splits=["train", "validation"],
@@ -6336,8 +7253,14 @@ coqa_first_question = LightevalTaskConfig(
     generation_size=100,
     version=1,
     metrics=(
-        Metrics.prefix_quasi_exact_match,
-        Metrics.f1_score_quasi,
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.f1_score(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
     ),
 )
 coqa_bb_lighteval = LightevalTaskConfig(
@@ -6351,7 +7274,7 @@ coqa_bb_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=10,
-    metrics=[Metrics.perfect_exact_match, Metrics.f1_score],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False}), Metrics.f1_score],
     stop_sequence=["\n"],
     version=0,
 )
@@ -6368,7 +7291,7 @@ covid_dialogue_helm = LightevalTaskConfig(
     generation_size=128,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.rougeL,
         Metrics.bleu_1,
@@ -6433,7 +7356,7 @@ cryptonite_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -6523,7 +7446,7 @@ disfl_qa_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -6560,8 +7483,14 @@ drop_qa = LightevalTaskConfig(
     generation_size=250,
     stop_sequence=["Question:", "question:", "\n"],
     metrics=(
-        Metrics.prefix_quasi_exact_match,
-        Metrics.f1_score_quasi,
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.f1_score(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
     ),
     version=1,
 )
@@ -6651,7 +7580,12 @@ emoji_movie_bigbench_lite = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.rouge_t5, Metrics.bleu, Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
+    metrics=[
+        Metrics.rouge_t5,
+        Metrics.bleu,
+        Metrics.loglikelihood_acc,
+        Metrics.exact_match(sample_params={"strip_strings": False}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -6758,9 +7692,15 @@ entity_data_imputation_Buy_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -6778,9 +7718,15 @@ entity_data_imputation_Restaurant_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -6798,9 +7744,15 @@ entity_matching_Abt_Buy_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -6818,9 +7770,15 @@ entity_matching_Amazon_Google_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -6838,9 +7796,15 @@ entity_matching_Beer_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -6858,9 +7822,15 @@ entity_matching_Company_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -6878,9 +7848,15 @@ entity_matching_DBLP_ACM_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -6898,9 +7874,15 @@ entity_matching_DBLP_GoogleScholar_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -6918,9 +7900,15 @@ entity_matching_Dirty_DBLP_ACM_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -6938,9 +7926,15 @@ entity_matching_Dirty_DBLP_GoogleScholar_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -6958,9 +7952,15 @@ entity_matching_Dirty_Walmart_Amazon_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -6978,9 +7978,15 @@ entity_matching_Dirty_iTunes_Amazon_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -6998,9 +8004,15 @@ entity_matching_Fodors_Zagats_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -7018,9 +8030,15 @@ entity_matching_Walmart_Amazon_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -7038,9 +8056,15 @@ entity_matching_iTunes_Amazon_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -7251,7 +8275,7 @@ gender_inclusive_sentences_german_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -7281,7 +8305,12 @@ geometric_shapes_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.rouge_t5, Metrics.bleu, Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
+    metrics=[
+        Metrics.rouge_t5,
+        Metrics.bleu,
+        Metrics.loglikelihood_acc,
+        Metrics.exact_match(sample_params={"strip_strings": False}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -7296,7 +8325,7 @@ glue_cola_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.mcc_single_token],
+    metrics=[Metrics.loglikelihood_acc, Metrics.mcc],
     stop_sequence=["\n"],
     version=0,
 )
@@ -7476,11 +8505,7 @@ gpqa_diamond_instruct_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,  # needed for reasoning models like R1
-    metrics=[
-        Metrics.gpqa_instruct_pass_at_1_1n,
-        Metrics.gpqa_instruct_pass_at_1_4n,
-        Metrics.gpqa_instruct_pass_at_1_8n,
-    ],
+    metrics=[Metrics.gpqa_instruct_pass_at_k(sample_params={"k": 1})],
     stop_sequence=[],  # no stop sequence, will use eos token
     version=1,
 )
@@ -7555,7 +8580,9 @@ gsm8k_leaderboard = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling_from_train",
     generation_size=256,
-    metrics=[Metrics.quasi_exact_match_gsm8k],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": gsm8k_normalizer, "normalize_pred": gsm8k_normalizer})
+    ],
     stop_sequence=[],
     version=0,
 )
@@ -7576,6 +8603,42 @@ gsm8k_lighteval = LightevalTaskConfig(
     stop_sequence=["Question:"],
     version=0,
 )
+headqa_en_lighteval = LightevalTaskConfig(
+    name="headqa:en",
+    suite=["lighteval", "headqa"],
+    prompt_function=prompt.headqa,
+    hf_repo="lighteval/headqa_harness",
+    hf_subset="en",
+    hf_avail_splits=["train", "test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=-1,
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
+    stop_sequence=["\n"],
+    version=0,
+)
+headqa_es_lighteval = LightevalTaskConfig(
+    name="headqa:es",
+    suite=["lighteval", "headqa"],
+    prompt_function=prompt.headqa,
+    hf_repo="lighteval/headqa_harness",
+    hf_subset="es",
+    hf_avail_splits=["train", "test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=-1,
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
+    stop_sequence=["\n"],
+    version=0,
+)
 hellaswag_leaderboard = LightevalTaskConfig(
     name="hellaswag",
     suite=["leaderboard"],
@@ -7587,7 +8650,10 @@ hellaswag_leaderboard = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling_from_train",
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -7604,9 +8670,15 @@ hellaswag_generative = LightevalTaskConfig(
     generation_size=1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -7637,7 +8709,7 @@ hindi_question_answering_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.bleu, Metrics.rouge_t5, Metrics.perfect_exact_match],
+    metrics=[Metrics.bleu, Metrics.rouge_t5, Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -7744,9 +8816,15 @@ imdb_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -7766,9 +8844,15 @@ imdb_contrastset_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -7833,9 +8917,15 @@ interactive_qa_mmlu_abstract_algebra_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -7853,9 +8943,15 @@ interactive_qa_mmlu_college_chemistry_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -7873,9 +8969,15 @@ interactive_qa_mmlu_global_facts_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -7893,9 +8995,15 @@ interactive_qa_mmlu_miscellaneous_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -7913,9 +9021,15 @@ interactive_qa_mmlu_nutrition_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -7933,9 +9047,15 @@ interactive_qa_mmlu_us_foreign_policy_helm = LightevalTaskConfig(
     generation_size=-1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -7966,7 +9086,7 @@ international_phonetic_alphabet_transliterate_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.bleu, Metrics.rouge_t5, Metrics.perfect_exact_match],
+    metrics=[Metrics.bleu, Metrics.rouge_t5, Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -8197,8 +9317,14 @@ jeopardy = LightevalTaskConfig(
     generation_size=250,
     stop_sequence=["\n", "Question:", "question:"],
     metrics=(
-        Metrics.prefix_quasi_exact_match,
-        Metrics.f1_score_quasi,
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.f1_score(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
     ),
 )
 kanji_ascii_bigbench = LightevalTaskConfig(
@@ -8407,7 +9533,7 @@ language_games_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.bleu, Metrics.rouge_t5, Metrics.perfect_exact_match],
+    metrics=[Metrics.bleu, Metrics.rouge_t5, Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -8506,9 +9632,15 @@ legalsupport_helm = LightevalTaskConfig(
     metrics=[
         Metrics.loglikelihood_acc,
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -8526,7 +9658,7 @@ lexglue_case_hold_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8547,7 +9679,7 @@ lexglue_ecthr_a_helm = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8568,7 +9700,7 @@ lexglue_ecthr_b_helm = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8589,7 +9721,7 @@ lexglue_eurlex_helm = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8610,7 +9742,7 @@ lexglue_ledgar_helm = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8631,7 +9763,7 @@ lexglue_scotus_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8652,7 +9784,7 @@ lexglue_unfair_tos_helm = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8673,7 +9805,7 @@ lextreme_brazilian_court_decisions_judgment_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8694,7 +9826,7 @@ lextreme_brazilian_court_decisions_unanimity_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8715,7 +9847,7 @@ lextreme_covid19_emergency_event_helm = LightevalTaskConfig(
     generation_size=10,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8736,7 +9868,7 @@ lextreme_german_argument_mining_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8757,7 +9889,7 @@ lextreme_greek_legal_code_chapter_helm = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8778,7 +9910,7 @@ lextreme_greek_legal_code_subject_helm = LightevalTaskConfig(
     generation_size=20,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8797,7 +9929,11 @@ lextreme_greek_legal_code_volume_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=20,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.f1_score,
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -8814,7 +9950,7 @@ lextreme_greek_legal_ner_helm = LightevalTaskConfig(
     generation_size=430,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8835,7 +9971,7 @@ lextreme_legalnero_helm = LightevalTaskConfig(
     generation_size=788,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8856,7 +9992,7 @@ lextreme_lener_br_helm = LightevalTaskConfig(
     generation_size=338,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8877,7 +10013,7 @@ lextreme_mapa_coarse_helm = LightevalTaskConfig(
     generation_size=274,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8898,7 +10034,7 @@ lextreme_mapa_fine_helm = LightevalTaskConfig(
     generation_size=274,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8919,7 +10055,7 @@ lextreme_multi_eurlex_level_1_helm = LightevalTaskConfig(
     generation_size=10,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8940,7 +10076,7 @@ lextreme_multi_eurlex_level_2_helm = LightevalTaskConfig(
     generation_size=10,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8961,7 +10097,7 @@ lextreme_multi_eurlex_level_3_helm = LightevalTaskConfig(
     generation_size=10,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -8982,7 +10118,7 @@ lextreme_online_terms_of_service_clause_topics_helm = LightevalTaskConfig(
     generation_size=10,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -9003,7 +10139,7 @@ lextreme_online_terms_of_service_unfairness_levels_helm = LightevalTaskConfig(
     generation_size=10,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -9024,7 +10160,7 @@ lextreme_swiss_judgment_prediction_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
@@ -9043,7 +10179,7 @@ linguistic_mappings_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -9058,7 +10194,7 @@ linguistics_puzzles_bigbench_lite = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=100,
-    metrics=[Metrics.bleu, Metrics.rouge_t5, Metrics.perfect_exact_match],
+    metrics=[Metrics.bleu, Metrics.rouge_t5, Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=None,
     version=0,
 )
@@ -9148,7 +10284,10 @@ logiqa_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -9165,9 +10304,15 @@ lsat_qa_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -9185,9 +10330,15 @@ lsat_qa_assignment_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -9205,9 +10356,15 @@ lsat_qa_grouping_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -9225,9 +10382,15 @@ lsat_qa_miscellaneous_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -9245,9 +10408,15 @@ lsat_qa_ordering_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -9264,8 +10433,7 @@ math_500 = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=32768,
     metrics=[
-        Metrics.math_pass_at_1_1n,
-        Metrics.math_pass_at_1_4n,
+        Metrics.pass_at_k_math(sample_params={"k": 1, "n": 1}),
     ],
     version=2,
 )
@@ -9280,7 +10448,7 @@ math_500_gpassk = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=8192,
-    metrics=[Metrics.g_pass_at_16_latex_gold],
+    metrics=[Metrics.g_pass_at_k_latex(sample_params={"k": 16, "n": 48})],
     version=1,
 )
 math_algebra_lighteval = LightevalTaskConfig(
@@ -9294,7 +10462,17 @@ math_algebra_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.maj_at_k(
+            sample_params={
+                "k": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=1,
 )
@@ -9309,7 +10487,17 @@ math_counting_and_probability_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.maj_at_k(
+            sample_params={
+                "k": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=1,
 )
@@ -9324,7 +10512,17 @@ math_geometry_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.maj_at_k(
+            sample_params={
+                "k": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=1,
 )
@@ -9339,7 +10537,17 @@ math_intermediate_algebra_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.maj_at_k(
+            sample_params={
+                "k": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=1,
 )
@@ -9354,7 +10562,17 @@ math_number_theory_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.maj_at_k(
+            sample_params={
+                "k": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=1,
 )
@@ -9369,7 +10587,17 @@ math_prealgebra_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.maj_at_k(
+            sample_params={
+                "k": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=1,
 )
@@ -9384,7 +10612,17 @@ math_precalculus_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.maj_at_k(
+            sample_params={
+                "k": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=1,
 )
@@ -9399,7 +10637,17 @@ math_cot_algebra_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.maj_at_k(
+            sample_params={
+                "k": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -9414,7 +10662,17 @@ math_cot_counting_and_probability_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.maj_at_k(
+            sample_params={
+                "k": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -9429,7 +10687,17 @@ math_cot_geometry_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.maj_at_k(
+            sample_params={
+                "k": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -9444,7 +10712,17 @@ math_cot_intermediate_algebra_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.maj_at_k(
+            sample_params={
+                "k": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -9459,7 +10737,17 @@ math_cot_number_theory_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.maj_at_k(
+            sample_params={
+                "k": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -9474,7 +10762,17 @@ math_cot_prealgebra_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.maj_at_k(
+            sample_params={
+                "k": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -9489,7 +10787,17 @@ math_cot_precalculus_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.maj_at_k(
+            sample_params={
+                "k": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -9519,7 +10827,10 @@ mathqa_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -9534,7 +10845,7 @@ matrixshapes_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -9551,7 +10862,7 @@ me_q_sum_helm = LightevalTaskConfig(
     generation_size=128,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.rougeL,
         Metrics.bleu_1,
@@ -9573,7 +10884,7 @@ med_dialog_healthcaremagic_helm = LightevalTaskConfig(
     generation_size=128,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.rougeL,
         Metrics.bleu_1,
@@ -9595,7 +10906,7 @@ med_dialog_icliniq_helm = LightevalTaskConfig(
     generation_size=128,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.rougeL,
         Metrics.bleu_1,
@@ -9618,9 +10929,15 @@ med_mcqa_helm = LightevalTaskConfig(
     metrics=[
         Metrics.loglikelihood_acc,
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -9638,7 +10955,7 @@ med_paragraph_simplification_helm = LightevalTaskConfig(
     generation_size=512,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.rougeL,
         Metrics.bleu_1,
@@ -9661,9 +10978,15 @@ med_qa_helm = LightevalTaskConfig(
     metrics=[
         Metrics.loglikelihood_acc,
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -9709,7 +11032,10 @@ mgsm_en_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n", "=", "Question="],
     version=0,
 )
@@ -9724,7 +11050,10 @@ mgsm_es_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n", "=", "Pregunta="],
     version=0,
 )
@@ -9739,7 +11068,10 @@ mgsm_fr_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n", "=", "Question="],
     version=0,
 )
@@ -9754,7 +11086,10 @@ mgsm_de_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n", "=", "Frage="],
     version=0,
 )
@@ -9769,7 +11104,10 @@ mgsm_ru_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n", "=", "\u0417\u0430\u0434\u0430\u0447\u0430="],
     version=0,
 )
@@ -9784,7 +11122,10 @@ mgsm_zh_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n", "=", "\u95ee\u9898="],
     version=0,
 )
@@ -9799,7 +11140,10 @@ mgsm_ja_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n", "=", "\u554f\u984c="],
     version=0,
 )
@@ -9814,7 +11158,10 @@ mgsm_th_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n", "=", "\u0e42\u0e08\u0e17\u0e22\u0e4c="],
     version=0,
 )
@@ -9829,7 +11176,10 @@ mgsm_sw_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n", "=", "Swali="],
     version=0,
 )
@@ -9844,7 +11194,10 @@ mgsm_bn_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n", "=", "\u09aa\u09cd\u09b0\u09b6\u09cd\u09a8="],
     version=0,
 )
@@ -9859,7 +11212,10 @@ mgsm_te_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n", "=", "\u0c2a\u0c4d\u0c30\u0c36\u0c4d\u0c28="],
     version=0,
 )
@@ -9951,9 +11307,15 @@ mmlu_abstract_algebra_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10001,9 +11363,15 @@ mmlu_anatomy_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10051,9 +11419,15 @@ mmlu_astronomy_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10101,9 +11475,15 @@ mmlu_business_ethics_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10151,9 +11531,15 @@ mmlu_clinical_knowledge_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10201,9 +11587,15 @@ mmlu_college_biology_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10251,9 +11643,15 @@ mmlu_college_chemistry_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10301,9 +11699,15 @@ mmlu_college_computer_science_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10351,9 +11755,15 @@ mmlu_college_mathematics_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10401,9 +11811,15 @@ mmlu_college_medicine_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10451,9 +11867,15 @@ mmlu_college_physics_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10501,9 +11923,15 @@ mmlu_computer_security_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10551,9 +11979,15 @@ mmlu_conceptual_physics_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10601,9 +12035,15 @@ mmlu_econometrics_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10651,9 +12091,15 @@ mmlu_electrical_engineering_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10701,9 +12147,15 @@ mmlu_elementary_mathematics_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10751,9 +12203,15 @@ mmlu_formal_logic_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10801,9 +12259,15 @@ mmlu_global_facts_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10851,9 +12315,15 @@ mmlu_high_school_biology_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10901,9 +12371,15 @@ mmlu_high_school_chemistry_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -10951,9 +12427,15 @@ mmlu_high_school_computer_science_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11001,9 +12483,15 @@ mmlu_high_school_european_history_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11051,9 +12539,15 @@ mmlu_high_school_geography_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11101,9 +12595,15 @@ mmlu_high_school_government_and_politics_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11151,9 +12651,15 @@ mmlu_high_school_macroeconomics_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11201,9 +12707,15 @@ mmlu_high_school_mathematics_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11251,9 +12763,15 @@ mmlu_high_school_microeconomics_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11301,9 +12819,15 @@ mmlu_high_school_physics_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11351,9 +12875,15 @@ mmlu_high_school_psychology_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11401,9 +12931,15 @@ mmlu_high_school_statistics_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11451,9 +12987,15 @@ mmlu_high_school_us_history_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11501,9 +13043,15 @@ mmlu_high_school_world_history_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11551,9 +13099,15 @@ mmlu_human_aging_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11601,9 +13155,15 @@ mmlu_human_sexuality_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11651,9 +13211,15 @@ mmlu_international_law_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11701,9 +13267,15 @@ mmlu_jurisprudence_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11751,9 +13323,15 @@ mmlu_logical_fallacies_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11801,9 +13379,15 @@ mmlu_machine_learning_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11851,9 +13435,15 @@ mmlu_management_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11901,9 +13491,15 @@ mmlu_marketing_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -11951,9 +13547,15 @@ mmlu_medical_genetics_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12001,9 +13603,15 @@ mmlu_miscellaneous_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12051,9 +13659,15 @@ mmlu_moral_disputes_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12101,9 +13715,15 @@ mmlu_moral_scenarios_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12151,9 +13771,15 @@ mmlu_nutrition_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12201,9 +13827,15 @@ mmlu_philosophy_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12251,9 +13883,15 @@ mmlu_prehistory_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12301,9 +13939,15 @@ mmlu_professional_accounting_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12351,9 +13995,15 @@ mmlu_professional_law_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12401,9 +14051,15 @@ mmlu_professional_medicine_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12451,9 +14107,15 @@ mmlu_professional_psychology_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12501,9 +14163,15 @@ mmlu_public_relations_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12551,9 +14219,15 @@ mmlu_security_studies_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12601,9 +14275,15 @@ mmlu_sociology_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12651,9 +14331,15 @@ mmlu_us_foreign_policy_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12701,9 +14387,15 @@ mmlu_virology_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12751,9 +14443,15 @@ mmlu_world_religions_helm = LightevalTaskConfig(
     generation_size=5,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -12784,7 +14482,7 @@ modified_arithmetic_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -12904,7 +14602,7 @@ mult_data_wrangling_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -12979,7 +14677,7 @@ mutual_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.recall_at_1, Metrics.recall_at_2, Metrics.mrr],
+    metrics=[Metrics.recall_at_k, Metrics.recall_at_k(sample_params={"k": 2}), Metrics.mrr],
     stop_sequence=["\n"],
     version=0,
 )
@@ -12994,7 +14692,7 @@ mutual_plus_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.recall_at_1, Metrics.recall_at_2, Metrics.mrr],
+    metrics=[Metrics.recall_at_k, Metrics.recall_at_k(sample_params={"k": 2}), Metrics.mrr],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13011,7 +14709,7 @@ narrativeqa_helm = LightevalTaskConfig(
     generation_size=100,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
         Metrics.f1_score,
         Metrics.rougeL,
         Metrics.bleu_1,
@@ -13049,8 +14747,14 @@ natural_questions = LightevalTaskConfig(
     generation_size=250,
     stop_sequence=["\n", "Question:", "question:"],
     metrics=(
-        Metrics.prefix_quasi_exact_match,
-        Metrics.f1_score_quasi,
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.f1_score(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
     ),
 )
 navigate_bigbench = LightevalTaskConfig(
@@ -13109,7 +14813,10 @@ numeracy_linear_example_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=20,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13124,7 +14831,10 @@ numeracy_linear_standard_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=20,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13139,7 +14849,10 @@ numeracy_parabola_example_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=20,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13154,7 +14867,10 @@ numeracy_parabola_standard_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=20,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13169,7 +14885,10 @@ numeracy_paraboloid_example_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=20,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13184,7 +14903,10 @@ numeracy_paraboloid_standard_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=20,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13199,7 +14921,10 @@ numeracy_plane_example_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=20,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13214,7 +14939,10 @@ numeracy_plane_standard_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=20,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13229,7 +14957,7 @@ object_counting_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13261,9 +14989,15 @@ openbookqa_helm = LightevalTaskConfig(
     generation_size=1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -13279,7 +15013,10 @@ openbookqa_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13294,7 +15031,7 @@ operators_bigbench_lite = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=20,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13309,7 +15046,7 @@ paragraph_segmentation_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13339,7 +15076,7 @@ parsinlu_reading_comprehension_bigbench_lite = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=100,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=None,
     version=0,
 )
@@ -13354,7 +15091,7 @@ penguins_in_a_table_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
+    metrics=[Metrics.loglikelihood_acc, Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13369,7 +15106,7 @@ periodic_elements_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13444,7 +15181,7 @@ physics_questions_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.bleu, Metrics.perfect_exact_match],
+    metrics=[Metrics.bleu, Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13459,7 +15196,10 @@ piqa_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13476,9 +15216,15 @@ piqa_helm = LightevalTaskConfig(
     generation_size=1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -13539,7 +15285,10 @@ prost_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13571,9 +15320,15 @@ pubmedqa_helm = LightevalTaskConfig(
     generation_size=1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -13589,7 +15344,10 @@ qa4mre_2011_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13604,7 +15362,10 @@ qa4mre_2012_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13619,7 +15380,10 @@ qa4mre_2013_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13634,7 +15398,12 @@ qa_wikidata_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.bleurt, Metrics.bleu, Metrics.rouge_t5, Metrics.perfect_exact_match],
+    metrics=[
+        Metrics.bleurt,
+        Metrics.bleu,
+        Metrics.rouge_t5,
+        Metrics.exact_match(sample_params={"strip_strings": False}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13649,7 +15418,7 @@ qasper_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=20,
-    metrics=[Metrics.f1_score_quasi],
+    metrics=[Metrics.f1_score(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13679,7 +15448,11 @@ quac_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=100,
-    metrics=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score],
+    metrics=[
+        Metrics.exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.f1_score,
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -13726,9 +15499,15 @@ raft_ade_corpus_v2_helm = LightevalTaskConfig(
     generation_size=30,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -13748,9 +15527,15 @@ raft_banking_77_helm = LightevalTaskConfig(
     generation_size=30,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -13770,9 +15555,15 @@ raft_neurips_impact_statement_risks_helm = LightevalTaskConfig(
     generation_size=30,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -13792,9 +15583,15 @@ raft_one_stop_english_helm = LightevalTaskConfig(
     generation_size=30,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -13814,9 +15611,15 @@ raft_overruling_helm = LightevalTaskConfig(
     generation_size=30,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -13836,9 +15639,15 @@ raft_semiconductor_org_types_helm = LightevalTaskConfig(
     generation_size=30,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -13858,9 +15667,15 @@ raft_systematic_review_inclusion_helm = LightevalTaskConfig(
     generation_size=30,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -13880,9 +15695,15 @@ raft_tai_safety_research_helm = LightevalTaskConfig(
     generation_size=30,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -13902,9 +15723,15 @@ raft_terms_of_service_helm = LightevalTaskConfig(
     generation_size=30,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -13924,9 +15751,15 @@ raft_tweet_eval_hate_helm = LightevalTaskConfig(
     generation_size=30,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -13946,9 +15779,15 @@ raft_twitter_complaints_helm = LightevalTaskConfig(
     generation_size=30,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
         Metrics.f1_score_macro,
         Metrics.f1_score_micro,
     ],
@@ -14011,7 +15850,7 @@ repeat_copy_logic_bigbench_lite = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=100,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -14026,7 +15865,12 @@ rephrase_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.rouge_t5, Metrics.bleu, Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
+    metrics=[
+        Metrics.rouge_t5,
+        Metrics.bleu,
+        Metrics.loglikelihood_acc,
+        Metrics.exact_match(sample_params={"strip_strings": False}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -14101,7 +15945,7 @@ scientific_press_release_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.bleu, Metrics.perfect_exact_match],
+    metrics=[Metrics.bleu, Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -14116,7 +15960,10 @@ sciq_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -14131,7 +15978,7 @@ semantic_parsing_in_context_sparc_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.bleu, Metrics.rouge_t5, Metrics.perfect_exact_match],
+    metrics=[Metrics.bleu, Metrics.rouge_t5, Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -14146,7 +15993,7 @@ semantic_parsing_spider_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.bleu, Metrics.rouge_t5, Metrics.perfect_exact_match],
+    metrics=[Metrics.bleu, Metrics.rouge_t5, Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -14191,7 +16038,7 @@ simp_turing_concept_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -14221,7 +16068,7 @@ simple_arithmetic_json_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -14251,7 +16098,7 @@ simple_arithmetic_json_subtasks_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -14266,7 +16113,7 @@ simple_arithmetic_multiple_targets_json_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.bleu, Metrics.perfect_exact_match],
+    metrics=[Metrics.bleu, Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -14296,7 +16143,7 @@ simple_text_editing_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -14313,9 +16160,15 @@ siqa_helm = LightevalTaskConfig(
     generation_size=1,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -14399,8 +16252,14 @@ squad_v2 = LightevalTaskConfig(
     stop_sequence=["\n", "Question:", "question:"],
     generation_size=200,
     metrics=(
-        Metrics.prefix_quasi_exact_match,
-        Metrics.f1_score_quasi,
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
+        Metrics.f1_score(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
     ),
 )
 storycloze_2016_lighteval = LightevalTaskConfig(
@@ -14474,7 +16333,7 @@ sufficient_information_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -14690,7 +16549,10 @@ swag_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm(ignore_first_space=True)}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -14737,9 +16599,15 @@ synthetic_reasoning_induction_helm = LightevalTaskConfig(
     generation_size=50,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -14787,9 +16655,15 @@ synthetic_reasoning_pattern_match_helm = LightevalTaskConfig(
     generation_size=50,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -14807,9 +16681,15 @@ synthetic_reasoning_variable_substitution_helm = LightevalTaskConfig(
     generation_size=50,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -14855,7 +16735,7 @@ tense_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -15170,7 +17050,10 @@ toxigen_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
+    metrics=[
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()}),
+    ],
     stop_sequence=["\n"],
     version=0,
 )
@@ -15215,7 +17098,9 @@ triviaqa_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=20,
-    metrics=[Metrics.quasi_exact_match_triviaqa],
+    metrics=[
+        Metrics.exact_match(sample_params={"strip_strings": True, "normalize_pred": harness_triviaqa_normalizer})
+    ],
     stop_sequence=["\n", ".", ","],
     version=0,
 )
@@ -15263,9 +17148,15 @@ truthfulqa_helm = LightevalTaskConfig(
     metrics=[
         Metrics.loglikelihood_acc,
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15371,7 +17262,7 @@ unnatural_in_context_learning_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -15386,7 +17277,7 @@ unscramble_anagrams1_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=5,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -15401,7 +17292,7 @@ unscramble_anagrams2_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=5,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -15416,7 +17307,7 @@ unscramble_cycle_letters_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=5,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -15431,7 +17322,7 @@ unscramble_random_insertion_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=5,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -15446,7 +17337,7 @@ unscramble_reversed_words_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=5,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -15523,9 +17414,15 @@ wikifact_applies_to_jurisdiction_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15543,9 +17440,15 @@ wikifact_atomic_number_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15563,9 +17466,15 @@ wikifact_author_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15583,9 +17492,15 @@ wikifact_award_received_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15603,9 +17518,15 @@ wikifact_basic_form_of_government_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15623,9 +17544,15 @@ wikifact_capital_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15643,9 +17570,15 @@ wikifact_capital_of_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15663,9 +17596,15 @@ wikifact_central_bank_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15683,9 +17622,15 @@ wikifact_composer_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15703,9 +17648,15 @@ wikifact_continent_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15723,9 +17674,15 @@ wikifact_country_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15743,9 +17700,15 @@ wikifact_country_of_citizenship_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15763,9 +17726,15 @@ wikifact_country_of_origin_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15783,9 +17752,15 @@ wikifact_creator_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15803,9 +17778,15 @@ wikifact_currency_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15823,9 +17804,15 @@ wikifact_defendant_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15843,9 +17830,15 @@ wikifact_developer_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15863,9 +17856,15 @@ wikifact_diplomatic_relation_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15883,9 +17882,15 @@ wikifact_director_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15903,9 +17908,15 @@ wikifact_discoverer_or_inventor_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15923,9 +17934,15 @@ wikifact_drug_or_therapy_used_for_treatment_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15943,9 +17960,15 @@ wikifact_educated_at_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15963,9 +17986,15 @@ wikifact_electron_configuration_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -15983,9 +18012,15 @@ wikifact_employer_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16003,9 +18038,15 @@ wikifact_field_of_work_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16023,9 +18064,15 @@ wikifact_file_extension_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16043,9 +18090,15 @@ wikifact_genetic_association_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16063,9 +18116,15 @@ wikifact_genre_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16083,9 +18142,15 @@ wikifact_has_part_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16103,9 +18168,15 @@ wikifact_head_of_government_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16123,9 +18194,15 @@ wikifact_head_of_state_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16143,9 +18220,15 @@ wikifact_headquarters_location_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16163,9 +18246,15 @@ wikifact_industry_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16183,9 +18272,15 @@ wikifact_influenced_by_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16203,9 +18298,15 @@ wikifact_instance_of_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16223,9 +18324,15 @@ wikifact_instrument_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16243,9 +18350,15 @@ wikifact_language_of_work_or_name_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16263,9 +18376,15 @@ wikifact_languages_spoken_written_or_signed_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16283,9 +18402,15 @@ wikifact_laws_applied_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16303,9 +18428,15 @@ wikifact_located_in_the_administrative_territorial_entity_helm = LightevalTaskCo
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16323,9 +18454,15 @@ wikifact_location_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16343,9 +18480,15 @@ wikifact_location_of_discovery_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16363,9 +18506,15 @@ wikifact_location_of_formation_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16383,9 +18532,15 @@ wikifact_majority_opinion_by_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16403,9 +18558,15 @@ wikifact_manufacturer_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16423,9 +18584,15 @@ wikifact_measured_physical_quantity_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16443,9 +18610,15 @@ wikifact_medical_condition_treated_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16463,9 +18636,15 @@ wikifact_member_of_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16483,9 +18662,15 @@ wikifact_member_of_political_party_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16503,9 +18688,15 @@ wikifact_member_of_sports_team_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16523,9 +18714,15 @@ wikifact_movement_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16543,9 +18740,15 @@ wikifact_named_after_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16563,9 +18766,15 @@ wikifact_native_language_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16583,9 +18792,15 @@ wikifact_number_of_processor_cores_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16603,9 +18818,15 @@ wikifact_occupation_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16623,9 +18844,15 @@ wikifact_office_held_by_head_of_government_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16643,9 +18870,15 @@ wikifact_office_held_by_head_of_state_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16663,9 +18896,15 @@ wikifact_official_language_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16683,9 +18922,15 @@ wikifact_operating_system_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16703,9 +18948,15 @@ wikifact_original_language_of_film_or_TV_show_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16723,9 +18974,15 @@ wikifact_original_network_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16743,9 +19000,15 @@ wikifact_overrules_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16763,9 +19026,15 @@ wikifact_owned_by_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16783,9 +19052,15 @@ wikifact_part_of_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16803,9 +19078,15 @@ wikifact_participating_team_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16823,9 +19104,15 @@ wikifact_place_of_birth_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16843,9 +19130,15 @@ wikifact_place_of_death_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16863,9 +19156,15 @@ wikifact_plaintiff_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16883,9 +19182,15 @@ wikifact_position_held_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16903,9 +19208,15 @@ wikifact_position_played_on_team_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16923,9 +19234,15 @@ wikifact_programming_language_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16943,9 +19260,15 @@ wikifact_recommended_unit_of_measurement_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16963,9 +19286,15 @@ wikifact_record_label_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -16983,9 +19312,15 @@ wikifact_religion_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -17003,9 +19338,15 @@ wikifact_repealed_by_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -17023,9 +19364,15 @@ wikifact_shares_border_with_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -17043,9 +19390,15 @@ wikifact_solved_by_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -17063,9 +19416,15 @@ wikifact_statement_describes_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -17083,9 +19442,15 @@ wikifact_stock_exchange_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -17103,9 +19468,15 @@ wikifact_subclass_of_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -17123,9 +19494,15 @@ wikifact_subsidiary_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -17143,9 +19520,15 @@ wikifact_symptoms_and_signs_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -17163,9 +19546,15 @@ wikifact_therapeutic_area_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -17183,9 +19572,15 @@ wikifact_time_of_discovery_or_invention_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -17203,9 +19598,15 @@ wikifact_twinned_administrative_body_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -17223,9 +19624,15 @@ wikifact_work_location_helm = LightevalTaskConfig(
     generation_size=8,
     metrics=[
         Metrics.exact_match,
-        Metrics.quasi_exact_match,
-        Metrics.prefix_exact_match,
-        Metrics.prefix_quasi_exact_match,
+        Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
+        Metrics.exact_match(sample_params={"type_exact_match": "prefix"}),
+        Metrics.exact_match(
+            sample_params={
+                "normalize_gold": helm_normalizer,
+                "normalize_pred": helm_normalizer,
+                "type_exact_match": "prefix",
+            }
+        ),
     ],
     stop_sequence=["\n"],
     version=0,
@@ -19851,7 +22258,7 @@ word_sorting_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )
@@ -19866,7 +22273,7 @@ word_unscrambling_bigbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
 )

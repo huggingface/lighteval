@@ -20,11 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import logging
-from typing import Optional
 
 import typer
 from typer import Argument, Option
 from typing_extensions import Annotated
+
+from lighteval.cli_args import custom_tasks
 
 
 app = typer.Typer()
@@ -33,7 +34,7 @@ app = typer.Typer()
 @app.command()
 def inspect(
     tasks: Annotated[str, Argument(help="Id of tasks or path to a text file with a list of tasks")],
-    custom_tasks: Annotated[Optional[str], Option(help="Path to a file with custom tasks")] = None,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
     num_samples: Annotated[int, Option(help="Number of samples to display")] = 10,
     show_config: Annotated[bool, Option(help="Will display the full task config")] = False,
 ):
@@ -45,13 +46,13 @@ def inspect(
 
     from rich import print
 
-    from lighteval.tasks.registry import Registry
+    from lighteval.tasks.registry import Registry, taskinfo_selector
 
     registry = Registry(custom_tasks=custom_tasks)
 
     # Loading task
-    task_configs = registry.get_tasks_configs(tasks)
-    task_dict = registry.get_tasks_from_configs(task_configs)
+    task_names_list, _ = taskinfo_selector(tasks, task_registry=registry)
+    task_dict = registry.get_task_dict(task_names_list)
     for name, task in task_dict.items():
         print("-" * 10, name, "-" * 10)
         if show_config:
@@ -65,14 +66,22 @@ def inspect(
 
 
 @app.command()
-def list(custom_tasks: Annotated[Optional[str], Option(help="Path to a file with custom tasks")] = None):
+def list(
+    custom_tasks: custom_tasks.type = custom_tasks.default,
+    suites: Annotated[
+        str | None,
+        Option(
+            help="Comma-separated list of suites to display (e.g., 'helm,harness'). Use 'all' for all suites. If not specified, shows core suites only."
+        ),
+    ] = None,
+):
     """
     List all tasks
     """
     from lighteval.tasks.registry import Registry
 
     registry = Registry(custom_tasks=custom_tasks)
-    registry.print_all_tasks()
+    registry.print_all_tasks(suites=suites)
 
 
 @app.command()
