@@ -23,6 +23,8 @@ Lighteval has optional dependencies that you can install by specifying the
 appropriate extras group.
 `pip install lighteval[<group>]` or `pip install -e .[<group>]`.
 
+If you want to use lighteval with `sglang`, try to follow [sglang install documentation](https://docs.sglang.ai/start/install.html).
+
 | extra name   | description                                                               |
 |--------------|---------------------------------------------------------------------------|
 | tgi          | To use Text Generation Inference API to evaluate your model               |
@@ -31,6 +33,7 @@ appropriate extras group.
 | adapters     | To evaluate adapters models (delta and peft)                              |
 | tensorboardX | To upload your results to tensorboard                                     |
 | vllm         | To use vllm as backend for inference                                      |
+| sglang       | To use sglang as backend for inference                                    |
 | s3           | To upload results to s3                                                   |
 
 

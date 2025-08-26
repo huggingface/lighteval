@@ -11,36 +11,49 @@ on:
 
 jobs:
   run_tests:
-   name: Run tests
-   runs-on: ubuntu-latest
-   steps:
-     - name: Checkout code
-       uses: actions/checkout@v3
-       with:
-        lfs: 'true'
-     - name: Setup Python environment
-       uses: actions/setup-python@v4
-       with:
-         python-version: '3.10'
-         cache: 'pip'
-     - name: Install lighteval in editable mode
-       run: |
-         pip install -e .[dev,extended_tasks,multilingual,litellm]
-     - name: Get cached files
-       uses: actions/cache@v4
-       id: get-cache
-       with:
-         path: "cache"
-         key: test-cache-HF
-     - name: Test
-       env:
-        HF_TEST_TOKEN: ${{ secrets.HF_TEST_TOKEN }}
-        HF_HOME: "cache/models"
-        HF_DATASETS_CACHE: "cache/datasets"
-       run: | # PYTHONPATH="${PYTHONPATH}:src" HF_DATASETS_CACHE="cache/datasets" HF_HOME="cache/models"
-        python -m pytest --disable-pytest-warnings
-     - name: Write cache
-       uses: actions/cache@v4
-       with:
-         path: "cache"
-         key: test-cache-HF
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Hugging Face models
+        uses: actions/cache@v4
+        with:
+          path: cache/models
+          key: hf-models-${{ runner.os }}-${{ github.ref }}
+          restore-keys: hf-models-${{ runner.os }}-
+
+      - name: Cache Hugging Face datasets
+        uses: actions/cache@v4
+        with:
+          path: cache/datasets
+          key: hf-datasets-${{ runner.os }}-${{ github.ref }}
+          restore-keys: hf-datasets-${{ runner.os }}-
+
+      - name: Cache uv virtual environment
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: uv-env-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: uv-env-${{ runner.os }}-
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install the project
+        run: uv sync --extra dev
+
+      - name: Ensure cache directories exist
+        run: mkdir -p cache/models cache/datasets
+
+      - name: Run tests
+        env:
+          HF_TEST_TOKEN: ${{ secrets.HF_TEST_TOKEN }}
+          HF_HOME: "cache/models"
+          HF_DATASETS_CACHE: "cache/datasets"
+        run: uv run pytest -x --disable-pytest-warnings

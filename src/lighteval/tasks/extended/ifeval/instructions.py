@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """Library of instructions."""
+
 import collections
 import json
 import logging
@@ -204,7 +205,7 @@ class NumberOfSentences(Instruction):
             self._comparison_relation = random.choice(_COMPARISON_RELATION)
         elif relation not in _COMPARISON_RELATION:
             raise ValueError(
-                "The supported relation for comparison must be in " f"{_COMPARISON_RELATION}, but {relation} is given."
+                f"The supported relation for comparison must be in {_COMPARISON_RELATION}, but {relation} is given."
             )
         else:
             self._comparison_relation = relation
@@ -663,7 +664,7 @@ class RephraseChecker(Instruction):
           A string representing the instruction description.
         """
         if not self.is_change(original_message):
-            raise ValueError(f"Message {original_message} does not contain changes " "in the form of *change me*.")
+            raise ValueError(f"Message {original_message} does not contain changes in the form of *change me*.")
 
         self._reference_without_change = original_message
         self._description = (
@@ -694,7 +695,7 @@ class RephraseChecker(Instruction):
         """
 
         if not self.is_change(value):
-            raise ValueError(f"value {value} does not contain " "changes in the form of *change me*.")
+            raise ValueError(f"value {value} does not contain changes in the form of *change me*.")
 
         response_without_changes = self.strip_changes(value)
         reference_without_changes = self.strip_changes(self._reference_without_change)
@@ -782,7 +783,7 @@ class KeywordFrequencyChecker(Instruction):
             self._comparison_relation = random.choice(_COMPARISON_RELATION)
         elif relation not in _COMPARISON_RELATION:
             raise ValueError(
-                "The supported relation for comparison must be in " f"{_COMPARISON_RELATION}, but {relation} is given."
+                f"The supported relation for comparison must be in {_COMPARISON_RELATION}, but {relation} is given."
             )
         else:
             self._comparison_relation = relation
@@ -846,7 +847,7 @@ class NumberOfWords(Instruction):
             self._comparison_relation = random.choice(_COMPARISON_RELATION)
         elif relation not in _COMPARISON_RELATION:
             raise ValueError(
-                "The supported relation for comparison must be in " f"{_COMPARISON_RELATION}, but {relation} is given."
+                f"The supported relation for comparison must be in {_COMPARISON_RELATION}, but {relation} is given."
             )
         else:
             self._comparison_relation = relation
@@ -878,7 +879,7 @@ class JsonFormat(Instruction):
 
     def build_description(self):
         self._description_pattern = (
-            "Entire output should be wrapped in JSON format. You can use markdown" " ticks such as ```."
+            "Entire output should be wrapped in JSON format. You can use markdown ticks such as ```."
         )
         return self._description_pattern
 
@@ -1250,7 +1251,7 @@ class EndChecker(Instruction):
         if self._end_phrase is None:
             self._end_phrase = random.choice(_ENDING_OPTIONS)
         self._description_pattern = (
-            "Finish your response with this exact phrase {ender}. " "No other words should follow this phrase."
+            "Finish your response with this exact phrase {ender}. No other words should follow this phrase."
         )
         return self._description_pattern.format(ender=self._end_phrase)
 
@@ -1274,7 +1275,7 @@ class TitleChecker(Instruction):
     def build_description(self):
         """Build the instruction description."""
         self._description_pattern = (
-            "Your answer must contain a title, wrapped in double angular brackets," " such as <<poem of joy>>."
+            "Your answer must contain a title, wrapped in double angular brackets, such as <<poem of joy>>."
         )
         return self._description_pattern
 
@@ -1337,7 +1338,7 @@ class LetterFrequencyChecker(Instruction):
             self._comparison_relation = let_relation
 
         self._description_pattern = (
-            "In your response, the letter {letter} should appear {let_relation}" " {let_frequency} times."
+            "In your response, the letter {letter} should appear {let_relation} {let_frequency} times."
         )
 
         return self._description_pattern.format(
@@ -1402,8 +1403,7 @@ class LowercaseLettersEnglishChecker(Instruction):
     def build_description(self):
         """Build the instruction description."""
         self._description_pattern = (
-            "Your entire response should be in English, and in all lowercase"
-            " letters. No capital letters are allowed."
+            "Your entire response should be in English, and in all lowercase letters. No capital letters are allowed."
         )
         return self._description_pattern
 
@@ -1479,7 +1479,7 @@ class CapitalWordFrequencyChecker(Instruction):
             )
 
         self._description_pattern = (
-            "In your response, words with all capital letters should appear" " {relation} {frequency} times."
+            "In your response, words with all capital letters should appear {relation} {frequency} times."
         )
 
         return self._description_pattern.format(frequency=self._frequency, relation=self._comparison_relation)

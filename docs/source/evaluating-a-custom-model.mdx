@@ -1,0 +1,148 @@
+# Custom Model
+
+Lighteval allows you to evaluate custom model implementations by creating a custom model class that inherits from `LightevalModel`.
+This is useful when you want to evaluate models that aren't directly supported by the standard backends and providers (transformers, vllm, etc), or
+if you want to add your own pre/post processing.
+
+## Creating a Custom Model
+
+1. Create a Python file containing your custom model implementation. The model must inherit from `LightevalModel` and implement all required methods.
+
+Here's a basic example:
+
+```python
+from typing import List
+from lighteval.models.abstract_model import LightevalModel
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.requests import Doc
+from lighteval.utils.cache_management import SampleCache, cached
+
+class MyCustomModel(LightevalModel):
+    def __init__(self, config):
+        super().__init__(config)
+        # Initialize your model here...
+
+        # Enable caching (recommended)
+        self._cache = SampleCache(config)
+
+    @cached("predictions")  # Enable caching for better performance
+    def greedy_until(self, docs: List[Doc]) -> List[ModelResponse]:
+        # Implement generation logic
+        pass
+
+    @cached("predictions")  # Enable caching for better performance
+    def loglikelihood(self, docs: List[Doc]) -> List[ModelResponse]:
+        # Implement loglikelihood computation
+        pass
+
+    @cached("predictions")  # Enable caching for better performance
+    def loglikelihood_rolling(self, docs: List[Doc]) -> List[ModelResponse]:
+        # Implement rolling loglikelihood computation
+        pass
+```
+
+2. The custom model file should contain exactly one class that inherits from `LightevalModel`. This class will be automatically detected and instantiated when loading the model.
+
+> [!TIP]
+> You can find a complete example of a custom model implementation in `examples/custom_models/google_translate_model.py`.
+
+## Running the Evaluation
+
+You can evaluate your custom model using either the command line interface or the Python API.
+
+### Using the Command Line
+
+```bash
+lighteval custom \
+    "google-translate" \
+    "examples/custom_models/google_translate_model.py" \
+    "lighteval|wmt20:fr-de|0|0" \
+    --max-samples 10
+```
+
+The command takes three required arguments:
+- The model name (used for tracking in results/logs)
+- The path to your model implementation file
+- The tasks to evaluate on (same format as other backends)
+
+### Using the Python API
+
+```python
+from lighteval.logging.evaluation_tracker import EvaluationTracker
+from lighteval.models.custom.custom_model import CustomModelConfig
+from lighteval.pipeline import Pipeline, PipelineParameters
+
+# Set up evaluation tracking
+evaluation_tracker = EvaluationTracker(
+    output_dir="results",
+    save_details=True
+)
+
+# Configure the pipeline
+pipeline_params = PipelineParameters(
+    launcher_type=ParallelismManager.CUSTOM,
+)
+
+# Configure your custom model
+model_config = CustomModelConfig(
+    model="my-custom-model",
+    model_definition_file_path="path/to/my_model.py"
+)
+
+# Create and run the pipeline
+pipeline = Pipeline(
+    tasks="leaderboard|truthfulqa:mc|0|0",
+    pipeline_parameters=pipeline_params,
+    evaluation_tracker=evaluation_tracker,
+    model_config=model_config
+)
+
+pipeline.evaluate()
+pipeline.save_and_push_results()
+```
+
+## Required Methods
+
+Your custom model must implement these core methods:
+
+- `greedy_until`: For generating text until a stop sequence or max tokens is reached - this is used for generative evaluations
+- `loglikelihood`: For computing log probabilities of specific continuations - this is used for multiple choice logprob evaluations
+- `loglikelihood_rolling`: For computing rolling log probabilities of sequences - this is used for perplexity metrics
+
+See the `LightevalModel` base class documentation for detailed method signatures and requirements.
+
+## Enabling Caching (Recommended)
+
+Lighteval includes a caching system that can significantly speed up evaluations by storing and reusing model predictions.
+To enable caching in your custom model:
+
+1. **Import caching components**:
+   ```python
+   from lighteval.utils.cache_management import SampleCache, cached
+   ```
+
+2. **Initialize cache in constructor**:
+   ```python
+   def __init__(self, config):
+       # Your initialization code...
+       self._cache = SampleCache(config)
+   ```
+
+3. **Add cache decorators** to your prediction methods:
+   ```python
+   @cached("predictions")
+   def greedy_until(self, docs: List[Doc]) -> List[ModelResponse]:
+       # Your implementation...
+   ```
+
+For detailed information about the caching system, see the [Caching Documentation](./caching.mdx).
+
+## Best Practices
+
+1. **Error Handling**: Implement robust error handling in your model methods to gracefully handle edge cases.
+
+2. **Batching**: Consider implementing efficient batching in your model methods to improve performance.
+
+3. **Documentation**: Add clear docstrings to your model class and methods explaining any specific requirements or limitations.
+
+4. **Caching**: Enable caching to speed up repeated evaluations and development iterations.

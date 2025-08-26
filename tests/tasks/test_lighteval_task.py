@@ -20,13 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
 
-from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig, extract_num_samples
+from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
+from lighteval.tasks.requests import Doc
 
 
 def dummy_prompt_function(item, task_name):
-    return item["text"]
+    return Doc(query=item["text"], choices=["A", "B"], gold_index=0, task_name=task_name)
 
 
 def test_revision_check():
@@ -37,11 +37,13 @@ def test_revision_check():
         hf_repo="lighteval-tests-datasets/dataset-test-1",
         hf_subset="default",
         evaluation_splits=["train"],
-        metric=[],
+        metrics=[],
         hf_revision="25175defadfde48b131b7cd7573ad6f59f868306",
     )
-    task_with_revision = LightevalTask("test_task_revision", cfg_with_revision)
-    assert task_with_revision.eval_docs() == ["hi", "how are you?"]
+    task_with_revision = LightevalTask(cfg_with_revision)
+    docs = task_with_revision.eval_docs()
+    queries = [doc.query for doc in docs]
+    assert queries == ["hi", "how are you?"]
 
 
 def test_dataset_filter():
@@ -53,26 +55,11 @@ def test_dataset_filter():
         hf_repo="lighteval-tests-datasets/dataset-test-1",
         hf_subset="default",
         hf_filter=lambda x: x["text"] == "hi",
-        metric=[],
+        metrics=[],
         evaluation_splits=["train"],
     )
-    task = LightevalTask("test_task", cfg)
+    task = LightevalTask(cfg)
 
     filtered_docs = task.eval_docs()
     assert len(filtered_docs) == 1
-    assert filtered_docs[0] == "hi"
-
-
-@pytest.mark.parametrize(
-    "metric_name, expected",
-    [
-        ("maj@1", 1),
-        ("pass@1:32_samples", 32),
-        ("pass@10:64_samples", 64),
-        ("codegen_pass@1:16", 16),
-        ("other_name@2", 2),
-        ("other_name", 1),
-    ],
-)
-def test_extract_num_samples(metric_name, expected):
-    assert extract_num_samples(metric_name) == expected
+    assert filtered_docs[0].query == "hi"

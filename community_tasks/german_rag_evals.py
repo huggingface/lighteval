@@ -162,7 +162,7 @@ task1 = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="test",
     few_shots_select="sequential",
-    metric=[Metrics.loglikelihood_acc],
+    metrics=[Metrics.loglikelihood_acc],
     version=1,
 )
 
@@ -179,14 +179,14 @@ task2 = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="test",
     few_shots_select="sequential",
-    metric=[Metrics.loglikelihood_acc],
+    metrics=[Metrics.loglikelihood_acc],
     version=1,
 )
 
 
 # Task 3: Question-answer match.
 # Given is a question and an answer.
-# The task is to decide whether the answer actualy answers the question.
+# The task is to decide whether the answer actually answers the question.
 task3 = LightevalTaskConfig(
     name="german_rag_eval:question_answer_match",
     prompt_function=prompt_fn_question_answer_match,
@@ -197,7 +197,7 @@ task3 = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="test",
     few_shots_select="sequential",
-    metric=[Metrics.loglikelihood_acc],
+    metrics=[Metrics.loglikelihood_acc],
     version=1,
 )
 
@@ -214,7 +214,7 @@ task4 = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="test",
     few_shots_select="sequential",
-    metric=[Metrics.loglikelihood_acc],
+    metrics=[Metrics.loglikelihood_acc],
     version=1,
 )
 

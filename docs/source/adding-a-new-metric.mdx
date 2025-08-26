@@ -15,7 +15,6 @@ If not, you can use the `custom_task` system to register your new metric:
 > to install the required dev dependencies by running `pip install -e .[dev]`
 > and then run `pre-commit install` to install the pre-commit hooks.
 
-
 - Create a new Python file which should contain the full logic of your metric.
 - The file also needs to start with these imports
 
@@ -24,20 +23,22 @@ from aenum import extend_enum
 from lighteval.metrics import Metrics
 ```
 
-You need to define a sample level metric:
+You need to define a sample level metric, all sample level metrics will have the same signature, taking a
+[`~lighteval.types.Doc`] and a [`~lighteval.types.ModelResponse`]. The metric should return a float or a
+boolean.
 
 ```python
-def custom_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> bool:
-    response = predictions[0]
-    return response == formatted_doc.choices[formatted_doc.gold_index]
+def custom_metric(doc: Doc, model_response: ModelResponse) -> bool:
+    response = model_response.text[0]
+    return response == doc.choices[doc.gold_index]
 ```
 
 Here the sample level metric only returns one metric, if you want to return multiple metrics per sample you need to return a dictionary with the metrics as keys and the values as values.
 
 ```python
-def custom_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
-    response = predictions[0]
-    return {"accuracy": response == formatted_doc.choices[formatted_doc.gold_index], "other_metric": 0.5}
+def custom_metric(doc: Doc, model_response: ModelResponse) -> dict:
+    response = model_response.text[0]
+    return {"accuracy": response == doc.choices[doc.gold_index], "other_metric": 0.5}
 ```
 
 Then, you can define an aggregation function if needed, a common aggregation function is `np.mean`.
@@ -56,8 +57,7 @@ with [`~metrics.utils.metric_utils.SampleLevelMetric`]:
 my_custom_metric = SampleLevelMetric(
     metric_name={custom_metric_name},
     higher_is_better={either True or False},
-    category={MetricCategory},
-    use_case={MetricUseCase},
+    category={SamplingMethod},
     sample_level_fn=custom_metric,
     corpus_level_fn=agg_function,
 )
@@ -70,8 +70,7 @@ with [`~metrics.utils.metric_utils.SampleLevelMetricGrouping`]:
 custom_metric = SampleLevelMetricGrouping(
     metric_name={submetric_names},
     higher_is_better={n: {True or False} for n in submetric_names},
-    category={MetricCategory},
-    use_case={MetricUseCase},
+    category={SamplingMethod},
     sample_level_fn=custom_metric,
     corpus_level_fn={
         "accuracy": np.mean,
