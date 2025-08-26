@@ -93,8 +93,10 @@ class TestPipelineReasoningTags(unittest.TestCase):
                 return task._docs
 
         class FakeRegistry(Registry):
-            def __init__(self, custom_tasks: Optional[Union[str, Path, ModuleType]] = None):
-                super().__init__(custom_tasks=custom_tasks)
+            def __init__(
+                self, tasks: Optional[str] = None, custom_tasks: Optional[Union[str, Path, ModuleType]] = None
+            ):
+                super().__init__(tasks=tasks, custom_tasks=custom_tasks)
 
             def get_tasks_configs(self, task: str):
                 return [task_config]
