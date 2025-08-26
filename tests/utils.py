@@ -105,7 +105,7 @@ def fake_evaluate_task(
     # Create a mock Registry class
 
     class FakeRegistry(Registry):
-        def __init__(self, custom_tasks: Optional[Union[str, Path, ModuleType]] = None):
+        def __init__(self, tasks: Optional[str], custom_tasks: Optional[Union[str, Path, ModuleType]] = None):
             super().__init__(custom_tasks=custom_tasks)
 
         def get_task_dict(self, task_names: list[str]):
