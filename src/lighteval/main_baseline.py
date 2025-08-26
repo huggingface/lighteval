@@ -22,21 +22,20 @@
 
 
 from lighteval.cli_args import (
-    DEFAULT_VALUES,
-    CustomTasks,
-    DatasetLoadingProcesses,
-    MaxSamples,
-    OutputDir,
-    Tasks,
+    custom_tasks,
+    dataset_loading_processes,
+    max_samples,
+    output_dir,
+    tasks,
 )
 
 
 def baseline(
-    tasks: Tasks,
-    custom_tasks: CustomTasks = DEFAULT_VALUES["custom_tasks"],
-    dataset_loading_processes: DatasetLoadingProcesses = DEFAULT_VALUES["dataset_loading_processes"],
-    output_dir: OutputDir = DEFAULT_VALUES["output_dir"],
-    max_samples: MaxSamples = DEFAULT_VALUES["max_samples"],
+    tasks: tasks.type,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
+    dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
+    output_dir: output_dir.type = output_dir.default,
+    max_samples: max_samples.type = max_samples.default,
 ):
     """
     Compute baselines for given tasks.

@@ -26,25 +26,24 @@ from typer import Argument, Option
 from typing_extensions import Annotated
 
 from lighteval.cli_args import (
-    DEFAULT_VALUES,
     HELP_PANEL_NAME_4,
-    CustomTasks,
-    DatasetLoadingProcesses,
-    JobId,
-    LoadResponsesFromDetailsDateId,
-    MaxSamples,
-    NumFewshotSeeds,
-    OutputDir,
-    PublicRun,
-    PushToHub,
-    PushToTensorboard,
-    ReasoningTags,
-    RemoveReasoningTags,
-    ResultsOrg,
-    ResultsPathTemplate,
-    SaveDetails,
-    Tasks,
-    Wandb,
+    custom_tasks,
+    dataset_loading_processes,
+    job_id,
+    load_responses_from_details_date_id,
+    max_samples,
+    num_fewshot_seeds,
+    output_dir,
+    public_run,
+    push_to_hub,
+    push_to_tensorboard,
+    reasoning_tags,
+    remove_reasoning_tags,
+    results_org,
+    results_path_template,
+    save_details,
+    tasks,
+    wandb,
 )
 
 
@@ -57,7 +56,7 @@ def inference_endpoint(
     model_config_path: Annotated[
         str, Argument(help="Path to model config yaml file. (examples/model_configs/endpoint_model.yaml)")
     ],
-    tasks: Tasks,
+    tasks: tasks.type,
     free_endpoint: Annotated[
         bool,
         Option(
@@ -66,26 +65,24 @@ def inference_endpoint(
         ),
     ] = False,
     # === Common parameters ===
-    dataset_loading_processes: DatasetLoadingProcesses = DEFAULT_VALUES["dataset_loading_processes"],
-    custom_tasks: CustomTasks = DEFAULT_VALUES["custom_tasks"],
-    num_fewshot_seeds: NumFewshotSeeds = DEFAULT_VALUES["num_fewshot_seeds"],
-    load_responses_from_details_date_id: LoadResponsesFromDetailsDateId = DEFAULT_VALUES[
-        "load_responses_from_details_date_id"
-    ],
-    remove_reasoning_tags: RemoveReasoningTags = DEFAULT_VALUES["remove_reasoning_tags"],
-    reasoning_tags: ReasoningTags = DEFAULT_VALUES["reasoning_tags"],
+    dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
+    num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
+    load_responses_from_details_date_id: load_responses_from_details_date_id.type = load_responses_from_details_date_id.default,
+    remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
+    reasoning_tags: reasoning_tags.type = reasoning_tags.default,
     # === saving ===
-    output_dir: OutputDir = DEFAULT_VALUES["output_dir"],
-    results_path_template: ResultsPathTemplate = DEFAULT_VALUES["results_path_template"],
-    push_to_hub: PushToHub = DEFAULT_VALUES["push_to_hub"],
-    push_to_tensorboard: PushToTensorboard = DEFAULT_VALUES["push_to_tensorboard"],
-    public_run: PublicRun = DEFAULT_VALUES["public_run"],
-    results_org: ResultsOrg = DEFAULT_VALUES["results_org"],
-    save_details: SaveDetails = DEFAULT_VALUES["save_details"],
-    wandb: Wandb = DEFAULT_VALUES["wandb"],
+    output_dir: output_dir.type = output_dir.default,
+    results_path_template: results_path_template.type = results_path_template.default,
+    push_to_hub: push_to_hub.type = push_to_hub.default,
+    push_to_tensorboard: push_to_tensorboard.type = push_to_tensorboard.default,
+    public_run: public_run.type = public_run.default,
+    results_org: results_org.type = results_org.default,
+    save_details: save_details.type = save_details.default,
+    wandb: wandb.type = wandb.default,
     # === debug ===
-    max_samples: MaxSamples = DEFAULT_VALUES["max_samples"],
-    job_id: JobId = DEFAULT_VALUES["job_id"],
+    max_samples: max_samples.type = max_samples.default,
+    job_id: job_id.type = job_id.default,
 ):
     """
     Evaluate models using inference-endpoints as backend.
@@ -147,37 +144,32 @@ def tgi(
     model_config_path: Annotated[
         str, Argument(help="Path to model config yaml file. (examples/model_configs/tgi_model.yaml)")
     ],
-    tasks: Tasks,
+    tasks: tasks.type,
     # === Common parameters ===
-    dataset_loading_processes: DatasetLoadingProcesses = DEFAULT_VALUES["dataset_loading_processes"],
-    custom_tasks: CustomTasks = DEFAULT_VALUES["custom_tasks"],
-    num_fewshot_seeds: NumFewshotSeeds = DEFAULT_VALUES["num_fewshot_seeds"],
-    load_responses_from_details_date_id: LoadResponsesFromDetailsDateId = DEFAULT_VALUES[
-        "load_responses_from_details_date_id"
-    ],
-    remove_reasoning_tags: RemoveReasoningTags = DEFAULT_VALUES["remove_reasoning_tags"],
-    reasoning_tags: ReasoningTags = DEFAULT_VALUES["reasoning_tags"],
+    dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
+    num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
+    load_responses_from_details_date_id: load_responses_from_details_date_id.type = load_responses_from_details_date_id.default,
+    remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
+    reasoning_tags: reasoning_tags.type = reasoning_tags.default,
     # === saving ===
-    output_dir: OutputDir = DEFAULT_VALUES["output_dir"],
-    results_path_template: ResultsPathTemplate = DEFAULT_VALUES["results_path_template"],
-    push_to_hub: PushToHub = DEFAULT_VALUES["push_to_hub"],
-    push_to_tensorboard: PushToTensorboard = DEFAULT_VALUES["push_to_tensorboard"],
-    public_run: PublicRun = DEFAULT_VALUES["public_run"],
-    results_org: ResultsOrg = DEFAULT_VALUES["results_org"],
-    save_details: SaveDetails = DEFAULT_VALUES["save_details"],
-    wandb: Wandb = DEFAULT_VALUES["wandb"],
+    output_dir: output_dir.type = output_dir.default,
+    results_path_template: results_path_template.type = results_path_template.default,
+    push_to_hub: push_to_hub.type = push_to_hub.default,
+    push_to_tensorboard: push_to_tensorboard.type = push_to_tensorboard.default,
+    public_run: public_run.type = public_run.default,
+    results_org: results_org.type = results_org.default,
+    save_details: save_details.type = save_details.default,
+    wandb: wandb.type = wandb.default,
     # === debug ===
-    max_samples: MaxSamples = DEFAULT_VALUES["max_samples"],
-    job_id: JobId = DEFAULT_VALUES["job_id"],
+    max_samples: max_samples.type = max_samples.default,
+    job_id: job_id.type = job_id.default,
 ):
     """
     Evaluate models using TGI as backend.
     """
-    import yaml
-
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.endpoints.tgi_model import TGIModelConfig
-    from lighteval.models.model_input import GenerationParameters
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
     evaluation_tracker = EvaluationTracker(
@@ -193,11 +185,7 @@ def tgi(
 
     parallelism_manager = ParallelismManager.TGI
 
-    with open(model_config_path, "r") as f:
-        config = yaml.safe_load(f)
-
-    generation_parameters = GenerationParameters(**config.get("generation", {}))
-    model_config = TGIModelConfig(**config["model"], generation_parameters=generation_parameters)
+    model_config = TGIModelConfig.from_path(model_config_path)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
@@ -237,28 +225,26 @@ def litellm(
             help="config file path for the litellm model, or a comma separated string of model args (model_name={},base_url={},provider={})"
         ),
     ],
-    tasks: Tasks,
+    tasks: tasks.type,
     # === Common parameters ===
-    dataset_loading_processes: DatasetLoadingProcesses = DEFAULT_VALUES["dataset_loading_processes"],
-    custom_tasks: CustomTasks = DEFAULT_VALUES["custom_tasks"],
-    num_fewshot_seeds: NumFewshotSeeds = DEFAULT_VALUES["num_fewshot_seeds"],
-    load_responses_from_details_date_id: LoadResponsesFromDetailsDateId = DEFAULT_VALUES[
-        "load_responses_from_details_date_id"
-    ],
-    remove_reasoning_tags: RemoveReasoningTags = DEFAULT_VALUES["remove_reasoning_tags"],
-    reasoning_tags: ReasoningTags = DEFAULT_VALUES["reasoning_tags"],
+    dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
+    num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
+    load_responses_from_details_date_id: load_responses_from_details_date_id.type = load_responses_from_details_date_id.default,
+    remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
+    reasoning_tags: reasoning_tags.type = reasoning_tags.default,
     # === saving ===
-    output_dir: OutputDir = DEFAULT_VALUES["output_dir"],
-    results_path_template: ResultsPathTemplate = DEFAULT_VALUES["results_path_template"],
-    push_to_hub: PushToHub = DEFAULT_VALUES["push_to_hub"],
-    push_to_tensorboard: PushToTensorboard = DEFAULT_VALUES["push_to_tensorboard"],
-    public_run: PublicRun = DEFAULT_VALUES["public_run"],
-    results_org: ResultsOrg = DEFAULT_VALUES["results_org"],
-    save_details: SaveDetails = DEFAULT_VALUES["save_details"],
-    wandb: Wandb = DEFAULT_VALUES["wandb"],
+    output_dir: output_dir.type = output_dir.default,
+    results_path_template: results_path_template.type = results_path_template.default,
+    push_to_hub: push_to_hub.type = push_to_hub.default,
+    push_to_tensorboard: push_to_tensorboard.type = push_to_tensorboard.default,
+    public_run: public_run.type = public_run.default,
+    results_org: results_org.type = results_org.default,
+    save_details: save_details.type = save_details.default,
+    wandb: wandb.type = wandb.default,
     # === debug ===
-    max_samples: MaxSamples = DEFAULT_VALUES["max_samples"],
-    job_id: JobId = DEFAULT_VALUES["job_id"],
+    max_samples: max_samples.type = max_samples.default,
+    job_id: job_id.type = job_id.default,
 ):
     """
     Evaluate models using LiteLLM as backend.
@@ -331,25 +317,25 @@ def inference_providers(
             help="config file path for the inference provider model, or a comma separated string of model args (model_name={},provider={},generation={temperature: 0.6})"
         ),
     ],
-    tasks: Tasks,
+    tasks: tasks.type,
     # === Common parameters ===
-    dataset_loading_processes: DatasetLoadingProcesses = DEFAULT_VALUES["dataset_loading_processes"],
-    custom_tasks: CustomTasks = DEFAULT_VALUES["custom_tasks"],
-    num_fewshot_seeds: NumFewshotSeeds = DEFAULT_VALUES["num_fewshot_seeds"],
+    dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
+    num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
     # === saving ===
-    output_dir: OutputDir = DEFAULT_VALUES["output_dir"],
-    results_path_template: ResultsPathTemplate = DEFAULT_VALUES["results_path_template"],
-    push_to_hub: PushToHub = DEFAULT_VALUES["push_to_hub"],
-    push_to_tensorboard: PushToTensorboard = DEFAULT_VALUES["push_to_tensorboard"],
-    public_run: PublicRun = DEFAULT_VALUES["public_run"],
-    results_org: ResultsOrg = DEFAULT_VALUES["results_org"],
-    save_details: SaveDetails = DEFAULT_VALUES["save_details"],
-    wandb: Wandb = DEFAULT_VALUES["wandb"],
-    remove_reasoning_tags: RemoveReasoningTags = DEFAULT_VALUES["remove_reasoning_tags"],
-    reasoning_tags: ReasoningTags = DEFAULT_VALUES["reasoning_tags"],
+    output_dir: output_dir.type = output_dir.default,
+    results_path_template: results_path_template.type = results_path_template.default,
+    push_to_hub: push_to_hub.type = push_to_hub.default,
+    push_to_tensorboard: push_to_tensorboard.type = push_to_tensorboard.default,
+    public_run: public_run.type = public_run.default,
+    results_org: results_org.type = results_org.default,
+    save_details: save_details.type = save_details.default,
+    wandb: wandb.type = wandb.default,
+    remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
+    reasoning_tags: reasoning_tags.type = reasoning_tags.default,
     # === debug ===
-    max_samples: MaxSamples = DEFAULT_VALUES["max_samples"],
-    job_id: JobId = DEFAULT_VALUES["job_id"],
+    max_samples: max_samples.type = max_samples.default,
+    job_id: job_id.type = job_id.default,
 ):
     """
     Evaluate models using HuggingFace's inference providers as backend.

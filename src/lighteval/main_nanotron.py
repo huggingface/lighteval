@@ -29,9 +29,8 @@ from typing_extensions import Annotated
 from yaml import SafeLoader
 
 from lighteval.cli_args import (
-    DEFAULT_VALUES,
-    ReasoningTags,
-    RemoveReasoningTags,
+    reasoning_tags,
+    remove_reasoning_tags,
 )
 
 
@@ -43,8 +42,8 @@ def nanotron(
         str, Option(help="Path to the nanotron checkpoint YAML or python config file, potentially on s3.")
     ],
     lighteval_config_path: Annotated[str, Option(help="Path to a YAML config to be used for the evaluation.")],
-    remove_reasoning_tags: RemoveReasoningTags = DEFAULT_VALUES["remove_reasoning_tags"],
-    reasoning_tags: ReasoningTags = DEFAULT_VALUES["reasoning_tags"],
+    remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
+    reasoning_tags: reasoning_tags.type = reasoning_tags.default,
 ):
     """
     Evaluate models using nanotron as backend.

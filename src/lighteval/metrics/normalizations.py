@@ -426,8 +426,6 @@ class LogProbPMINorm:
 
     name: str = "norm_pmi"
 
-    pass
-
 
 @dataclass
 class LogProbTokenNorm:
@@ -437,7 +435,6 @@ class LogProbTokenNorm:
     """
 
     name: str = "norm_token"
-    pass
 
 
 @dataclass

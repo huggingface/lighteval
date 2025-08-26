@@ -29,7 +29,7 @@ from dataclasses import asdict, dataclass, field
 import git
 import xxhash
 
-from lighteval.metrics.stderr import get_stderr_function
+from lighteval.metrics.utils.stderr import get_stderr_function
 from lighteval.models.abstract_model import ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
@@ -364,13 +364,13 @@ class MetricsLogger:
                     # The metric is in a subset which has already been computed and saved
                     continue
 
+                aggregation = task.aggregation()[metric_name]
+
                 try:
-                    metric_result = task.aggregation()[metric_name](metric_values)
+                    metric_result = aggregation(metric_values)
                 except OverflowError:
                     logger.warning(f"{task_name}, {metric_name} got an OVERFLOW ERROR when aggregating.")
                     metric_result = float("nan")
-                except KeyError:
-                    continue
 
                 if isinstance(metric_result, dict):  # For some corpus level grouping metrics
                     self.metric_aggregated[task_name].update(metric_result)
@@ -383,7 +383,6 @@ class MetricsLogger:
                         None  # We skip stderr for some corpus metrics that return dicts, or if bootstrap_iters is 0
                     )
                 else:
-                    aggregation = task.aggregation()[metric_name]
                     stderr = get_stderr_function(aggregation=aggregation, number_experiments=bootstrap_iters)
                 if stderr is not None and len(metric_values) > 1:
                     try:

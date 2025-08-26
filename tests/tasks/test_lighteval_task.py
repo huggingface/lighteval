@@ -20,9 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
 
-from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig, extract_num_samples
+from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
@@ -64,18 +63,3 @@ def test_dataset_filter():
     filtered_docs = task.eval_docs()
     assert len(filtered_docs) == 1
     assert filtered_docs[0].query == "hi"
-
-
-@pytest.mark.parametrize(
-    "metric_name, expected",
-    [
-        ("maj@1", 1),
-        ("pass@1:32_samples", 32),
-        ("pass@10:64_samples", 64),
-        ("codegen_pass@1:16", 16),
-        ("other_name@2", 2),
-        ("other_name", 1),
-    ],
-)
-def test_extract_num_samples(metric_name, expected):
-    assert extract_num_samples(metric_name) == expected
