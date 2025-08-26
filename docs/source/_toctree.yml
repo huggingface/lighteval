@@ -55,6 +55,6 @@
     title: Logging
   - local: package_reference/models_outputs
     title: ModelResponse
-  - local: package_reference/
+  - local: package_reference/doc
     title: Doc
   title: Reference
