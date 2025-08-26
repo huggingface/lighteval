@@ -130,7 +130,7 @@ class CustomSubsetTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=prompt_fn,  # Must be defined in the file or imported
             hf_repo="your_dataset_name",
-            metric=[custom_metric],  # Select your metric in Metrics or use your custom_metric
+            metrics=[custom_metric],  # Select your metric in Metrics or use your custom_metric
             hf_avail_splits=["train", "test"],
             evaluation_splits=["test"],
             few_shots_split="train",
