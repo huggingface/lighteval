@@ -114,9 +114,6 @@ class GeneralConfigLogger:
 
         Args:
             num_fewshot_seeds (int): number of few-shot seeds.
-            override_batch_size (Union[None, int]): overridden batch size.
-                If strictly positive, its value is used as the batch size for all experiments.
-                Else, the batch size is automatically inferred depending on what fits in memory.
             max_samples (int | None): maximum number of samples, if None, use all the samples available.
             job_id (str): job ID, used to retrieve logs.
         """
