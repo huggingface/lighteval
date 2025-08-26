@@ -2,10 +2,10 @@
 
 
 style:
-	ruff format .
-	ruff check --fix .
+	uvx ruff format .
+	uvx ruff check --fix .
 
 
 quality:
-	ruff format --check .
-	ruff check .
+	uvx ruff format --check .
+	uvx ruff check .
