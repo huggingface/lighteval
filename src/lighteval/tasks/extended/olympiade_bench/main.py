@@ -21,11 +21,14 @@
 # SOFTWARE.
 
 
+import numpy as np
+
 from lighteval.metrics.dynamic_metrics import (
     ExprExtractionConfig,
     LatexExtractionConfig,
-    multilingual_extractive_match_metric,
+    MultilingualExtractiveMatchMetric,
 )
+from lighteval.metrics.metrics import SampleLevelMetric, SamplingMethod
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.utils.language import Language
@@ -200,11 +203,17 @@ olympiad_bench_subsets = set(olympiad_bench_subsets).intersection(available_subs
 
 extraction_targets = [ExprExtractionConfig(), LatexExtractionConfig()]
 
-metric = multilingual_extractive_match_metric(
-    language=Language.ENGLISH,
-    gold_extraction_target=extraction_targets,
-    pred_extraction_target=extraction_targets,
-    precision=6,
+metric = SampleLevelMetric(
+    metric_name="extractive_match",
+    sample_level_fn=MultilingualExtractiveMatchMetric(
+        language=Language.ENGLISH,
+        gold_extraction_target=extraction_targets,
+        pred_extraction_target=extraction_targets,
+        precision=6,
+    ),
+    category=SamplingMethod.GENERATIVE,
+    corpus_level_fn=np.mean,
+    higher_is_better=True,
 )
 
 task_configs = []
@@ -218,7 +227,7 @@ for subset in olympiad_bench_subsets:
             suite=["extended"],
             hf_repo="Hothan/OlympiadBench",
             hf_subset=subset,
-            metric=[metric],
+            metrics=[metric],
             hf_avail_splits=["train"],
             evaluation_splits=["train"],
             few_shots_split="train",

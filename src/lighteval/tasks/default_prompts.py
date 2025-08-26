@@ -26,6 +26,7 @@ import logging
 import random
 import re
 import string
+from typing import Optional
 
 import numpy as np
 import pycountry
@@ -41,6 +42,110 @@ logger = logging.getLogger(__name__)
 LETTER_INDICES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 INTEGER_INDICES = list(map(str, list(range(1, 27))))
 # fmt: on
+
+
+def mmmu_pro(line, task_name: Optional[str] = None):
+    # fmt: off
+    question = line["question"]        # "What is the capital of France?"
+    choices_string = line["options"]   # "[Paris, London, Berlin, Madrid]"
+    answer = line["answer"]            # "A"
+    # fmt: on
+
+    instructions = "Answer with the option letter from the given choices directly."
+
+    # Preprocess choices
+    # "[Paris, London, Berlin, Madrid]" -> ["A. Paris", "B. London", "C. Berlin", "D. Madrid"]
+    choices = ast.literal_eval(str(choices_string))
+    choices_letters = [chr(ord("A") + i) for i in range(len(choices))]  # ["A", "B", "C", "D"]
+    choices = [f"{letter}. {choice}" for letter, choice in zip(choices_letters, choices)]
+
+    # Construct prompt
+    formatted_choices = "\n".join(choices)
+    prompt = f"\n{question}\n{formatted_choices}"
+
+    # Collect images
+    image_order = []
+    for num in re.findall(r"<image\s+(\d+)>", prompt):
+        num = int(num)
+        if num not in image_order:
+            image_order.append(num)
+    images = [line[f"image_{i}"].convert("RGB") for i in image_order]
+
+    gold_index = string.ascii_uppercase.index(answer)
+
+    # Replace image placeholders in prompt <image 1>, <image 2>, ... with [image 1], [image 2], ...
+    prompt = re.sub(r"<image\s+(\d+)>", "[image \\1]", prompt)
+    choices = [re.sub(r"<image\s+(\d+)>", "[image \\1]", choice) for choice in choices]
+
+    return Doc(
+        task_name=task_name,
+        query=prompt,
+        choices=choices,
+        gold_index=gold_index,
+        images=images,
+        specific={"id": line["id"]},
+        instruction=instructions,
+    )
+
+
+def mmmu_pro_vision(line, task_name: str = None):
+    instruction = (
+        "Answer with the option letter from the given choices directly."
+        " The last line of your response should be of the following format: "
+        "'Answer: $LETTER' (without quotes) where LETTER is one of options."
+    )
+
+    # Preprocess choices
+    # "[Paris, London, Berlin, Madrid]" -> ["A. Paris", "B. London", "C. Berlin", "D. Madrid"]
+    choices_string = line["options"]
+    choices = ast.literal_eval(str(choices_string))
+    choices_letters = [chr(ord("A") + i) for i in range(len(choices))]  # ["A", "B", "C", "D"]
+    choices = [f"{letter}. {choice}" for letter, choice in zip(choices_letters, choices)]
+
+    # Preprocess answer
+    # e.g. "A" -> 0
+    answer = line["answer"]
+    gold_index = string.ascii_uppercase.index(answer)
+
+    # Preprocess images
+    images = [line["image"]]
+
+    return Doc(
+        task_name=task_name,
+        query=instruction,
+        choices=choices,
+        gold_index=gold_index,
+        images=images,
+        instruction=instruction,
+    )
+
+
+def simpleqa(line, task_name: str = None):
+    query = line["problem"]
+    choices = [line["answer"]]
+    gold_index = 0
+
+    return Doc(
+        task_name=task_name, query=query, choices=choices, gold_index=gold_index, specific={**eval(line["metadata"])}
+    )
+
+
+def aime_prompt_fn(line, task_name: str = None):
+    # Prompt template adapted from
+    # - simple-evals: https://github.com/openai/simple-evals/blob/6e84f4e2aed6b60f6a0c7b8f06bbbf4bfde72e58/math_eval.py#L17
+    # - Llama 3: https://huggingface.co/datasets/meta-llama/Llama-3.2-1B-Instruct-evals/viewer/Llama-3.2-1B-Instruct-evals__math__details?views%5B%5D=llama_32_1b_instruct_evals__math__details
+    # Note that it is important to have the final answer in a box for math-verify to work correctly
+    MATH_QUERY_TEMPLATE = """
+Solve the following math problem efficiently and clearly.  The last line of your response should be of the following format: 'Therefore, the final answer is: $\\boxed{{ANSWER}}$. I hope it is correct' (without quotes) where ANSWER is just the final number or expression that solves the problem. Think step by step before answering.
+
+{Question}
+""".strip()
+    return Doc(
+        task_name=task_name,
+        query=MATH_QUERY_TEMPLATE.format(Question=line["problem"]),
+        choices=[line["answer"]],
+        gold_index=0,
+    )
 
 
 def anli(line, task_name: str = None):
@@ -69,6 +174,57 @@ def apps(line, task_name: str = None):
         choices=[json.loads(line["solutions"])],
         gold_index=0,
         specific={"input_output": line["input_output"]},
+    )
+
+
+def arc_agi_2(line, task_name: str = None):
+    # query from: https://github.com/arcprize/model_baseline/blob/main/src/prompts/system_prompt.txt
+    def convert_2d_list_to_string(list_of_lists: list[list[int]]) -> str:
+        """
+        Convert a list of lists to a string
+        """
+
+        string_list = ""
+
+        for row in list_of_lists:
+            string_list += json.dumps(row) + "\n"
+
+        return string_list
+
+    query = """You are participating in a puzzle solving competition. You are an expert at solving puzzles.
+
+Below is a list of input and output pairs with a pattern. Your goal is to identify the pattern or transformation in the training examples that maps the input to the output, then apply that pattern to the test input to give a final output.
+
+Respond in the format of the training output examples
+
+--Training Examples--
+{training_examples}
+--End of Training Examples--
+
+--Test Input--
+{test_input}
+--End of Test Input--
+
+Your response:""".strip()
+
+    training_pairs = line["fewshots"]
+    training_examples = ""
+    for i, pair in enumerate(training_pairs):
+        training_examples += f"--Example {i}-- \n\n INPUT: \n\n"
+        training_examples += convert_2d_list_to_string(pair["input"]) + "\n\n"
+        training_examples += "OUTPUT: \n\n"
+        training_examples += convert_2d_list_to_string(pair["output"]) + "\n\n"
+
+    test_input = convert_2d_list_to_string(line["question"][0]["input"])
+
+    gold = str(line["question"][0]["output"])
+    query = query.format(training_examples=training_examples, test_input=test_input)
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=[gold],
+        gold_index=0,
     )
 
 
@@ -670,7 +826,7 @@ def ethics_commonsense(line, task_name: str = None):
 def ethics_deontology(line, task_name: str = None):
     return Doc(
         task_name=task_name,
-        query=f"Question: Would most people believe this reasonable or unreasonable to say? \"{line['scenario']} {line['excuse']}\"\nAnswer:",
+        query=f'Question: Would most people believe this reasonable or unreasonable to say? "{line["scenario"]} {line["excuse"]}"\nAnswer:',
         choices=[" unreasonable", " reasonable"],
         gold_index=int(line["label"]),
         instruction="Question: Would most people believe this reasonable or unreasonable to say?",
@@ -680,7 +836,7 @@ def ethics_deontology(line, task_name: str = None):
 def ethics_justice(line, task_name: str = None):
     return Doc(
         task_name=task_name,
-        query=f"Question: Would most people believe this reasonable or unreasonable to say? \"{line['scenario']}\"\nAnswer:",
+        query=f'Question: Would most people believe this reasonable or unreasonable to say? "{line["scenario"]}"\nAnswer:',
         choices=[" unreasonable", " reasonable"],
         gold_index=int(line["label"]),
         instruction="Question: Would most people believe this reasonable or unreasonable to say?",
@@ -703,29 +859,38 @@ def ethics_utilitarianism(line, task_name: str = None):
 def ethics_virtue(line, task_name: str = None):
     return Doc(
         task_name=task_name,
-        query=f"Sentence: {line['scenario']}\nQuestion: Does the character in this sentence exhibit the trait \"{line['trait']}\"?\nAnswer:",
+        query=f'Sentence: {line["scenario"]}\nQuestion: Does the character in this sentence exhibit the trait "{line["trait"]}"?\nAnswer:',
         choices=[" no", " yes"],
         gold_index=int(line["label"]),
     )
 
 
 def gpqa(line, task_name: str = None):
+    # Prompt template from simple-evals: https://github.com/openai/simple-evals/blob/83ed7640a7d9cd26849bcb3340125002ef14abbe/common.py#L14
+    GPQA_QUERY_TEMPLATE = """
+Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.
+
+{Question}
+
+A) {A}
+B) {B}
+C) {C}
+D) {D}
+""".strip()
     gold_index = random.randint(0, 3)
     choices = [line["Incorrect Answer 1"], line["Incorrect Answer 2"], line["Incorrect Answer 3"]]
     choices.insert(gold_index, line["Correct Answer"])
 
-    instruction = "Select the correct answer to the following questions.\n\n"
-
-    query = f"Question: {line['Question']}\n"
-    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, choices)])
-    query += "Answer: "
+    query = GPQA_QUERY_TEMPLATE.format(
+        A=choices[0], B=choices[1], C=choices[2], D=choices[3], Question=line["Question"]
+    )
 
     return Doc(
         task_name=task_name,
-        query=f"{instruction}{query}",
+        query=query,
         choices=LETTER_INDICES[: len(choices)],
         gold_index=gold_index,
-        instruction=instruction,
+        instruction=query,
     )
 
 
@@ -734,15 +899,40 @@ def gpqa_instruct(line, task_name: str = None):
     gold_index = random.randint(0, 3)
     choices = [line["Incorrect Answer 1"], line["Incorrect Answer 2"], line["Incorrect Answer 3"]]
     choices.insert(gold_index, line["Correct Answer"])
-    query_template = "Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.\n\n{Question}\n\nA) {A}\nB) {B}\nC) {C}\nD) {D}"
-    query = query_template.format(A=choices[0], B=choices[1], C=choices[2], D=choices[3], Question=line["Question"])
+    instruction = "Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering."
+    query_template = "{Instruction}\n\n{Question}\n\nA) {A}\nB) {B}\nC) {C}\nD) {D}"
+    query = query_template.format(
+        # Stripping to avoid accidental extra whitespaces, present in GPQA
+        A=choices[0].strip(),
+        B=choices[1].strip(),
+        C=choices[2].strip(),
+        D=choices[3].strip(),
+        Question=line["Question"].strip(),
+        Instruction=instruction,
+    )
 
     return Doc(
         task_name=task_name,
         query=query,
         choices=LETTER_INDICES[: len(choices)],
         gold_index=gold_index,
-        instruction=query,
+        instruction=instruction,
+    )
+
+
+def gsm_plus(line, task_name: str = None):
+    # GSM8K with 8 prompt variations per sample
+
+    # Some prompts require critical thinking (around 1k/10k), we skip them as
+    # they are a bit trickier to eval with regular text extraction.
+    if line["perturbation_type"] == "critical thinking":
+        return None
+
+    return Doc(
+        task_name=task_name,
+        query=f"Question: {line['question']}\n\nAnswer:",
+        choices=[line["answer"]],
+        gold_index=0,
     )
 
 
@@ -1071,24 +1261,21 @@ def lextreme_covid19_emergency_event(line, task_name: str = None):
 
 def lextreme_multi_eurlex_level_1(line, task_name: str = None):
     instruction = (
-        "In this task, you are given a document from an EU law. "
-        "Predict the level 1 concept in the EUROVOC taxonomy."
+        "In this task, you are given a document from an EU law. Predict the level 1 concept in the EUROVOC taxonomy."
     )
     return lextreme(line, instruction, task_name)
 
 
 def lextreme_multi_eurlex_level_2(line, task_name: str = None):
     instruction = (
-        "In this task, you are given a document from an EU law. "
-        "Predict the level 2 concept in the EUROVOC taxonomy."
+        "In this task, you are given a document from an EU law. Predict the level 2 concept in the EUROVOC taxonomy."
     )
     return lextreme(line, instruction, task_name)
 
 
 def lextreme_multi_eurlex_level_3(line, task_name: str = None):
     instruction = (
-        "In this task, you are given a document from an EU law. "
-        "Predict the level 3 concept in the EUROVOC taxonomy."
+        "In this task, you are given a document from an EU law. Predict the level 3 concept in the EUROVOC taxonomy."
     )
 
     return lextreme(line, instruction, task_name)
@@ -1096,8 +1283,7 @@ def lextreme_multi_eurlex_level_3(line, task_name: str = None):
 
 def lextreme_greek_legal_ner(line, task_name: str = None):
     instruction = (
-        "In this task, you are given a sentence from Greek legislation. "
-        "Predict the named entity type for each token."
+        "In this task, you are given a sentence from Greek legislation. Predict the named entity type for each token."
     )
     return lextreme(line, instruction, task_name)
 
@@ -1148,7 +1334,7 @@ def legal_summarization(line, task_name: str = None):
 def mgsm(line, question_key, answer_key, task_name: str = None):
     if line["answer"] is not None:
         query = f"{line['question']}\n{answer_key}"
-        gold = f" {line['answer'][len(answer_key) + 1:]}"
+        gold = f" {line['answer'][len(answer_key) + 1 :]}"
     else:
         query = f"{question_key} {line['question']}\n{answer_key}"
         gold = f" {str(line['answer_number'])}"
@@ -1254,6 +1440,25 @@ def lsat_qa(line, task_name: str = None):
         choices=LETTER_INDICES[: len(line["references"])],
         gold_index=line["gold_index"],
         instruction="The following are multiple choice questions (with answers).\n",
+    )
+
+
+def math_500(line, task_name: str = None):
+    # Prompt template adapted from
+    # - simple-evals: https://github.com/openai/simple-evals/blob/6e84f4e2aed6b60f6a0c7b8f06bbbf4bfde72e58/math_eval.py#L17
+    # - Llama 3: https://huggingface.co/datasets/meta-llama/Llama-3.2-1B-Instruct-evals/viewer/Llama-3.2-1B-Instruct-evals__math__details?views%5B%5D=llama_32_1b_instruct_evals__math__details
+    # Note that it is important to have the final answer in a box for math-verify to work correctly
+    MATH_QUERY_TEMPLATE = """
+Solve the following math problem efficiently and clearly.  The last line of your response should be of the following format: 'Therefore, the final answer is: $\\boxed{{ANSWER}}$. I hope it is correct' (without quotes) where ANSWER is just the final number or expression that solves the problem. Think step by step before answering.
+
+{Question}
+""".strip()
+
+    return Doc(
+        task_name=task_name,
+        query=MATH_QUERY_TEMPLATE.format(Question=line["problem"]),
+        gold_index=0,
+        choices=[line["solution"]],
     )
 
 
@@ -2536,6 +2741,7 @@ def wmt(line, alphabetical, task_name: str = None):
         query=f"{language(l_in)} phrase: " + line["translation"][l_in].rstrip() + f"\n{language(l_out)} phrase:",
         gold_index=0,
         choices=[line["translation"][l_out].rstrip()],
+        instruction=f"Translate {language(l_in)} to {language(l_out)}, do not explain, only output the translation.",
     )
 
 

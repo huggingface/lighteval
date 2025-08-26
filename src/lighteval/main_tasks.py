@@ -19,7 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import os
+import logging
 from typing import Optional
 
 import typer
@@ -28,7 +28,6 @@ from typing_extensions import Annotated
 
 
 app = typer.Typer()
-CACHE_DIR = os.getenv("HF_HOME")
 
 
 @app.command()
@@ -37,7 +36,6 @@ def inspect(
     custom_tasks: Annotated[Optional[str], Option(help="Path to a file with custom tasks")] = None,
     num_samples: Annotated[int, Option(help="Number of samples to display")] = 10,
     show_config: Annotated[bool, Option(help="Will display the full task config")] = False,
-    cache_dir: Annotated[Optional[str], Option(help="Cache directory used to store datasets and models")] = CACHE_DIR,
 ):
     """
     Inspect a tasks
@@ -49,7 +47,7 @@ def inspect(
 
     from lighteval.tasks.registry import Registry, taskinfo_selector
 
-    registry = Registry(cache_dir=cache_dir, custom_tasks=custom_tasks)
+    registry = Registry(custom_tasks=custom_tasks)
 
     # Loading task
     task_names_list, _ = taskinfo_selector(tasks, task_registry=registry)
@@ -67,11 +65,40 @@ def inspect(
 
 
 @app.command()
-def list(custom_tasks: Annotated[Optional[str], Option(help="Path to a file with custom tasks")] = None):
+def list(
+    custom_tasks: Annotated[Optional[str], Option(help="Path to a file with custom tasks")] = None,
+    suites: Annotated[
+        Optional[str],
+        Option(
+            help="Comma-separated list of suites to display (e.g., 'helm,harness'). Use 'all' for all suites. If not specified, shows core suites only."
+        ),
+    ] = None,
+):
     """
     List all tasks
     """
     from lighteval.tasks.registry import Registry
 
-    registry = Registry(cache_dir=CACHE_DIR, custom_tasks=custom_tasks)
-    registry.print_all_tasks()
+    registry = Registry(custom_tasks=custom_tasks)
+    registry.print_all_tasks(suites=suites)
+
+
+@app.command()
+def create(template: str, task_name: str, dataset_name: str):
+    """
+    Create a new task
+    """
+    logger = logging.getLogger(__name__)
+
+    logger.info(f"Creating task for dataset {dataset_name}")
+
+    with open(template, "r") as f:
+        content = f.read()
+
+    content = content.replace("HF_TASK_NAME", task_name)
+    content = content.replace("HF_DATASET_NAME", dataset_name)
+
+    with open(f"custom_{task_name}_task.py", "w+") as f:
+        f.write(content)
+
+    logger.info(f"Task created in custom_{task_name}_task.py")

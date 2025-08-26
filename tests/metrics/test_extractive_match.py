@@ -23,13 +23,14 @@
 import pytest
 import sympy
 
-from lighteval.metrics.dynamic_metrics import (
+from lighteval.metrics.dynamic_metrics import MultilingualExtractiveMatchMetric
+from lighteval.metrics.utils.extractive_match_utils import (
     ExprExtractionConfig,
     IndicesExtractionConfig,
     LatexExtractionConfig,
-    multilingual_extractive_match_metric,
 )
 from lighteval.metrics.utils.math_comparison import sympy_expr_eq
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
 from lighteval.utils.language import Language
 
@@ -56,19 +57,23 @@ def compare_strings(
         elif match_type == "expr":
             extraction_targets.append(ExprExtractionConfig())
         elif match_type == "NativeLetters":
-            extraction_targets.append(IndicesExtractionConfig(prefix_for_extraction="NativeLetters"))
+            extraction_targets.append(
+                IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=True)
+            )
 
     extraction_targets = tuple(extraction_targets)  # Convert to tuple
 
-    return multilingual_extractive_match_metric(
+    model_response = ModelResponse(text=[pred])
+    doc = Doc(choices=[gold, "", "", ""], query="", gold_index=0)
+
+    return MultilingualExtractiveMatchMetric(
         language=language,
         gold_extraction_target=extraction_targets,
         pred_extraction_target=extraction_targets,
         precision=precision,
-    ).sample_level_fn(
-        golds=[gold],
-        predictions=[pred],
-        formatted_doc=Doc(choices=["", "", "", ""], query="", gold_index=0),
+    ).compute(
+        model_response=model_response,
+        doc=doc,
     )
 
 
@@ -80,9 +85,15 @@ def compare_strings(
         # Test answer with reasoning
         ("B", "Let's think step by step. It's not A because it doesn't make sense, therefore I think it's B", 1),
         ("D", "The answer is for sure D, it can't be A or B", 1),
-        ("D", "The answer: D, doesn't makese nsense for answer to be A or B", 1),
+        ("D", "The answer: D, it doesn't make sense for it to be A or B", 1),
         # Test minimal answer format
         ("D", "D. it can't be A or B", 1),
+        ("(D) Alina", "D", 1),
+        ("(A) Cecile", "C", 0),
+        ("C Cecile", "C", 1),
+        ("Alina and the answer is\n(C) Cecile", "C", 1),
+        ("Alina and the answer is\nC Cecile", "C", 1),
+        ("A Peter\nCelina bum", "A", 1),
     ],
 )
 def test_extraction_abc(gold, pred, expected):

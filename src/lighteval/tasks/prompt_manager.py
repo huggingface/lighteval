@@ -26,10 +26,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from itertools import cycle
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
-from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.litellm_model import LiteLLMClient
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list
 
@@ -42,246 +40,124 @@ if TYPE_CHECKING:
 
 
 class PromptManager:
-    def __init__(self, task: "LightevalTask", lm: LightevalModel):
-        self.model = lm
-        self.task = task
-        self.few_shot_sampler = FewShotSampler(task)
+    def __init__(self, use_chat_template: bool = False, tokenizer=None, system_prompt: str | None = None):
+        self.use_chat_template = use_chat_template
+        self.tokenizer = tokenizer
+        self.system_prompt = system_prompt  # System prompt to be used in chat templates
 
-    @staticmethod
-    def doc_to_text(doc: Doc, return_instructions: bool = False) -> Union[str, Tuple[str, str]]:
-        """
-        Returns the query of the document without the instructions. If the
-        document has instructions, it removes them from the query:
+    def prepare_prompt(self, doc: Doc) -> str:
+        """Prepare a prompt from a document, either using chat template or plain text format."""
+        if self.use_chat_template:
+            return self._prepare_chat_template(doc)
+        else:
+            return self._prepare_plain_text(doc)
 
-        Args:
-            doc (Doc): document class, containing the query and the
-                instructions.
+    def prepare_prompt_multimodal(self, doc: Doc) -> str:
+        if self.use_chat_template is False or self.tokenizer is None:
+            raise ValueError("Multimodal prompts are only supported with chat template format.")
 
-        Returns:
-            str: Query of the document without the instructions.
-        """
-        instructions = doc.instruction if doc.instruction is not None else ""
-        if not doc.query.startswith(instructions):
-            raise ValueError(f"Prompt query {doc.query} is not starting with instruction {instructions}")
+        if doc.images is None:
+            raise ValueError("Multimodal prompts require images to be provided in the document.")
 
-        return (
-            (doc.query[len(instructions) :], instructions) if return_instructions else doc.query[len(instructions) :]
+        text_content = [{"type": "text", "text": doc.query}]
+        image_content = [{"type": "image", "image": image} for image in doc.images]
+        message = {"role": "user", "content": text_content + image_content}
+
+        if (
+            self.system_prompt is not None or doc.instruction is not None
+        ):  # We add system prompt and instruction jointly if possible
+            system_prompt = self.system_prompt if self.system_prompt is not None else ""
+            instruction = doc.instruction if doc.instruction is not None else ""
+            system_content = [{"type": "text", "text": system_prompt + instruction}]
+            system_prompt_message = {"role": "system", "content": system_content}
+            message = [system_prompt_message, message]
+
+        else:
+            message = [message]
+
+        return self.tokenizer.apply_chat_template(
+            message,
+            tokenize=False,
+            add_generation_prompt=True,
         )
 
-    @staticmethod
-    def doc_to_target(formatted_doc: Doc) -> str:
+    def prepare_prompt_api(self, doc: Doc) -> list[dict[str, str]]:
         """
-        Returns the target of the given document.
-
-        Args:
-            formatted_doc (Doc): Formatted document.
-
-        Returns:
-            str: Target of the document, which is the correct answer for a document.
+        Prepare a prompt for API calls, using a chat-like format.
+        Will not tokenize the message because APIs will usually handle this.
         """
-        return as_list(formatted_doc.get_golds())[0]
+        return self._prepare_chat_template(doc, tokenize=False)
 
-    @staticmethod
-    def doc_to_fewshot_sorting_class(formatted_doc: Doc) -> str:
-        """
-        In some cases, when selecting few-shot samples, we want to use specific document classes
-        which need to be specified separately from the target.
-        For example, a document where the gold is a json might want to use only one of the keys of
-        the json to define sorting classes in few shot samples. Else we take the gold.
+    def _prepare_chat_template(self, doc: Doc, tokenize: bool = True) -> str:
+        """Prepare prompt using chat template format."""
+        messages = []
+        instruction_used = False  # Flag to check if instruction is used in the first few-shot example
 
-        Args:
-            formatted_doc (Doc): Formatted document.
+        # Add system prompt if available
+        if self.system_prompt is not None:
+            messages.append({"role": "system", "content": self.system_prompt})
 
-        Returns:
-            str: Class of the fewshot document
-        """
-        return formatted_doc.fewshot_sorting_class or PromptManager.doc_to_target(formatted_doc)
+        # Add few-shot examples
+        for ix, fewshot_sample in enumerate(doc.fewshot_samples):
+            query = self._extract_query(fewshot_sample.query, fewshot_sample.instruction)
+            if ix == 0 and doc.instruction is not None:
+                instruction_used = True
+                query = doc.instruction + query
 
-    def add_context_to_doc(
-        self,
-        doc: Doc,
-        num_fewshot: int,
-        seed: int,
-        sampler: Optional[random.Random] = None,
-        truncate_few_shots: bool = False,
-        use_chat_template=False,
-        system_prompt: str = None,
-    ) -> Doc:
-        is_multi_turn = doc.specific is not None and len(doc.specific.get("multi_turn_queries", [])) > 0
-        if is_multi_turn:
-            ctx, num_effective_few_shots = self._multi_turn_contexts(doc, use_chat_template, system_prompt)
-            doc.specific["multi_turn_queries_context"] = ctx
-        else:
-            ctx, num_effective_few_shots = self._single_turn_context(
-                doc=doc,
-                num_fewshot=num_fewshot,
-                seed=seed,
-                truncate_few_shots=truncate_few_shots,
-                sampler=sampler,
-                use_chat_template=use_chat_template,
-                system_prompt=system_prompt,
+            messages.append({"role": "user", "content": query})
+            messages.append({"role": "assistant", "content": fewshot_sample.get_golds()[0]})
+
+        # Add main query
+        main_query = self._extract_query(doc.query, doc.instruction)
+
+        if doc.instruction is not None and not instruction_used:
+            # If instruction is provided, prepend it to the main query
+            main_query = doc.instruction + main_query
+
+        messages.append({"role": "user", "content": main_query})
+
+        if tokenize:  # for local models
+            assert self.tokenizer is not None, "Tokenizer must be set for chat template formatting."
+
+            return self.tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True,
             )
-        doc.num_effective_few_shots = num_effective_few_shots
-        doc.num_asked_few_shots = num_fewshot
-        doc.ctx = ctx
 
-        return doc
+        else:  # for apis
+            return messages
 
-    def _multi_turn_contexts(self, doc: Doc, use_chat_template: bool, system_prompt: Optional[str]) -> list[str]:
-        """Creates N contexts (depending on the number of turn) for a tasks.
-        Multi turn tasks need use chat templating.
+    def _prepare_plain_text(self, doc: Doc) -> str:
+        """Prepare prompt using plain text format."""
+        parts = []
 
-        Args:
-            doc (Doc): Formatted document.
-            use_chat_template (bool): wether or not to use chat template. Will fail if false.
-            system_prompt (Optional[str]): The system prompt to use
-            tokenizer (PreTrainedTokenizer): The tokenizer used for the chat template
+        # Add system prompt if available
+        if self.system_prompt is not None:
+            parts.append(self.system_prompt)
 
-        Raises:
-            ValueError: If use_chat_template is set to false.
+        if doc.instruction is not None:
+            parts.append(doc.instruction)
 
-        Returns:
-            list[str]: contexts for every turn
-        """
-        if not use_chat_template:
-            raise ValueError("You need to use the chat template to create multi turn contexts")
+        # Add few-shot examples
+        for fewshot_sample in doc.fewshot_samples:
+            query = self._extract_query(fewshot_sample.query, fewshot_sample.instruction)
+            parts.append(query + " " + fewshot_sample.get_golds()[0].strip())
 
-        role_content_list = []
-        if system_prompt is not None:
-            role_content_list.append({"role": "system", "content": system_prompt})
+        # Add main query
+        query = self._extract_query(doc.query, doc.instruction)
+        parts.append(query)
 
-        for i in doc.specific["multi_turn_queries"]:
-            role_content_list.append({"role": "user", "content": i})
-            role_content_list.append({"role": "assistant", "content": "{model_response}"})
-        role_content_list.pop(-1)
+        return "\n\n".join(parts)
 
-        contexts = []
-        offset = 2 if system_prompt is not None else 1
-        for i in range(0, len(role_content_list), offset + 1):
-            c = self.model.tokenizer.apply_chat_template(
-                role_content_list[: i + offset], add_generation_prompt=True, tokenize=False, add_special_tokens=False
-            )
-            contexts.append(c)
-
-        return contexts, 0
-
-    def _single_turn_context(
-        self,
-        doc: Doc,
-        num_fewshot: int,
-        seed: int,
-        sampler: Optional[random.Random] = None,
-        truncate_few_shots: bool = False,
-        use_chat_template=False,
-        system_prompt: str = None,
-    ):
-        """Returns a fewshot context string that is made up of a prepended description
-        (if provided), the `num_fewshot` number of examples, and an appended prompt example.
-
-        :param doc: str
-            The document as returned from training_docs, validation_docs, or test_docs - should be preformatted.
-        :param num_fewshot: int
-            The number of fewshot examples to provide in the returned context string.
-        :param seed: seed
-            The random seed used to randomly sample examples. If -1, no shuffling will occur, and the samples taken
-            will be the `num_fewshot` firsts of the set.
-        :returns: str
-            The fewshot context.
-        """
-        if use_chat_template and self.model.tokenizer is None:
-            raise Exception("You can't use a chat template if your model does not have a tokenizer")
-
-        example, instruction = self.doc_to_text(doc, return_instructions=True)
-
-        fewshot_ex = self.few_shot_sampler.sample_fewshot_examples(
-            num_fewshot=num_fewshot, formatted_doc=doc, variance_seed=seed, sampler=sampler
-        )
-
-        num_effective_fewshots = num_fewshot
-
-        output = self.get_examples(
-            example=example,
-            instruction=instruction,
-            fewshot_ex=fewshot_ex,
-            system_prompt=system_prompt,
-            use_chat_template=use_chat_template,
-        )
-        if not use_chat_template:
-            toks = self.model.tok_encode(output)
-        else:
-            toks = [self.model.tok_encode(msg["content"]) for msg in output]
-            toks = [t for ts in toks for t in ts]
-
-        # If we need to truncate few-shots to fit in the context
-        if truncate_few_shots and self.model.max_length is not None and self.model.tokenizer is not None:
-            # If self.generation_size is None, the maximum allowed generation size depends
-            # on the model maximum context length, not on the task - we don't take it into account here
-            # but we probably should
-            gen_size = self.task.generation_size if self.task.generation_size is not None else 0
-
-            while len(toks) + gen_size > self.model.max_length and num_effective_fewshots >= 0:
-                num_effective_fewshots -= 1
-                output = self.get_examples(
-                    example=example,
-                    instruction=instruction,
-                    fewshot_ex=fewshot_ex[:num_effective_fewshots],
-                    system_prompt=system_prompt,
-                    use_chat_template=use_chat_template,
-                )
-                if not use_chat_template:
-                    toks = self.model.tok_encode(output)
-                else:
-                    toks = [self.model.tok_encode(msg["content"]) for msg in output]
-                    toks = [t for ts in toks for t in ts]
-
-        if isinstance(self.model, LiteLLMClient):
-            return output, num_effective_fewshots
-
-        elif use_chat_template:
-            return self.model.tokenizer.apply_chat_template(
-                output, tokenize=False, add_generation_prompt=True
-            ), num_effective_fewshots
-
-        return output, num_effective_fewshots
-
-    def get_examples(
-        self,
-        example: str,
-        instruction: Union[str | None],
-        fewshot_ex: list[str],
-        system_prompt: Union[str | None],
-        use_chat_template: bool,
-    ):
-        examples = []
-        # Few shot examples
-        for ex in fewshot_ex:
-            if use_chat_template:
-                examples.append({"role": "user", "content": self.doc_to_text(ex, return_instructions=False)})
-                examples.append({"role": "assistant", "content": self.doc_to_target(ex)})
+    def _extract_query(self, query: str, instruction: str | None) -> str:
+        """Extract query content, removing instruction prefix if appropriate."""
+        if instruction is not None:
+            if query.startswith(instruction):
+                return query[len(instruction) :].strip()
             else:
-                examples.append(self.doc_to_text(ex, return_instructions=False) + self.doc_to_target(ex))
-
-        # Actual example
-        if use_chat_template:
-            examples.append({"role": "user", "content": example})
-        else:
-            examples.append(example)
-
-        # System prompt and instruction
-        if use_chat_template:
-            if system_prompt is not None:  # We add system prompt and instruction jointly if possible
-                examples.insert(0, {"role": "system", "content": system_prompt + instruction})
-            else:  # Else we add the instruction to the first example
-                examples[0]["content"] = instruction + examples[0]["content"]
-            return examples
-        else:
-            if system_prompt is not None:
-                output = system_prompt + instruction + "\n\n".join(examples)
-            else:
-                output = instruction + "\n\n".join(examples)
-            if output == "\n\n":
-                return ""
-            return output
+                return query
+        return query
 
 
 @dataclass
@@ -324,9 +200,9 @@ class FewShotSampler:
         self,
         num_fewshot: int,
         variance_seed: int,
-        sampler: random.Random = None,
-        formatted_doc: Doc = None,
-    ):
+        sampler: random.Random | None = None,
+        formatted_doc: Doc | None = None,
+    ) -> list[Doc]:
         if num_fewshot == 0:
             return []
 
@@ -394,7 +270,7 @@ class FewShotSampler:
         # (or the gold target, if the class is undefined)
         label_to_instances = defaultdict(list)
         for instance in fewshotpool:
-            target = PromptManager.doc_to_fewshot_sorting_class(instance)
+            target = instance.fewshot_sorting_class or as_list(instance.get_golds())[0]
             label_to_instances[target].append(instance)
 
         # Sort by counts of class labels
