@@ -29,11 +29,12 @@ from pydantic import PositiveFloat, PositiveInt
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig, _simplify_name
+from lighteval.models.utils import _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
+from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import is_sglang_available
 
 
@@ -76,8 +77,6 @@ class SGLangModelConfig(ModelConfig):
             Random seed for reproducibility. Defaults to 1234.
         trust_remote_code (bool):
             Whether to trust remote code when loading models. Defaults to False.
-        use_chat_template (bool):
-            Whether to use chat templates for conversation-style prompts. Defaults to False.
         device (str):
             Device to load the model on. Defaults to "cuda".
         skip_tokenizer_init (bool):
@@ -96,6 +95,9 @@ class SGLangModelConfig(ModelConfig):
             Fraction of GPU memory to use for static allocation. Defaults to 0.8.
         chunked_prefill_size (PositiveInt):
             Size of chunks for prefill operations. Defaults to 4096.
+        override_chat_template (bool):
+            If True, we force the model to use a chat template. If alse, we prevent the model from using
+            a chat template. If None, we use the default (true if present in the tokenizer, false otherwise)
 
     Example:
         ```python
@@ -119,7 +121,6 @@ class SGLangModelConfig(ModelConfig):
     context_length: PositiveInt | None = None
     random_seed: PositiveInt | None = 1234
     trust_remote_code: bool = False
-    use_chat_template: bool = False
     device: str = "cuda"
     skip_tokenizer_init: bool = False
     kv_cache_dtype: str = "auto"
@@ -129,6 +130,7 @@ class SGLangModelConfig(ModelConfig):
     attention_backend: str | None = None
     mem_fraction_static: PositiveFloat = 0.8
     chunked_prefill_size: PositiveInt = 4096
+    override_chat_template: bool = None
 
 
 class SGLangModel(LightevalModel):
@@ -136,9 +138,11 @@ class SGLangModel(LightevalModel):
         self,
         config: SGLangModelConfig,
     ):
-        """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
-        self._config = config
-        self.use_chat_template = config.use_chat_template
+        """Initializes an SGLang model."""
+        self.config = config
+        self.use_chat_template = uses_chat_template(
+            model_name=self.config.model_name, override_chat_template=config.override_chat_template
+        )
         self.data_parallel_size = config.dp_size
         self.tensor_parallel_size = config.tp_size
         self._add_special_tokens = config.add_special_tokens
@@ -149,11 +153,13 @@ class SGLangModel(LightevalModel):
         self.model_sha = ""  # config.get_model_sha()
         self.precision = config.dtype
         self.sampling_params = config.generation_parameters.to_sglang_dict()
-        self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
         self.sampling_backend = config.sampling_backend
         self.attention_backend = config.attention_backend
         self.pairwise_tokenization = config.pairwise_tokenization
         self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer, config.system_prompt)
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
 
     @property
     def tokenizer(self):
@@ -210,6 +216,7 @@ class SGLangModel(LightevalModel):
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
 
+    @cached("predictions")
     def greedy_until(
         self,
         docs: list[Doc],
@@ -224,6 +231,12 @@ class SGLangModel(LightevalModel):
         Returns:
             list[GenerateReturn]: list of generated responses.
         """
+        return self._greedy_until(docs)
+
+    def _greedy_until(
+        self,
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
@@ -261,6 +274,11 @@ class SGLangModel(LightevalModel):
                         f"{context_size + max_new_tokens=} which is greater than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
                     )
                     context_size = self.max_length - max_new_tokens
+                    if context_size < 0:
+                        logger.critical(
+                            f"{context_size=} is less than 0, either reduce the max_new_tokens or increase model max length."
+                        )
+                        raise ValueError("Context size is less than 0.")
                     inputs = [input[-context_size:] for input in inputs]
             else:
                 if context_size > self.max_length:
@@ -327,6 +345,7 @@ class SGLangModel(LightevalModel):
         )
         return outputs
 
+    @cached("predictions")
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         return self._loglikelihood_tokens(docs)
 
@@ -395,8 +414,6 @@ class SGLangModel(LightevalModel):
                 res.append(answer)
         return dataset.get_original_order(res)
 
+    @cached("predictions")
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
-        raise NotImplementedError()
-
-    def loglikelihood_single_token(self, docs: list[Doc]) -> list[ModelResponse]:
         raise NotImplementedError()

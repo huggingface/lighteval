@@ -24,7 +24,7 @@ import asyncio
 import logging
 import re
 import time
-from typing import Coroutine, Dict, List, Optional, Union
+from typing import Coroutine, Dict, List, Optional, Tuple, Union
 
 import requests
 import torch
@@ -45,11 +45,11 @@ from tqdm import tqdm
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
+from lighteval.utils.cache_management import SampleCache, cached
 
 
 logger = logging.getLogger(__name__)
@@ -230,134 +230,22 @@ class InferenceEndpointModel(LightevalModel):
     endpoints, which will use text-generation-inference to deploy your model for the duration of the evaluation.
     """
 
-    def __init__(  # noqa: C901
-        self, config: Union[InferenceEndpointModelConfig, ServerlessEndpointModelConfig]
-    ) -> None:
+    def __init__(self, config: Union[InferenceEndpointModelConfig, ServerlessEndpointModelConfig]) -> None:
         self.config = config
         self.reuse_existing = getattr(config, "reuse_existing", False)
         self._max_length = None
-        self.endpoint = None
         self.model_name = None
+        self.endpoint, self.async_client, self.client = self._create_endpoint(config)
         if isinstance(config, InferenceEndpointModelConfig):
-            if config.instance_type and config.instance_size and config.vendor and config.region:
-                vendor, region, instance_type, instance_size = (
-                    config.vendor,
-                    config.region,
-                    config.instance_type,
-                    config.instance_size,
-                )
-            else:
-                try:
-                    vendor, region, instance_type, instance_size = InferenceEndpointModel.get_suggested_model_config(
-                        config.model_name
-                    )
-                except Exception:
-                    vendor, region, instance_type, instance_size = (
-                        "aws",
-                        "us-east-1",
-                        *InferenceEndpointModel.get_larger_hardware_suggestion(),
-                    )
-
-            must_scaleup_endpoint = False
-            timer_start = time.time()
-            # Endpoint names do not allow special characters
-            endpoint_name = config.endpoint_name or re.sub(
-                "[^a-zA-Z0-9-]", "-", config.model_name.lower() + "-lighteval"
-            )
-            # If no endpoint or endpoint not running, and we're below an hour
-            while (self.endpoint is None or self.endpoint.status != "running") and (
-                time.time() - timer_start < MAX_TIME_FOR_SPINUP
-            ):
-                try:
-                    if self.endpoint is None:  # Endpoint does not exist yet locally
-                        if not config.reuse_existing:  # New endpoint
-                            logger.info("Creating endpoint.")
-                            self.endpoint: InferenceEndpoint = create_inference_endpoint(
-                                name=endpoint_name,
-                                namespace=config.namespace,
-                                repository=config.model_name,
-                                revision=config.revision,
-                                framework=config.framework,
-                                task="text-generation",
-                                accelerator=config.accelerator,
-                                type=config.endpoint_type,
-                                vendor=vendor,
-                                region=region,
-                                instance_size=instance_size,
-                                instance_type=instance_type,
-                                custom_image={
-                                    "health_route": "/health",
-                                    "env": {
-                                        # Documentation: https://huggingface.co/docs/text-generation-inference/en/basic_tutorials/launcher
-                                        "MAX_BATCH_PREFILL_TOKENS": "2048",
-                                        "MAX_INPUT_LENGTH": "2047",
-                                        "MAX_TOTAL_TOKENS": "2048",
-                                        "MODEL_ID": "/repository",
-                                        "HF_MODEL_TRUST_REMOTE_CODE": "true",
-                                        **config.get_dtype_args(),
-                                        **config.get_custom_env_vars(),
-                                    },
-                                    "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:3.0.1"),
-                                },
-                            )
-                        else:  # Endpoint exists
-                            logger.info("Reusing existing endpoint.")
-                            self.endpoint = get_inference_endpoint(name=endpoint_name, namespace=config.namespace)
-
-                    else:
-                        # Endpoint exists locally but either failed (and most likely it must be scaled up)
-                        if must_scaleup_endpoint:
-                            logger.info("Rescaling existing endpoint.")
-                            self.endpoint.update(instance_size=instance_size, instance_type=instance_type)
-                            must_scaleup_endpoint = False
-                        # or we got a connection error, in which case we do nothing and just wait at the next step
-
-                    # Waits for the endpoint to be deployed - we could also check for the status in updating', 'pending', 'initializing'
-                    logger.info("Trying to deploy your endpoint. Please wait for 10 min.")
-                    self.endpoint.wait(timeout=600, refresh_every=60)  # We wait for 10 min
-                except InferenceEndpointError as e:
-                    logger.info(
-                        f"Endpoint failed to start on current hardware with error {e}. Trying to autoscale to ({instance_type}, {instance_size})."
-                    )
-                    instance_type, instance_size = InferenceEndpointModel.get_larger_hardware_suggestion(
-                        instance_type, instance_size
-                    )
-                    must_scaleup_endpoint = True
-
-                except HfHubHTTPError as e:
-                    # The endpoint actually already exists, we'll spin it up instead of trying to create a new one
-                    if "409 Client Error: Conflict for url:" in str(e):
-                        config.endpoint_name = endpoint_name
-                        config.reuse_existing = True
-                    # Requested resources are not available
-                    elif "Bad Request: Compute instance not available yet" in str(e):
-                        logger.error(
-                            f"The hardware combination you are requesting does not seem to be available: ({instance_type}, {instance_size}, {config.region})."
-                        )
-                        raise e
-                    # User account does not have access to requested resources
-                    elif "Conflict: Quota exceeded" in str(e):
-                        raise e
-                except ConnectionError as e:
-                    logger.error(f"Connection failed with error {e}. Retrying")
-
-            if not self.endpoint.status == "running":
-                raise Exception("Did not manage to start endpoint within the elapsed time and on suggested hardware.")
-
-            logger.info("Endpoint successfully deployed!")
             self.endpoint_name = config.endpoint_name
             self.name = self.endpoint.repository
             self.revision = self.endpoint.revision
-            self.async_client: AsyncInferenceClient = self.endpoint.async_client
-            self.client: InferenceClient = self.endpoint.client
-
         else:  # Free inference client
-            self.endpoint = None
             self.endpoint_name = None
             self.name = config.model_name
             self.revision = "default"
-            self.async_client = AsyncInferenceClient(model=config.model_name)
-            self.client = InferenceClient(model=config.model_name)
+
+        self.config.revision = self.revision
 
         self.use_async = True  # set to False for debug - async use is faster
 
@@ -367,14 +255,130 @@ class InferenceEndpointModel(LightevalModel):
         self.prompt_manager = PromptManager(
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
-        self.model_info = ModelInfo(
-            model_name=self.name,
-            model_sha=self.revision,
-            model_dtype=getattr(config, "dtype", "default"),
-            model_size=-1,
-        )
         self.generation_parameters = config.generation_parameters
         self.generation_config = self.generation_parameters.to_tgi_ie_dict()
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
+
+    def _create_endpoint(  # noqa: C901
+        self, config: InferenceEndpointModelConfig | ServerlessEndpointModelConfig
+    ) -> Tuple[Union[InferenceEndpoint | None], AsyncInferenceClient, InferenceClient]:  # noqa: C901
+        """Creates the endpoint depending on the configuration - for an InferenceEnpointModelConfig, will retry to start
+        TODO: should probably split ServerlessEndpointModelConfig and make it a derived class
+        """
+        if isinstance(config, ServerlessEndpointModelConfig):
+            return None, AsyncInferenceClient(model=config.model_name), InferenceClient(model=config.model_name)
+
+        endpoint = None
+
+        if config.instance_type and config.instance_size and config.vendor and config.region:
+            vendor, region, instance_type, instance_size = (
+                config.vendor,
+                config.region,
+                config.instance_type,
+                config.instance_size,
+            )
+        else:
+            try:
+                vendor, region, instance_type, instance_size = InferenceEndpointModel.get_suggested_model_config(
+                    config.model_name
+                )
+            except Exception:
+                vendor, region, instance_type, instance_size = (
+                    "aws",
+                    "us-east-1",
+                    *InferenceEndpointModel.get_larger_hardware_suggestion(),
+                )
+
+        must_scaleup_endpoint = False
+        timer_start = time.time()
+        # Endpoint names do not allow special characters
+        endpoint_name = config.endpoint_name or re.sub("[^a-zA-Z0-9-]", "-", config.model_name.lower() + "-lighteval")
+        # If no endpoint or endpoint not running, and we're below an hour
+        while (endpoint is None or endpoint.status != "running") and (time.time() - timer_start < MAX_TIME_FOR_SPINUP):
+            try:
+                if endpoint is None:  # Endpoint does not exist yet locally
+                    if not config.reuse_existing:  # New endpoint
+                        logger.info("Creating endpoint.")
+                        endpoint: InferenceEndpoint = create_inference_endpoint(
+                            name=endpoint_name,
+                            namespace=config.namespace,
+                            repository=config.model_name,
+                            revision=config.revision,
+                            framework=config.framework,
+                            task="text-generation",
+                            accelerator=config.accelerator,
+                            type=config.endpoint_type,
+                            vendor=vendor,
+                            region=region,
+                            instance_size=instance_size,
+                            instance_type=instance_type,
+                            custom_image={
+                                "health_route": "/health",
+                                "env": {
+                                    # Documentation: https://huggingface.co/docs/text-generation-inference/en/basic_tutorials/launcher
+                                    "MAX_BATCH_PREFILL_TOKENS": "2048",
+                                    "MAX_INPUT_LENGTH": "2047",
+                                    "MAX_TOTAL_TOKENS": "2048",
+                                    "MODEL_ID": "/repository",
+                                    "HF_MODEL_TRUST_REMOTE_CODE": "true",
+                                    **config.get_dtype_args(),
+                                    **config.get_custom_env_vars(),
+                                },
+                                "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:3.0.1"),
+                            },
+                        )
+                    else:  # Endpoint exists
+                        logger.info("Reusing existing endpoint.")
+                        endpoint = get_inference_endpoint(name=endpoint_name, namespace=config.namespace)
+
+                else:
+                    # Endpoint exists locally but either failed (and most likely it must be scaled up)
+                    if must_scaleup_endpoint:
+                        logger.info("Rescaling existing endpoint.")
+                        endpoint.update(instance_size=instance_size, instance_type=instance_type)
+                        must_scaleup_endpoint = False
+                    # or we got a connection error, in which case we do nothing and just wait at the next step
+
+                # Waits for the endpoint to be deployed - we could also check for the status in updating', 'pending', 'initializing'
+                logger.info("Trying to deploy your endpoint. Please wait for 10 min.")
+                endpoint.wait(timeout=600, refresh_every=60)  # We wait for 10 min
+            except InferenceEndpointError as e:
+                logger.info(
+                    f"Endpoint failed to start on current hardware with error {e}. Trying to autoscale to ({instance_type}, {instance_size})."
+                )
+                instance_type, instance_size = InferenceEndpointModel.get_larger_hardware_suggestion(
+                    instance_type, instance_size
+                )
+                must_scaleup_endpoint = True
+
+            except HfHubHTTPError as e:
+                # The endpoint actually already exists, we'll spin it up instead of trying to create a new one
+                if "409 Client Error: Conflict for url:" in str(e):
+                    config.endpoint_name = endpoint_name
+                    config.reuse_existing = True
+                # Requested resources are not available
+                elif "Bad Request: Compute instance not available yet" in str(e):
+                    logger.error(
+                        f"The hardware combination you are requesting does not seem to be available: ({instance_type}, {instance_size}, {config.region})."
+                    )
+                    raise e
+                # User account does not have access to requested resources
+                elif "Conflict: Quota exceeded" in str(e):
+                    raise e
+            except ConnectionError as e:
+                logger.error(f"Connection failed with error {e}. Retrying")
+
+        if not endpoint.status == "running":
+            raise Exception("Did not manage to start endpoint within the elapsed time and on suggested hardware.")
+
+        logger.info("Endpoint successfully deployed!")
+
+        async_client: AsyncInferenceClient = endpoint.async_client
+        client: InferenceClient = endpoint.client
+
+        return endpoint, async_client, client
 
     @staticmethod
     def get_larger_hardware_suggestion(cur_instance_type: str = None, cur_instance_size: str = None):
@@ -523,6 +527,7 @@ class InferenceEndpointModel(LightevalModel):
                     context=context if rolling else context + doc.choices[0],
                     stop_tokens=[],
                     max_tokens=1,
+                    grammar=doc.generation_grammar,
                 )
                 for context, doc in zip(contexts, docs)
             ]
@@ -535,14 +540,19 @@ class InferenceEndpointModel(LightevalModel):
                 context=context if rolling else context + doc.choices[0],
                 stop_tokens=[],
                 max_tokens=1,
+                grammar=doc.generation_grammar,
             )
             for context, doc in zip(contexts, docs)
         ]
 
+    @cached("predictions")
     def greedy_until(
         self,
         docs: List[Doc],
     ) -> List[ModelResponse]:
+        return self._greedy_until(docs)
+
+    def _greedy_until(self, docs: List[Doc]) -> list[ModelResponse]:
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         batch_size = self.config.batch_size
         results = []
@@ -579,55 +589,17 @@ class InferenceEndpointModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
+    @cached("predictions")
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
+        return self._loglikelihood(docs, rolling=False)
+
+    @cached("predictions")
+    def loglikelihood_rolling(self, docs: list[Doc], override_bs=None) -> list[ModelResponse]:
+        return self._loglikelihood(docs, rolling=True)
+
+    def _loglikelihood(self, docs: list[Doc], rolling: bool = False) -> list[ModelResponse]:
         dataset = LoglikelihoodDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         batch_size = self.config.batch_size
-        results = []
-
-        for split in tqdm(
-            dataset.splits_iterator(),
-            total=dataset.num_dataset_splits,
-            desc="Splits",
-            position=0,
-            disable=self.disable_tqdm,
-        ):
-            dataloader = DataLoader(split, batch_size=batch_size, collate_fn=lambda batch: batch)
-
-            for batch in tqdm(dataloader, desc="Loglikelihoods", position=1, leave=False, disable=self.disable_tqdm):
-                if self.use_async:
-                    responses = asyncio.run(self._async_process_batch_logprob(batch))
-                else:
-                    responses = self._process_batch_logprob(batch)
-
-                for cur_request, response in zip(batch, responses):
-                    cont_toks = torch.tensor(cur_request.tokenized_continuation)
-                    len_choice = len(cont_toks)
-
-                    if self.endpoint:  # inference endpoint
-                        logits = [
-                            t.logprob for t in response.details.prefill[-len_choice:] if t.logprob is not None
-                        ]  # to check
-                    else:  # serverless endpoint
-                        logits = [t.logprob for t in response.details.tokens[-len_choice:] if t.logprob is not None]
-
-                    greedy_tokens = torch.tensor(logits).argmax(dim=-1)
-                    max_equal = (greedy_tokens == cont_toks).all().squeeze(0)
-                    results.append(
-                        ModelResponse(
-                            logprobs=(sum(logits), bool(max_equal)),
-                            input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
-                            output_tokens=[t.id for t in response.details.prefill[-len_choice:]],
-                            truncated_tokens_count=-1,
-                            padded_tokens_count=-1,
-                        )
-                    )
-
-        return dataset.get_original_order(results)
-
-    def loglikelihood_rolling(self, requests: list[Doc], override_bs=None) -> list[ModelResponse]:
-        """This function is used to compute the log likelihood of the context for perplexity metrics."""
-        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
-        batch_size = override_bs if override_bs is not None else BATCH_SIZE
         results: list[ModelResponse] = []
 
         for split in tqdm(
@@ -640,24 +612,53 @@ class InferenceEndpointModel(LightevalModel):
             dataloader = DataLoader(split, batch_size=batch_size, collate_fn=lambda batch: batch)
 
             for batch in tqdm(
-                dataloader, desc="Loglikelihoods, rolling", position=1, leave=False, disable=self.disable_tqdm
+                dataloader,
+                desc=f"Loglikelihoods {'rolling' if rolling else ''}",
+                position=1,
+                leave=False,
+                disable=self.disable_tqdm,
             ):
                 if self.use_async:
-                    responses = asyncio.run(self._async_process_batch_logprob(batch, rolling=True))
+                    responses = asyncio.run(self._async_process_batch_logprob(batch, rolling=rolling))
                 else:
-                    responses = self._process_batch_logprob(batch, rolling=True)
+                    responses = self._process_batch_logprob(batch, rolling=rolling)
 
-                for response in responses:
-                    logits = [t.logprob for t in response.details.tokens[:-1]]
+                for cur_request, response in zip(batch, responses):
+                    cont_toks = torch.tensor(cur_request.tokenized_continuation)
+                    len_choice = len(cont_toks)
 
-                    results.append(
-                        ModelResponse(
-                            result=sum(logits),
-                            input_tokens=[t.id for t in response.details.prefill],
-                            generated_tokens=[t.id for t in response.details.tokens[:-1]],
-                            truncated_tokens_count=-1,
-                            padded_tokens_count=-1,
+                    if rolling:
+                        logits = [t.logprob for t in response.details.tokens[:-1]]
+                        results.append(
+                            ModelResponse(
+                                result=sum(logits),
+                                input_tokens=[t.id for t in response.details.prefill],
+                                generated_tokens=[t.id for t in response.details.tokens[:-1]],
+                                truncated_tokens_count=-1,
+                                padded_tokens_count=-1,
+                            )
                         )
-                    )
+
+                    else:
+                        if self.endpoint:  # inference endpoint
+                            logits = [
+                                t.logprob for t in response.details.prefill[-len_choice:] if t.logprob is not None
+                            ]  # to check
+                        else:  # serverless endpoint
+                            logits = [
+                                t.logprob for t in response.details.tokens[-len_choice:] if t.logprob is not None
+                            ]
+
+                        greedy_tokens = torch.tensor(logits).argmax(dim=-1)
+                        max_equal = (greedy_tokens == cont_toks).all().squeeze(0)
+                        results.append(
+                            ModelResponse(
+                                logprobs=(sum(logits), bool(max_equal)),
+                                input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
+                                output_tokens=[t.id for t in response.details.prefill[-len_choice:]],
+                                truncated_tokens_count=-1,
+                                padded_tokens_count=-1,
+                            )
+                        )
 
         return dataset.get_original_order(results)

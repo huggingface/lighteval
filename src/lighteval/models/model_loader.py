@@ -23,7 +23,7 @@
 import logging
 from typing import Union
 
-from lighteval.models.abstract_model import LightevalModel
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.custom.custom_model import CustomModelConfig
 from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
 from lighteval.models.endpoints.endpoint_model import (
@@ -35,14 +35,13 @@ from lighteval.models.endpoints.inference_providers_model import (
     InferenceProvidersClient,
     InferenceProvidersModelConfig,
 )
+from lighteval.models.endpoints.litellm_model import LiteLLMClient, LiteLLMModelConfig
 from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
-from lighteval.models.litellm_model import LiteLLMClient, LiteLLMModelConfig
 from lighteval.models.sglang.sglang_model import SGLangModel, SGLangModelConfig
 from lighteval.models.transformers.adapter_model import AdapterModel, AdapterModelConfig
 from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConfig
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModel, VLMTransformersModelConfig
-from lighteval.models.utils import ModelConfig
 from lighteval.models.vllm.vllm_model import AsyncVLLMModel, VLLMModel, VLLMModelConfig
 from lighteval.utils.imports import (
     NO_LITELLM_ERROR_MSG,
@@ -110,9 +109,7 @@ def load_model_with_tgi(config: TGIModelConfig):
         raise ImportError(NO_TGI_ERROR_MSG)
 
     logger.info(f"Load model from inference server: {config.inference_server_address}")
-    model = ModelClient(
-        address=config.inference_server_address, auth_token=config.inference_server_auth, model_id=config.model_id
-    )
+    model = ModelClient(config=config)
     return model
 
 

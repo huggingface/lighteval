@@ -40,13 +40,12 @@ from lighteval.metrics.normalizations import (
 from lighteval.metrics.utils.extractive_match_utils import (  # noqa: F401
     ExprExtractionConfig,
     ExtractionTarget,
-    IndicesExtractionConfig,
     LatexExtractionConfig,
     extract_target_from_pred,
     get_extraction_regexes,
 )
 from lighteval.metrics.utils.math_comparison import compare_gold_target
-from lighteval.metrics.utils.metric_utils import SampleLevelMetric
+from lighteval.metrics.utils.metric_utils import SampleLevelComputation, SampleLevelMetric
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.language import Language
@@ -56,171 +55,168 @@ from lighteval.utils.timeout import timeout
 logger = logging.getLogger(__name__)
 
 
-def loglikelihood_acc_metric(normalization: LogProbNormalization | None = None) -> SampleLevelMetric:
-    """
-    Creates an accuracy (loglikelihood) metric, which returns accuracy given normalization.
-    """
-
-    normalization_str = f"_{normalization.name}" if normalization else ""
-    metric_name = f"acc{normalization_str}"
-    return SampleLevelMetric(
-        metric_name=metric_name,
-        sample_level_fn=LoglikelihoodAcc(logprob_normalization=normalization).compute,
-        category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
+class LogLikelihoodAccMetric(SampleLevelMetric):
+    def __init__(self, normalization: LogProbNormalization | None = None):
+        """
+        Creates an accuracy (loglikelihood) metric, which returns accuracy given normalization.
+        """
+        super().__init__(
+            metric_name="acc" + (f"_{normalization.name}" if normalization else ""),
+            sample_level_fn=LoglikelihoodAcc(logprob_normalization=normalization),
+            category=SamplingMethod.LOGPROBS,
+            corpus_level_fn=np.mean,
+            higher_is_better=True,
+        )
 
 
-def normalized_multi_choice_prob_metric(
-    normalization: LogProbNormalization | None = None,
-    aggregation_function: Callable[[np.ndarray], float] = np.max,
-) -> SampleLevelMetric:
-    """
-    Creates a normalized multi-choice probability metric, which returns the probability of the gold choice / sum of probabilities of all choices (after logprobs are normalized).
-    """
-
-    normalization_str = f"_{normalization.name}" if normalization else ""
-    metric_name = f"normalized_mc_prob{normalization_str}"
-
-    return SampleLevelMetric(
-        metric_name=metric_name,
-        sample_level_fn=NormalizedMultiChoiceProbability(
-            log_prob_normalization=normalization, aggregation_function=aggregation_function
-        ).compute,
-        category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
+class NormalizedMultiChoiceProbMetric(SampleLevelMetric):
+    def __init__(
+        self,
+        normalization: LogProbNormalization | None = None,
+        aggregation_function: Callable[[np.ndarray], float] = np.max,
+    ):
+        """
+        Creates a normalized multi-choice probability metric, which returns the probability of the gold choice / sum of probabilities of all choices (after logprobs are normalized).
+        """
+        super().__init__(
+            metric_name="normalized_mc_prob" + (f"_{normalization.name}" if normalization else ""),
+            sample_level_fn=NormalizedMultiChoiceProbability(
+                log_prob_normalization=normalization, aggregation_function=aggregation_function
+            ),
+            category=SamplingMethod.LOGPROBS,
+            corpus_level_fn=np.mean,
+            higher_is_better=True,
+        )
 
 
-def probability_metric(
-    normalization: LogProbTokenNorm | None = None,
-    aggregation_function: Callable[[np.ndarray], float] = np.max,
-) -> SampleLevelMetric:
-    """
-    Creates a probability metric, which returns the probability of the gold choice given normalization.
-    """
-
-    normalization_str = f"_{normalization.name}" if normalization else ""
-    metric_name = f"prob{normalization_str}"
-
-    return SampleLevelMetric(
-        metric_name=metric_name,
-        sample_level_fn=Probability(normalization=normalization, aggregation_function=aggregation_function).compute,
-        category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
+class ProbabilityMetric(SampleLevelMetric):
+    def __init__(
+        self,
+        normalization: LogProbTokenNorm | None = None,
+        aggregation_function: Callable[[np.ndarray], float] = np.max,
+    ):
+        """
+        Creates a probability metric, which returns the probability of the gold choice given normalization.
+        """
+        super().__init__(
+            metric_name="prob" + (f"_{normalization.name}" if normalization else ""),
+            sample_level_fn=Probability(normalization=normalization, aggregation_function=aggregation_function),
+            category=SamplingMethod.LOGPROBS,
+            corpus_level_fn=np.mean,
+            higher_is_better=True,
+        )
 
 
-def multilingual_quasi_f1_score_metric(
-    language: Language, aggregation_function: Callable[[list[float]], float] = max
-) -> SampleLevelMetric:
-    """
-    Creates a language-aware F1 score metric, which returns the F1 score.
+class MultilingualQuasiF1ScoreMetric(SampleLevelMetric):
+    def __init__(self, language: Language, aggregation_function: Callable[[list[float]], float] = max):
+        """
+        Creates a language-aware F1 score metric, which returns the F1 score.
 
-    Args:
-        language: The language of the samples.
-        aggregation_function: Aggregation samples to use when multiple golds are present.
-
-    Returns:
-        F1 score metric.
-    """
-    metric_name = f"f1_{language.value}"
-
-    multilang_normalizer = get_multilingual_normalizer(language)
-    return SampleLevelMetric(
-        metric_name=metric_name,
-        sample_level_fn=F1_score(
-            normalize_gold=multilang_normalizer,
-            normalize_pred=multilang_normalizer,
-            aggregation_function=aggregation_function,
-        ).compute,
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
+        Args:
+            language: The language of the samples.
+            aggregation_function: Aggregation samples to use when multiple golds are present.
+        """
+        super().__init__(
+            metric_name=f"f1_{language.value}",
+            sample_level_fn=F1_score(
+                normalize_gold=get_multilingual_normalizer(language),
+                normalize_pred=get_multilingual_normalizer(language),
+                aggregation_function=aggregation_function,
+            ),
+            category=SamplingMethod.GENERATIVE,
+            corpus_level_fn=np.mean,
+            higher_is_better=True,
+        )
 
 
-def multilingual_quasi_exact_match_metric(
-    language: Language,
-    match_type: Literal["prefix", "suffix", "full"] = "full",
-    aggregation_function: Callable[[list[float]], float] = max,
-) -> SampleLevelMetric:
-    """
-    Creates a language-aware exact match metric, which returns the exact match score
-    Args:
-        language: The language of the samples.
-        match_type: The type of match to use
-            - "prefix": Prefixes must match
-            - "suffix": Suffixes must match
-            - "full": Full strings must match
-        aggregation_function: Aggregation samples to use when multiple golds are present.
-    Returns:
-        Exact match metric.
-    """
-    metric_name = f"exact_match_{language.value}_{match_type}"
-    multilang_normalizer = get_multilingual_normalizer(language)
-    return SampleLevelMetric(
-        metric_name=metric_name,
-        sample_level_fn=ExactMatches(
-            normalize_gold=multilang_normalizer,
-            normalize_pred=multilang_normalizer,
-            aggregation_function=aggregation_function,
-            type_exact_match=match_type,
-        ).compute,
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
+class MultilingualQuasiExactMatchMetric(SampleLevelMetric):
+    def __init__(
+        self,
+        language: Language,
+        match_type: Literal["prefix", "suffix", "full"] = "full",
+        aggregation_function: Callable[[list[float]], float] = max,
+    ):
+        """
+        Creates a language-aware exact match metric, which returns the exact match score
+        Args:
+            language: The language of the samples.
+            match_type: The type of match to use
+                - "prefix": Prefixes must match
+                - "suffix": Suffixes must match
+                - "full": Full strings must match
+            aggregation_function: Aggregation samples to use when multiple golds are present.
+        Returns:
+            Exact match metric.
+        """
+        super().__init__(
+            metric_name=f"exact_match_{language.value}_{match_type}",
+            sample_level_fn=ExactMatches(
+                normalize_gold=get_multilingual_normalizer(language),
+                normalize_pred=get_multilingual_normalizer(language),
+                aggregation_function=aggregation_function,
+                type_exact_match=match_type,
+            ),
+            category=SamplingMethod.GENERATIVE,
+            corpus_level_fn=np.mean,
+            higher_is_better=True,
+        )
 
 
-def multilingual_extractive_match_metric(
-    language: Language = Language.ENGLISH,
-    gold_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(),),
-    pred_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(), LatexExtractionConfig()),
-    aggregation_function: Callable[[list[float]], float] = max,
-    fallback_mode: Literal["no_fallback", "first_match"] = "first_match",
-    extraction_mode: Literal["first_match", "any_match"] = "any_match",
-    precision: int = 6,
-    timeout_seconds: int = 5,
-) -> SampleLevelMetric:
-    """Creates a language-aware extractive match metric that extracts answers from the model's output.
+class MultilingualExtractiveMatchMetric(SampleLevelComputation):
+    def __init__(
+        self,
+        language: Language = Language.ENGLISH,
+        gold_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(),),
+        pred_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(), LatexExtractionConfig()),
+        aggregation_function: Callable[[list[float]], float] = max,
+        fallback_mode: Literal["no_fallback", "first_match"] = "first_match",
+        extraction_mode: Literal["first_match", "any_match"] = "any_match",
+        precision: int = 6,
+        timeout_seconds: int = 5,
+    ):
+        """Creates a language-aware extractive match metric that extracts answers from the model's output.
 
-    Known issues:
-    - If the task is to simplify an expression, the metric might overestimate the accuracy. This is because if the model doesn't output any anchor for the extraction (e.g final answer is..),
-        it's possible that the extracted prediction will be the expression to simplify. Because we do simplifications ourselves, it can thus happen that sympy will correctly simplify the expression,
-        thus it will match gold, despite model not doing anything. PRs to fix this are welcome.
+        Known issues:
+        - If the task is to simplify an expression, the metric might overestimate the accuracy. This is because if the model doesn't output any anchor for the extraction (e.g final answer is..),
+            it's possible that the extracted prediction will be the expression to simplify. Because we do simplifications ourselves, it can thus happen that sympy will correctly simplify the expression,
+            thus it will match gold, despite model not doing anything. PRs to fix this are welcome.
 
-    - There is currently no StringExtractionConfig, so if the gold is \boxed{\text{Friday}} and model outputs Friday it will not match, because nothing will be extracted.
+        - There is currently no StringExtractionConfig, so if the gold is \boxed{\text{Friday}} and model outputs Friday it will not match, because nothing will be extracted.
 
-    Args:
-        language: Language
-            The language of the samples.
-        gold_extraction_target: Sequence[ExtractionTarget]
-            Extraction targets to use for gold answers. Defaults to extracting simple math expressions.
-        pred_extraction_target: Sequence[ExtractionTarget]
-            Extraction targets to use for predictions. Defaults to extracting simple math expressions.
-        aggregation_function: Callable[[list[float]], float]
-            Function to aggregate scores when multiple golds/predictions are present. Defaults to max.
-        fallback_mode: Literal["no_fallback", "first_match"]
-            How to perform extraction. Defaults to "first_match".
-            - "no_fallback": Only use first successfully parsed matches
-            - "first_match": Use the first successfully parsed match + first match irregardless the parsing success
-        extraction_mode: Literal["first_match", "any_match"]
-            - "first_match": Only tries to extract the first regex match if it fails no other matches are tried
-            - "any_match": Tries to extract any regex match
+        Args:
+            language: Language
+                The language of the samples.
+            gold_extraction_target: Sequence[ExtractionTarget]
+                Extraction targets to use for gold answers. Defaults to extracting simple math expressions.
+            pred_extraction_target: Sequence[ExtractionTarget]
+                Extraction targets to use for predictions. Defaults to extracting simple math expressions.
+            aggregation_function: Callable[[list[float]], float]
+                Function to aggregate scores when multiple golds/predictions are present. Defaults to max.
+            fallback_mode: Literal["no_fallback", "first_match"]
+                How to perform extraction. Defaults to "first_match".
+                - "no_fallback": Only use first successfully parsed matches
+                - "first_match": Use the first successfully parsed match + first match irregardless the parsing success
+            extraction_mode: Literal["first_match", "any_match"]
+                - "first_match": Only tries to extract the first regex match if it fails no other matches are tried
+                - "any_match": Tries to extract any regex match
 
-        precision: int
-            Number of decimal places to use when comparing numerical values. Defaults to 6.
-        timeout_seconds: int
-            Timeout for the extraction (each attempt) and comparison. Defaults to 5.
+            precision: int
+                Number of decimal places to use when comparing numerical values. Defaults to 6.
+            timeout_seconds: int
+                Timeout for the extraction (each attempt) and comparison. Defaults to 5.
 
-    Returns:
-        A sample level metric that extracts and compares mathematical expressions.
+        Returns:
+            A sample level metric that extracts and compares mathematical expressions.
 
-    """
+        """
+        self.language = language
+        self.gold_extraction_target = gold_extraction_target
+        self.pred_extraction_target = pred_extraction_target
+        self.aggregation_function = aggregation_function
+        self.fallback_mode = fallback_mode
+        self.extraction_mode = extraction_mode
+        self.precision = precision
+        self.timeout_seconds = timeout_seconds
 
     @timeout(2)
     def add_to_specifics_with_timeout(
@@ -234,19 +230,23 @@ def multilingual_extractive_match_metric(
         ]
         formatted_doc.specific["extracted_golds"] = [str(gold) for golds in extracted_golds for gold in golds]
 
-    def sample_level_fn(doc: Doc, model_response: ModelResponse) -> float:
+    def compute(self, doc: Doc, model_response: ModelResponse) -> float:
         golds = doc.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
 
-        gold_extraction_regexes = get_extraction_regexes(doc, gold_extraction_target, language)
-        pred_extraction_regexes = get_extraction_regexes(doc, pred_extraction_target, language)
+        gold_extraction_regexes = get_extraction_regexes(doc, self.gold_extraction_target, self.language)
+        pred_extraction_regexes = get_extraction_regexes(doc, self.pred_extraction_target, self.language)
 
         extracted_predictions = [
-            extract_target_from_pred(pred, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds)
+            extract_target_from_pred(
+                pred, pred_extraction_regexes, self.fallback_mode, self.extraction_mode, self.timeout_seconds
+            )
             for pred in predictions
         ]
         extracted_golds = [
-            extract_target_from_pred(gold, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds)
+            extract_target_from_pred(
+                gold, gold_extraction_regexes, self.fallback_mode, self.extraction_mode, self.timeout_seconds
+            )
             for gold in golds
         ]
 
@@ -262,16 +262,16 @@ def multilingual_extractive_match_metric(
 
         # We have to use timeout because the sypmy to str conversion can be very slow
         try:
-            add_to_specifics_with_timeout(doc, extracted_predictions, extracted_golds)
+            self.add_to_specifics_with_timeout(doc, extracted_predictions, extracted_golds)
         except Exception:  # noqa: E722
             logger.warning("Timeout when adding extracted predictions and golds to specific")
 
-        return aggregation_function(
+        return self.aggregation_function(
             [
                 (
                     1.0
                     if any(
-                        compare_gold_target(gold, pred, precision, timeout_seconds=timeout_seconds)
+                        compare_gold_target(gold, pred, self.precision, timeout_seconds=self.timeout_seconds)
                         for gold in extracted_golds
                     )
                     else 0.0
@@ -279,11 +279,3 @@ def multilingual_extractive_match_metric(
                 for pred in extracted_predictions
             ]
         )
-
-    return SampleLevelMetric(
-        metric_name="extractive_match",
-        sample_level_fn=sample_level_fn,
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )

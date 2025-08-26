@@ -80,7 +80,7 @@ TASKS_TABLE = [
         few_shots_split="dev",
         few_shots_select="sequential",
         generation_size=5,
-        metric=[Metrics.loglikelihood_acc_single_token],
+        metric=[Metrics.loglikelihood_acc],
         stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
@@ -94,7 +94,7 @@ TASKS_TABLE = [
         few_shots_split="dev",
         few_shots_select="sequential",
         generation_size=5,
-        metric=[Metrics.loglikelihood_acc_single_token],
+        metric=[Metrics.loglikelihood_acc],
         stop_sequence=["\n"],
     ),
 ]

@@ -30,7 +30,7 @@ lighteval accelerate \
      "leaderboard|truthfulqa:mc|0|0"
 ```
 
-Here, we first choose a backend (either `accelerate`, `nanotron`, or `vllm`), and then specify the model and task(s) to run.
+Here, we first choose a backend (either `accelerate`, `nanotron`, `endpoint`, or `vllm`), and then specify the model and task(s) to run.
 
 The syntax for the model arguments is `key1=value1,key2=value2,etc`.
 Valid key-value pairs correspond with the backend configuration, and are detailed [below](#Model Arguments).
@@ -43,6 +43,17 @@ The syntax for the task specification might be a bit hard to grasp at first. The
 
 If the fourth value is set to 1, lighteval will check if the prompt (including the few-shot examples) is too long for the context size of the task or the model.
 If so, the number of few shot examples is automatically reduced.
+
+Tasks have a function applied at the sample level and one at the corpus level. For example,
+- an exact match can be applied per sample, then averaged over the corpus to give the final score
+- samples can be left untouched before applying Corpus BLEU at the corpus level
+etc.
+
+If the task you are looking at has a sample level function (`sample_level_fn`) which can be parametrized, you can pass parameters in the CLI.
+For example
+```txt
+{suite}|{task}@{parameter_name1}={value1},{parameter_name2}={value2},...|0|0
+```
 
 All officially supported tasks can be found at the [tasks_list](available-tasks) and in the
 [extended folder](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks/extended).
@@ -104,13 +115,32 @@ GPUs.
 
 ## Backend configuration
 
+#### General information
+
 The `model-args` argument takes a string representing a list of model
 argument. The arguments allowed vary depending on the backend you use and
 correspond to the fields of the model configs.
 
-The model config can be found [here](./package_reference/models).
+The model configurations can be found [here](./package_reference/models).
 
-## Nanotron
+All models allow you to post process your reasoning model predictions,
+to remove the thinking tokens from the trace used to compute the metrics,
+using `--remove-reasoning-tags`, and `--reasoning-tags` to specify which
+reasoning tags to remove (defaults to <think> and </think>).
+
+Here's an example with `mistralai/Magistral-Small-2507` which outputs custom
+think tokens.
+
+```bash
+lighteval vllm \
+    "model_name=mistralai/Magistral-Small-2507,dtype=float16,data_parallel_size=4" \
+    "lighteval|aime24|0|0" \
+    --remove-reasoning-tags \
+    --reasoning-tags="[('[THINK]','[/THINK]')]"
+```
+
+
+#### Nanotron
 
 To evaluate a model trained with nanotron on a single gpu.
 

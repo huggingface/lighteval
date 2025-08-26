@@ -28,8 +28,10 @@ import requests
 from huggingface_hub import TextGenerationInputGenerateParameters, TextGenerationInputGrammarType, TextGenerationOutput
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 
-from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel, ModelInfo
-from lighteval.models.utils import ModelConfig
+from lighteval.models.abstract_model import ModelConfig
+from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel
+from lighteval.tasks.prompt_manager import PromptManager
+from lighteval.utils.cache_management import SampleCache
 from lighteval.utils.imports import NO_TGI_ERROR_MSG, is_tgi_available
 
 
@@ -83,9 +85,11 @@ class TGIModelConfig(ModelConfig):
         ```
     """
 
-    inference_server_address: str | None
-    inference_server_auth: str | None
+    inference_server_address: str | None = None
+    inference_server_auth: str | None = None
     model_name: str | None
+    model_info: dict | None = None
+    batch_size: int = 1
 
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite
@@ -109,19 +113,22 @@ class ModelClient(InferenceEndpointModel):
             raise ValueError("Error occurred when fetching info: " + str(self.model_info))
         if config.model_name:
             self.model_info["model_id"] = config.model_name
+        else:
+            # Set the model_name in config to the actual model_id from server for caching
+            config.model_name = self.model_info["model_id"]
+        self.config = config
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_info["model_id"])
         self._add_special_tokens = True
         self.use_async = True
+        self.config.model_info = self.model_info
 
-        model_name = str(self.model_info["model_id"])
-        model_sha = self.model_info["model_sha"]
-        model_precision = self.model_info["model_dtype"]
-        self.model_info = ModelInfo(
-            model_name=model_name,
-            model_sha=model_sha,
-            model_dtype=model_precision,
-            model_size=-1,
+        # Initialize prompt manager (required by parent class)
+        self.prompt_manager = PromptManager(
+            use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
 
     def _async_process_request(
         self,
@@ -141,7 +148,24 @@ class ModelClient(InferenceEndpointModel):
             grammar=grammar,
         )
 
-        generated_text = self.client.generate(prompt=context, generation_config=generation_config)
+        generated_text = self.client.generate(
+            prompt=context,
+            do_sample=generation_config.do_sample or False,
+            max_new_tokens=generation_config.max_new_tokens,
+            best_of=generation_config.best_of,
+            repetition_penalty=generation_config.repetition_penalty,
+            return_full_text=generation_config.return_full_text or False,
+            seed=generation_config.seed,
+            stop_sequences=generation_config.stop,
+            temperature=generation_config.temperature,
+            top_k=generation_config.top_k,
+            top_p=generation_config.top_p,
+            truncate=generation_config.truncate,
+            typical_p=generation_config.typical_p,
+            watermark=generation_config.watermark or False,
+            decoder_input_details=generation_config.decoder_input_details,
+            grammar=generation_config.grammar,
+        )
 
         return generated_text
 

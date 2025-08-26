@@ -30,8 +30,8 @@ from typing import Union
 import git
 import xxhash
 
-from lighteval.metrics.stderr import get_stderr_function
-from lighteval.models.abstract_model import ModelInfo
+from lighteval.metrics.utils.stderr import get_stderr_function
+from lighteval.models.abstract_model import ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 if is_nanotron_available():
-    from nanotron.config import Config
+    pass
 
 
 @dataclass(init=False)
@@ -64,11 +64,7 @@ class GeneralConfigLogger:
         start_time (float): Start time of the experiment. Logged at class init.
         end_time (float): End time of the experiment. Logged when calling [`GeneralConfigLogger.log_end_time`]
         total_evaluation_time_secondes (str): Inferred total evaluation time in seconds (from the start and end times).
-        model_name (str): Name of the currently evaluated model.
-        model_sha (str): Commit hash of the currently evaluated model on the hub if available.
-        model_dtype (str): Dtype of the model weights, as obtained when loading the model config.
-        model_size (str): Model size as obtained when loading the model config.
-
+        model_config (ModelConfig): Model configuration
     """
 
     # general
@@ -80,16 +76,8 @@ class GeneralConfigLogger:
     end_time: float = None
     total_evaluation_time_secondes: str = None
 
-    # model info
+    model_config: ModelConfig = None
     model_name: str = None
-    model_sha: str = None
-    model_dtype: str = None
-    model_size: str = None
-
-    generation_parameters: dict | None = None
-
-    # Nanotron config
-    config: "Config" = None
 
     def __init__(self) -> None:
         """Stores the current lighteval commit for reproducibility, and starts the evaluation timer."""
@@ -106,7 +94,6 @@ class GeneralConfigLogger:
         num_fewshot_seeds: int,
         max_samples: Union[None, int],
         job_id: str,
-        config: "Config" = None,
     ) -> None:
         """
         Logs the information about the arguments passed to the method.
@@ -118,31 +105,21 @@ class GeneralConfigLogger:
                 Else, the batch size is automatically inferred depending on what fits in memory.
             max_samples (Union[None, int]): maximum number of samples, if None, use all the samples available.
             job_id (str): job ID, used to retrieve logs.
-            config (optional): Nanotron Config
-
-        Returns:
-            None
-
         """
         self.num_fewshot_seeds = num_fewshot_seeds
         self.max_samples = max_samples
         self.job_id = job_id
-        self.config = config
 
-    def log_model_info(self, generation_parameters: dict, model_info: ModelInfo) -> None:
+    def log_model_info(self, model_config: ModelConfig) -> None:
         """
         Logs the model information.
 
         Args:
             model_config: the model config used to initialize the model.
-            model_info (ModelInfo): Model information to be logged.
 
         """
-        self.generation_parameters = generation_parameters
-        self.model_name = model_info.model_name
-        self.model_sha = model_info.model_sha
-        self.model_dtype = model_info.model_dtype
-        self.model_size = model_info.model_size
+        self.model_config = model_config
+        self.model_name = model_config.model_name
 
     def log_end_time(self) -> None:
         self.end_time = time.perf_counter()
@@ -170,27 +147,10 @@ class DetailsLogger:
         """Experiment details of one single example of one task.
 
         Attributes:
-            example (str): Current task example query
-            instruction (str): Instruction prepended to the example and few shots.
-                For example "In this task, you are given information of type x. You need to predict y."
-            full_prompt (str): Expanded full prompt (instruction if present, then prompt)
-            num_effective_few_shots (int): Number of actual few shots used for the example.
-                This depends on the model context length and few-shots samples size: when using effective few-shots,
-                only `num_effective_few_shots` few-shot samples are kept, allowing
-                1) each of the used few-shot examples and the prompt to not be truncated
-                2) this context still allows the model to predict up to the requested max numbers of tokens within its remaining context size.
-            num_asked_few_shots (int): Initially asked number of few-shot samples.
-            predictions (list): List of the actual model predictions
-            input_tokens (list): List of the input tokens given to the model
-            cont_tokens (list): List of the continuation tokens predicted by the model
-            truncated (list): Size of the truncations (if it was needed to fit the prompt in the model context length)
-            padded (list): Size of the padding (if it was needed for the current example)
-            gold (list): Example gold targets (for generative evaluations)
-            pred_logits (list): List of the actual model predicted logits
-            choices (list): List of the possible choices (for multichoice/loglikelihood evaluations)
-            gold_index (list): Indices of the gold targets among the [`choices`]
-            metrics (dict): Metric name to current example score
-
+            doc (Doc): The [`Doc`] object containing the current example information.
+            model_response (ModelResponse): The [`ModelResponse`] object containing the model response for the current example.
+            metric (dict): The metric scores for the current example.
+                Example: {"accuracy": 0.5, "f1": 0.7, "exact_match": 0.6}
         """
 
         doc: Doc
@@ -400,13 +360,13 @@ class MetricsLogger:
                     # The metric is in a subset which has already been computed and saved
                     continue
 
+                aggregation = task.aggregation()[metric_name]
+
                 try:
-                    metric_result = task.aggregation()[metric_name](metric_values)
+                    metric_result = aggregation(metric_values)
                 except OverflowError:
                     logger.warning(f"{task_name}, {metric_name} got an OVERFLOW ERROR when aggregating.")
                     metric_result = float("nan")
-                except KeyError:
-                    continue
 
                 if isinstance(metric_result, dict):  # For some corpus level grouping metrics
                     self.metric_aggregated[task_name].update(metric_result)
@@ -419,7 +379,6 @@ class MetricsLogger:
                         None  # We skip stderr for some corpus metrics that return dicts, or if bootstrap_iters is 0
                     )
                 else:
-                    aggregation = task.aggregation()[metric_name]
                     stderr = get_stderr_function(aggregation=aggregation, number_experiments=bootstrap_iters)
                 if stderr is not None and len(metric_values) > 1:
                     try:

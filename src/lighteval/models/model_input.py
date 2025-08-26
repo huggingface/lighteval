@@ -25,6 +25,9 @@ from pydantic import BaseModel, NonNegativeFloat, NonNegativeInt
 
 
 class GenerationParameters(BaseModel, extra="forbid"):
+    num_blocks: NonNegativeInt | None = None  # transformers
+    block_size: NonNegativeInt | None = None  # transformers
+
     early_stopping: bool | None = None  # transformers
     repetition_penalty: NonNegativeFloat | None = None  # vllm, transformers, tgi, sglang
     frequency_penalty: NonNegativeFloat | None = None  # vllm, tgi, sglang
@@ -43,6 +46,8 @@ class GenerationParameters(BaseModel, extra="forbid"):
     min_p: NonNegativeFloat | None = None  # vllm, transformers, sglang
     top_p: NonNegativeFloat | None = None  # vllm, transformers, tgi, litellm, sglang
     truncate_prompt: bool | None = None  # vllm, tgi
+
+    cache_implementation: str | None = None  # transformers
 
     # response format to be followed by the model,
     # more info here https://platform.openai.com/docs/api-reference/chat/create#chat-create-response_format
@@ -186,7 +191,10 @@ class GenerationParameters(BaseModel, extra="forbid"):
             "repetition_penalty": self.repetition_penalty,
             "length_penalty": self.length_penalty,
             "output_scores": True,
+            "num_blocks": self.num_blocks,
+            "block_size": self.block_size,
             "return_dict_in_generate": True,
+            "cache_implementation": self.cache_implementation,
         }
         return {k: v for k, v in args.items() if v is not None}
 

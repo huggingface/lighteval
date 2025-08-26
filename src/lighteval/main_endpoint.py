@@ -62,6 +62,20 @@ def inference_endpoint(
     load_responses_from_details_date_id: Annotated[
         Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
+    remove_reasoning_tags: Annotated[
+        bool | None,
+        Option(
+            help="Remove reasoning tags from responses (true to remove, false to leave - true by default).",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = True,
+    reasoning_tags: Annotated[
+        str | None,
+        Option(
+            help="List of reasoning tags (provided as pairs) to remove from responses. Default is [('<think>', '</think>')].",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = None,
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -91,7 +105,7 @@ def inference_endpoint(
     wandb: Annotated[
         bool,
         Option(
-            help="Push results to wandb. This will only work if you have wandb installed and logged in. We use env variable to configure wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/",
+            help="Push results to wandb or trackio if available. We use env variable to configure trackio or wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/, https://github.com/gradio-app/trackio",
             rich_help_panel=HELP_PANEL_NAME_2,
         ),
     ] = False,
@@ -118,7 +132,7 @@ def inference_endpoint(
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
-        wandb=wandb,
+        use_wandb=wandb,
     )
 
     parallelism_manager = ParallelismManager.NONE  # since we're using inference endpoints in remote
@@ -136,6 +150,8 @@ def inference_endpoint(
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
+        remove_reasoning_tags=remove_reasoning_tags,
+        reasoning_tags=reasoning_tags,
     )
     pipeline = Pipeline(
         tasks=tasks,
@@ -175,6 +191,20 @@ def tgi(
     load_responses_from_details_date_id: Annotated[
         Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
+    remove_reasoning_tags: Annotated[
+        bool | None,
+        Option(
+            help="Remove reasoning tags from responses (true to remove, false to leave - true by default).",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = True,
+    reasoning_tags: Annotated[
+        str | None,
+        Option(
+            help="List of reasoning tags (provided as pairs) to remove from responses. Default is [('<think>', '</think>')].",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = None,
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -204,7 +234,7 @@ def tgi(
     wandb: Annotated[
         bool,
         Option(
-            help="Push results to wandb. This will only work if you have wandb installed and logged in. We use env variable to configure wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/",
+            help="Push results to wandb or trackio if available. We use env variable to configure trackio or wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/, https://github.com/gradio-app/trackio",
             rich_help_panel=HELP_PANEL_NAME_2,
         ),
     ] = False,
@@ -219,11 +249,8 @@ def tgi(
     """
     Evaluate models using TGI as backend.
     """
-    import yaml
-
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.endpoints.tgi_model import TGIModelConfig
-    from lighteval.models.model_input import GenerationParameters
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
     evaluation_tracker = EvaluationTracker(
@@ -234,16 +261,12 @@ def tgi(
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
-        wandb=wandb,
+        use_wandb=wandb,
     )
 
     parallelism_manager = ParallelismManager.TGI
 
-    with open(model_config_path, "r") as f:
-        config = yaml.safe_load(f)
-
-    generation_parameters = GenerationParameters(**config.get("generation", {}))
-    model_config = TGIModelConfig(**config["model"], generation_parameters=generation_parameters)
+    model_config = TGIModelConfig.from_path(model_config_path)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
@@ -253,6 +276,8 @@ def tgi(
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
+        remove_reasoning_tags=remove_reasoning_tags,
+        reasoning_tags=reasoning_tags,
     )
     pipeline = Pipeline(
         tasks=tasks,
@@ -295,6 +320,20 @@ def litellm(
     load_responses_from_details_date_id: Annotated[
         Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
+    remove_reasoning_tags: Annotated[
+        bool | None,
+        Option(
+            help="Remove reasoning tags from responses (true to remove, false to leave - true by default).",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = True,
+    reasoning_tags: Annotated[
+        str | None,
+        Option(
+            help="List of reasoning tags (provided as pairs) to remove from responses. Default is [('<think>', '</think>')].",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = None,
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -324,7 +363,7 @@ def litellm(
     wandb: Annotated[
         bool,
         Option(
-            help="Push results to wandb. This will only work if you have wandb installed and logged in. We use env variable to configure wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/",
+            help="Push results to wandb or trackio if available. We use env variable to configure trackio or wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/, https://github.com/gradio-app/trackio",
             rich_help_panel=HELP_PANEL_NAME_2,
         ),
     ] = False,
@@ -343,7 +382,7 @@ def litellm(
     import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.litellm_model import LiteLLMModelConfig
+    from lighteval.models.endpoints.litellm_model import LiteLLMModelConfig
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
     evaluation_tracker = EvaluationTracker(
@@ -354,7 +393,7 @@ def litellm(
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
-        wandb=wandb,
+        use_wandb=wandb,
     )
 
     parallelism_manager = ParallelismManager.NONE
@@ -376,6 +415,8 @@ def litellm(
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
+        remove_reasoning_tags=remove_reasoning_tags,
+        reasoning_tags=reasoning_tags,
     )
     pipeline = Pipeline(
         tasks=tasks,
@@ -445,10 +486,24 @@ def inference_providers(
     wandb: Annotated[
         bool,
         Option(
-            help="Push results to wandb. This will only work if you have wandb installed and logged in. We use env variable to configure wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/",
+            help="Push results to wandb or trackio if available. We use env variable to configure trackio or wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/, https://github.com/gradio-app/trackio",
             rich_help_panel=HELP_PANEL_NAME_2,
         ),
     ] = False,
+    remove_reasoning_tags: Annotated[
+        bool | None,
+        Option(
+            help="Remove reasoning tags from responses (true to remove, false to leave - true by default).",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = True,
+    reasoning_tags: Annotated[
+        str | None,
+        Option(
+            help="List of reasoning tags (provided as pairs) to remove from responses. Default is [('<think>', '</think>')].",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = None,
     # === debug ===
     max_samples: Annotated[
         Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
@@ -475,7 +530,7 @@ def inference_providers(
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
-        wandb=wandb,
+        use_wandb=wandb,
     )
 
     parallelism_manager = ParallelismManager.NONE
@@ -493,6 +548,8 @@ def inference_providers(
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         load_responses_from_details_date_id=None,
+        remove_reasoning_tags=remove_reasoning_tags,
+        reasoning_tags=reasoning_tags,
     )
     pipeline = Pipeline(
         tasks=tasks,

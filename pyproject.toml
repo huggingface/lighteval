@@ -54,14 +54,15 @@ classifiers = [
 keywords = ["evaluation", "nlp", "llm"]
 dependencies = [
     # Base dependencies
-    "transformers>=4.51.0,<4.54.0", # waiting for a vllm fix
+    "transformers>=4.54.0",
     "accelerate",
     "huggingface_hub[hf_xet]>=0.30.2",
     "torch>=2.0,<3.0",
     "GitPython>=3.1.41", # for logging
-    "datasets>=3.5.0,<4.0.0",
+    "datasets>=4.0.0",
     "pydantic",
-    "numpy<2",  # pinned to avoid incompatibilities
+    "numpy>=2",  # pinned to avoid incompatibilities
+    "hf-xet>=1.1.8",  # pinned to avoid failing test suite
     # Prettiness
     "typer",
     "termcolor==2.3.0",
@@ -79,13 +80,13 @@ dependencies = [
     "protobuf",
     "pycountry",
     "fsspec>=2023.12.2",
-    "httpx == 0.27.2",
+    "httpx>=0.27.2",
     "latex2sympy2_extended==1.0.6",
 ]
 
 [project.optional-dependencies]
-litellm = ["litellm", "diskcache"]
-tgi = ["text-generation>=0.6.0"]
+litellm = ["litellm[caching]", "diskcache"]
+tgi = ["text-generation>=0.7.0"]
 optimum = ["optimum==1.12.0"]
 quantization = ["bitsandbytes>=0.41.0", "auto-gptq>=0.4.2"]
 adapters = ["peft==0.3.0"]
@@ -94,14 +95,14 @@ nanotron = [
   "tensorboardX"
 ]
 tensorboardX = ["tensorboardX"]
-vllm = ["vllm>=0.8.4", "ray", "more_itertools"]
+vllm = ["vllm>=0.10.0", "ray", "more_itertools"]
 quality = ["ruff>=v0.11.0","pre-commit"]
 tests = ["pytest>=7.4.0","deepdiff"]
 dev = ["lighteval[accelerate,quality,tests,multilingual,math,extended_tasks,vllm]"]
 docs = ["hf-doc-builder", "watchdog"]
 extended_tasks = [
   "langdetect", # ifeval
-  "openai==1.55.2", # llm as a judge using openai models
+  "openai>1.87", # llm as a judge using openai models
   "tiktoken"
 ]
 s3 = ["s3fs"]
@@ -113,6 +114,7 @@ multilingual = [
 ]
 math = ["latex2sympy2_extended==1.0.6"]
 wandb = ["wandb"]
+trackio = ["trackio"]
 
 [project.urls]
 Homepage = "https://github.com/huggingface/lighteval"

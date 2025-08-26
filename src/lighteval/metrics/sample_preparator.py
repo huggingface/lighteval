@@ -60,7 +60,11 @@ class PerplexityCorpusMetricInput(CorpusMetricInput):
     weights: list[int]
 
 
-class GenerativePreparator:
+class Preparator:
+    pass
+
+
+class GenerativePreparator(Preparator):
     @staticmethod
     def prepare(doc: Doc, model_response: ModelResponse, **kwargs):
         """Prepares an individual generative example to the format expected by metrics computed at the corpus level (aggregated).
@@ -73,11 +77,11 @@ class GenerativePreparator:
             GenerativeCorpusMetricInput: Stores the golds and predictions as such
         """
         golds = as_list(doc.get_golds())
-        predictions = model_response.text
+        predictions = model_response.final_text
         return GenerativeCorpusMetricInput(golds=golds, preds=predictions)
 
 
-class LoglikelihoodPreparator:
+class LoglikelihoodPreparator(Preparator):
     def __init__(self, is_single_token: bool = False):
         """Init.
 
@@ -110,7 +114,7 @@ class LoglikelihoodPreparator:
         return LogprobCorpusMetricInput(golds=gold_ixs, preds=np.argmax(choices_logprob))
 
 
-class TargetPerplexityPreparator:
+class TargetPerplexityPreparator(Preparator):
     def __init__(self, units_type: str) -> None:
         """Init.
 
@@ -155,7 +159,7 @@ class TargetPerplexityPreparator:
         return PerplexityCorpusMetricInput(logprobs=logprobs_flat, weights=self.count_units(reference_text_flat))
 
 
-class PerplexityPreparator:
+class PerplexityPreparator(Preparator):
     def __init__(self, units_type: str) -> None:
         """Init.
 
