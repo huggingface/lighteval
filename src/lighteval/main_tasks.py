@@ -20,11 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import logging
-from typing import Optional
 
 import typer
 from typer import Argument, Option
 from typing_extensions import Annotated
+
+from lighteval.cli_args import custom_tasks
 
 
 app = typer.Typer()
@@ -33,7 +34,7 @@ app = typer.Typer()
 @app.command()
 def inspect(
     tasks: Annotated[str, Argument(help="Id of tasks or path to a text file with a list of tasks")],
-    custom_tasks: Annotated[Optional[str], Option(help="Path to a file with custom tasks")] = None,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
     num_samples: Annotated[int, Option(help="Number of samples to display")] = 10,
     show_config: Annotated[bool, Option(help="Will display the full task config")] = False,
 ):
@@ -65,7 +66,7 @@ def inspect(
 
 
 @app.command()
-def list(custom_tasks: Annotated[Optional[str], Option(help="Path to a file with custom tasks")] = None):
+def list(custom_tasks: custom_tasks.type = custom_tasks.default):
     """
     List all tasks
     """
