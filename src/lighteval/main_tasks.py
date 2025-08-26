@@ -67,9 +67,9 @@ def inspect(
 
 @app.command()
 def list(
-    custom_tasks: custom_tasks.type = custom_tasks.default
+    custom_tasks: custom_tasks.type = custom_tasks.default,
     suites: Annotated[
-        Optional[str],
+        str | None,
         Option(
             help="Comma-separated list of suites to display (e.g., 'helm,harness'). Use 'all' for all suites. If not specified, shows core suites only."
         ),
