@@ -25,6 +25,7 @@ import numpy as np
 from aenum import extend_enum
 
 from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.metrics_sample import SampleLevelComputation
 from lighteval.metrics.utils.metric_utils import (
     SampleLevelMetricGrouping,
 )
@@ -53,30 +54,31 @@ submetric_names = [
 ]
 
 
-def ifbench_metric(doc: Doc, model_response: ModelResponse, **kwargs) -> dict:
-    response = model_response.final_text[0]
+class IFBench(SampleLevelComputation):
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict:
+        response = model_response.final_text[0]
 
-    # Create InputExample from the doc data
-    inp = evaluation_lib.InputExample(
-        key=0,  # Not used in evaluation
-        instruction_id_list=doc.specific["instruction_id_list"],
-        prompt=doc.query,
-        kwargs=doc.specific["kwargs"],
-    )
+        # Create InputExample from the doc data
+        inp = evaluation_lib.InputExample(
+            key=0,  # Not used in evaluation
+            instruction_id_list=doc.specific["instruction_id_list"],
+            prompt=doc.query,
+            kwargs=doc.specific["kwargs"],
+        )
 
-    # Create prompt_to_response mapping for evaluation_lib functions
-    prompt_to_response = {doc.query: response}
+        # Create prompt_to_response mapping for evaluation_lib functions
+        prompt_to_response = {doc.query: response}
 
-    # Use existing evaluation_lib functions
-    strict_result = evaluation_lib.test_instruction_following_strict(inp, prompt_to_response)
-    loose_result = evaluation_lib.test_instruction_following_loose(inp, prompt_to_response)
+        # Use existing evaluation_lib functions
+        strict_result = evaluation_lib.test_instruction_following_strict(inp, prompt_to_response)
+        loose_result = evaluation_lib.test_instruction_following_loose(inp, prompt_to_response)
 
-    return {
-        "prompt_level_strict_acc": int(strict_result.follow_all_instructions),
-        "inst_level_strict_acc": strict_result.follow_instruction_list,
-        "prompt_level_loose_acc": int(loose_result.follow_all_instructions),
-        "inst_level_loose_acc": loose_result.follow_instruction_list,
-    }
+        return {
+            "prompt_level_strict_acc": int(strict_result.follow_all_instructions),
+            "inst_level_strict_acc": strict_result.follow_instruction_list,
+            "prompt_level_loose_acc": int(loose_result.follow_all_instructions),
+            "inst_level_loose_acc": loose_result.follow_instruction_list,
+        }
 
 
 def agg_inst_level_acc(items):
@@ -89,7 +91,7 @@ ifbench_metrics = SampleLevelMetricGrouping(
     metric_name=submetric_names,
     higher_is_better=dict.fromkeys(submetric_names, True),
     category=SamplingMethod.GENERATIVE,
-    sample_level_fn=ifbench_metric,
+    sample_level_fn=IFBench(),
     corpus_level_fn={
         "prompt_level_strict_acc": np.mean,
         "inst_level_strict_acc": agg_inst_level_acc,

@@ -22,22 +22,17 @@ import re
 import string
 import unicodedata
 from collections import Counter
-from typing import Dict, Optional, Sequence, Union
 
 import emoji
 import nltk
 import spacy
 import syllapy
-from spacy.cli import download
 
 import lighteval.tasks.extended.ifbench.instructions_util as instructions_util
 
 
-download("en_core_web_sm")
-
 logger = logging.getLogger(__name__)
 
-_InstructionArgsDtype = Optional[Dict[str, Union[int, str, Sequence[str]]]]
 
 # The number of keywords.
 _NUM_KEYWORDS = 2
@@ -70,6 +65,19 @@ _NUM_CONJUNCTIONS = 6
 
 class Instruction:
     """An instruction template."""
+
+    # Class level logic: do once only
+    try:
+        nlp = spacy.load("en_core_web_sm")
+    except OSError:
+        logger.info("Downloading the spacy en_core_web_sm model\n(don't worry, this will only happen once)")
+        from spacy.cli import download
+
+        download("en_core_web_sm")
+        nlp = spacy.load("en_core_web_sm")
+
+    nltk.download("punkt_tab")
+    nltk.download("averaged_perceptron_tagger_eng")
 
     def __init__(self, instruction_id):
         self.id = instruction_id
@@ -215,7 +223,6 @@ class SentTypeRatioChecker(Instruction):
     def build_description(self):
         """Build the instruction description."""
         self._description_pattern = "Maintain a 2:1 ratio of declarative to interrogative sentences."
-        nltk.download("punkt_tab")
         return self._description_pattern
 
     def get_instruction_args(self):
@@ -241,7 +248,6 @@ class SentBalanceChecker(Instruction):
 
     def build_description(self):
         """Build the instruction description."""
-        nltk.download("punkt_tab")
         self._description_pattern = (
             "Ensure that the ratio of sentence types (declarative, interrogative, exclamatory) is balanced."
         )
@@ -325,8 +331,6 @@ class PersonNameCountChecker(Instruction):
 
         if self._num_person_names is None or self._num_person_names < 0:
             self._num_person_names = random.randint(1, 50)
-
-        self.nlp = spacy.load("en_core_web_sm")
 
         self._description_pattern = "Mention at least {N} different person names in the response, from this list of person names: Emma, Liam, Sophia, Jackson, Olivia, Noah, Ava, Lucas, Isabella, Mason, Mia, Ethan, Charlotte, Alexander, Amelia, Benjamin, Harper, Leo, Zoe, Daniel, Chloe, Samuel, Lily, Matthew, Grace, Owen, Abigail, Gabriel, Ella, Jacob, Scarlett, Nathan, Victoria, Elijah, Layla, Nicholas, Audrey, David, Hannah, Christopher, Penelope, Thomas, Nora, Andrew, Aria, Joseph, Claire, Ryan, Stella, Jonathan ."
         return self._description_pattern.format(N=self._num_person_names)
@@ -582,7 +586,6 @@ class IncrementingAlliterationChecker(Instruction):
 
     def build_description(self):
         """Build the instruction description."""
-        nltk.download("punkt_tab")
         self._description_pattern = (
             "Each sentence must have a longer sequence of consecutive alliterative words than the previous one."
         )
@@ -780,7 +783,7 @@ class PrimeLengthsChecker(Instruction):
         """Checks if the response only includes words with prime length."""
         value = value.translate(str.maketrans("", "", string.punctuation))
         words = value.split()
-        primes = set(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97)
+        primes = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97}
         for word in words:
             if len(word) not in primes:
                 return False
@@ -870,7 +873,6 @@ class EmojiSentenceChecker(Instruction):
 
     def build_description(self):
         """Build the instruction description."""
-        nltk.download("punkt_tab")
         self._description_pattern = "Please use an emoji at the end of every sentence."
         return self._description_pattern
 
@@ -907,7 +909,6 @@ class CharacterCountUniqueWordsChecker(Instruction):
 
     def build_description(self):
         """Build the instruction description."""
-        nltk.download("punkt_tab")
         self._description_pattern = (
             "Respond with three sentences, all containing the same number of characters but using all different words."
         )
@@ -998,7 +999,6 @@ class StartWithVerbChecker(Instruction):
     def build_description(self):
         """Build the instruction description."""
         self._description_pattern = "The response must start with a verb."
-        nltk.download("averaged_perceptron_tagger_eng")
         return self._description_pattern
 
     def get_instruction_args(self):
@@ -1068,7 +1068,6 @@ class IncludeKeywordChecker(Instruction):
         Returns:
           A string representing the instruction description.
         """
-        nltk.download("punkt_tab")
 
         if not word:
             self._keyword = instructions_util.generate_keywords(num_keywords=1)[0]
@@ -1127,7 +1126,7 @@ class PronounCountChecker(Instruction):
 
     def check_following(self, value):
         """Checks if the response includes at least {N} pronouns."""
-        pronouns = set(
+        pronouns = {
             "i",
             "me",
             "my",
@@ -1159,7 +1158,7 @@ class PronounCountChecker(Instruction):
             "their",
             "theirs",
             "themselves",
-        )
+        }
         value = value.replace(
             "/", " "
         )  # to correctly count pronoun sets like she/her/hers, a common use case of pronouns
@@ -1197,7 +1196,6 @@ class LastWordFirstNextChecker(Instruction):
 
     def build_description(self):
         """Build the instruction description."""
-        nltk.download("punkt_tab")
         self._description_pattern = "The last word of each sentence must become the first word of the next sentence."
         return self._description_pattern
 
@@ -1267,8 +1265,6 @@ class IncrementingWordCountChecker(Instruction):
         self._num_increment = small_n
         if self._num_increment is None or self._num_increment < 0:
             self._num_increment = random.randint(1, _NUM_INCREMENT)
-
-        nltk.download("punkt_tab")
 
         self._description_pattern = "Each sentence must contain exactly {small_n} more words than the previous one."
         return self._description_pattern.format(small_n=self._num_increment)
@@ -1655,7 +1651,6 @@ class WordReverseOrderChecker(Instruction):
     """What animal is the national symbol of the US? Respond to this query, but make your sentence in reverse order of what it should be, per word."""
 
     def build_description(self, **kwargs):
-        nltk.download("punkt_tab")
         self._description_pattern = "What animal is the national symbol of the US? Respond to this query, but make your sentence in reverse order of what it should be, per word."
         return self._description_pattern
 
@@ -1700,7 +1695,6 @@ class SentenceAlphabetChecker(Instruction):
     """Tell me a 26-sentence story where each sentence's first word starts with the letters of the alphabet in order."""
 
     def build_description(self, **kwargs):
-        nltk.download("punkt_tab")
         self._description_pattern = "Tell me a 26-sentence story where each sentence's first word starts with the letters of the alphabet in order."
         return self._description_pattern
 
