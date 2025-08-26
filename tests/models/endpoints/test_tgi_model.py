@@ -33,11 +33,12 @@ class TestTGIModelConfig:
             (
                 "examples/model_configs/tgi_model.yaml",
                 {
-                    "inference_server_address": "",
+                    "inference_server_address": "http://localhost:8080",
                     "inference_server_auth": None,
                     "model_name": None,
                     "model_info": None,
                     "system_prompt": None,
+                    "batch_size": 1,
                     "generation_parameters": {
                         "block_size": None,
                         "num_blocks": None,
@@ -52,7 +53,7 @@ class TestTGIModelConfig:
                         "repetition_penalty": None,
                         "seed": None,
                         "stop_tokens": None,
-                        "temperature": 0,
+                        "temperature": 0.1,
                         "top_k": None,
                         "top_p": None,
                         "truncate_prompt": None,

@@ -52,7 +52,7 @@ gpqa_diamond_test = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.gpqa_instruct_pass_at_1_1n],
+    metrics=[Metrics.gpqa_instruct_pass_at_k(sample_params={"k": 1})],
     stop_sequence=[],  # no stop sequence, will use eos token
     version=0,
 )

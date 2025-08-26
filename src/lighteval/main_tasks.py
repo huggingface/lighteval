@@ -46,13 +46,13 @@ def inspect(
 
     from rich import print
 
-    from lighteval.tasks.registry import Registry
+    from lighteval.tasks.registry import Registry, taskinfo_selector
 
     registry = Registry(custom_tasks=custom_tasks)
 
     # Loading task
-    task_configs = registry.get_tasks_configs(tasks)
-    task_dict = registry.get_tasks_from_configs(task_configs)
+    task_names_list, _ = taskinfo_selector(tasks, task_registry=registry)
+    task_dict = registry.get_task_dict(task_names_list)
     for name, task in task_dict.items():
         print("-" * 10, name, "-" * 10)
         if show_config:
@@ -66,14 +66,22 @@ def inspect(
 
 
 @app.command()
-def list(custom_tasks: custom_tasks.type = custom_tasks.default):
+def list(
+    custom_tasks: custom_tasks.type = custom_tasks.default
+    suites: Annotated[
+        Optional[str],
+        Option(
+            help="Comma-separated list of suites to display (e.g., 'helm,harness'). Use 'all' for all suites. If not specified, shows core suites only."
+        ),
+    ] = None,
+):
     """
     List all tasks
     """
     from lighteval.tasks.registry import Registry
 
     registry = Registry(custom_tasks=custom_tasks)
-    registry.print_all_tasks()
+    registry.print_all_tasks(suites=suites)
 
 
 @app.command()

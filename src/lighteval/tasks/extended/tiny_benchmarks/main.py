@@ -38,7 +38,8 @@ from scipy.optimize import minimize
 
 import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import CorpusLevelMetricGrouping, Metrics
-from lighteval.metrics.metrics_sample import ExactMatches, LoglikelihoodAcc
+from lighteval.metrics.metrics_corpus import CorpusLevelComputation
+from lighteval.metrics.metrics_sample import ExactMatches, LoglikelihoodAcc, SampleLevelComputation
 from lighteval.metrics.normalizations import gsm8k_normalizer
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import SamplingMethod
@@ -71,7 +72,7 @@ def fit_theta(responses_test, seen_items, A, B, theta_init=None, eps=1e-10, opti
 
 
 # Evaluation function
-class TinyCorpusAggregator:
+class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
     LEADEBRBOARD_SCENARIOS = ["truthfulqa", "gsm8k", "winogrande", "arc", "hellaswag"]
     BENCHS = ["lb", "mmlu"]
     METRICS = ["irt", "pirt", "gpirt"]
@@ -111,7 +112,7 @@ class TinyCorpusAggregator:
             res = LoglikelihoodAcc().compute(**args)
             return dict.fromkeys(self.METRICS, res)
 
-    def aggregate(self, y_input):
+    def compute_corpus(self, y_input):
         if len(y_input) == self.num_samples and self.estimates is not None:
             return self.estimates[self.task]
 
@@ -276,8 +277,8 @@ for task_param in task_params:
         CorpusLevelMetricGrouping(
             metric_name=TinyCorpusAggregator.METRICS,
             higher_is_better=dict.fromkeys(TinyCorpusAggregator.METRICS, True),
-            sample_level_fn=TinyCorpusAggregator(name).compute,
+            sample_level_fn=TinyCorpusAggregator(name),
             category=category,
-            corpus_level_fn=TinyCorpusAggregator(name).aggregate,
+            corpus_level_fn=TinyCorpusAggregator(name),
         ),
     )

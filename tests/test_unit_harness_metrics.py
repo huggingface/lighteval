@@ -39,8 +39,6 @@ from lighteval.utils.utils import as_list
 
 PATH_TO_HARNESS_METRICS = os.path.join(os.path.dirname(__file__), "reference_scores/harness_metrics.json")
 
-POSSIBLE_METRICS = Metrics.all_metrics()
-
 
 def pytest_generate_tests(metafunc: pytest.Metafunc):
     """Initializes the main test setup. This function is automatically called by pytest and
@@ -106,7 +104,7 @@ def test_model_prediction(prompt_inputs: tuple[str, str, list]):  # noqa: C901
 
         metric_result = {k: list(v) if isinstance(v, tuple) else v for k, v in results.items()}
 
-        metric_reference = {k: v for k, v in example.items() if k in POSSIBLE_METRICS}
+        metric_reference = {k: example[k] for k in results.keys()}
         error_msg += f"Prediction: {results}\n"
         error_msg += f"Reference: {metric_reference}\n"
         error_msg += f"Returned : {metric_result}"

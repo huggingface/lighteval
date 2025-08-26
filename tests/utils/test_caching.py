@@ -219,9 +219,10 @@ class TestCaching(unittest.TestCase):
 
             self._test_cache(model)
 
+    @patch("requests.get")
     @patch("lighteval.models.endpoints.tgi_model.ModelClient._greedy_until")
     @patch("lighteval.models.endpoints.tgi_model.ModelClient._loglikelihood")
-    def test_cache_tgi(self, mock_greedy_until, mock_loglikelihood):
+    def test_cache_tgi(self, mock_loglikelihood, mock_greedy_until, mock_requests_get):
         from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
         from lighteval.utils.imports import is_tgi_available
 
@@ -229,11 +230,16 @@ class TestCaching(unittest.TestCase):
             pytest.skip("Skipping because missing the imports")
 
         # Mock TGI requests
-        mock_greedy_until.return_value = self.model_responses
         mock_loglikelihood.return_value = self.model_responses
+        mock_greedy_until.return_value = self.model_responses
+
+        # Mock HTTP info request
+        mock_requests_get.return_value.json.return_value = {"model_id": "Qwen/Qwen3-0.6B"}
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            config = TGIModelConfig(model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir)
+            config = TGIModelConfig(
+                model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir, inference_server_address="http://localhost:8080"
+            )
             model = ModelClient(config)
 
             self._test_cache(model)

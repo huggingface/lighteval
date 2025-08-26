@@ -27,9 +27,9 @@ from langcodes import Language as LangCodeLanguage
 from langcodes import standardize_tag
 
 from lighteval.metrics.dynamic_metrics import (
-    loglikelihood_acc_metric,
-    multilingual_quasi_exact_match_metric,
-    multilingual_quasi_f1_score_metric,
+    LogLikelihoodAccMetric,
+    MultilingualQuasiExactMatchMetric,
+    MultilingualQuasiF1ScoreMetric,
 )
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm
@@ -83,9 +83,9 @@ xnli_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=None),
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=None),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
         prompt_function=get_nli_prompt_function(
@@ -138,9 +138,9 @@ xnli2_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=None),
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=None),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
         prompt_function=get_nli_prompt_function(
@@ -218,9 +218,9 @@ xnli_indic_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=None),
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=None),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -265,9 +265,9 @@ afri_xnli_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=None),
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=None),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -321,9 +321,9 @@ paws_x_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=None),
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=None),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -366,9 +366,9 @@ rcb_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=None),
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=None),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -402,9 +402,9 @@ ocnli_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=None),
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=None),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -437,9 +437,9 @@ cmnli_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=None),
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=None),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -486,8 +486,8 @@ xcopa_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -534,8 +534,8 @@ copa_indic_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -585,8 +585,8 @@ parus_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -627,8 +627,8 @@ mlmm_hellaswag_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -700,8 +700,8 @@ hellaswag_tur_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -734,8 +734,8 @@ hellaswag_tha_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -763,8 +763,8 @@ hellaswag_hin_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
             ],
         ),
     )
@@ -791,8 +791,8 @@ hellaswag_tel_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -836,8 +836,8 @@ xquad_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metrics=(
-            multilingual_quasi_exact_match_metric(language, "prefix"),
-            multilingual_quasi_f1_score_metric(language),
+            MultilingualQuasiExactMatchMetric(language, "prefix"),
+            MultilingualQuasiF1ScoreMetric(language),
         ),
     )
     for language in [
@@ -879,8 +879,8 @@ germanquad_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metrics=(
-            multilingual_quasi_exact_match_metric(Language.GERMAN, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.GERMAN),
+            MultilingualQuasiExactMatchMetric(Language.GERMAN, "prefix"),
+            MultilingualQuasiF1ScoreMetric(Language.GERMAN),
         ),
     )
 ]
@@ -908,8 +908,8 @@ squad_it_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metrics=(
-            multilingual_quasi_exact_match_metric(Language.ITALIAN, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.ITALIAN),
+            MultilingualQuasiExactMatchMetric(Language.ITALIAN, "prefix"),
+            MultilingualQuasiF1ScoreMetric(Language.ITALIAN),
         ),
     )
 ]
@@ -935,8 +935,8 @@ thaiqa_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metrics=(
-            multilingual_quasi_exact_match_metric(Language.THAI, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.THAI),
+            MultilingualQuasiExactMatchMetric(Language.THAI, "prefix"),
+            MultilingualQuasiF1ScoreMetric(Language.THAI),
         ),
     )
 ]
@@ -960,8 +960,8 @@ sber_squad_tasks = [
         evaluation_splits=("validation",),
         few_shots_split="train",
         metrics=(
-            multilingual_quasi_exact_match_metric(Language.RUSSIAN, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.RUSSIAN),
+            MultilingualQuasiExactMatchMetric(Language.RUSSIAN, "prefix"),
+            MultilingualQuasiF1ScoreMetric(Language.RUSSIAN),
         ),
         generation_size=400,
         stop_sequence=("\n",),
@@ -989,8 +989,8 @@ faquad_tasks = [
         evaluation_splits=("validation",),
         few_shots_split="train",
         metrics=(
-            multilingual_quasi_exact_match_metric(Language.PORTUGUESE, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.PORTUGUESE),
+            MultilingualQuasiExactMatchMetric(Language.PORTUGUESE, "prefix"),
+            MultilingualQuasiF1ScoreMetric(Language.PORTUGUESE),
         ),
         generation_size=400,
         stop_sequence=("\n",),
@@ -1018,8 +1018,8 @@ squad_es_tasks = [
         evaluation_splits=("validation",),
         few_shots_split="train",
         metrics=(
-            multilingual_quasi_exact_match_metric(Language.SPANISH, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.SPANISH),
+            MultilingualQuasiExactMatchMetric(Language.SPANISH, "prefix"),
+            MultilingualQuasiF1ScoreMetric(Language.SPANISH),
         ),
         generation_size=400,
         stop_sequence=("\n",),
@@ -1046,8 +1046,8 @@ arcd_tasks = [
         evaluation_splits=("validation",),
         few_shots_split="train",
         metrics=(
-            multilingual_quasi_exact_match_metric(Language.ARABIC, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.ARABIC),
+            MultilingualQuasiExactMatchMetric(Language.ARABIC, "prefix"),
+            MultilingualQuasiF1ScoreMetric(Language.ARABIC),
         ),
         generation_size=400,
         stop_sequence=("\n",),
@@ -1073,8 +1073,8 @@ kenswquad_tasks = [
         evaluation_splits=("test",),
         few_shots_split="validation",
         metrics=(
-            multilingual_quasi_exact_match_metric(Language.SWAHILI, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.SWAHILI),
+            MultilingualQuasiExactMatchMetric(Language.SWAHILI, "prefix"),
+            MultilingualQuasiF1ScoreMetric(Language.SWAHILI),
         ),
         generation_size=400,
         stop_sequence=("\n",),
@@ -1100,8 +1100,8 @@ chinese_squad_tasks = [
         evaluation_splits=("validation",),
         few_shots_split="train",
         metrics=(
-            multilingual_quasi_exact_match_metric(Language.CHINESE, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.CHINESE),
+            MultilingualQuasiExactMatchMetric(Language.CHINESE, "prefix"),
+            MultilingualQuasiF1ScoreMetric(Language.CHINESE),
         ),
         generation_size=400,
         stop_sequence=("\n",),
@@ -1128,8 +1128,8 @@ cmrc2018_tasks = [
         few_shots_split="train",
         generation_size=400,
         metrics=(
-            multilingual_quasi_exact_match_metric(Language.CHINESE, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.CHINESE),
+            MultilingualQuasiExactMatchMetric(Language.CHINESE, "prefix"),
+            MultilingualQuasiF1ScoreMetric(Language.CHINESE),
         ),
         stop_sequence=("\n",),
     )
@@ -1157,8 +1157,8 @@ indicqa_tasks = [
         hf_avail_splits=("test",),
         generation_size=400,
         metrics=(
-            multilingual_quasi_exact_match_metric(language, "prefix"),
-            multilingual_quasi_f1_score_metric(language),
+            MultilingualQuasiExactMatchMetric(language, "prefix"),
+            MultilingualQuasiF1ScoreMetric(language),
         ),
         stop_sequence=("\n",),
     )
@@ -1198,8 +1198,8 @@ fquad_v2_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metrics=(
-            multilingual_quasi_exact_match_metric(Language.FRENCH, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.FRENCH),
+            MultilingualQuasiExactMatchMetric(Language.FRENCH, "prefix"),
+            MultilingualQuasiF1ScoreMetric(Language.FRENCH),
         ),
     )
 ]
@@ -1224,8 +1224,8 @@ tquad_v2_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metrics=(
-            multilingual_quasi_exact_match_metric(Language.TURKISH, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.TURKISH),
+            MultilingualQuasiExactMatchMetric(Language.TURKISH, "prefix"),
+            MultilingualQuasiF1ScoreMetric(Language.TURKISH),
         ),
     )
 ]
@@ -1253,8 +1253,8 @@ tydiqa_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metrics=(
-            multilingual_quasi_exact_match_metric(language, "prefix"),
-            multilingual_quasi_f1_score_metric(language),
+            MultilingualQuasiExactMatchMetric(language, "prefix"),
+            MultilingualQuasiF1ScoreMetric(language),
         ),
     )
     for language in [
@@ -1296,8 +1296,8 @@ c3_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -1327,8 +1327,8 @@ race_ar_task = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -1352,8 +1352,8 @@ soqal_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -1388,8 +1388,8 @@ mlqa_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metrics=[
-            multilingual_quasi_exact_match_metric(lang, "prefix"),
-            multilingual_quasi_f1_score_metric(lang),
+            MultilingualQuasiExactMatchMetric(lang, "prefix"),
+            MultilingualQuasiF1ScoreMetric(lang),
         ],
     )
     for lang in [
@@ -1425,8 +1425,8 @@ belebele_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -1679,9 +1679,9 @@ meta_mmlu_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -1726,9 +1726,9 @@ mlmm_mmlu_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -1790,9 +1790,9 @@ openai_mmlu_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -1855,9 +1855,9 @@ global_mmlu_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -1941,9 +1941,9 @@ afri_mmlu_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -1997,9 +1997,9 @@ rummlu = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -2029,9 +2029,9 @@ mmlu_turkish = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -2136,9 +2136,9 @@ cmmlu_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -2217,9 +2217,9 @@ arabic_mmlu_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -2264,9 +2264,9 @@ turkish_mmlu_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -2328,9 +2328,9 @@ mlmm_arc_challenge_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -2386,8 +2386,8 @@ arabic_ledarboard_arc_easy = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -2421,9 +2421,9 @@ lumi_arc = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -2471,10 +2471,10 @@ turkish_arc_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ]
-            + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
+            + ([LogLikelihoodAccMetric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
         ),
     )
     for subset in ["easy", "challenge"]
@@ -2507,10 +2507,10 @@ hindi_arc_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ]
-            + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
+            + ([LogLikelihoodAccMetric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
         ),
     )
     for subset in ["easy", "challenge"]
@@ -2535,8 +2535,8 @@ arabic_arc_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -2572,10 +2572,10 @@ swahili_arc_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ]
-            + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
+            + ([LogLikelihoodAccMetric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
         ),
     )
     for subset in ["easy", "challenge"]
@@ -2631,8 +2631,8 @@ mlmm_truthfulqa_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -2704,8 +2704,8 @@ turkish_truthfulqa = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -2867,8 +2867,8 @@ exams_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -2901,8 +2901,8 @@ m3exams_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -2943,8 +2943,8 @@ thai_exams_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -2993,9 +2993,9 @@ xcsqa_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -3051,8 +3051,8 @@ piqa_ar_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -3089,8 +3089,8 @@ openbook_ara_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -3123,8 +3123,8 @@ openbook_es_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -3158,8 +3158,8 @@ openbook_rus_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -3204,8 +3204,8 @@ sciqa_ar_task = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -3248,8 +3248,8 @@ mathlogicqa_rus_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -3277,7 +3277,7 @@ cmath_tasks = [
         few_shots_split="validation",
         generation_size=25,
         metrics=[
-            multilingual_quasi_exact_match_metric(Language.CHINESE, "full"),
+            MultilingualQuasiExactMatchMetric(Language.CHINESE, "full"),
         ],
         stop_sequence=("\n",),
     )
@@ -3302,7 +3302,7 @@ mgsm_tasks = [
         few_shots_split="train",
         generation_size=25,
         metrics=[
-            multilingual_quasi_exact_match_metric(language, "full"),
+            MultilingualQuasiExactMatchMetric(language, "full"),
         ],
         stop_sequence=("\n",),
     )
@@ -3341,7 +3341,7 @@ afri_mgsm_tasks = [
         few_shots_split="train",
         generation_size=25,
         metrics=[
-            multilingual_quasi_exact_match_metric(language, "full"),
+            MultilingualQuasiExactMatchMetric(language, "full"),
         ],
         stop_sequence=("\n",),
     )
@@ -3413,9 +3413,9 @@ agieval_tasks_zh = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -3504,8 +3504,8 @@ ceval_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -3541,8 +3541,8 @@ oab_exams_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -3576,8 +3576,8 @@ enem_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -3614,8 +3614,8 @@ worldtree_rus_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -3650,8 +3650,8 @@ xcodah_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -3710,8 +3710,8 @@ xstory_tasks = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -3755,9 +3755,9 @@ xwinograd_tasks = [
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
         metrics=[
-            loglikelihood_acc_metric(normalization=None),
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            LogLikelihoodAccMetric(normalization=None),
+            LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+            LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
         ],
     )
     for language in [
@@ -3787,9 +3787,9 @@ winograd_turkish_task = [
         evaluation_splits=("validation",),
         few_shots_split="train",
         metrics=[
-            loglikelihood_acc_metric(normalization=None),
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            LogLikelihoodAccMetric(normalization=None),
+            LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+            LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
         ],
     )
     for formulation in [
@@ -3839,12 +3839,12 @@ mkqa_tasks = [
         hf_avail_splits=["train"],
         stop_sequence=("\n",),
         metrics=[
-            multilingual_quasi_exact_match_metric(language, "prefix"),
-            multilingual_quasi_f1_score_metric(language),
+            MultilingualQuasiExactMatchMetric(language, "prefix"),
+            MultilingualQuasiF1ScoreMetric(language),
         ]
         if subset in ["entity", "long_answer", "short_phrase"]
         else [
-            multilingual_quasi_exact_match_metric(language, "full"),
+            MultilingualQuasiExactMatchMetric(language, "full"),
         ],
     )
     for subset in MKQA_TASK_TO_ID.keys()
@@ -3896,8 +3896,8 @@ mintaka_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metrics=[
-            multilingual_quasi_exact_match_metric(lang, "prefix"),
-            multilingual_quasi_f1_score_metric(lang),
+            MultilingualQuasiExactMatchMetric(lang, "prefix"),
+            MultilingualQuasiF1ScoreMetric(lang),
         ],
     )
     for lang in [
@@ -3931,8 +3931,8 @@ french_triviqa_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metrics=[
-            multilingual_quasi_exact_match_metric(Language.FRENCH, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.FRENCH),
+            MultilingualQuasiExactMatchMetric(Language.FRENCH, "prefix"),
+            MultilingualQuasiF1ScoreMetric(Language.FRENCH),
         ],
     )
 ]
@@ -3956,8 +3956,8 @@ chegeka_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metrics=[
-            multilingual_quasi_exact_match_metric(Language.RUSSIAN, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.RUSSIAN),
+            MultilingualQuasiExactMatchMetric(Language.RUSSIAN, "prefix"),
+            MultilingualQuasiF1ScoreMetric(Language.RUSSIAN),
         ],
     )
 ]
@@ -4051,7 +4051,7 @@ acva_tasks = [
         hf_subset=subset,
         evaluation_splits=("test",),
         few_shots_split="validation",
-        metrics=[multilingual_quasi_exact_match_metric(Language.ARABIC, "full"), loglikelihood_acc_metric()],
+        metrics=[MultilingualQuasiExactMatchMetric(Language.ARABIC, "full"), LogLikelihoodAccMetric()],
         generation_size=5,
         stop_sequence=("\n",),
     )
@@ -4078,7 +4078,7 @@ french_boolq_tasks = [
         few_shots_split="valid",
         generation_size=5,
         stop_sequence=["\n"],
-        metrics=[multilingual_quasi_exact_match_metric(Language.FRENCH, "full"), loglikelihood_acc_metric()],
+        metrics=[MultilingualQuasiExactMatchMetric(Language.FRENCH, "full"), LogLikelihoodAccMetric()],
     )
 ]
 
@@ -4101,7 +4101,7 @@ hindi_boolq_tasks = [
         few_shots_split="train",
         generation_size=5,
         stop_sequence=["\n"],
-        metrics=[multilingual_quasi_exact_match_metric(language, "full"), loglikelihood_acc_metric()],
+        metrics=[MultilingualQuasiExactMatchMetric(language, "full"), LogLikelihoodAccMetric()],
     )
     for language in [
         Language.HINDI,
