@@ -62,15 +62,13 @@ def baseline(
         This baseline computation may not be suitable for all task types and should be used with caution.
     """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
+    from lighteval.tasks.lighteval_task import LightevalTask
     from lighteval.tasks.registry import Registry
     from lighteval.tasks.requests import SamplingMethod
     from lighteval.utils.utils import as_list
 
-    registry = Registry(custom_tasks=custom_tasks)
-
-    task_configs: list[LightevalTaskConfig] = registry.get_tasks_configs(tasks)
-    tasks_dict: dict[str, LightevalTask] = registry.get_tasks_from_configs(task_configs)
+    registry = Registry(tasks=tasks, custom_tasks=custom_tasks)
+    tasks_dict: dict[str, LightevalTask] = registry.load_tasks()
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
