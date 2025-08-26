@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 
-from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
+from lighteval.metrics.dynamic_metrics import LogLikelihoodAccMetric
 from lighteval.metrics.utils.metric_utils import Metric
 from lighteval.tasks.templates.utils.formulation import Formulation, MCFFormulation
 
@@ -37,6 +37,6 @@ def get_metrics_for_formulation(formulation: Formulation, metrics: list[Metric])
     match formulation:
         #
         case MCFFormulation(choice_prefix="Letters"):
-            return [loglikelihood_acc_metric(normalization=None)]
+            return [LogLikelihoodAccMetric(normalization=None)]
         case _:
             return metrics
