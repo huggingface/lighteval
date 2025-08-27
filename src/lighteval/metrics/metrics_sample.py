@@ -1168,7 +1168,7 @@ class AvgAtK(SamplingMetric, SampleLevelComputation):
         self.k = k
         self.attribute_must_be_set = ["k"]
 
-    def compute(self, model_response: ModelResponse, doc: Doc):
+    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs):
         """Computes the metric over a list of golds and predictions for one single sample.
         It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones,
         then compares it to the gold.
