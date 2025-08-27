@@ -1285,7 +1285,6 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
             new_model_response = ModelResponse(
                 text=[cur_pred],
             )
-            breakpoint()
             all_scores.append(self.score_sample(doc=new_doc, model_response=new_model_response))
 
         return self.pass_at_k(all_scores)
