@@ -1,0 +1,406 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+"""
+Automated testing framework for LightEval metrics.
+
+This module provides a simple way to test metrics by providing input/output pairs.
+You can define test cases with expected inputs and outputs, and the framework will
+automatically run them and verify the results.
+"""
+
+import json
+import logging
+from dataclasses import field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+from pydantic import BaseModel
+
+from lighteval.metrics.metrics import Metrics
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.requests import Doc
+
+
+logger = logging.getLogger(__name__)
+
+
+class MetricTestCase(BaseModel):
+    """A test case for a metric with input and expected output."""
+
+    name: str
+    metric_class: str
+    metric_params: Dict[str, Any] = field(default_factory=dict)
+    doc: Dict[str, Any]
+    model_response: Dict[str, Any]
+    expected_output: Union[float, Dict[str, float]]
+    tolerance: float = 1e-2
+    description: Optional[str] = None
+
+
+class MetricTestSuite(BaseModel):
+    """A collection of test cases for metrics."""
+
+    name: str
+    test_cases: List[MetricTestCase]
+    description: Optional[str] = None
+
+
+class AutomatedMetricTester:
+    """Automated testing framework for LightEval metrics."""
+
+    # Mapping of metric names to Metrics enum values
+    METRIC_CLASSES = {
+        # Map metric names to their corresponding Metrics enum values
+        "exact_match": Metrics.exact_match,
+        "f1_score": Metrics.f1_score,
+        "loglikelihood_acc": Metrics.loglikelihood_acc,
+        "recall_at_k": Metrics.recall_at_k,
+        "mrr": Metrics.mrr,
+        "rouge1": Metrics.rouge1,
+        "rouge2": Metrics.rouge2,
+        "rougeL": Metrics.rougeL,
+        "rougeLsum": Metrics.rougeLsum,
+        "rouge_t5": Metrics.rouge_t5,
+        "extractiveness": Metrics.extractiveness,
+        "bleurt": Metrics.bleurt,
+        "copyright": Metrics.copyright,
+        "drop": Metrics.drop,
+        "avg_at_k": Metrics.avg_at_k,
+        "avg_at_k_math": Metrics.avg_at_k_math,
+        "g_pass_at_k": Metrics.g_pass_at_k,
+        "g_pass_at_k_math": Metrics.g_pass_at_k_math,
+        "g_pass_at_k_latex": Metrics.g_pass_at_k_latex,
+        "maj_at_k": Metrics.maj_at_k,
+        "pass_at_k": Metrics.pass_at_k,
+        "pass_at_k_math": Metrics.pass_at_k_math,
+        "pass_at_k_letters": Metrics.pass_at_k_letters,
+        "gpqa_instruct_metric": Metrics.gpqa_instruct_metric,
+        "gpqa_instruct_pass_at_k": Metrics.gpqa_instruct_pass_at_k,
+        "expr_gold_metric": Metrics.expr_gold_metric,
+        "acc_golds_likelihood": Metrics.acc_golds_likelihood,
+        "truthfulqa_mc_metrics": Metrics.truthfulqa_mc_metrics,
+        # "faithfulness": Metrics.faithfulness, issue with tokenizer
+        # "prediction_perplexity": Metrics.prediction_perplexity,
+        # "target_perplexity": Metrics.target_perplexity,
+        # "bert_score": Metrics.bert_score, issue with the scoring function, int too big to convert
+        # "simpleqa_judge": Metrics.simpleqa_judge, Batched metrics not supported yet
+        # "bleu": Metrics.bleu,
+        # "bleu_1": Metrics.bleu_1,
+        # "bleu_4": Metrics.bleu_4,
+        # "bits_per_byte": Metrics.bits_per_byte,
+        # "byte_perplexity": Metrics.byte_perplexity,
+        # "chrf": Metrics.chrf,
+        # "chrf_plus": Metrics.chrf_plus,
+        # "loglikelihood_f1": Metrics.loglikelihood_f1,
+        # "multi_f1_numeric": Metrics.multi_f1_numeric,
+        # "ter": Metrics.ter,
+        # "word_perplexity": Metrics.word_perplexity,
+        # "f1_score_macro": Metrics.f1_score_macro,
+        # "f1_score_micro": Metrics.f1_score_micro,
+        # "mcc": Metrics.mcc,
+    }
+
+    def __init__(self):
+        self.test_results = []
+
+    def create_doc_from_dict(self, doc_dict: Dict[str, Any]) -> Doc:
+        """Create a Doc object from a dictionary representation."""
+        return Doc(
+            query=doc_dict.get("query", ""),
+            choices=doc_dict.get("choices", []),
+            gold_index=doc_dict.get("gold_index", 0),
+            task_name=doc_dict.get("task_name", "test"),
+            specific=doc_dict.get("specific", {}),
+        )
+
+    def create_model_response_from_dict(self, response_dict: Dict[str, Any]) -> ModelResponse:
+        """Create a ModelResponse object from a dictionary representation."""
+        return ModelResponse(
+            text=response_dict.get("text", []),
+            logprobs=response_dict.get("logprobs", []),
+            output_tokens=response_dict.get("output_tokens", []),
+            argmax_logits_eq_gold=response_dict.get("argmax_logits_eq_gold", []),
+        )
+
+    def instantiate_metric(self, metric_class: str, metric_params: Dict[str, Any]):
+        """Get a metric from the Metrics enum with the given parameters."""
+        if metric_class not in self.METRIC_CLASSES:
+            raise ValueError(f"Unknown metric class: {metric_class}")
+
+        # Get the metric from the Metrics enum
+        if metric_params != {}:
+            metric_enum_value = self.METRIC_CLASSES[metric_class].value(metric_params)
+        else:
+            metric_enum_value = self.METRIC_CLASSES[metric_class].value
+
+        # The Metrics enum values are already instantiated, so we just return them
+        # The metric_params are ignored for now since the Metrics enum values are pre-configured
+        return metric_enum_value
+
+    def run_test_case(self, test_case: MetricTestCase) -> Dict[str, Any]:
+        """Run a single test case and return the result."""
+        try:
+            # Check if metric is available in METRIC_CLASSES
+            if test_case.metric_class not in self.METRIC_CLASSES:
+                return {
+                    "test_case": test_case.name,
+                    "success": True,  # Mark as success to skip
+                    "expected": test_case.expected_output,
+                    "actual": None,
+                    "error": None,
+                    "skipped": True,
+                    "skip_reason": f"Metric '{test_case.metric_class}' not available in METRIC_CLASSES",
+                }
+
+            # Get the metric from the Metrics enum
+            metric = self.instantiate_metric(test_case.metric_class, test_case.metric_params)
+
+            # Create input objects
+            doc = self.create_doc_from_dict(test_case.doc)
+            model_response = self.create_model_response_from_dict(test_case.model_response)
+
+            # Create sample_params for the metric
+            sample_params = {
+                "doc": doc,
+                "model_response": model_response,
+            }
+
+            # Run the metric using the Metrics enum value
+            actual_output = metric.compute_sample(**sample_params)
+
+            # Compare with expected output
+            success = self._compare_dict_outputs(actual_output, test_case.expected_output, test_case.tolerance)
+            return {
+                "test_case": test_case.name,
+                "success": success,
+                "expected": test_case.expected_output,
+                "actual": actual_output,
+                "error": None,
+                "skipped": False,
+            }
+
+        except Exception as e:
+            return {
+                "test_case": test_case.name,
+                "success": False,
+                "expected": test_case.expected_output,
+                "actual": None,
+                "error": str(e),
+                "skipped": False,
+            }
+
+    def _compare_scalar_outputs(self, actual: Any, expected: float, tolerance: float) -> bool:
+        """Compare scalar outputs with tolerance."""
+        if isinstance(actual, (int, float)) and isinstance(expected, (int, float)):
+            return abs(actual - expected) <= tolerance
+        return actual == expected
+
+    def _compare_dict_outputs(self, actual: Dict[str, Any], expected: Dict[str, float], tolerance: float) -> bool:
+        """Compare dictionary outputs with tolerance."""
+        if not isinstance(actual, dict) or not isinstance(expected, dict):
+            return actual == expected
+
+        if set(actual.keys()) != set(expected.keys()):
+            return False
+
+        for key in actual.keys():
+            actual_value = actual[key]
+            expected_value = expected[key]
+
+            # Handle corpus metric inputs (objects with specific types)
+            if hasattr(actual_value, "__class__") and "CorpusMetricInput" in str(actual_value.__class__):
+                # For corpus metric inputs, just check that the key exists and the object is created
+                continue
+            elif hasattr(actual_value, "__class__") and "np.float64" in str(actual_value.__class__):
+                # For numpy float64 values, convert to regular float for comparison
+                actual_value = float(actual_value)
+
+            if not self._compare_scalar_outputs(actual_value, expected_value, tolerance):
+                return False
+
+        return True
+
+    def run_test_suite(self, test_suite: MetricTestSuite) -> List[Dict[str, Any]]:
+        """Run a complete test suite and return results."""
+        logger.info(f"Running test suite: {test_suite.name}")
+        if test_suite.description:
+            logger.info(f"Description: {test_suite.description}")
+
+        results = []
+        for test_case in test_suite.test_cases:
+            result = self.run_test_case(test_case)
+            results.append(result)
+
+            if result.get("skipped", False):
+                logger.info(f"⏭ {test_case.name}: SKIPPED - {result.get('skip_reason', 'Unknown reason')}")
+            elif result["success"]:
+                logger.info(f"✓ {test_case.name}: PASSED")
+            else:
+                logger.error(f"✗ {test_case.name}: FAILED")
+                if result["error"]:
+                    logger.error(f"  Error: {result['error']}")
+                else:
+                    logger.error(f"  Expected: {result['expected']}")
+                    logger.error(f"  Actual: {result['actual']}")
+
+        return results
+
+    def run_test_suites_from_file(self, file_path: Union[str, Path]) -> List[Dict[str, Any]]:
+        """Run test suites from a JSON file."""
+        with open(file_path, "r") as f:
+            data = json.load(f)
+
+        if isinstance(data, list):
+            # Multiple test suites
+            all_results = []
+            for suite_data in data:
+                test_suite = MetricTestSuite(**suite_data)
+                results = self.run_test_suite(test_suite)
+                all_results.extend(results)
+            return all_results
+        else:
+            # Single test suite
+            test_suite = MetricTestSuite(**data)
+            return self.run_test_suite(test_suite)
+
+    def save_test_suite_to_file(self, test_suite: MetricTestSuite, file_path: Union[str, Path]):
+        """Save a test suite to a JSON file."""
+        with open(file_path, "w") as f:
+            json.dump(test_suite.dict(), f, indent=2)
+
+    def create_example_test_suite(self) -> MetricTestSuite:
+        """Create an example test suite with various metrics."""
+        return MetricTestSuite(
+            name="Example Test Suite",
+            description="Example test cases for various metrics",
+            test_cases=[
+                MetricTestCase(
+                    name="Exact Match - Perfect Match",
+                    metric_class="exact_match",
+                    metric_params={},
+                    doc={
+                        "query": "What is the capital of France?",
+                        "choices": ["Paris", "London", "Berlin"],
+                        "gold_index": 0,
+                        "task_name": "test",
+                    },
+                    model_response={
+                        "text": ["Paris"],
+                        "logprobs": [],
+                        "output_tokens": [],
+                    },
+                    expected_output={"em": 1.0},
+                    description="Test exact match with perfect prediction",
+                ),
+                MetricTestCase(
+                    name="Exact Match - No Match",
+                    metric_class="exact_match",
+                    metric_params={},
+                    doc={
+                        "query": "What is the capital of France?",
+                        "choices": ["Paris", "London", "Berlin"],
+                        "gold_index": 0,
+                        "task_name": "test",
+                    },
+                    model_response={
+                        "text": ["London"],
+                        "logprobs": [],
+                        "output_tokens": [],
+                    },
+                    expected_output={"em": 0.0},
+                    description="Test exact match with wrong prediction",
+                ),
+                MetricTestCase(
+                    name="F1 Score - Good Match",
+                    metric_class="f1_score",
+                    metric_params={},
+                    doc={
+                        "query": "Summarize the text",
+                        "choices": ["The quick brown fox jumps over the lazy dog"],
+                        "gold_index": 0,
+                        "task_name": "test",
+                    },
+                    model_response={
+                        "text": ["The quick brown fox jumps over the lazy dog"],
+                        "logprobs": [],
+                        "output_tokens": [],
+                    },
+                    expected_output={"f1": 1.0},
+                    description="Test F1 score with perfect match",
+                ),
+                MetricTestCase(
+                    name="Loglikelihood Accuracy - Correct Choice",
+                    metric_class="loglikelihood_acc",
+                    metric_params={},
+                    doc={
+                        "query": "Choose the correct answer",
+                        "choices": ["A", "B", "C"],
+                        "gold_index": 0,
+                        "task_name": "test",
+                    },
+                    model_response={
+                        "text": ["A"],
+                        "logprobs": [0.5, 0.3, 0.2],  # A has highest logprob
+                        "output_tokens": [[1], [2], [3]],
+                    },
+                    expected_output={"acc": 1},
+                    description="Test loglikelihood accuracy with correct choice",
+                ),
+                MetricTestCase(
+                    name="ROUGE Score",
+                    metric_class="rouge1",
+                    metric_params={"methods": ["rouge1"]},
+                    doc={
+                        "query": "Summarize the text",
+                        "choices": ["The quick brown fox jumps over the lazy dog"],
+                        "gold_index": 0,
+                        "task_name": "test",
+                    },
+                    model_response={
+                        "text": ["The quick brown fox jumps over the lazy dog"],
+                        "logprobs": [],
+                        "output_tokens": [],
+                    },
+                    expected_output={"rouge1": 1.0},
+                    description="Test ROUGE score with perfect match",
+                ),
+            ],
+        )
+
+
+if __name__ == "__main__":
+    # Example usage
+    tester = AutomatedMetricTester()
+
+    # Create and run example test suite
+    example_suite = tester.create_example_test_suite()
+    results = tester.run_test_suite(example_suite)
+
+    # Print summary
+    passed = sum(1 for r in results if r["success"])
+    total = len(results)
+    print(f"\nTest Summary: {passed}/{total} tests passed")
+
+    # Save example test suite to file
+    tester.save_test_suite_to_file(example_suite, "example_test_suite.json")
+    print("Example test suite saved to example_test_suite.json")

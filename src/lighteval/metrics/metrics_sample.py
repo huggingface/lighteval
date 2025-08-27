@@ -1125,6 +1125,7 @@ class SamplingMetric:
             else:
                 self.type_exact_match = "full"
             self.compute_score = self.default_sample_scoring
+            self.score_sample = self.default_sample_scoring
 
     def preprocess(self, text: str) -> str:
         if not text:
@@ -1182,7 +1183,7 @@ class AvgAtK(SamplingMetric, SampleLevelComputation):
         """
         all_scores = []
         for i in range(self.k):
-            all_scores.append(self.compute_score(doc, model_response[i]))
+            all_scores.append(self.score_sample(doc, model_response[i]))
 
         avg_score = np.mean(all_scores)
         return avg_score
@@ -1199,7 +1200,7 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
         self.k = k
         self.attribute_must_be_set = ["k"]
 
-    def compute(self, model_response: ModelResponse, docs: Doc):
+    def compute(self, doc: Doc, model_response: ModelResponse):
         """Computes the metric over a list of golds and predictions for one single sample.
         It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones,
         then compares it to the gold.
@@ -1213,15 +1214,15 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
         """
         if self.k is None:
             raise Exception("You did not set the value of k")
-        golds = docs.get_golds()
+        golds = doc.get_golds()
         if len(golds) > 1:
             raise Exception("Cannot compute maj@k with several golds")
 
-        processed_choices = [self.preprocess(text=g) for g in docs.get_golds()]
+        processed_choices = [self.preprocess(text=g) for g in doc.get_golds()]
         new_doc = Doc(
             choices=processed_choices,
-            query=docs.query,
-            gold_index=docs.gold_index,
+            query=doc.query,
+            gold_index=doc.gold_index,
         )
         all_answers = []
         for pred in model_response.final_text[: self.k]:
@@ -1230,7 +1231,7 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
         new_model_response = ModelResponse(
             text=[majority_prediction],
         )
-        return self.compute_score(new_model_response, new_doc)
+        return self.compute_score(new_doc, new_model_response)
 
     def num_samples(self):
         return self.k
