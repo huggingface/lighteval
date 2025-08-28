@@ -53,8 +53,7 @@ def divide_chunks(array, n):
 
 
 class TGIModelConfig(ModelConfig):
-    """
-    Configuration class for Text Generation Inference (TGI) backend.
+    """Configuration class for Text Generation Inference (TGI) backend.
 
     doc: https://huggingface.co/docs/text-generation-inference/en/index
 

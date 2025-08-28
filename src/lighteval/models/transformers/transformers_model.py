@@ -68,8 +68,7 @@ STARTING_BATCH_SIZE = 512
 
 
 class TransformersModelConfig(ModelConfig):
-    """
-    Configuration class for HuggingFace Transformers models.
+    """Configuration class for HuggingFace Transformers models.
 
     This configuration is used to load and configure models from the HuggingFace Transformers library.
 
@@ -374,8 +373,7 @@ class TransformersModel(LightevalModel):
         return model_parallel, max_mem_this_process, device_map
 
     def _create_auto_model(self) -> transformers.PreTrainedModel:
-        """
-        Creates an instance of the pretrained HF model.
+        """Creates an instance of the pretrained HF model.
 
         Returns:
             transformers.PreTrainedModel: The created auto model instance.
@@ -431,8 +429,7 @@ class TransformersModel(LightevalModel):
     def _create_auto_tokenizer(
         self,
     ) -> transformers.PreTrainedTokenizer:
-        """
-        Create a Hugging Face AutoTokenizer for language model.
+        """Create a Hugging Face AutoTokenizer for language model.
 
         Returns:
             transformers.PreTrainedTokenizer: The created tokenizer.
@@ -467,7 +464,6 @@ class TransformersModel(LightevalModel):
         Returns:
             int: Max length to use depending on the available args and config
         """
-
         if self.config.max_length is not None:
             return self.config.max_length
 
@@ -524,15 +520,13 @@ class TransformersModel(LightevalModel):
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
-            list[GenerateReturn]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         results = []
@@ -629,12 +623,10 @@ class TransformersModel(LightevalModel):
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
             list[ModelResponse]: list of generated responses.
@@ -882,10 +874,10 @@ class TransformersModel(LightevalModel):
         tokenized sequences.
 
         Args:
-            requests (list[Tuple[str, dict]]): _description_
+            docs (list[Doc]): List of documents containing the context and choices.
 
         Returns:
-            list[Tuple[float, bool]]: _description_
+            list[ModelResponse]: List of model responses with logprobs.
         """
         return self._loglikelihood_tokens(docs)
 
@@ -895,7 +887,6 @@ class TransformersModel(LightevalModel):
         docs: list[Doc],
     ) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
-
         return self._loglikelihood_tokens(
             docs,
             rolling=True,
@@ -1197,14 +1188,14 @@ class TransformersModel(LightevalModel):
     def pad_and_gather(
         self, output_tensor: torch.Tensor, drop_last_samples: bool = True, num_samples: int = None
     ) -> torch.Tensor:
-        """
-        Pads the `output_tensor` to the maximum length and gathers the lengths across processes.
+        """Pads the `output_tensor` to the maximum length and gathers the lengths across processes.
 
         Args:
             output_tensor (torch.Tensor): The output tensor to be padded.
             drop_last_samples (bool, optional): Whether to drop the last samples during gathering.
-            Last samples are dropped when the number of samples is not divisible by the number of processes.
+                Last samples are dropped when the number of samples is not divisible by the number of processes.
                 Defaults to True.
+            num_samples (int, optional): Number of samples per batch item.
 
         Returns:
             torch.Tensor: The padded output tensor and the gathered length tensor.

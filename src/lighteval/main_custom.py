@@ -72,9 +72,7 @@ def custom(
     max_samples: max_samples.type = max_samples.default,
     job_id: job_id.type = job_id.default,
 ):
-    """
-    Evaluate custom models (can be anything).
-    """
+    """Evaluate custom models (can be anything)."""
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 

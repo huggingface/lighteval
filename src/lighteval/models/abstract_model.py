@@ -39,8 +39,7 @@ TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]
 
 
 class ModelConfig(BaseModel, extra="forbid"):
-    """
-    Base configuration class for all model types in Lighteval.
+    """Base configuration class for all model types in Lighteval.
 
     This is the foundation class that all specific model configurations inherit from.
     It provides common functionality for parsing configuration from files and command-line arguments,
@@ -187,8 +186,7 @@ class LightevalModel(ABC):
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
             docs (list[Doc]): List of documents containing the context for generation.
@@ -225,9 +223,10 @@ class LightevalModel(ABC):
 
     def tok_encode_pair(self, context, continuations: list[str], pairwise: bool = False):
         """Encodes a context with a list of continuations by taking care of the spaces in between.
+
         Args:
             context (str): The context string to be encoded.
-            continuation (list[str]): List of continuation strings to be encoded.
+            continuations (list[str]): List of continuation strings to be encoded.
             pairwise (bool):
                 If True, encode context and continuations separately.
                 If False, encode them together and then split.

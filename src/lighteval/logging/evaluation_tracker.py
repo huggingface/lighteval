@@ -59,8 +59,7 @@ except ImportError:
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
-    """
-    Provides a proper json encoding for the loggers and trackers json dumps.
+    """Provides a proper json encoding for the loggers and trackers json dumps.
     Notably manages the json encoding of dataclasses.
     """
 

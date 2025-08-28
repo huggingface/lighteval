@@ -74,8 +74,7 @@ class DropMetrics(SampleLevelComputation):
         return normalized_spans, token_bags
 
     def _get_metrics(self, predicted: List[str], gold: List[str]):
-        """
-        Takes a predicted answer and a gold answer (that are both either a string or a list of
+        """Takes a predicted answer and a gold answer (that are both either a string or a list of
         strings), and returns exact match and the DROP F1 metric for the prediction.  If you are
         writing a script for evaluating objects in memory (say, the output of predictions during
         validation, or while training), this is the function you want to call, after using
@@ -117,8 +116,7 @@ class DropMetrics(SampleLevelComputation):
         return False
 
     def _align_bags(self, predicted: List[Set[str]], gold: List[Set[str]]) -> np.array:
-        """
-        Takes gold and predicted answer sets and first finds the optimal 1-1 alignment
+        """Takes gold and predicted answer sets and first finds the optimal 1-1 alignment
         between them and gets maximum metric values over all the answers.
         """
         scores = np.zeros([len(gold), len(predicted)])

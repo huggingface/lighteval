@@ -186,8 +186,7 @@ class LightevalTask:
         self,
         config: LightevalTaskConfig,
     ):
-        """
-        Initialize a LightEval task.
+        """Initialize a LightEval task.
 
         Args:
             config (dict): configuration dictionary containing
@@ -237,8 +236,7 @@ class LightevalTask:
                 self.num_samples.append(metric.sample_level_fn.num_samples())
 
     def get_first_possible_fewshot_splits(self, available_splits: ListLike[str]) -> str | None:
-        """
-        Parses the possible fewshot split keys in order: train, then validation
+        """Parses the possible fewshot split keys in order: train, then validation
         keys and matches them with the available keys.  Returns the first
         available.
 
@@ -263,8 +261,7 @@ class LightevalTask:
         return None
 
     def _get_docs_from_split(self, splits: list[str], few_shots=False) -> list[Doc]:
-        """
-        Get the documents from the dataset for the given keys (splits).
+        """Get the documents from the dataset for the given keys (splits).
 
         Args:
             splits (list[str]): List of dataset splits to process (e.g. ["train", "dev"])
@@ -309,8 +306,7 @@ class LightevalTask:
         return res
 
     def fewshot_docs(self) -> list[Doc]:
-        """
-        Returns the few shot documents. If the few shot documents are not
+        """Returns the few shot documents. If the few shot documents are not
         available, it gets them from the few shot split or the evaluation split.
 
         Returns:
@@ -329,8 +325,7 @@ class LightevalTask:
         return self._fewshot_docs
 
     def eval_docs(self) -> list[Doc]:
-        """
-        Returns the evaluation documents.
+        """Returns the evaluation documents.
 
         Returns:
             list[Doc]: Evaluation documents.
@@ -342,8 +337,7 @@ class LightevalTask:
         return self._docs
 
     def get_docs(self, max_samples: int | None = None) -> list[Doc]:
-        """
-        Get evaluation documents with few-shot examples and generation parameters configured.
+        """Get evaluation documents with few-shot examples and generation parameters configured.
 
         Retrieves evaluation documents, optionally limits the number of samples,
         shuffles them for reproducibility, and configures each document with
@@ -388,8 +382,7 @@ class LightevalTask:
         return docs
 
     def aggregation(self):
-        """
-        Return a dict with metric name and its aggregation function for all
+        """Return a dict with metric name and its aggregation function for all
         metrics
         """
         aggregations = {}
@@ -399,8 +392,7 @@ class LightevalTask:
 
     @staticmethod
     def load_datasets(tasks: dict[str, "LightevalTask"], dataset_loading_processes: int = 1) -> None:
-        """
-        Load datasets from the HuggingFace Hub for the given tasks.
+        """Load datasets from the HuggingFace Hub for the given tasks.
 
         Args:
             tasks (dict[str, LightevalTask]): Dictionary mapping task names to task objects.
@@ -410,7 +402,6 @@ class LightevalTask:
         Returns:
             None
         """
-
         if dataset_loading_processes <= 1:
             # Useful for the test suite: we can mock loading tasks by overwriting the
             # individual download_dataset_worker functions
@@ -429,8 +420,7 @@ class LightevalTask:
     def download_dataset_worker(
         task: "LightevalTask",
     ) -> DatasetDict:
-        """
-        Worker function to download a dataset from the HuggingFace Hub.
+        """Worker function to download a dataset from the HuggingFace Hub.
 
         Downloads the dataset specified in the task configuration, optionally
         applies a filter if configured, and returns the dataset dictionary.

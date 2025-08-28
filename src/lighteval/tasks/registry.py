@@ -108,13 +108,10 @@ TRUNCATE_FEW_SHOTS_DEFAULTS = True
 
 
 class Registry:
-    """
-    The Registry class is used to manage the task registry and get task classes.
-    """
+    """The Registry class is used to manage the task registry and get task classes."""
 
     def __init__(self, custom_tasks: str | Path | ModuleType | None = None):
-        """
-        Initialize the Registry with optional custom tasks.
+        """Initialize the Registry with optional custom tasks.
 
         The registry is responsible for holding a dictionary of tasks and their
         configurations, and initializing LightevalTask instances when requested.
@@ -129,7 +126,7 @@ class Registry:
                 Each custom task module should contain a TASKS_TABLE exposing
                 a list of LightevalTaskConfig objects.
 
-                Example:
+        Example:
                     TASKS_TABLE = [
                         LightevalTaskConfig(
                             name="custom_task",
@@ -144,8 +141,7 @@ class Registry:
         return {f"{config.full_name}": LightevalTask(config=config) for config in task_configs}
 
     def get_tasks_configs(self, task: str) -> list[LightevalTaskConfig]:
-        """
-        task is a string of the form "suite|task|few_shot|truncate_few_shots,suite|task|few_shot|truncate_few_shots"
+        """Task is a string of the form "suite|task|few_shot|truncate_few_shots,suite|task|few_shot|truncate_few_shots"
 
         returns a LightevalTaskConfig object based on the task name and fewshot and truncate_few_shots values.
         """
@@ -182,8 +178,7 @@ class Registry:
     @property
     @lru_cache
     def task_registry(self) -> dict[str, LightevalTaskConfig]:
-        """
-        Returns:
+        """Returns:
             dict[str, LazyLightevalTask]: A dictionary mapping task names (suite|task) to their corresponding LightevalTask classes.
 
         Example:
@@ -240,8 +235,7 @@ class Registry:
         return {**default_tasks_registry, **custom_tasks_registry}
 
     def taskinfo_selector(self, tasks: str) -> dict[str, list[dict]]:
-        """
-        Converts a input string of tasks name to task information usable by lighteval.
+        """Converts a input string of tasks name to task information usable by lighteval.
 
         Args:
             tasks (str): A string containing a comma-separated list of tasks definitions in the
@@ -321,8 +315,7 @@ class Registry:
     @property
     @lru_cache
     def _task_superset_dict(self):
-        """
-        Returns:
+        """Returns:
             dict[str, list[str]]: A dictionary where keys are task super set names (suite|task) and values are lists of task subset names (suite|task).
 
         Example:
@@ -339,8 +332,7 @@ class Registry:
     @property
     @lru_cache
     def task_groups_dict(self) -> dict[str, list[str]]:
-        """
-        Returns:
+        """Returns:
             dict[str, list[str]]: A dictionary where keys are task group names and values are lists of task names (suite|task).
 
         Example:
@@ -360,15 +352,14 @@ class Registry:
         return {k: v if isinstance(v, list) else v.split(",") for k, v in tasks_group_dict.items()}
 
     def expand_task_definition(self, task_definition: str):
-        """
-        Args:
+        """Args:
             task_definition (str): Task definition to expand. In format:
                 - suite|task
                 - suite|task_superset (e.g lighteval|mmlu, which runs all the mmlu subtasks)
+
         Returns:
             list[str]: List of task names (suite|task)
         """
-
         # Try if it's a task superset
         tasks = self._task_superset_dict.get(task_definition, None)
         if tasks is not None:
@@ -378,8 +369,7 @@ class Registry:
         return [task_definition]
 
     def print_all_tasks(self, suites: str | None = None):
-        """
-        Print all the tasks in the task registry.
+        """Print all the tasks in the task registry.
 
         Args:
             suites: Comma-separated list of suites to display. If None, shows core suites only.
@@ -465,8 +455,7 @@ class Registry:
 
     @staticmethod
     def create_task_config_dict(meta_table: list[LightevalTaskConfig] | None = None) -> dict[str, LightevalTaskConfig]:
-        """
-        Create configuration tasks based on the provided meta_table.
+        """Create configuration tasks based on the provided meta_table.
 
         Args:
             meta_table: meta_table containing tasks
@@ -477,7 +466,6 @@ class Registry:
         Returns:
             Dict[str, LightevalTask]: A dictionary of task names mapped to their corresponding LightevalTask classes.
         """
-
         if meta_table is None:
             meta_table = [config for config in vars(default_tasks).values() if isinstance(config, LightevalTaskConfig)]
 

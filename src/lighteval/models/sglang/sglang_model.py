@@ -52,8 +52,7 @@ else:
 
 
 class SGLangModelConfig(ModelConfig):
-    """
-    Configuration class for SGLang inference engine.
+    """Configuration class for SGLang inference engine.
 
     This configuration is used to load and configure models using the SGLang inference engine,
     which provides high-performance inference.
@@ -227,15 +226,13 @@ class SGLangModel(LightevalModel):
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
-            list[GenerateReturn]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         return self._greedy_until(docs)
 
@@ -325,7 +322,6 @@ class SGLangModel(LightevalModel):
         generate: bool = True,
     ) -> list:
         """Contains the actual logic of the generation."""
-
         logprob_start_len = None
         top_logprobs_num = None
         if generate:

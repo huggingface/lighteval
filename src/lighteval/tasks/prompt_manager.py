@@ -82,8 +82,7 @@ class PromptManager:
         )
 
     def prepare_prompt_api(self, doc: Doc) -> list[dict[str, str]]:
-        """
-        Prepare a prompt for API calls, using a chat-like format.
+        """Prepare a prompt for API calls, using a chat-like format.
         Will not tokenize the message because APIs will usually handle this.
         """
         return self._prepare_chat_template(doc, tokenize=False)

@@ -78,9 +78,7 @@ def accelerate(  # noqa C901
     max_samples: max_samples.type = max_samples.default,
     job_id: job_id.type = job_id.default,
 ):
-    """
-    Evaluate models using accelerate and transformers as backend.
-    """
+    """Evaluate models using accelerate and transformers as backend."""
     import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker

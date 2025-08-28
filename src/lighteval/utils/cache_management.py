@@ -48,8 +48,7 @@ class SampleType(Enum):
 
 
 class SampleCache:
-    """
-    Disk-based cache for sample evaluation results using HuggingFace datasets.
+    """Disk-based cache for sample evaluation results using HuggingFace datasets.
     The model hash is a hash of the model config, to make sure we rerun the eval if any parameter changes
     (generation param, model version, etc).
 
@@ -62,8 +61,7 @@ class SampleCache:
     """
 
     def __init__(self, model_config: ModelConfig):
-        """
-        Initialize the sample cache.
+        """Initialize the sample cache.
 
         Args:
             model_config: Configuration for the model being cached
@@ -170,8 +168,7 @@ class SampleCache:
             return asdict(result)
 
     def get_notcached_samples(self, docs: List[Doc], sample_type: SampleType) -> Tuple[List[Doc], Set]:
-        """
-        Identify which docs need processing based on cached indices.
+        """Identify which docs need processing based on cached indices.
 
         Returns:
             Tuple of (docs_not_cached, tasks_with_cached_samples) where
@@ -195,8 +192,7 @@ class SampleCache:
     def get_samples_from_cache(
         self, docs: List[Doc], task_names: list | set, sample_type: SampleType
     ) -> List[dict | ModelResponse]:
-        """
-        Get cached samples for the given docs.
+        """Get cached samples for the given docs.
         Warning: Assumes all docs and task_names provided are stored in cache, will fail otherwise.
 
         Returns:
@@ -277,8 +273,7 @@ class SampleCache:
 
 
 def cached(cache_type_name: str):  # noqa C901
-    """
-    Decorator to cache method results based on Doc inputs.
+    """Decorator to cache method results based on Doc inputs.
 
     Args:
         cache_type_name: Type of cache ("tokenization" or "predictions")

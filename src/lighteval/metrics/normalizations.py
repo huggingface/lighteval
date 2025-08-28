@@ -35,7 +35,8 @@ from lighteval.utils.language import Language
 def helm_normalizer(text: str) -> str:
     """Lower text and remove punctuation, articles and extra whitespace.
     Copied from the [QuAC](http://quac.ai/) evaluation script found at
-    https://s3.amazonaws.com/my89public/quac/scorer.py"""
+    https://s3.amazonaws.com/my89public/quac/scorer.py
+    """
 
     def remove_articles(text: str) -> str:
         return re.sub(r"\b(a|an|the)\b", " ", text)
@@ -96,8 +97,8 @@ def math_normalizer(text: str) -> str:  # noqa C901
     """Source: https://github.com/hendrycks/math"""
 
     def _remove_boxed(text: str | None) -> str:
-        """
-        Extract the text within a \\boxed{...} environment.
+        """Extract the text within a \\boxed{...} environment.
+
         Example:
         >>> _remove_boxed(\\boxed{\\frac{2}{3}})
         \\frac{2}{3}
@@ -148,8 +149,7 @@ def math_normalizer(text: str) -> str:  # noqa C901
         return retval
 
     def _fix_fracs(text: str) -> str:
-        """
-        Fix the formatting of fractions in the given text.
+        """Fix the formatting of fractions in the given text.
         Copied from: https://github.com/hendrycks/math/blob/357963a7f5501a6c1708cf3f3fb0cdf525642761/modeling/math_equivalence.py#L1
 
         Args:
@@ -199,6 +199,7 @@ def math_normalizer(text: str) -> str:  # noqa C901
     def _fix_a_slash_b(text: str) -> str:
         """Source: https://github.com/hendrycks/math
         Reformat fractions formatted as a/b to \\frac{a}{b}.
+
         Example:
         >>> _fix_a_slash_b("2/3")
         \frac{2}{3}
@@ -217,8 +218,7 @@ def math_normalizer(text: str) -> str:  # noqa C901
             return text
 
     def _remove_right_units(text: str) -> str:
-        """
-        Removes unit descriptions from LaTeX-formatted text, where units are indicated by "\\text{ }".
+        """Removes unit descriptions from LaTeX-formatted text, where units are indicated by "\\text{ }".
         This function splits the text at each "\\text{ " and returns the part before the first occurrence,
         effectively discarding any units and additional text following this pattern. This function also
         trims any trailing whitespace left after removing units.
@@ -258,6 +258,7 @@ def math_normalizer(text: str) -> str:  # noqa C901
     def _fix_sqrt(text: str) -> str:
         """Source: https://github.com/hendrycks/math
         Reformat square roots.
+
         Example:
         >>> _fix_sqrt("\\sqrt3")
         \\sqrt{3}
@@ -339,8 +340,7 @@ def math_normalizer(text: str) -> str:  # noqa C901
 
 
 def gsm8k_normalizer(text: str) -> str:
-    """
-    from https://github.com/openai/grade-school-math/blob/3101c7d5072418e28b9008a6636bde82a006892c/grade_school_math/dataset.py#L28
+    """From https://github.com/openai/grade-school-math/blob/3101c7d5072418e28b9008a6636bde82a006892c/grade_school_math/dataset.py#L28
 
     Args:
         text (str): input text
@@ -386,8 +386,7 @@ _ARTICLE_PATTERNS = {
 
 
 def remove_articles(text: str, lang: Language) -> str:
-    """
-    Removes definite and indefinite articles from the text.
+    """Removes definite and indefinite articles from the text.
     Generated using LLM then manually checked by non-expert.
     We currently only support languages that don't blend articles.
     If you are a native speaker of a language where articles are blended,
@@ -419,8 +418,7 @@ def get_multilingual_normalizer(lang: Language, lower: bool = True) -> Callable[
 # Loglikelihood normalization
 @dataclass
 class LogProbPMINorm:
-    """
-    Performs Pointwise mutual information normalization. log_likelihood_conditioned - log_likelihood_unconditioned.
+    """Performs Pointwise mutual information normalization. log_likelihood_conditioned - log_likelihood_unconditioned.
     Useful when answer contains generally unlikely tokens.
     """
 
@@ -429,8 +427,7 @@ class LogProbPMINorm:
 
 @dataclass
 class LogProbTokenNorm:
-    """
-    Performs token level normalization. log_likelihood/token_length.
+    """Performs token level normalization. log_likelihood/token_length.
     Useful for non-english languages.
     """
 
@@ -439,8 +436,7 @@ class LogProbTokenNorm:
 
 @dataclass
 class LogProbCharNorm:
-    """
-    Performs character level normalization. log_likelihood/char_length
+    """Performs character level normalization. log_likelihood/char_length
     ignore_first_space (bool, optional): Whether to ignore the first token's log prob (if it's a space only). Defaults to False.
         The only case when it should be True is when the possible choices (for example `A`,`B` ...) have an extra
         space added in front of them to manage tokenization issues (` A`, ` B`, ...) for some models.

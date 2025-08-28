@@ -43,8 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 class InferenceProvidersModelConfig(ModelConfig):
-    """
-    Configuration class for HuggingFace's inference providers (like Together AI, Anyscale, etc.).
+    """Configuration class for HuggingFace's inference providers (like Together AI, Anyscale, etc.).
 
     inference providers doc: https://huggingface.co/docs/inference-providers/en/index
 
@@ -202,12 +201,10 @@ class InferenceProvidersClient(LightevalModel):
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
             list[ModelResponse]: list of generated responses.

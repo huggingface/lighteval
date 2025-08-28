@@ -109,8 +109,7 @@ class GeneralConfigLogger:
         max_samples: int | None,
         job_id: str,
     ) -> None:
-        """
-        Logs the information about the arguments passed to the method.
+        """Logs the information about the arguments passed to the method.
 
         Args:
             num_fewshot_seeds (int): number of few-shot seeds.
@@ -122,8 +121,7 @@ class GeneralConfigLogger:
         self.job_id = job_id
 
     def log_model_info(self, model_config: ModelConfig) -> None:
-        """
-        Logs the model information.
+        """Logs the model information.
 
         Args:
             model_config: the model config used to initialize the model.
@@ -222,8 +220,7 @@ class DetailsLogger:
 
     @dataclass
     class Hash:
-        """
-        Hashes important values for one sample ([`Doc`]) of one task ([`LightevalTask`])
+        """Hashes important values for one sample ([`Doc`]) of one task ([`LightevalTask`])
 
         Attributes:
             example (str): Hash of the [`Doc.query`]
@@ -240,8 +237,7 @@ class DetailsLogger:
 
     @dataclass
     class CompiledHash:
-        """
-        Hashes the aggregated hash values for all the sample ([`Doc`]) of one task ([`LightevalTask`])
+        """Hashes the aggregated hash values for all the sample ([`Doc`]) of one task ([`LightevalTask`])
 
         Attributes:
             example (str): Aggregated hash of all the [`Doc.query`] hashes for all samples of the current task.
@@ -292,9 +288,7 @@ class DetailsLogger:
         self.hashes[task_name].append(hash)
 
     def aggregate(self):
-        """
-        Hashes the details for each task and then for all tasks.
-        """
+        """Hashes the details for each task and then for all tasks."""
         for task_name in self.hashes:
             compiled_hash = self.CompiledHash()
             compiled_hash.hash_examples = xxhash.xxh64(
@@ -347,14 +341,12 @@ class MetricsLogger:
             self.metrics_values[task_name][metric_name].append(metric_value)
 
     def aggregate(self, task_dict: dict[str, LightevalTask], bootstrap_iters: int = 1000):  # noqa: C901
-        """
-        Aggregate the metrics for each task and then for all tasks.
+        """Aggregate the metrics for each task and then for all tasks.
 
         Args:
             task_dict (dict[str, LightevalTask]): used to determine what aggregation function to use for each metric
             bootstrap_iters (int, optional): Number of runs used to run the statistical bootstrap. Defaults to 1000.
         """
-
         for task_name, metrics in self.metrics_values.items():
             task = task_dict[task_name]
 

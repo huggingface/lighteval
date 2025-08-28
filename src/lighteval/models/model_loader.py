@@ -61,8 +61,7 @@ logger = logging.getLogger(__name__)
 def load_model(  # noqa: C901
     config: ModelConfig,
 ) -> LightevalModel:
-    """
-    Load a model from a checkpoint, depending on the config type.
+    """Load a model from a checkpoint, depending on the config type.
 
     Args:
         config (ModelConfig): configuration of the model to load

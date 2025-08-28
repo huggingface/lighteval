@@ -70,8 +70,7 @@ class BatchCollator:
 
 
 class VLMTransformersModelConfig(ModelConfig):
-    """
-    Configuration class for VLM (image-text-to-text) models.
+    """Configuration class for VLM (image-text-to-text) models.
 
     Attributes:
         model_name (str):
@@ -148,7 +147,6 @@ class VLMTransformersModel(LightevalModel):
         config: VLMTransformersModelConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
-
         self.accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
         self.device = self.accelerator.device
         self.torch_dtype = _get_dtype(config.dtype)
@@ -295,8 +293,7 @@ class VLMTransformersModel(LightevalModel):
         return model
 
     def _create_auto_processor(self):
-        """
-        Create a transformers `Processor` for VLM (image-text-to-text) model.
+        """Create a transformers `Processor` for VLM (image-text-to-text) model.
 
         Returns:
             transformers.ProcessorMixin: The created processor.
@@ -346,8 +343,7 @@ class VLMTransformersModel(LightevalModel):
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
             docs (list[Docs]): list of docs containing the context and ending conditions.

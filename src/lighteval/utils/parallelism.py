@@ -39,8 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 def should_reduce_batch_size(exception: Exception) -> bool:
-    """
-    Checks if `exception` relates to CUDA out-of-memory, CUDNN not supported, or CPU out-of-memory
+    """Checks if `exception` relates to CUDA out-of-memory, CUDNN not supported, or CPU out-of-memory
 
     Args:
         exception (`Exception`):
@@ -58,8 +57,7 @@ def should_reduce_batch_size(exception: Exception) -> bool:
 
 
 def find_executable_batch_size(function: callable = None, starting_batch_size: int = 128):
-    """
-    A basic decorator that will try to execute `function`. If it fails from exceptions related to out-of-memory or
+    """A basic decorator that will try to execute `function`. If it fails from exceptions related to out-of-memory or
     CUDNN, the batch size is cut in half and passed to `function`
 
     `function` must take in a `batch_size` parameter as its first argument.
@@ -71,7 +69,6 @@ def find_executable_batch_size(function: callable = None, starting_batch_size: i
             The batch size to try and fit into memory
 
     Example:
-
     ```python
     >>> from lighteval.utils_parallelism import find_executable_batch_size
 
@@ -118,8 +115,7 @@ def find_executable_batch_size(function: callable = None, starting_batch_size: i
 
 
 def test_all_gather(accelerator=None, parallel_context=None):
-    """
-    Test the gather operation in a parallel setup.
+    """Test the gather operation in a parallel setup.
 
     Args:
         accelerator (Optional): The accelerator object used for parallelism.

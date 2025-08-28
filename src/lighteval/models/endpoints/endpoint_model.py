@@ -69,8 +69,7 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
 
 
 class ServerlessEndpointModelConfig(ModelConfig):
-    """
-    Configuration class for HuggingFace Inference API (inference endpoints).
+    """Configuration class for HuggingFace Inference API (inference endpoints).
 
     https://huggingface.co/inference-endpoints/dedicated
 
@@ -107,8 +106,7 @@ class ServerlessEndpointModelConfig(ModelConfig):
 
 
 class InferenceEndpointModelConfig(ModelConfig):
-    """
-    Configuration class for HuggingFace Inference Endpoints (dedicated infrastructure).
+    """Configuration class for HuggingFace Inference Endpoints (dedicated infrastructure).
 
     This configuration is used to create and manage dedicated inference endpoints
     on HuggingFace's infrastructure. These endpoints provide dedicated compute
