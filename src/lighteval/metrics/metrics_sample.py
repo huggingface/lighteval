@@ -1218,7 +1218,7 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
         if len(golds) > 1:
             raise Exception("Cannot compute maj@k with several golds")
 
-        processed_choices = [self.preprocess(text=g) for g in docs.get_golds()]
+        processed_choices = [self.preprocess(text=g) for g in doc.get_golds()]
         new_doc = Doc(
             choices=processed_choices,
             query=doc.query,

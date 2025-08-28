@@ -48,7 +48,7 @@ def test_custom_task_groups():
     """
     Tests that task info selector correctly handles custom task groups.
     """
-    registry = Registry(custom_tasks="tests.tasks.test_registry")
+    registry = Registry(custom_tasks="tests.unit.tasks.test_registry")
     task_info = registry.taskinfo_selector("zero_and_one")
 
     assert set(task_info.keys()) == {"custom|test_task_revision"}
@@ -62,7 +62,7 @@ def test_custom_tasks():
     """
     Tests that task info selector correctly handles custom tasks.
     """
-    registry = Registry(custom_tasks="tests.tasks.test_registry")
+    registry = Registry(custom_tasks="tests.unit.tasks.test_registry")
     task_info = registry.taskinfo_selector("custom|test_task_revision|0|0")
 
     assert list(task_info.keys()) == ["custom|test_task_revision"]
@@ -131,7 +131,7 @@ def test_task_group_expansion_with_subset_expansion():
     """
     Tests that task info selector correctly handles a group with task superset is provided.
     """
-    registry = Registry(custom_tasks="tests.tasks.test_registry")
+    registry = Registry(custom_tasks="tests.unit.tasks.test_registry")
 
     task_info = registry.taskinfo_selector("all_mmlu")
 
