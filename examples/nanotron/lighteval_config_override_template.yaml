@@ -20,4 +20,4 @@ tasks:
   max_samples: 10
   multichoice_continuations_start_space: null
   num_fewshot_seeds: null
-  tasks: lighteval|gsm8k|5|1
+  tasks: lighteval|gsm8k|5

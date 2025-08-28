@@ -197,7 +197,7 @@ COMMON_SENSE_REASONING_TASKS = [
 
 
 # 0 short for common sense
-COMMON_SENSE_REASONING_STRING = [(t, f"custom|{t.name}|0|1") for t in COMMON_SENSE_REASONING_TASKS]
+COMMON_SENSE_REASONING_STRING = [(t, f"custom|{t.name}|0") for t in COMMON_SENSE_REASONING_TASKS]
 _TASKS_STRINGS.extend(COMMON_SENSE_REASONING_STRING)
 _TASKS += COMMON_SENSE_REASONING_TASKS
 
@@ -239,8 +239,8 @@ WORLD_KNOWLEDGE_TASKS = [
 ]
 
 
-WORLD_KNOWLEDGE_STRING = [(t, f"custom|{t.name}|5|1") for t in WORLD_KNOWLEDGE_TASKS]
-# WORLD_KNOWLEDGE_STRING = {t: f'custom|{t.name}|0|1' for t in WORLD_KNOWLEDGE_TASKS}
+WORLD_KNOWLEDGE_STRING = [(t, f"custom|{t.name}|5") for t in WORLD_KNOWLEDGE_TASKS]
+# WORLD_KNOWLEDGE_STRING = {t: f'custom|{t.name}|0' for t in WORLD_KNOWLEDGE_TASKS}
 _TASKS_STRINGS.extend(WORLD_KNOWLEDGE_STRING)
 _TASKS += WORLD_KNOWLEDGE_TASKS
 
@@ -278,7 +278,7 @@ READING_COMP_TASKS = [
 ]
 
 
-READING_COMP_STRING = [(t, f"custom|{t.name}|0|1") for t in READING_COMP_TASKS]
+READING_COMP_STRING = [(t, f"custom|{t.name}|0") for t in READING_COMP_TASKS]
 _TASKS_STRINGS.extend(READING_COMP_STRING)
 _TASKS += READING_COMP_TASKS
 
@@ -342,8 +342,8 @@ GSM8K = LightevalTaskConfig(
 )
 
 
-MATH_STRING = [(t, f"custom|{t.name}|4|1") for t in MATH_TASKS]
-GSM8K_STRING = [(GSM8K, f"custom|{GSM8K.name}|8|1")]
+MATH_STRING = [(t, f"custom|{t.name}|4") for t in MATH_TASKS]
+GSM8K_STRING = [(GSM8K, f"custom|{GSM8K.name}|8")]
 _TASKS_STRINGS.extend(MATH_STRING)
 _TASKS_STRINGS.extend(GSM8K_STRING)
 _TASKS += MATH_TASKS + [GSM8K]
@@ -484,8 +484,8 @@ MMLU_TASKS = [
 ]
 
 
-# MMLU_STRING = {t: f'custom|{t.name}|5|1' for t in MMLU_TASKS}
-MMLU_STRING = [(t, f"custom|{t.name}|0|1") for t in MMLU_TASKS]
+# MMLU_STRING = {t: f'custom|{t.name}|5' for t in MMLU_TASKS}
+MMLU_STRING = [(t, f"custom|{t.name}|0") for t in MMLU_TASKS]
 _TASKS_STRINGS.extend(MMLU_STRING)
 _TASKS += MMLU_TASKS
 
@@ -571,8 +571,8 @@ BBH_TASKS = [
 ]
 
 
-# BBH_STRING = {t: f'custom|{t.name}|3|1' for t in BBH_TASKS}
-BBH_STRING = [(t, f"custom|{t.name}|0|1") for t in BBH_TASKS]
+# BBH_STRING = {t: f'custom|{t.name}|3' for t in BBH_TASKS}
+BBH_STRING = [(t, f"custom|{t.name}|0") for t in BBH_TASKS]
 _TASKS_STRINGS.extend(BBH_STRING)
 _TASKS += BBH_TASKS
 
@@ -687,8 +687,8 @@ AGIEVAL_TASKS = [
 ]
 
 
-# AGIEVAL_STRING = {t: f'custom|{t.name}|5|1' for t in AGIEVAL_TASKS}
-AGIEVAL_STRING = [(t, f"custom|{t.name}|0|1") for t in AGIEVAL_TASKS]
+# AGIEVAL_STRING = {t: f'custom|{t.name}|5' for t in AGIEVAL_TASKS}
+AGIEVAL_STRING = [(t, f"custom|{t.name}|0") for t in AGIEVAL_TASKS]
 _TASKS_STRINGS.extend(AGIEVAL_STRING)
 _TASKS += AGIEVAL_TASKS
 

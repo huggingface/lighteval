@@ -123,7 +123,7 @@ class CustomTUMLUTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=partial(tumlu_pfn, language=hf_subset),
             hf_repo="jafarisbarov/TUMLU-mini",
-            metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+            metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
             hf_avail_splits=["test", "dev"],
             evaluation_splits=["test"],
             few_shots_split=["dev"],

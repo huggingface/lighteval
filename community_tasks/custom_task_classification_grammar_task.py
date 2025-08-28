@@ -32,7 +32,7 @@ classifying text into one of six emotion categories: sadness, joy, love, anger, 
 Example usage:
     TGI endpoint evaluation:
     ```bash
-    uv run --active --extra litellm --extra tgi lighteval endpoint tgi examples/model_configs/tgi_model.yaml "custom|emotion_classification|0|0"
+    uv run --active --extra litellm --extra tgi lighteval endpoint tgi examples/model_configs/tgi_model.yaml "custom|emotion_classification|0"
     --custom-tasks examples/custom_tasks_templates/custom_task_classification_grammar_task.py
     --output-dir results
     --save-details
@@ -449,8 +449,8 @@ if __name__ == "__main__":
 
     print("\nUsage Examples:")
     print(
-        f"  TGI: uv run lighteval endpoint tgi config/tgi/tgi.yaml 'custom|{task.name}|0|0' --custom-tasks {__file__} --output-dir results --override-batch-size 1 --use-chat-template --save-details --no-public-run --max-samples 10"
+        f"  TGI: uv run lighteval endpoint tgi config/tgi/tgi.yaml 'custom|{task.name}|0' --custom-tasks {__file__} --output-dir results --override-batch-size 1 --use-chat-template --save-details --no-public-run --max-samples 10"
     )
     print(
-        f"  Full: uv run lighteval endpoint tgi config/tgi/tgi.yaml 'custom|{task.name}|5|1' --custom-tasks {__file__} --output-dir results --override-batch-size 1 --use-chat-template --save-details --no-public-run"
+        f"  Full: uv run lighteval endpoint tgi config/tgi/tgi.yaml 'custom|{task.name}|5' --custom-tasks {__file__} --output-dir results --override-batch-size 1 --use-chat-template --save-details --no-public-run"
     )

@@ -40,7 +40,7 @@ MODELS_ARGS = [
         "results_file": "tests/reference_scores/Qwen2.5-VL-3B-Instruct-results-vlm.json",
     }
 ]
-TASKS = "lighteval|mmmu_pro:standard-4|0|0"
+TASKS = "lighteval|mmmu_pro:standard-4|0"
 
 ModelInput = Tuple[str, Callable[[], dict]]
 

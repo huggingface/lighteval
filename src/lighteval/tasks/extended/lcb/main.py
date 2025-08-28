@@ -22,11 +22,11 @@
 """Usage:
 lighteval vllm \
     "pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=bfloat16,data_parallel_size=8,max_model_length=32768,gpu_memory_utilization=0.8,generation_parameters={temperature:0.6,top_p:0.95}" \
-    "extended|lcb:codegeneration|0|0"
+    "extended|lcb:codegeneration|0"
 
 lighteval vllm \
     "pretrained=Qwen/Qwen2.5-Coder-3B-Instruct,dtype=bfloat16,data_parallel_size=8,max_model_length=32768,gpu_memory_utilization=0.8,generation_parameters={temperature:0.2,top_p:0.95}" \
-    "extended|lcb:codegeneration|0|0"
+    "extended|lcb:codegeneration|0"
 """
 
 import json

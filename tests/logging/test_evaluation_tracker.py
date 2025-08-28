@@ -445,7 +445,6 @@ class TestProperties(unittest.TestCase):
                         "non_truncated": 0,
                         "padded": 0,
                         "non_padded": 0,
-                        "num_truncated_few_shots": 0,
                     },
                 )
 

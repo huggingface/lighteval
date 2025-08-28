@@ -69,7 +69,7 @@ class LocalMTClient(LightevalModel):
     where src and tgt are ISO language codes (2 or 3 letter codes supported).
 
     Example:
-        ```lighteval custom facebook/seamless-m4t-v2-large examples/custom_models/local_mt_model.py "lighteval|wmt20:fr-de|0|0" --max-samples 10 --save-details
+        ```lighteval custom facebook/seamless-m4t-v2-large examples/custom_models/local_mt_model.py "lighteval|wmt20:fr-de|0" --max-samples 10 --save-details
         ```
 
     Note:

@@ -42,7 +42,7 @@ from typing import Any
 from langcodes import Language as LangCodeLanguage
 from langcodes import standardize_tag
 
-from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
+from lighteval.metrics.dynamic_metrics import LogLikelihoodAccMetric
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import (
     LogProbCharNorm,
@@ -87,8 +87,8 @@ FILIPINO_BALITA_TASKS = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -117,8 +117,8 @@ FILIPINO_BELEBELE_TASKS = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
     )
@@ -154,9 +154,9 @@ FILIPINO_CEBUANER_TASKS = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
         version=0,
@@ -191,9 +191,9 @@ FILIPINO_READABILITY_TASKS = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
         hf_avail_splits=["test"],
@@ -275,9 +275,9 @@ FILIPINO_FIRECS_TASK = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
         hf_avail_splits=["train", "test"],
@@ -327,9 +327,9 @@ FILIPINO_GLOBAL_MMLU_TASKS = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
     )
@@ -360,9 +360,9 @@ FILIPINO_INCLUDE_TASKS = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
         hf_avail_splits=["test"],
@@ -396,9 +396,9 @@ FILIPINO_KALAHI_TASKS = [
         hf_subset="default",
         evaluation_splits=["tl"],
         metrics=[
-            loglikelihood_acc_metric(normalization=None),
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            LogLikelihoodAccMetric(normalization=None),
+            LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+            LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
         ],
     )
     for formulation in [HybridFormulation(), MCFFormulation()]
@@ -427,9 +427,9 @@ FILIPINO_NEWSPH_NLI_TASKS = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=None),
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=None),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
         trust_dataset=True,
@@ -509,9 +509,9 @@ def create_sib200_task(language: Language, formulation):
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
         hf_avail_splits=["test", "validation"],
@@ -565,9 +565,9 @@ FILIPINO_STINGRAY_CORRECTNESS_TASKS = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
         hf_avail_splits=["test"],
@@ -595,9 +595,9 @@ FILIPINO_STINGRAY_SEMANTIC_TASKS = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
         hf_avail_splits=["test"],
@@ -718,9 +718,9 @@ FILIPINO_TLUNIFIED_NER_TASK = [
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
         version=0,
@@ -762,9 +762,9 @@ def create_universalner_task(language: Language, formulation):
         metrics=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbPMINorm()),
             ],
         ),
         version=0,

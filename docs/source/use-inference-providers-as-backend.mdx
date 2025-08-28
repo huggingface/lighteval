@@ -12,7 +12,7 @@ Lighteval allows to use Hugging Face's Inference Providers to evaluate llms on s
 ```bash
 lighteval endpoint inference-providers \
     "model_name=deepseek-ai/DeepSeek-R1,provider=hf-inference" \
-    "lighteval|gsm8k|0|0"
+    "lighteval|gsm8k|0"
 ```
 
 ## Using a config file
@@ -22,7 +22,7 @@ You can use config files to define the model and the provider to use.
 ```bash
 lighteval endpoint inference-providers \
     examples/model_configs/inference_providers.yaml \
-    "lighteval|gsm8k|0|0"
+    "lighteval|gsm8k|0"
 ```
 
 with the following config file:

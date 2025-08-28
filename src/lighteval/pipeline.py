@@ -39,7 +39,7 @@ from lighteval.models.model_loader import TransformersModel, load_model
 from lighteval.models.model_output import (
     ModelResponse,
 )
-from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
+from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.registry import Registry
 from lighteval.tasks.requests import SamplingMethod
 from lighteval.utils.imports import (
@@ -241,13 +241,10 @@ class Pipeline:
         logger.info("--- LOADING TASKS ---")
 
         # The registry contains all the potential tasks
-        registry = Registry(
-            custom_tasks=self.pipeline_parameters.custom_tasks_directory,
-        )
+        registry = Registry(tasks=tasks, custom_tasks=self.pipeline_parameters.custom_tasks_directory)
 
-        # load the tasks fro the configs and their datasets
-        task_configs: list[LightevalTaskConfig] = registry.get_tasks_configs(tasks)
-        self.tasks_dict: dict[str, LightevalTask] = registry.get_tasks_from_configs(task_configs)
+        # load the tasks from the configs and their datasets
+        self.tasks_dict: dict[str, LightevalTask] = registry.load_tasks()
         LightevalTask.load_datasets(self.tasks_dict, self.pipeline_parameters.dataset_loading_processes)
         self.documents_dict = {
             task.full_name: task.get_docs(self.pipeline_parameters.max_samples) for _, task in self.tasks_dict.items()

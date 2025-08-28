@@ -1669,6 +1669,16 @@ def _get_sentence_tokenizer():
     return nltk.data.load("nltk:tokenizers/punkt/english.pickle")
 
 
+def count_stopwords(text):
+    """Counts the number of stopwords."""
+    nltk.download("stopwords")
+    stopwords = nltk.corpus.stopwords.words("english")
+    tokenizer = nltk.tokenize.RegexpTokenizer(r"\w+")
+    tokens = tokenizer.tokenize(text)
+    num_stopwords = len([t for t in tokens if t.lower() in stopwords])
+    return num_stopwords
+
+
 def count_sentences(text):
     """Count the number of sentences."""
     tokenizer = _get_sentence_tokenizer()

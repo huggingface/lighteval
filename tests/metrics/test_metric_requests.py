@@ -43,7 +43,7 @@ def dummy_prompt_fc(line, task_name: str = ""):
 
 
 def get_pmi_task(metrics: list[Metric]):
-    return LightevalTaskConfig(
+    config = LightevalTaskConfig(
         name="pmi_test_task",
         metrics=metrics,
         suite=["test"],
@@ -52,6 +52,10 @@ def get_pmi_task(metrics: list[Metric]):
         hf_subset=xstory_cloze_en_lighteval.hf_subset,
         evaluation_splits=xstory_cloze_en_lighteval.evaluation_splits,
     )
+    # This is manually edited when updating the config and in the post init function
+    #  - we need to get a more homogeneous system for naming...
+    config.full_name = "test|pmi_test_task|0"
+    return config
 
 
 def test_pmi_request():
@@ -72,9 +76,10 @@ def test_pmi_request():
     metric = LogLikelihoodAccMetric(normalization=LogProbPMINorm())
     pmi_test_config = get_pmi_task(metrics=[metric])
     task = LightevalTask(pmi_test_config)
-    result = fake_evaluate_task(task, fake_model, max_samples=1)["results"]["test:pmi_test_task:0"]
+    evaluation = fake_evaluate_task(task, fake_model, max_samples=1)
+    results = evaluation["results"]["test:pmi_test_task:0"]
     # Correct choice after norm should be the second one so 0 acc
-    assert result[metric.metric_name] == 0
+    assert results[metric.metric_name] == 0
 
 
 def test_pmi_request_with_logprob_metric():

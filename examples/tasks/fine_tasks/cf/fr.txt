@@ -1,16 +1,16 @@
 # General Knowledge (GK)
-lighteval|meta_mmlu_fra_cf|0|1
-lighteval|mlmm_arc_fra_cf:challenge|0|1
-lighteval|mintaka_fra|0|1
+lighteval|meta_mmlu_fra_cf|0
+lighteval|mlmm_arc_fra_cf:challenge|0
+lighteval|mintaka_fra|0
 
 # Reading Comprehension (RC)
-lighteval|belebele_fra_Latn_cf|0|1
-lighteval|fquadv2_fra|0|1
+lighteval|belebele_fra_Latn_cf|0
+lighteval|fquadv2_fra|0
 
 # Reasoning (RES)
-lighteval|xcodah_fra_cf|0|1
-lighteval|xcsqa_fra_cf|0|1
+lighteval|xcodah_fra_cf|0
+lighteval|xcsqa_fra_cf|0
 
 # Natural Language Understanding (NLU)
-lighteval|mlmm_hellaswag_fra_cf|0|1
-lighteval|xnli2.0_fra_cf|0|1
+lighteval|mlmm_hellaswag_fra_cf|0
+lighteval|xnli2.0_fra_cf|0
