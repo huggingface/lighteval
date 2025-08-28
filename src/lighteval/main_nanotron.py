@@ -28,11 +28,10 @@ from typer import Option
 from typing_extensions import Annotated
 from yaml import SafeLoader
 
-
-HELP_PANEL_NAME_1 = "Common Parameters"
-HELP_PANEL_NAME_2 = "Logging Parameters"
-HELP_PANEL_NAME_3 = "Debug Parameters"
-HELP_PANEL_NAME_4 = "Modeling Parameters"
+from lighteval.cli_args import (
+    reasoning_tags,
+    remove_reasoning_tags,
+)
 
 
 SEED = 1234
@@ -43,20 +42,8 @@ def nanotron(
         str, Option(help="Path to the nanotron checkpoint YAML or python config file, potentially on s3.")
     ],
     lighteval_config_path: Annotated[str, Option(help="Path to a YAML config to be used for the evaluation.")],
-    remove_reasoning_tags: Annotated[
-        bool | None,
-        Option(
-            help="Remove reasoning tags from responses (true to remove, false to leave - true by default).",
-            rich_help_panel=HELP_PANEL_NAME_1,
-        ),
-    ] = True,
-    reasoning_tags: Annotated[
-        str | None,
-        Option(
-            help="List of reasoning tags (provided as pairs) to remove from responses. Default is [('<think>', '</think>')].",
-            rich_help_panel=HELP_PANEL_NAME_1,
-        ),
-    ] = None,
+    remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
+    reasoning_tags: reasoning_tags.type = reasoning_tags.default,
 ):
     """
     Evaluate models using nanotron as backend.
