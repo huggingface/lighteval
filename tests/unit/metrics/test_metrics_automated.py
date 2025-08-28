@@ -159,55 +159,44 @@ class AutomatedMetricTester:
 
     def run_test_case(self, test_case: MetricTestCase) -> Dict[str, Any]:
         """Run a single test case and return the result."""
-        try:
-            # Check if metric is available in METRIC_CLASSES
-            if test_case.metric_class not in self.METRIC_CLASSES:
-                return {
-                    "test_case": test_case.name,
-                    "success": True,  # Mark as success to skip
-                    "expected": test_case.expected_output,
-                    "actual": None,
-                    "error": None,
-                    "skipped": True,
-                    "skip_reason": f"Metric '{test_case.metric_class}' not available in METRIC_CLASSES",
-                }
-
-            # Get the metric from the Metrics enum
-            metric = self.instantiate_metric(test_case.metric_class, test_case.metric_params)
-
-            # Create input objects
-            doc = self.create_doc_from_dict(test_case.doc)
-            model_response = self.create_model_response_from_dict(test_case.model_response)
-
-            # Create sample_params for the metric
-            sample_params = {
-                "doc": doc,
-                "model_response": model_response,
-            }
-
-            # Run the metric using the Metrics enum value
-            actual_output = metric.compute_sample(**sample_params)
-
-            # Compare with expected output
-            success = self._compare_dict_outputs(actual_output, test_case.expected_output, test_case.tolerance)
+        # Check if metric is available in METRIC_CLASSES
+        if test_case.metric_class not in self.METRIC_CLASSES:
             return {
                 "test_case": test_case.name,
-                "success": success,
-                "expected": test_case.expected_output,
-                "actual": actual_output,
-                "error": None,
-                "skipped": False,
-            }
-
-        except Exception as e:
-            return {
-                "test_case": test_case.name,
-                "success": False,
+                "success": True,  # Mark as success to skip
                 "expected": test_case.expected_output,
                 "actual": None,
-                "error": str(e),
-                "skipped": False,
+                "error": None,
+                "skipped": True,
+                "skip_reason": f"Metric '{test_case.metric_class}' not available in METRIC_CLASSES",
             }
+
+        # Get the metric from the Metrics enum
+        metric = self.instantiate_metric(test_case.metric_class, test_case.metric_params)
+
+        # Create input objects
+        doc = self.create_doc_from_dict(test_case.doc)
+        model_response = self.create_model_response_from_dict(test_case.model_response)
+
+        # Create sample_params for the metric
+        sample_params = {
+            "doc": doc,
+            "model_response": model_response,
+        }
+
+        # Run the metric using the Metrics enum value
+        actual_output = metric.compute_sample(**sample_params)
+
+        # Compare with expected output
+        success = self._compare_dict_outputs(actual_output, test_case.expected_output, test_case.tolerance)
+        return {
+            "test_case": test_case.name,
+            "success": success,
+            "expected": test_case.expected_output,
+            "actual": actual_output,
+            "error": None,
+            "skipped": False,
+        }
 
     def _compare_scalar_outputs(self, actual: Any, expected: float, tolerance: float) -> bool:
         """Compare scalar outputs with tolerance."""
