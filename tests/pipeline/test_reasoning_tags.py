@@ -146,7 +146,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             model = TestDummyModel(DummyModelConfig(seed=42))
 
             pipeline = Pipeline(
-                tasks="test|test_reasoning_task|0|0",
+                tasks="test|test_reasoning_task|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
@@ -192,7 +192,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             model = TestDummyModel(DummyModelConfig(seed=42))
 
             pipeline = Pipeline(
-                tasks="test|test_reasoning_task|0|0",
+                tasks="test|test_reasoning_task|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
@@ -235,7 +235,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             model = TestDummyModel(DummyModelConfig(seed=42))
 
             pipeline = Pipeline(
-                tasks="test|test_reasoning_task|0|0",
+                tasks="test|test_reasoning_task|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
@@ -281,7 +281,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             model = TestDummyModel(DummyModelConfig(seed=42))
 
             pipeline = Pipeline(
-                tasks="test|test_reasoning_task|0|0",
+                tasks="test|test_reasoning_task|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
@@ -327,7 +327,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             model = TestDummyModel(DummyModelConfig(seed=42))
 
             pipeline = Pipeline(
-                tasks="test|test_reasoning_task|0|0",
+                tasks="test|test_reasoning_task|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
@@ -373,7 +373,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             model = TestDummyModel(DummyModelConfig(seed=42))
 
             pipeline = Pipeline(
-                tasks="test|test|test_reasoning_task|0|0",
+                tasks="test|test|test_reasoning_task|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,

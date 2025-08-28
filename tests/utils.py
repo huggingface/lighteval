@@ -106,7 +106,7 @@ def fake_evaluate_task(
 
     class FakeRegistry(Registry):
         def __init__(self, tasks: Optional[str], custom_tasks: Optional[Union[str, Path, ModuleType]] = None):
-            super().__init__(custom_tasks=custom_tasks)
+            super().__init__(tasks=tasks, custom_tasks=custom_tasks)
 
         def get_task_dict(self, task_names: list[str]):
             return task_dict

@@ -100,7 +100,6 @@ class LightevalTaskConfig:
     must_remove_duplicate_docs: bool = False
 
     num_fewshots: int = 0
-    truncate_fewshots: bool = False
 
     version: int = 0
 

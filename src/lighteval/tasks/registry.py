@@ -109,8 +109,6 @@ OPTIONAL_SUITES = [
 
 DEFAULT_SUITES = CORE_SUITES + OPTIONAL_SUITES
 
-TRUNCATE_FEW_SHOTS_DEFAULTS = True
-
 
 class Registry:
     """
@@ -192,6 +190,9 @@ class Registry:
             if len(expanded_tasks) > 1:
                 logger.info(f"Expanding task group {maybe_task_group} to {expanded_tasks}")
             expanded_tasks_list.extend(expanded_tasks)
+
+        # We remove exact duplicates
+        expanded_tasks_list = list(set(expanded_tasks_list))
 
         return expanded_tasks_list
 
@@ -281,23 +282,17 @@ class Registry:
         for task in self.tasks_list:
             metric_params_dict = {}
             try:
-                suite_name, task_name, few_shot, truncate_few_shots = tuple(task.split("|"))
+                suite_name, task_name, few_shot = tuple(task.split("|"))
                 if "@" in task_name:
-                    task_name, metric_params = task_name.split("@")
-                    # We convert k:v,k2:v2 to {"k": "v", "k2": "v2"}, then to correct type
-                    metric_params_dict = dict(item.split("=") for item in metric_params.split(",") if item)
+                    split_task_name = task_name.split("@")
+                    task_name, metric_params = split_task_name[0], split_task_name[1:]
+                    # We convert k:v to {"k": "v"}, then to correct type
+                    metric_params_dict = dict(item.split("=") for item in metric_params if item)
                     metric_params_dict = {k: ast.literal_eval(v) for k, v in metric_params_dict.items()}
-
-                truncate_few_shots = int(truncate_few_shots)
-                if truncate_few_shots not in [0, 1]:
-                    raise ValueError(f"TruncateFewShots must be 0 or 1, got {truncate_few_shots}")
-                truncate_few_shots = bool(truncate_few_shots)
                 few_shot = int(few_shot)
 
             except ValueError:
-                raise ValueError(
-                    f"Cannot get task info from {task}. correct format is suite|task|few_shot|truncate_few_shots"
-                )
+                raise ValueError(f"Cannot get task info from {task}. correct format is suite|task|few_shot")
 
             # This adds support for task supersets (eg: mmlu -> all the mmlu tasks)
             for expanded_task in self._expand_task_definition(f"{suite_name}|{task_name}"):
@@ -310,7 +305,6 @@ class Registry:
 
                 config = copy.deepcopy(config)
                 config.num_fewshots = few_shot
-                config.truncate_fewshots = truncate_few_shots
                 config.full_name = f"{expanded_task}|{config.num_fewshots}"
                 # If some tasks are parametrizable and in cli, we set attributes here
                 for metric in [m for m in config.metrics if "@" in m.metric_name]:  # parametrizable metric
@@ -324,7 +318,7 @@ class Registry:
                                 f"was not correctly parametrized. Forgot to set '{attribute}'."
                             )
 
-                task_to_configs[expanded_task] = config
+                task_to_configs[expanded_task].append(config)
 
         return task_to_configs
 
@@ -333,7 +327,11 @@ class Registry:
             return {f"{config.full_name}": LightevalTask(config=config) for config in self._task_registry.values()}
 
         # We return only the tasks of interest
-        return {f"{config.full_name}": LightevalTask(config=config) for config in self.task_to_configs.values()}
+        return {
+            f"{config.full_name}": LightevalTask(config=config)
+            for configs in self.task_to_configs.values()
+            for config in configs
+        }
 
     @property
     @lru_cache
