@@ -61,11 +61,13 @@ class TestPipelineReasoningTags(unittest.TestCase):
             stop_sequence=["\n"],
             num_fewshots=0,
         )
+        self.input_task_name = "test|test_reasoning_task|0"
+        self.task_config_name = self.task_config.full_name
 
         # Create test documents with reasoning tags in expected responses
         self.test_docs = [
             Doc(
-                task_name="test|test_reasoning_task|0",
+                task_name=self.input_task_name,
                 query="What is 2+2?",
                 choices=["4"],
                 gold_index=[0],
@@ -77,7 +79,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
         # Mock dataset
         self.mock_dataset = {"test": self.test_docs}
 
-    def _mock_task_registry(self, task_config, task_docs, responses_with_reasoning_tags):
+    def _mock_task_registry(self, input_task_name, task_config, task_docs, responses_with_reasoning_tags):
         """Create a fake registry for testing."""
 
         class FakeTask(LightevalTask):
@@ -96,13 +98,12 @@ class TestPipelineReasoningTags(unittest.TestCase):
             def __init__(
                 self, tasks: Optional[str] = None, custom_tasks: Optional[Union[str, Path, ModuleType]] = None
             ):
-                super().__init__(tasks=tasks, custom_tasks=custom_tasks)
+                self.tasks_list = [input_task_name]
+                # suite_name, task_name, few_shot = input_task_name.split("|")
+                self.task_to_configs = {input_task_name: [task_config]}
 
-            def get_tasks_configs(self, task: str):
-                return [task_config]
-
-            def get_tasks_from_configs(self, tasks_configs):
-                return {f"{task_config.suite[0]}|{task_config.full_name}": FakeTask(task_config)}
+            def load_tasks(self):
+                return {input_task_name: FakeTask(config=task_config)}
 
         # Create a DummyModel that returns responses with reasoning tags
         class TestDummyModel(DummyModel):
@@ -124,7 +125,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
         ]
 
         FakeRegistry, TestDummyModel = self._mock_task_registry(
-            self.task_config, self.test_docs, responses_with_reasoning
+            self.input_task_name, self.task_config, self.test_docs, responses_with_reasoning
         )
 
         # Initialize accelerator if available
@@ -170,7 +171,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
         ]
 
         FakeRegistry, TestDummyModel = self._mock_task_registry(
-            self.task_config, self.test_docs, responses_with_reasoning
+            self.input_task_name, self.task_config, self.test_docs, responses_with_reasoning
         )
 
         # Initialize accelerator if available
@@ -216,7 +217,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
         ]
 
         FakeRegistry, TestDummyModel = self._mock_task_registry(
-            self.task_config, self.test_docs, responses_with_reasoning
+            self.input_task_name, self.task_config, self.test_docs, responses_with_reasoning
         )
 
         # Initialize accelerator if available
@@ -259,7 +260,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
         ]
 
         FakeRegistry, TestDummyModel = self._mock_task_registry(
-            self.task_config, self.test_docs, responses_with_reasoning
+            self.input_task_name, self.task_config, self.test_docs, responses_with_reasoning
         )
 
         # Initialize accelerator if available
@@ -305,7 +306,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
         ]
 
         FakeRegistry, TestDummyModel = self._mock_task_registry(
-            self.task_config, self.test_docs, responses_with_reasoning
+            self.input_task_name, self.task_config, self.test_docs, responses_with_reasoning
         )
 
         # Initialize accelerator if available
@@ -351,7 +352,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
         ]
 
         FakeRegistry, TestDummyModel = self._mock_task_registry(
-            self.task_config, self.test_docs, responses_with_reasoning
+            self.input_task_name, self.task_config, self.test_docs, responses_with_reasoning
         )
 
         # Initialize accelerator if available

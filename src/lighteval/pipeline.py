@@ -245,7 +245,7 @@ class Pipeline:
         # The registry contains all the potential tasks
         registry = Registry(tasks=tasks, custom_tasks=self.pipeline_parameters.custom_tasks_directory)
 
-        # load the tasks fro the configs and their datasets
+        # load the tasks from the configs and their datasets
         self.tasks_dict: dict[str, LightevalTask] = registry.load_tasks()
         LightevalTask.load_datasets(self.tasks_dict, self.pipeline_parameters.dataset_loading_processes)
         self.documents_dict = {

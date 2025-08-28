@@ -113,7 +113,7 @@ class LightevalTaskConfig:
         self.evaluation_splits = tuple(self.evaluation_splits)
         self.suite = tuple(self.suite)
         self.stop_sequence = self.stop_sequence if self.stop_sequence is not None else ()
-        self.full_name = f"{self.name}|{self.num_fewshots}"
+        self.full_name = f"{self.name}|{self.num_fewshots}"  # todo clefourrier: this is likely incorrect
 
     def print(self):
         md_writer = MarkdownTableWriter()

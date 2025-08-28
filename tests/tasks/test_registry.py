@@ -95,7 +95,7 @@ def test_superset_with_subset_task():
     registry = Registry(tasks="original|mmlu|3,original|mmlu:abstract_algebra|5")
 
     # We have all mmlu tasks
-    assert registry.tasks_list == ["original|mmlu|3", "original|mmlu:abstract_algebra|5"]
+    assert set(registry.tasks_list) == {"original|mmlu|3", "original|mmlu:abstract_algebra|5"}
     assert len(registry.task_to_configs.keys()) == 57
 
     task_info: list[LightevalTaskConfig] = registry.task_to_configs["original|mmlu:abstract_algebra"]
