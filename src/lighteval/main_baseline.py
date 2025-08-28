@@ -21,32 +21,21 @@
 # SOFTWARE.
 
 
-from typing import Optional
-
-from typer import Argument, Option
-from typing_extensions import Annotated
-
-
-HELP_PANEL_NAME_1 = "Common Parameters"
-HELP_PANEL_NAME_2 = "Logging Parameters"
-HELP_PANEL_NAME_3 = "Debug Parameters"
-HELP_PANEL_NAME_4 = "Modeling Parameters"
+from lighteval.cli_args import (
+    custom_tasks,
+    dataset_loading_processes,
+    max_samples,
+    output_dir,
+    tasks,
+)
 
 
 def baseline(
-    tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
-    custom_tasks: Annotated[
-        Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = None,
-    dataset_loading_processes: Annotated[
-        int, Option(help="Number of processes to use for dataset loading.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = 1,
-    output_dir: Annotated[
-        str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = "results",
-    max_samples: Annotated[
-        Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
-    ] = None,
+    tasks: tasks.type,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
+    dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
+    output_dir: output_dir.type = output_dir.default,
+    max_samples: max_samples.type = max_samples.default,
 ):
     """
     Compute baselines for given tasks.
