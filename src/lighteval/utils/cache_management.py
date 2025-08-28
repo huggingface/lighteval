@@ -114,7 +114,11 @@ class SampleCache:
         return cached_indices
 
     def get_model_hash(self, model_config: ModelConfig) -> str:
-        """Create a hash for model configuration."""
+        """Create a hash for model configuration.
+
+        Returns:
+            str: A 16-character hexadecimal hash of the model configuration
+        """
         # Use Pydantic's model_dump instead of asdict for BaseModel
         config_dict = model_config.model_dump()
         config_str = json.dumps(config_dict, sort_keys=True, default=str)
@@ -286,6 +290,9 @@ def cached(cache_type_name: str):  # noqa C901
         @cached("predictions")
         def greedy_until(self, docs: List[Doc], ...):
             # method implementation
+
+    Returns:
+        Callable: A decorator function that wraps the original function with caching functionality
     """
 
     def decorator(func: Callable):  # noqa C901

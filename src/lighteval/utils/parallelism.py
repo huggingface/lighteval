@@ -44,6 +44,9 @@ def should_reduce_batch_size(exception: Exception) -> bool:
     Args:
         exception (`Exception`):
             An exception
+
+    Returns:
+        bool: True if the exception is related to memory issues that can be resolved by reducing batch size
     """
     _statements = [
         "CUDA out of memory.",  # CUDA OOM
@@ -80,6 +83,9 @@ def find_executable_batch_size(function: callable = None, starting_batch_size: i
 
     >>> train(model, optimizer)
     ```
+
+    Returns:
+        Callable: A decorator function that automatically adjusts batch size to fit in memory
     """
     if function is None:
         return functools.partial(find_executable_batch_size, starting_batch_size=starting_batch_size)

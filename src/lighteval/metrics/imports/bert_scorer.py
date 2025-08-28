@@ -116,6 +116,9 @@ def get_bert_embedding(
         batch_size (int): batch size for processing, -1 for all sentences.
         device (str): device to use, e.g. 'cpu' or 'cuda'.
         all_layers (bool): whether to return all layers or just the last layer.
+
+    Returns:
+        tuple: A tuple containing (total_embedding, mask, padded_idf)
     """
     padded_sens, padded_idf, _, mask = collate_idf(all_sens, tokenizer, idf_dict, device=device)
 

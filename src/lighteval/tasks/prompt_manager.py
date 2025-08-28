@@ -46,7 +46,11 @@ class PromptManager:
         self.system_prompt = system_prompt  # System prompt to be used in chat templates
 
     def prepare_prompt(self, doc: Doc) -> str:
-        """Prepare a prompt from a document, either using chat template or plain text format."""
+        """Prepare a prompt from a document, either using chat template or plain text format.
+
+        Returns:
+            str: The formatted prompt string
+        """
         if self.use_chat_template:
             return self._prepare_chat_template(doc)
         else:
@@ -84,11 +88,18 @@ class PromptManager:
     def prepare_prompt_api(self, doc: Doc) -> list[dict[str, str]]:
         """Prepare a prompt for API calls, using a chat-like format.
         Will not tokenize the message because APIs will usually handle this.
+
+        Returns:
+            list[dict[str, str]]: List of message dictionaries for API calls
         """
         return self._prepare_chat_template(doc, tokenize=False)
 
     def _prepare_chat_template(self, doc: Doc, tokenize: bool = True) -> str:
-        """Prepare prompt using chat template format."""
+        """Prepare prompt using chat template format.
+
+        Returns:
+            str | list[dict[str, str]]: Formatted chat template string or list of messages
+        """
         messages = []
         instruction_used = False  # Flag to check if instruction is used in the first few-shot example
 
@@ -128,7 +139,11 @@ class PromptManager:
             return messages
 
     def _prepare_plain_text(self, doc: Doc) -> str:
-        """Prepare prompt using plain text format."""
+        """Prepare prompt using plain text format.
+
+        Returns:
+            str: The formatted plain text prompt
+        """
         parts = []
 
         # Add system prompt if available
@@ -150,7 +165,11 @@ class PromptManager:
         return "\n\n".join(parts)
 
     def _extract_query(self, query: str, instruction: str | None) -> str:
-        """Extract query content, removing instruction prefix if appropriate."""
+        """Extract query content, removing instruction prefix if appropriate.
+
+        Returns:
+            str: The extracted query content without instruction prefix if it was present
+        """
         if instruction is not None:
             if query.startswith(instruction):
                 return query[len(instruction) :].strip()

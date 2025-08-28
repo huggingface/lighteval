@@ -36,6 +36,9 @@ def helm_normalizer(text: str) -> str:
     """Lower text and remove punctuation, articles and extra whitespace.
     Copied from the [QuAC](http://quac.ai/) evaluation script found at
     https://s3.amazonaws.com/my89public/quac/scorer.py
+
+    Returns:
+        str: Normalized text with punctuation, articles removed and whitespace fixed
     """
 
     def remove_articles(text: str) -> str:
@@ -69,14 +72,29 @@ def helm_normalizer(text: str) -> str:
 
 
 def harness_triviaqa_normalizer(text: str) -> str:
+    """Normalize text for TriviaQA evaluation.
+
+    Returns:
+        str: Lowercase text with punctuation removed
+    """
     return text.lower().translate(str.maketrans("", "", string.punctuation))
 
 
 def bigbench_normalizer(text: str):
+    """Normalize text for BigBench evaluation.
+
+    Returns:
+        str: Text with " . " replaced by ".\n"
+    """
     return text.replace(" . ", ".\n")
 
 
 def remove_braces(text: str) -> str:
+    """Remove opening and closing braces from text.
+
+    Returns:
+        str: Text with braces removed from start and end
+    """
     if text.startswith("{"):
         text = text[1:]
     if text.endswith("}"):
@@ -85,6 +103,11 @@ def remove_braces(text: str) -> str:
 
 
 def remove_braces_and_strip(text: str) -> str:
+    """Remove braces and strip whitespace from text.
+
+    Returns:
+        str: Text with braces removed and whitespace stripped
+    """
     text = text.strip()
     if text.startswith("{"):
         text = text[1:]
@@ -102,6 +125,9 @@ def math_normalizer(text: str) -> str:  # noqa C901
         Example:
         >>> _remove_boxed(\\boxed{\\frac{2}{3}})
         \\frac{2}{3}
+
+        Returns:
+            str: The text within the boxed environment, or empty string if extraction fails
         """
         if text is None:
             return ""
@@ -121,7 +147,11 @@ def math_normalizer(text: str) -> str:  # noqa C901
             return ""
 
     def _last_boxed_only_string(text: str) -> str | None:
-        """Extract the last \\boxed{...} or \\fbox{...} element from a string."""
+        """Extract the last \\boxed{...} or \\fbox{...} element from a string.
+
+        Returns:
+            str | None: The last boxed string element, or None if not found
+        """
         idx = text.rfind("\\boxed")
         if idx < 0:
             idx = text.rfind("\\fbox")
@@ -203,6 +233,9 @@ def math_normalizer(text: str) -> str:  # noqa C901
         Example:
         >>> _fix_a_slash_b("2/3")
         \frac{2}{3}
+
+        Returns:
+            str: Text with a/b fractions reformatted to LaTeX \\frac{a}{b} format
         """
         if len(text.split("/")) != 2:
             return text
@@ -262,6 +295,9 @@ def math_normalizer(text: str) -> str:  # noqa C901
         Example:
         >>> _fix_sqrt("\\sqrt3")
         \\sqrt{3}
+
+        Returns:
+            str: Text with square roots reformatted to proper LaTeX format
         """
         if "\\sqrt" not in text:
             return text
@@ -391,16 +427,29 @@ def remove_articles(text: str, lang: Language) -> str:
     We currently only support languages that don't blend articles.
     If you are a native speaker of a language where articles are blended,
     we would appreciate your contribution!
+
+    Returns:
+        str: Text with articles removed for the specified language
     """
     pattern = _ARTICLE_PATTERNS.get(lang)
     return re.sub(pattern, " ", text) if pattern else text
 
 
 def remove_punc(text: str) -> str:
+    """Remove punctuation from text.
+
+    Returns:
+        str: Text with punctuation removed
+    """
     return "".join(ch for ch in text if ch not in PUNCT)
 
 
 def get_multilingual_normalizer(lang: Language, lower: bool = True) -> Callable[[str], str]:
+    """Get a normalizer function for the specified language.
+
+    Returns:
+        Callable[[str], str]: A function that normalizes text for the specified language
+    """
     tokenizer = get_word_tokenizer(lang)
 
     def _inner_normalizer(text: str) -> str:

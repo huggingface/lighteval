@@ -28,14 +28,22 @@ PUNCT = "᪩？⁈𑩂．꩞𑅃﹗𑂾\u1b7d፧𑅂꡶꘎⁉࠾᪨𑊩𑱂᱿�
 
 
 def decapitalize(word: str):
-    """Decapitalize the first letter of the string"""
+    """Decapitalize the first letter of the string
+
+    Returns:
+        str: The string with the first letter decapitalized
+    """
     if len(word) == 0:
         return word
     return word[0].lower() + word[1:]
 
 
 def capitalize(word: str):
-    """Capitalize the first letter of the string"""
+    """Capitalize the first letter of the string
+
+    Returns:
+        str: The string with the first letter capitalized
+    """
     if len(word) == 0:
         return word
     return word[0].upper() + word[1:]
@@ -44,6 +52,9 @@ def capitalize(word: str):
 def fix_ending_punct(ctx: str, translation_literals: TranslationLiterals):
     """Fixes the ending punctuation so that it uses the correct punctuation for the language.
     E.g in Chinese the "?" is written as "？"
+
+    Returns:
+        str: The string with corrected punctuation for the language
     """
     ctx = ctx.rstrip()
     if len(ctx) == 0:
@@ -63,6 +74,9 @@ def punctuation_ends_sentence(text: str, translation_literals: TranslationLitera
     """Check if the string ends with a sentence-ending punctuation mark.
     That's .?!:
     It's not perfect method as some languages don't have full stops etc..
+
+    Returns:
+        bool: True if the string ends with sentence-ending punctuation, False otherwise
     """
     return text.rstrip().endswith(
         (
@@ -80,6 +94,9 @@ def fix_capitalization(prefix: str, text: str, translation_literals: Translation
     It's based on simple heuristics:
     - If the prefix ends with a sentence-ending punctuation mark, the text should be capitalized.
     - If the prefix ends with a newline, the text should be capitalized.
+
+    Returns:
+        str: The text with appropriate capitalization based on the prefix
     """
     if len(prefix) == 0:
         return capitalize(text)

@@ -66,8 +66,6 @@ def load_model(  # noqa: C901
     Args:
         config (ModelConfig): configuration of the model to load
 
-    Raises:
-        ValueError: If you try to have both the multichoice continuations start with a space and not to start with a space
     Returns:
         LightevalModel: The model that will be evaluated
     """

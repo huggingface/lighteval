@@ -743,6 +743,9 @@ def drop(line, task_name: str = None):
         """Flattens a dict of lists of validated answers.
         {"number": ['1', '8'], ...}
         -> [{"number": ['1'], ...}, {"number": ['8'], ...}]
+
+        Returns:
+            list: List of dictionaries with flattened validated answers
         """
         valid_answers = []
         for i in range(len(validated_answers["number"])):

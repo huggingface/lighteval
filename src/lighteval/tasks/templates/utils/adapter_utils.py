@@ -35,6 +35,8 @@ def create_adapter_from_dict(
     Args:
         adapter: Dict of the form {key: value} where value is key in the input dict to get.
 
+    Returns:
+        Callable[[dict], AdapterReturnTypeVar]: A function that adapts dictionary input to the expected format
     """
     if not isinstance(adapter, Mapping):
         return adapter

@@ -137,9 +137,6 @@ class MultilingualQuasiExactMatchMetric(SampleLevelMetric):
                 - "suffix": Suffixes must match
                 - "full": Full strings must match
             aggregation_function: Aggregation samples to use when multiple golds are present.
-
-        Returns:
-            Exact match metric.
         """
         super().__init__(
             metric_name=f"exact_match_{language.value}_{match_type}",
@@ -197,9 +194,6 @@ class MultilingualExtractiveMatchMetric(SampleLevelComputation):
                 Number of decimal places to use when comparing numerical values. Defaults to 6.
             timeout_seconds: int
                 Timeout for the extraction (each attempt) and comparison. Defaults to 5.
-
-        Returns:
-            A sample level metric that extracts and compares mathematical expressions.
 
         """
         self.language = language

@@ -77,6 +77,9 @@ def get_boolq_prompt_function(
 
     Format:
     See mcq prompt function for the format.
+
+    Returns:
+        Callable: A function that generates BoolQ prompts based on the given parameters
     """
     translation_literals = TRANSLATION_LITERALS[language]
 

@@ -6,7 +6,11 @@ from collections import namedtuple as _namedtuple
 
 
 def normalize(tokens, case=False):
-    """Lowercases and turns tokens into distinct words."""
+    """Lowercases and turns tokens into distinct words.
+
+    Returns:
+        list[str]: List of normalized tokens
+    """
     return [str(t).lower() if not case else str(t) for t in tokens]
 
 

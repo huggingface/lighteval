@@ -44,7 +44,11 @@ AVAILABLE_COMMUNITY_TASKS_MODULES = []
 
 
 def load_community_tasks():
-    """Dynamically load community tasks, handling errors gracefully."""
+    """Dynamically load community tasks, handling errors gracefully.
+
+    Returns:
+        list: List of successfully loaded community task modules
+    """
     modules = []
     try:
         # Community tasks are in the lighteval directory, not under src
@@ -144,6 +148,9 @@ class Registry:
         """Task is a string of the form "suite|task|few_shot|truncate_few_shots,suite|task|few_shot|truncate_few_shots"
 
         returns a LightevalTaskConfig object based on the task name and fewshot and truncate_few_shots values.
+
+        Returns:
+            list[LightevalTaskConfig]: List of task configurations based on the task string
         """
         task_to_params = self.taskinfo_selector(task)
         configs = []

@@ -84,7 +84,11 @@ def inference_endpoint(
     max_samples: max_samples.type = max_samples.default,
     job_id: job_id.type = job_id.default,
 ):
-    """Evaluate models using inference-endpoints as backend."""
+    """Evaluate models using inference-endpoints as backend.
+
+    Returns:
+        dict: Evaluation results containing metrics and scores for all tasks
+    """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.endpoints.endpoint_model import InferenceEndpointModelConfig, ServerlessEndpointModelConfig
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
@@ -163,7 +167,11 @@ def tgi(
     max_samples: max_samples.type = max_samples.default,
     job_id: job_id.type = job_id.default,
 ):
-    """Evaluate models using TGI as backend."""
+    """Evaluate models using TGI as backend.
+
+    Returns:
+        dict: Evaluation results containing metrics and scores for all tasks
+    """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.endpoints.tgi_model import TGIModelConfig
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
@@ -242,7 +250,11 @@ def litellm(
     max_samples: max_samples.type = max_samples.default,
     job_id: job_id.type = job_id.default,
 ):
-    """Evaluate models using LiteLLM as backend."""
+    """Evaluate models using LiteLLM as backend.
+
+    Returns:
+        dict: Evaluation results containing metrics and scores for all tasks
+    """
     import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -330,7 +342,11 @@ def inference_providers(
     max_samples: max_samples.type = max_samples.default,
     job_id: job_id.type = job_id.default,
 ):
-    """Evaluate models using HuggingFace's inference providers as backend."""
+    """Evaluate models using HuggingFace's inference providers as backend.
+
+    Returns:
+        dict: Evaluation results containing metrics and scores for all tasks
+    """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.endpoints.inference_providers_model import (
         InferenceProvidersModelConfig,

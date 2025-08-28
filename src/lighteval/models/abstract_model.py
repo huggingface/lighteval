@@ -200,12 +200,19 @@ class LightevalModel(ABC):
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
+
+        Returns:
+            list[ModelResponse]: List of model responses containing log likelihood scores
         """
         return NotImplemented
 
     @abstractmethod
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
-        """This function is used to compute the log likelihood of the context for perplexity metrics."""
+        """This function is used to compute the log likelihood of the context for perplexity metrics.
+
+        Returns:
+            list[ModelResponse]: List of model responses containing log likelihood scores
+        """
         return NotImplemented
 
     # Tokenization utils

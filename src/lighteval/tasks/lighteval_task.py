@@ -398,9 +398,6 @@ class LightevalTask:
             tasks (dict[str, LightevalTask]): Dictionary mapping task names to task objects.
             dataset_loading_processes (int, optional): Number of processes to use for
                 parallel dataset loading. Defaults to 1 (sequential loading).
-
-        Returns:
-            None
         """
         if dataset_loading_processes <= 1:
             # Useful for the test suite: we can mock loading tasks by overwriting the

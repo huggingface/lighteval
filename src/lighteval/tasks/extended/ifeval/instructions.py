@@ -742,7 +742,11 @@ class KeywordChecker(Instruction):
         return ["keywords"]
 
     def check_following(self, value):
-        """Check if the response contain the expected keywords."""
+        """Check if the response contain the expected keywords.
+
+        Returns:
+            bool: True if the response contains all expected keywords, False otherwise
+        """
         for keyword in self._keywords:
             if not re.search(keyword, value, flags=re.IGNORECASE):
                 return False

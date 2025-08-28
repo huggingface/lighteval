@@ -31,7 +31,11 @@ MULTICHOICE_JOIN_VARIANT = Literal["COMMA", "NEW_LINE"]
 
 
 def multichoice_join(choices: list[str], variant: MULTICHOICE_JOIN_VARIANT, translation_literals: TranslationLiterals):
-    """Joins the choices with the appropriate separator."""
+    """Joins the choices with the appropriate separator.
+
+    Returns:
+        str: The joined choices string with appropriate separators
+    """
     separator: str
     if variant == "COMMA":
         separator = f"{translation_literals.comma}{translation_literals.word_space}"

@@ -97,6 +97,9 @@ def build_choices(
             The same value should be passed to `build_answers` function to ensure consistent tokenization.
 
         Defaults to True.
+
+    Returns:
+        str | None: Formatted choices string for Hybrid/MCF formulations, None for CF formulation
     """
     if isinstance(formulation, CFFormulation):
         return None
@@ -138,6 +141,9 @@ def build_answers(
         translation_literals (TranslationLiterals): The translation literals scoped to required language.
         use_sentence_space (bool, optional): Whether to use sentence or word space in front of the answer. Defaults to True.
             The same value should be passed to `build_choices` function to ensure consistent tokenization.
+
+    Returns:
+        list[str]: List of formatted answer strings
     """
     if isinstance(formulation, MCFFormulation):
         prefixes = get_prefix(formulation.choice_prefix, translation_literals)

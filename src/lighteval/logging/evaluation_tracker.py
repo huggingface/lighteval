@@ -361,6 +361,9 @@ class EvaluationTracker:
         """Aggregates and returns all the logger's experiment information in a dictionary.
 
         This function should be used to gather and display said information at the end of an evaluation run.
+
+        Returns:
+            dict: Dictionary containing all experiment information including config, results, versions, and summaries
         """
         to_dump = {
             "config_general": asdict(self.general_config_logger),

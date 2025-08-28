@@ -75,7 +75,11 @@ def vllm(
     max_samples: max_samples.type = max_samples.default,
     job_id: job_id.type = job_id.default,
 ):
-    """Evaluate models using vllm as backend."""
+    """Evaluate models using vllm as backend.
+
+    Returns:
+        dict: Evaluation results containing metrics and scores for all tasks
+    """
     import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker

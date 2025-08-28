@@ -914,6 +914,9 @@ class StringDistance(SampleLevelComputation):
             Lee, Katherine, et al.
             "Deduplicating training data makes language models better."
             arXiv preprint arXiv:2107.06499 (2021).
+
+        Returns:
+            float: Edit similarity score between 0 and 1
         """
         edist = edit_distance(s1, s2)
         return 1.0 - edist / max(len(s1), len(s2)) if len(s1) > 0 and len(s2) > 0 else 0
@@ -1177,7 +1180,12 @@ class AvgAtK(SamplingMetric, SampleLevelComputation):
         return avg_score
 
     def num_samples(self):
-        return self.k
+        """Get the number of samples for this metric.
+
+        Returns:
+            int: The number of samples (n if specified, otherwise k)
+        """
+        return self.n if self.n is not None else self.k
 
 
 class MajAtK(SamplingMetric, SampleLevelComputation):
