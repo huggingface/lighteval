@@ -108,10 +108,10 @@ def fake_evaluate_task(
     class FakeRegistry(Registry):
         def __init__(self, tasks: Optional[str], custom_tasks: Optional[Union[str, Path, ModuleType]] = None):
             self.tasks_list = [task_name_fs]
-            self.task_to_configs = {task_name: [lighteval_task.config]}
+            self.task_to_configs = {task_name_fs: [lighteval_task.config]}
 
         def load_tasks(self):
-            return {lighteval_task.config.full_name: lighteval_task}
+            return {task_name_fs: lighteval_task}
 
         # def get_tasks_configs(self, task: str):
         #    config = lighteval_task.config
