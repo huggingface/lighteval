@@ -65,6 +65,7 @@ export WANDB_SPACE_ID="org/name"
 
 ```python
 from datasets import load_dataset
+import glob
 import os
 
 output_dir = "evals_doc"
@@ -73,7 +74,7 @@ timestamp = "latest"
 task = "lighteval|gsm8k|0"
 
 if timestamp == "latest":
-    path = f"{output_dir}/details/{model_org}/{model_name}/*/"
+    path = f"{output_dir}/details/{model_name}/*/"
     timestamps = glob.glob(path)
     timestamp = sorted(timestamps)[-1].split("/")[-2]
     print(f"Latest timestamp: {timestamp}")
