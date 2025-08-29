@@ -59,8 +59,7 @@ except ImportError:
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
-    """
-    Provides a proper json encoding for the loggers and trackers json dumps.
+    """Provides a proper json encoding for the loggers and trackers json dumps.
     Notably manages the json encoding of dataclasses.
     """
 
@@ -91,38 +90,50 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 
 
 class EvaluationTracker:
-    """Keeps track of the overall evaluation process and relevant information.
+    """Tracks and manages evaluation results, metrics, and logging for model evaluations.
 
-    The [`~logging.evaluation_tracker.EvaluationTracker`] contains specific loggers for experiments details
-    ([`~logging.evaluation_tracker.DetailsLogger`]), metrics ([`~logging.evaluation_tracker.MetricsLogger`]), task versions
-    ([`~logging.evaluation_tracker.VersionsLogger`]) as well as for the general configurations of both the
-    specific task ([`~logging.evaluation_tracker.TaskConfigLogger`]) and overall evaluation run
-    ([`~logging.evaluation_tracker.GeneralConfigLogger`]).  It compiles the data from these loggers and
-    writes it to files, which can be published to the Hugging Face hub if
-    requested.
+    The EvaluationTracker coordinates multiple specialized loggers to track different aspects of model evaluation:
+
+    - Details Logger (DetailsLogger): Records per-instance evaluation details and predictions
+    - Metrics Logger (MetricsLogger): Tracks aggregate evaluation metrics and scores
+    - Versions Logger (VersionsLogger): Records task and dataset versions
+    - General Config Logger (GeneralConfigLogger): Stores overall evaluation configuration
+    - Task Config Logger (TaskConfigLogger): Maintains per-task configuration details
+
+    The tracker can save results locally and optionally push them to:
+    - Hugging Face Hub as datasets
+    - TensorBoard for visualization
+    - Trackio or Weights & Biases for experiment tracking
 
     Args:
-        output_dir (`str`): Local folder path where you want results to be saved.
-        results_path_template (`str`, *optional*): template to use for the results output directory. for example,
-            `"{output_dir}/results_this_time_it_will_work/{org}_{model}"` will create a folder named `results` in the output directory
-            with the model name and the organization name.
-        save_details (`bool`, defaults to True): If True, details are saved to the `output_dir`.
-        push_to_hub (`bool`, defaults to False): If True, details are pushed to the hub.
-            Results are pushed to `{hub_results_org}/details__{sanitized model_name}` for the model `model_name`, a public dataset,
-            if `public` is True else `{hub_results_org}/details__{sanitized model_name}_private`, a private dataset.
-        push_to_tensorboard (`bool`, defaults to False): If True, will create and push the results for a tensorboard folder on the hub.
-        hub_results_org (`str`, *optional*): The organisation to push the results to.
-            See more details about the datasets organisation in [`EvaluationTracker.save`].
-        tensorboard_metric_prefix (`str`, defaults to "eval"): Prefix for the metrics in the tensorboard logs.
-        public (`bool`, defaults to False): If True, results and details are pushed to public orgs.
-        nanotron_run_info ([`~nanotron.config.GeneralArgs`], *optional*): Reference to information about Nanotron models runs.
+        output_dir (str): Local directory to save evaluation results and logs
+        results_path_template (str, optional): Template for results directory structure.
+            Example: "{output_dir}/results/{org}_{model}"
+        save_details (bool, defaults to True): Whether to save detailed evaluation records
+        push_to_hub (bool, defaults to False): Whether to push results to HF Hub
+        push_to_tensorboard (bool, defaults to False): Whether to push metrics to TensorBoard
+        hub_results_org (str, optional): HF Hub organization to push results to
+        tensorboard_metric_prefix (str, defaults to "eval"): Prefix for TensorBoard metrics
+        public (bool, defaults to False): Whether to make Hub datasets public
+        nanotron_run_info (GeneralArgs, optional): Nanotron model run information
+        use_wandb (bool, defaults to False): Whether to log to Weights & Biases or Trackio if available
 
-    **Attributes**:
-        - **details_logger** ([`~logging.info_loggers.DetailsLogger`]) -- Logger for experiment details.
-        - **metrics_logger** ([`~logging.info_loggers.MetricsLogger`]) -- Logger for experiment metrics.
-        - **versions_logger** ([`~logging.info_loggers.VersionsLogger`]) -- Logger for task versions.
-        - **general_config_logger** ([`~logging.info_loggers.GeneralConfigLogger`]) -- Logger for general configuration.
-        - **task_config_logger** ([`~logging.info_loggers.TaskConfigLogger`]) -- Logger for task configuration.
+    Example:
+        ```python
+        tracker = EvaluationTracker(
+            output_dir="./eval_results",
+            push_to_hub=True,
+            hub_results_org="my-org",
+            save_details=True
+        )
+
+        # Log evaluation results
+        tracker.metrics_logger.add_metric("accuracy", 0.85)
+        tracker.details_logger.add_detail(task_name="qa", prediction="Paris")
+
+        # Save all results
+        tracker.save()
+        ```
     """
 
     def __init__(
@@ -350,6 +361,9 @@ class EvaluationTracker:
         """Aggregates and returns all the logger's experiment information in a dictionary.
 
         This function should be used to gather and display said information at the end of an evaluation run.
+
+        Returns:
+            dict: Dictionary containing all experiment information including config, results, versions, and summaries
         """
         to_dump = {
             "config_general": asdict(self.general_config_logger),

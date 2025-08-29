@@ -45,9 +45,7 @@ def nanotron(
     remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
     reasoning_tags: reasoning_tags.type = reasoning_tags.default,
 ):
-    """
-    Evaluate models using nanotron as backend.
-    """
+    """Evaluate models using nanotron as backend."""
     from lighteval.utils.imports import NO_NANOTRON_ERROR_MSG, is_nanotron_available
 
     if not is_nanotron_available():

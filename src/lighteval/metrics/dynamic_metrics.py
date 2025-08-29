@@ -57,9 +57,7 @@ logger = logging.getLogger(__name__)
 
 class LogLikelihoodAccMetric(SampleLevelMetric):
     def __init__(self, normalization: LogProbNormalization | None = None):
-        """
-        Creates an accuracy (loglikelihood) metric, which returns accuracy given normalization.
-        """
+        """Creates an accuracy (loglikelihood) metric, which returns accuracy given normalization."""
         super().__init__(
             metric_name="acc" + (f"_{normalization.name}" if normalization else ""),
             sample_level_fn=LoglikelihoodAcc(logprob_normalization=normalization),
@@ -75,9 +73,7 @@ class NormalizedMultiChoiceProbMetric(SampleLevelMetric):
         normalization: LogProbNormalization | None = None,
         aggregation_function: Callable[[np.ndarray], float] = np.max,
     ):
-        """
-        Creates a normalized multi-choice probability metric, which returns the probability of the gold choice / sum of probabilities of all choices (after logprobs are normalized).
-        """
+        """Creates a normalized multi-choice probability metric, which returns the probability of the gold choice / sum of probabilities of all choices (after logprobs are normalized)."""
         super().__init__(
             metric_name="normalized_mc_prob" + (f"_{normalization.name}" if normalization else ""),
             sample_level_fn=NormalizedMultiChoiceProbability(
@@ -95,9 +91,7 @@ class ProbabilityMetric(SampleLevelMetric):
         normalization: LogProbTokenNorm | None = None,
         aggregation_function: Callable[[np.ndarray], float] = np.max,
     ):
-        """
-        Creates a probability metric, which returns the probability of the gold choice given normalization.
-        """
+        """Creates a probability metric, which returns the probability of the gold choice given normalization."""
         super().__init__(
             metric_name="prob" + (f"_{normalization.name}" if normalization else ""),
             sample_level_fn=Probability(normalization=normalization, aggregation_function=aggregation_function),
@@ -109,8 +103,7 @@ class ProbabilityMetric(SampleLevelMetric):
 
 class MultilingualQuasiF1ScoreMetric(SampleLevelMetric):
     def __init__(self, language: Language, aggregation_function: Callable[[list[float]], float] = max):
-        """
-        Creates a language-aware F1 score metric, which returns the F1 score.
+        """Creates a language-aware F1 score metric, which returns the F1 score.
 
         Args:
             language: The language of the samples.
@@ -136,8 +129,7 @@ class MultilingualQuasiExactMatchMetric(SampleLevelMetric):
         match_type: Literal["prefix", "suffix", "full"] = "full",
         aggregation_function: Callable[[list[float]], float] = max,
     ):
-        """
-        Creates a language-aware exact match metric, which returns the exact match score
+        """Creates a language-aware exact match metric, which returns the exact match score
         Args:
             language: The language of the samples.
             match_type: The type of match to use
@@ -145,8 +137,6 @@ class MultilingualQuasiExactMatchMetric(SampleLevelMetric):
                 - "suffix": Suffixes must match
                 - "full": Full strings must match
             aggregation_function: Aggregation samples to use when multiple golds are present.
-        Returns:
-            Exact match metric.
         """
         super().__init__(
             metric_name=f"exact_match_{language.value}_{match_type}",
@@ -204,9 +194,6 @@ class MultilingualExtractiveMatchMetric(SampleLevelComputation):
                 Number of decimal places to use when comparing numerical values. Defaults to 6.
             timeout_seconds: int
                 Timeout for the extraction (each attempt) and comparison. Defaults to 5.
-
-        Returns:
-            A sample level metric that extracts and compares mathematical expressions.
 
         """
         self.language = language

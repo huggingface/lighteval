@@ -37,8 +37,7 @@ def baseline(
     output_dir: output_dir.type = output_dir.default,
     max_samples: max_samples.type = max_samples.default,
 ):
-    """
-    Compute baselines for given tasks.
+    """Compute baselines for given tasks.
 
     It has been tested with generative and accuracy tasks, but may not work correctly for other task types.
 
