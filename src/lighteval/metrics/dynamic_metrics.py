@@ -207,7 +207,7 @@ class MultilingualExtractiveMatchMetric(SampleLevelComputation):
 
     @timeout(2)
     def add_to_specifics_with_timeout(
-        formatted_doc: Doc, extracted_predictions: list[list[str]], extracted_golds: list[list[str]]
+        self, formatted_doc: Doc, extracted_predictions: list[list[str]], extracted_golds: list[list[str]]
     ) -> None:
         if formatted_doc.specific is None:
             formatted_doc.specific = {}
@@ -250,7 +250,7 @@ class MultilingualExtractiveMatchMetric(SampleLevelComputation):
         # We have to use timeout because the sypmy to str conversion can be very slow
         try:
             self.add_to_specifics_with_timeout(doc, extracted_predictions, extracted_golds)
-        except Exception:  # noqa: E722
+        except TimeoutError:  # noqa: E722
             logger.warning("Timeout when adding extracted predictions and golds to specific")
 
         return self.aggregation_function(
