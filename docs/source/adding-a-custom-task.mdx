@@ -1,35 +1,47 @@
 # Adding a Custom Task
 
-To add a new task, first either open an issue, to determine whether it will be
-integrated in the core evaluations of lighteval, in the extended tasks, or the
-community tasks, and add its dataset on the hub.
+Lighteval provides a flexible framework for creating custom evaluation tasks. This guide explains how to create and integrate new tasks into the evaluation system.
 
-- Core evaluations are evaluations that only require standard logic in their
-  metrics and processing, and that we will add to our test suite to ensure non
-  regression through time. They already see high usage in the community.
-- Extended evaluations are evaluations that require custom logic in their
-  metrics (complex normalisation, an LLM as a judge, ...), that we added to
-  facilitate the life of users. They already see high usage in the community.
-- Community evaluations are submissions by the community of new tasks.
+## Task Categories
+
+Before creating a custom task, consider which category it belongs to:
+
+### Core Evaluations
+Core evaluations are evaluations that only require standard logic in their
+metrics and processing, and that we will add to our test suite to ensure non-regression through time. They already see high usage in the community.
+
+### Extended Evaluations
+Extended evaluations are evaluations that require custom logic in their
+metrics (complex normalization, an LLM as a judge, etc.), that we added to
+facilitate the life of users. They already see high usage in the community.
+
+### Community Evaluations
+Community evaluations are submissions by the community of new tasks.
 
 A popular community evaluation can move to become an extended or core evaluation over time.
 
 > [!TIP]
-> You can find examples of custom tasks in the <a href="https://github.com/huggingface/lighteval/tree/main/community_tasks">community_task</a> directory.
+> You can find examples of custom tasks in the [community_tasks](https://github.com/huggingface/lighteval/tree/main/community_tasks) directory.
 
-## Step by step creation of a custom task
+## Step-by-Step Creation of a Custom Task
 
 > [!WARNING]
-> To contribute your custom metric to the lighteval repo, you would first need
+> To contribute your custom task to the Lighteval repository, you would first need
 > to install the required dev dependencies by running `pip install -e .[dev]`
 > and then run `pre-commit install` to install the pre-commit hooks.
 
-First, create a python file under the `community_tasks` directory.
+### Step 1: Create the Task File
+
+First, create a Python file under the `community_tasks` directory.
+
+### Step 2: Define the Prompt Function
 
 You need to define a prompt function that will convert a line from your
 dataset to a document to be used for evaluation.
 
 ```python
+from lighteval.tasks.requests import Doc
+
 # Define as many as you need for your different tasks
 def prompt_fn(line, task_name: str = None):
     """Defines how to go from a dataset line to a doc object.
@@ -44,47 +56,68 @@ def prompt_fn(line, task_name: str = None):
     )
 ```
 
-Then, you need to choose a metric: you can either use an existing one (defined
-in [`lighteval.metrics.metrics.Metrics`]) or [create a custom one](adding-a-new-metric)).
-[//]: # (TODO: Replace lighteval.metrics.metrics.Metrics with ~metrics.metrics.Metrics once its autodoc is added)
+### Step 3: Choose or Create Metrics
+
+You can either use an existing metric (defined in [`lighteval.metrics.metrics.Metrics`]) or [create a custom one](adding-a-new-metric).
+
+#### Using Existing Metrics
 
 ```python
+from lighteval.metrics import Metrics
+
+# Use an existing metric
+metric = Metrics.ACCURACY
+```
+
+#### Creating Custom Metrics
+
+```python
+from lighteval.metrics.utils.metric_utils import SampleLevelMetric
+import numpy as np
+
 custom_metric = SampleLevelMetric(
     metric_name="my_custom_metric_name",
     higher_is_better=True,
-    category=SamplingMethod.{GENERATIVE,LOGPROBS},
-    sample_level_fn=lambda x: x,  # how to compute score for one sample
-    corpus_level_fn=np.mean,  # How to aggregate the samples metrics
+    category="accuracy",
+    sample_level_fn=lambda x: x,  # How to compute score for one sample
+    corpus_level_fn=np.mean,  # How to aggregate the sample metrics
 )
 ```
 
-Then, you need to define your task using [`~tasks.lighteval_task.LightevalTaskConfig`].
-You can define a task with or without subsets.
-To define a task with no subsets:
+### Step 4: Define Your Task
+
+You can define a task with or without subsets using [`~tasks.lighteval_task.LightevalTaskConfig`].
+
+#### Simple Task (No Subsets)
 
 ```python
-# This is how you create a simple task (like hellaswag) which has one single subset
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
+
+# This is how you create a simple task (like HellaSwag) which has one single subset
 # attached to it, and one evaluation possible.
 task = LightevalTaskConfig(
     name="myothertask",
-    prompt_function=prompt_fn,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
+    prompt_function=prompt_fn,  # Must be defined in the file or imported
     suite=["community"],
-    hf_repo="",
+    hf_repo="your_dataset_name",
     hf_subset="default",
-    hf_avail_splits=[],
-    evaluation_splits=[],
-    few_shots_split=None,
-    few_shots_select=None,
-    metrics=[],  # select your metric in Metrics
+    hf_avail_splits=["train", "test"],
+    evaluation_splits=["test"],
+    few_shots_split="train",
+    few_shots_select="random_sampling_from_train",
+    metrics=[metric],  # Select your metric in Metrics
+    generation_size=256,
+    stop_sequence=["\n", "Question:"],
 )
 ```
 
-If you want to create a task with multiple subset, add them to the
+#### Task with Multiple Subsets
+
+If you want to create a task with multiple subsets, add them to the
 `SAMPLE_SUBSETS` list and create a task for each subset.
 
 ```python
-SAMPLE_SUBSETS = []  # list of all the subsets to use for this eval
-
+SAMPLE_SUBSETS = ["subset1", "subset2", "subset3"]  # List of all the subsets to use for this eval
 
 class CustomSubsetTask(LightevalTaskConfig):
     def __init__(
@@ -95,37 +128,58 @@ class CustomSubsetTask(LightevalTaskConfig):
         super().__init__(
             name=name,
             hf_subset=hf_subset,
-            prompt_function=prompt_fn,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
-            hf_repo="",
-            metric=[custom_metric],  # select your metric in Metrics or use your custom_metric
-            hf_avail_splits=[],
-            evaluation_splits=[],
-            few_shots_split=None,
-            few_shots_select=None,
+            prompt_function=prompt_fn,  # Must be defined in the file or imported
+            hf_repo="your_dataset_name",
+            metrics=[custom_metric],  # Select your metric in Metrics or use your custom_metric
+            hf_avail_splits=["train", "test"],
+            evaluation_splits=["test"],
+            few_shots_split="train",
+            few_shots_select="random_sampling_from_train",
             suite=["community"],
-            generation_size=-1,
-            stop_sequence=None,
+            generation_size=256,
+            stop_sequence=["\n", "Question:"],
         )
+
 SUBSET_TASKS = [CustomSubsetTask(name=f"mytask:{subset}", hf_subset=subset) for subset in SAMPLE_SUBSETS]
 ```
+
+### Step 5: Add Tasks to the Table
 
 Then you need to add your task to the `TASKS_TABLE` list.
 
 ```python
 # STORE YOUR EVALS
 
-# tasks with subset:
+# Tasks with subsets:
 TASKS_TABLE = SUBSET_TASKS
 
-# tasks without subset:
+# Tasks without subsets:
 # TASKS_TABLE = [task]
 ```
 
-Once your file is created you can then run the evaluation with the following command:
+## Running Your Custom Task
+
+Once your file is created, you can run the evaluation with the following command:
 
 ```bash
 lighteval accelerate \
     "model_name=HuggingFaceH4/zephyr-7b-beta" \
     "community|{custom_task}|{fewshots}|{truncate_few_shot}" \
     --custom-tasks {path_to_your_custom_task_file}
+```
+
+### Example Usage
+
+```bash
+# Run a custom task with zero-shot evaluation
+lighteval accelerate \
+    "model_name=openai-community/gpt2" \
+    "community|myothertask|0|0" \
+    --custom-tasks community_tasks/my_custom_task.py
+
+# Run a custom task with few-shot evaluation
+lighteval accelerate \
+    "model_name=openai-community/gpt2" \
+    "community|myothertask|3|1" \
+    --custom-tasks community_tasks/my_custom_task.py
 ```

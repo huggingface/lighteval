@@ -33,8 +33,7 @@ from lighteval.utils.cache_management import SampleCache, cached
 
 
 class DummyModelConfig(ModelConfig):
-    """
-    Configuration class for dummy models used for testing and baselines.
+    """Configuration class for dummy models used for testing and baselines.
 
     This configuration is used to create dummy models that generate random responses
     or baselines for evaluation purposes. Useful for testing evaluation pipelines

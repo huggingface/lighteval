@@ -31,9 +31,7 @@ def normalize_subset(subset: str) -> str:
 
 
 def get_metrics_for_formulation(formulation: Formulation, metrics: list[Metric]) -> list[Metric]:
-    """
-    Choose the appropriate metrics for the given formulation otherwise fallback to the original metrics.
-    """
+    """Choose the appropriate metrics for the given formulation otherwise fallback to the original metrics."""
     match formulation:
         #
         case MCFFormulation(choice_prefix="Letters"):

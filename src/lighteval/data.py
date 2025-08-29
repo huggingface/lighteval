@@ -47,8 +47,7 @@ class DynamicBatchDataset(Dataset):
         requests: list[Doc],
         num_dataset_splits: int,
     ):
-        """
-        This dataset class uses dynamic batching to speed up the generation.
+        """This dataset class uses dynamic batching to speed up the generation.
         Each request is sorted by the length of the prompt + the length of the
         continuation. Then, the dataset is split into num_dataset_splits splits.
         The first split will contain the longest requests, the second split will
@@ -87,11 +86,10 @@ class DynamicBatchDataset(Dataset):
         return num_dataset_splits, splits_indices
 
     def get_original_order(self, new_arr: list) -> list:
-        """
-        Get the original order of the data.
+        """Get the original order of the data.
 
         Args:
-            newarr (list): Array containing any kind of data that needs to be
+            new_arr (list): Array containing any kind of data that needs to be
                 reset in the original order.
 
         Returns:
@@ -110,8 +108,7 @@ class DynamicBatchDataset(Dataset):
         return original_order
 
     def splits_iterator(self) -> Iterator[Subset]:
-        """
-        Iterator that yields the dataset splits based on the split limits.
+        """Iterator that yields the dataset splits based on the split limits.
 
         Yields:
             Subset: A subset of the dataset.
@@ -124,8 +121,7 @@ class DynamicBatchDataset(Dataset):
             yield Subset(self, range(split_start, split_end))
 
     def __getitem__(self, index) -> Doc:
-        """
-        Get an item from the dataset.
+        """Get an item from the dataset.
 
         Args:
             index (int): The index of the item.
@@ -136,8 +132,7 @@ class DynamicBatchDataset(Dataset):
         return self.sorted_data[index]
 
     def __len__(self) -> int:
-        """
-        Get the length of current split the dataset.
+        """Get the length of current split the dataset.
         All splits have the same length, except the last one which might be
         shorter.
 
@@ -147,8 +142,7 @@ class DynamicBatchDataset(Dataset):
         return len(self.sorted_data)
 
     def __iter__(self) -> Iterator[Doc]:
-        """
-        Iterator that yields the items of the dataset depending on the split we
+        """Iterator that yields the items of the dataset depending on the split we
         are currently in. For instance, if we are in split 0, we will get the
         items from index 0 to self.split_size, if we are in split 1, we will get
         the items from index self.split_size to 2 * self.split_size, etc. Used
@@ -166,8 +160,7 @@ class DynamicBatchDataset(Dataset):
 
 class LoglikelihoodDataset(DynamicBatchDataset):
     def _sorting_criteria(self, doc: Doc) -> int:
-        """
-        Collates the input data for batching.
+        """Collates the input data for batching.
 
         the negative sign on len(toks) sorts descending - this has a few
         advantages:
@@ -180,10 +173,10 @@ class LoglikelihoodDataset(DynamicBatchDataset):
         - any OOMs will happen right away rather than near the end
 
         Args:
-            x (tuple): A tuple containing the input data.
+            doc (Doc): The document containing query and choices.
 
         Returns:
-            tuple: A tuple containing the sorted input data.
+            int: Negative sum of query length and max choice length for sorting.
         """
         len_doc_query = len(doc.query)
         max_len_choices = max(len(choice) for choice in doc.choices) if doc.choices else 0
@@ -233,14 +226,13 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         return num_dataset_splits, splits_indices
 
     def _sorting_criteria(self, doc: Doc) -> tuple[int, bool, tuple, int, int]:
-        """
-        Collate function for generating batches.
+        """Collate function for generating batches.
 
         Args:
-            x (Any): The input data.
+            doc (Doc): The document containing generation parameters.
 
         Returns:
-            Any: The collated data.
+            tuple: A tuple containing (num_samples, use_logits, stop_sequences, gen_length, negative_total_length).
         """
         query = doc.query
         gen_length = doc.generation_size
@@ -261,8 +253,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
 
 class GenerativeTaskDatasetNanotron(GenerativeTaskDataset):
     def __getitem__(self, index) -> tuple[int, Doc]:
-        """
-        Get an item from the dataset depending on the split we are currently in.
+        """Get an item from the dataset depending on the split we are currently in.
         For instance, if we are in split 0, we will get the item at index 0, if
         we are in split 1, we will get the item at index self.split_size, etc.
         Used for dynamic batching.

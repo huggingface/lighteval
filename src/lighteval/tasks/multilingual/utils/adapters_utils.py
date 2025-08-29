@@ -31,8 +31,10 @@ MULTICHOICE_JOIN_VARIANT = Literal["COMMA", "NEW_LINE"]
 
 
 def multichoice_join(choices: list[str], variant: MULTICHOICE_JOIN_VARIANT, translation_literals: TranslationLiterals):
-    """
-    Joins the choices with the appropriate separator.
+    """Joins the choices with the appropriate separator.
+
+    Returns:
+        str: The joined choices string with appropriate separators
     """
     separator: str
     if variant == "COMMA":
@@ -49,13 +51,14 @@ def multichoice_to_single_choice(
     join_variant: MULTICHOICE_JOIN_VARIANT,
     translation_literals: TranslationLiterals,
 ):
-    """
-    Converts from multi-choice format to single-choice format, by joining the correct choices with the appropriate separator.
+    """Converts from multi-choice format to single-choice format, by joining the correct choices with the appropriate separator.
+
     Args:
         choices (list[str]): List of choices.
         gold_idx (list[int]): List of indices of the correct choices.
         join_variant (MULTICHOICE_JOIN_VARIANT): Variant of the separator to join the choices.
         translation_literals (TranslationLiterals): Translation literals.
+
     Returns:
         tuple[list[str], list[int]]: Tuple of the new choices and the new gold index.
     """
@@ -78,8 +81,7 @@ def multichoice_to_single_choice(
 
 
 def extract_answers_from_string(answer_string: str, answer_prefixes: list[str]) -> tuple[int, dict[str, str]] | None:
-    """
-    Attempts to extract answers from the answer_string. The answers are identified by being prefixed with answer prefixes.
+    """Attempts to extract answers from the answer_string. The answers are identified by being prefixed with answer prefixes.
     The extraction is done from the end to the beginning and all answer prefixes must be found in the answer_string.
 
     Example:
@@ -94,16 +96,18 @@ def extract_answers_from_string(answer_string: str, answer_prefixes: list[str]) 
     Args:
         answer_string (str): String possibly containing answers.
         answer_prefixes (list[str]): List of answer prefixes.
+
     Returns:
         Optional[tuple[int, dict[str, str]]]: A tuple containing the start index of the answer and dictionary mapping the prefix to the answer.
     """
 
     def extract_answer(acc: tuple[str, int, list[str]], symbol: str) -> tuple[str, int, list[str]]:
-        """
-        Extracts an answer from the text until the next symbol is found.
+        """Extracts an answer from the text until the next symbol is found.
+
         Args:
             acc (tuple[str, int, list[str]]): Tuple containing the text, the right index (where to start searching) and the list of found answers.
             symbol (str): Symbol to extract the answer from.
+
         Returns:
             tuple[str, int, list[str]]: Tuple containing the text, the right index and the list of answers.
         """

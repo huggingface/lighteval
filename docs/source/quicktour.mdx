@@ -1,28 +1,45 @@
-# Quicktour
-
+# Quick Tour
 
 > [!TIP]
 > We recommend using the `--help` flag to get more information about the
 > available options for each command.
 > `lighteval --help`
 
-Lighteval can be used with a few different commands.
+Lighteval can be used with several different commands, each optimized for different evaluation scenarios.
 
-- `lighteval accelerate` : evaluate models on CPU or one or more GPUs using [🤗
+## Available Commands
+
+### Evaluation Backends
+
+- `lighteval accelerate`: Evaluate models on CPU or one or more GPUs using [🤗
   Accelerate](https://github.com/huggingface/accelerate)
-- `lighteval nanotron`: evaluate models in distributed settings using [⚡️
+- `lighteval nanotron`: Evaluate models in distributed settings using [⚡️
   Nanotron](https://github.com/huggingface/nanotron)
-- `lighteval vllm`: evaluate models on one or more GPUs using [🚀
+- `lighteval vllm`: Evaluate models on one or more GPUs using [🚀
   VLLM](https://github.com/vllm-project/vllm)
-- `lighteval endpoint`
-    - `inference-endpoint`: evaluate models using Hugging Face's [Inference Endpoints's API](https://huggingface.co/inference-endpoints/dedicated)
-    - `tgi`: evaluate models using [🔗 Text Generation Inference](https://huggingface.co/docs/text-generation-inference/en/index) running locally.
-    - `litellm`: evaluate models on any compatible API using [litellm](https://www.litellm.ai/)
+- `lighteval custom`: Evaluate custom models (can be anything)
+- `lighteval sglang`: Evaluate models using [SGLang](https://github.com/sgl-project/sglang) as backend
+- `lighteval endpoint`: Evaluate models using various endpoints as backend
+  - `lighteval endpoint inference-endpoint`: Evaluate models using Hugging Face's [Inference Endpoints API](https://huggingface.co/inference-endpoints/dedicated)
+  - `lighteval endpoint tgi`: Evaluate models using [🔗 Text Generation Inference](https://huggingface.co/docs/text-generation-inference/en/index) running locally
+  - `lighteval endpoint litellm`: Evaluate models on any compatible API using [LiteLLM](https://www.litellm.ai/)
+  - `lighteval endpoint inference-providers`: Evaluate models using [HuggingFace's inference providers](https://huggingface.co/docs/inference-providers/en/index) as backend
 
-## Basic usage
+### Evaluation Utils
+
+- `lighteval baseline`: Compute baselines for given tasks
+
+### Utils
+
+- `lighteval tasks`: List or inspect tasks
+  - `lighteval tasks list`: List all available tasks
+  - `lighteval tasks inspect`: Inspect a specific task to see its configuration and samples
+  - `lighteval tasks create`: Create a new task from a template
+
+## Basic Usage
 
 To evaluate `GPT-2` on the Truthful QA benchmark with [🤗
-  Accelerate](https://github.com/huggingface/accelerate) , run:
+  Accelerate](https://github.com/huggingface/accelerate), run:
 
 ```bash
 lighteval accelerate \
@@ -32,17 +49,16 @@ lighteval accelerate \
 
 Here, we first choose a backend (either `accelerate`, `nanotron`, `endpoint`, or `vllm`), and then specify the model and task(s) to run.
 
-The syntax for the model arguments is `key1=value1,key2=value2,etc`.
-Valid key-value pairs correspond with the backend configuration, and are detailed [below](#Model Arguments).
+### Task Specification
 
 The syntax for the task specification might be a bit hard to grasp at first. The format is as follows:
 
 ```txt
-{suite}|{task}|{num_few_shot}|{0 for strict `num_few_shots`, or 1 to allow a truncation if context size is too small}
+{suite}|{task}|{num_few_shot}|{0 for strict `num_few_shots`, or 1 to allow truncation if context size is too small}
 ```
 
-If the fourth value is set to 1, lighteval will check if the prompt (including the few-shot examples) is too long for the context size of the task or the model.
-If so, the number of few shot examples is automatically reduced.
+If the fourth value is set to 1, Lighteval will check if the prompt (including the few-shot examples) is too long for the context size of the task or the model.
+If so, the number of few-shot examples is automatically reduced.
 
 Tasks have a function applied at the sample level and one at the corpus level. For example,
 - an exact match can be applied per sample, then averaged over the corpus to give the final score
@@ -59,77 +75,40 @@ All officially supported tasks can be found at the [tasks_list](available-tasks)
 [extended folder](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks/extended).
 Moreover, community-provided tasks can be found in the
 [community](https://github.com/huggingface/lighteval/tree/main/community_tasks) folder.
-For more details on the implementation of the tasks, such as how prompts are constructed, or which metrics are used, you can have a look at the
-[file](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/default_tasks.py)
-implementing them.
 
-Running multiple tasks is supported, either with a comma-separated list, or by specifying a file path.
+For more details on the implementation of the tasks, such as how prompts are constructed or which metrics are used, you can examine the
+[implementation file](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/default_tasks.py).
+
+### Running Multiple Tasks
+
+Running multiple tasks is supported, either with a comma-separated list or by specifying a file path.
 The file should be structured like [examples/tasks/recommended_set.txt](https://github.com/huggingface/lighteval/blob/main/examples/tasks/recommended_set.txt).
-When specifying a path to file, it should start with `./`.
+When specifying a path to a file, it should start with `./`.
 
 ```bash
 lighteval accelerate \
      "model_name=openai-community/gpt2" \
      ./path/to/lighteval/examples/tasks/recommended_set.txt
-# or, e.g., "leaderboard|truthfulqa:mc|0|0|,leaderboard|gsm8k|3|1"
+# or, e.g., "leaderboard|truthfulqa:mc|0|0,leaderboard|gsm8k|3|1"
 ```
 
-## Evaluate a model on one or more GPUs
+## Backend Configuration
 
-#### Data parallelism
-
-To evaluate a model on one or more GPUs, first create a multi-gpu config by running.
-
-```bash
-accelerate config
-```
-
-You can then evaluate a model using data parallelism on 8 GPUs like follows:
-
-```bash
-accelerate launch --multi_gpu --num_processes=8 -m \
-    lighteval accelerate \
-    "model_name=openai-community/gpt2" \
-    "leaderboard|truthfulqa:mc|0|0"
-```
-
-Here, `--override_batch_size` defines the batch size per device, so the effective
-batch size will be `override_batch_size * num_gpus`.
-
-#### Pipeline parallelism
-
-To evaluate a model using pipeline parallelism on 2 or more GPUs, run:
-
-```bash
-lighteval accelerate \
-    "model_name=openai-community/gpt2,model_parallel=True" \
-    "leaderboard|truthfulqa:mc|0|0"
-```
-
-This will automatically use accelerate to distribute the model across the GPUs.
-
-> [!TIP]
-> Both data and pipeline parallelism can be combined by setting
-> `model_parallel=True` and using accelerate to distribute the data across the
-GPUs.
-
-## Backend configuration
-
-#### General information
+### General Information
 
 The `model-args` argument takes a string representing a list of model
-argument. The arguments allowed vary depending on the backend you use and
-correspond to the fields of the model configs.
+arguments. The arguments allowed vary depending on the backend you use and
+correspond to the fields of the model configurations.
 
 The model configurations can be found [here](./package_reference/models).
 
-All models allow you to post process your reasoning model predictions,
+All models allow you to post-process your reasoning model predictions
 to remove the thinking tokens from the trace used to compute the metrics,
-using `--remove-reasoning-tags`, and `--reasoning-tags` to specify which
-reasoning tags to remove (defaults to <think> and </think>).
+using `--remove-reasoning-tags` and `--reasoning-tags` to specify which
+reasoning tags to remove (defaults to `<think>` and `</think>`).
 
 Here's an example with `mistralai/Magistral-Small-2507` which outputs custom
-think tokens.
+thinking tokens:
 
 ```bash
 lighteval vllm \
@@ -139,23 +118,21 @@ lighteval vllm \
     --reasoning-tags="[('[THINK]','[/THINK]')]"
 ```
 
+### Nanotron
 
-#### Nanotron
-
-To evaluate a model trained with nanotron on a single gpu.
+To evaluate a model trained with Nanotron on a single GPU:
 
 > [!WARNING]
 > Nanotron models cannot be evaluated without torchrun.
 
-
 ```bash
- torchrun --standalone --nnodes=1 --nproc-per-node=1  \
- src/lighteval/__main__.py nanotron \
- --checkpoint-config-path ../nanotron/checkpoints/10/config.yaml \
- --lighteval-config-path examples/nanotron/lighteval_config_override_template.yaml
- ```
+torchrun --standalone --nnodes=1 --nproc-per-node=1 \
+    src/lighteval/__main__.py nanotron \
+    --checkpoint-config-path ../nanotron/checkpoints/10/config.yaml \
+    --lighteval-config-path examples/nanotron/lighteval_config_override_template.yaml
+```
 
-The `nproc-per-node` argument should match the data, tensor and pipeline
+The `nproc-per-node` argument should match the data, tensor, and pipeline
 parallelism configured in the `lighteval_config_template.yaml` file.
 That is: `nproc-per-node = data_parallelism * tensor_parallelism *
 pipeline_parallelism`.

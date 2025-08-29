@@ -693,7 +693,6 @@ class RephraseChecker(Instruction):
           True if `value` and `instruction_args` only differ by the words/sentences
           in between two asterisks such as *change me*; otherwise, False.
         """
-
         if not self.is_change(value):
             raise ValueError(f"value {value} does not contain changes in the form of *change me*.")
 
@@ -724,7 +723,6 @@ class KeywordChecker(Instruction):
         Returns:
           A string representing the instruction description.
         """
-
         if not keywords:
             self._keywords = instructions_util.generate_keywords(num_keywords=_NUM_KEYWORDS)
         else:
@@ -744,7 +742,11 @@ class KeywordChecker(Instruction):
         return ["keywords"]
 
     def check_following(self, value):
-        """Check if the response contain the expected keywords."""
+        """Check if the response contain the expected keywords.
+
+        Returns:
+            bool: True if the response contains all expected keywords, False otherwise
+        """
         for keyword in self._keywords:
             if not re.search(keyword, value, flags=re.IGNORECASE):
                 return False
@@ -838,7 +840,6 @@ class NumberOfWords(Instruction):
         Returns:
           A string representing the instruction description.
         """
-
         self._num_words = num_words
         if self._num_words is None or self._num_words < 0:
             self._num_words = random.randint(_NUM_WORDS_LOWER_LIMIT, _NUM_WORDS_UPPER_LIMIT)
@@ -975,7 +976,6 @@ class ParagraphFirstWordCheck(Instruction):
           True if the number of paragraphs is the same as required and the first
           word of the specified paragraph is the same as required. Otherwise, false.
         """
-
         paragraphs = re.split(r"\n\n", value)
         num_paragraphs = len(paragraphs)
 
@@ -1024,7 +1024,6 @@ class KeySentenceChecker(Instruction):
         Returns:
           A string representing the instruction description.
         """
-
         if not key_sentences:
             # TODO(jeffrey) make a generate sentences function? wonderwords package
             self._key_sentences = set("For now, this is fine.")
@@ -1075,7 +1074,6 @@ class ForbiddenWords(Instruction):
         Returns:
           A string representing the instruction description.
         """
-
         if not forbidden_words:
             self._forbidden_words = instructions_util.generate_keywords(num_keywords=_NUM_KEYWORDS)
         else:

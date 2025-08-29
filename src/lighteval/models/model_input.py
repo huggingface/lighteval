@@ -66,6 +66,9 @@ class GenerationParameters(BaseModel, extra="forbid"):
                     "truncate_prompt": value
                 }
             }
+
+        Returns:
+            GenerationParameters: A GenerationParameters object created from the config dictionary
         """
         return GenerationParameters(**config_dict.get("generation", {}))
 
@@ -80,6 +83,9 @@ class GenerationParameters(BaseModel, extra="forbid"):
         Args:
             model_args (str): A string like the following:
                 "pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=float16,max_model_length=32768,generation_parameters={temperature:0.7,top_p:5}"
+
+        Returns:
+            GenerationParameters: A GenerationParameters object created from the model args string
         """
 
         def parse_model_args(model_args):

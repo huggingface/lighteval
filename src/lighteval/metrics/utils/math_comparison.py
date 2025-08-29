@@ -170,12 +170,12 @@ def sympy_deep_compare_set_and_tuple(gold: FiniteSet | Tuple, pred: FiniteSet | 
     """Compare two finite sets by comparing each element with given precision.
 
     Args:
-        a: First finite set
-        b: Second finite set
-        precision: Number of decimal places to compare
+        gold (FiniteSet | Tuple): First finite set or tuple.
+        pred (FiniteSet | Tuple): Second finite set or tuple.
+        precision (int): Number of decimal places to compare.
 
     Returns:
-        True if sets contain equal elements within precision, False otherwise
+        True if sets contain equal elements within precision, False otherwise.
 
     Note: in order to fully support finite sets, we should ideally do kartesian product comparison
     but this is not implemented yet. We kinda hope sympy will order the elements.
@@ -571,10 +571,7 @@ complex_number_pattern = re.compile(
 
 
 def should_treat_as_complex(latex_str: str) -> bool:
-    """
-    Returns True if the latex string likely contains complex numbers, matrices, or vectors.
-    """
-
+    """Returns True if the latex string likely contains complex numbers, matrices, or vectors."""
     return bool(complex_number_pattern.search(latex_str))
 
 

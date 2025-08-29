@@ -52,8 +52,7 @@ def find_ngrams(input_list, n):
 
 class DataStatsMetric(Metric):
     def __init__(self, n_gram=3, n_workers=24, case=False, tokenize=True):
-        """
-        Data Statistics metric
+        """Data Statistics metric
         Makes use of Newsroom code: \
             https://github.com/lil-lab/newsroom/blob/master/newsroom/analyze/fragments.py
         Calculates extractive statistics such as coverage, density, compression as
@@ -65,11 +64,11 @@ class DataStatsMetric(Metric):
             (e.g. news article) as opposed to the reference.
 
         Args:
-                :param n_gram: compute statistics for n-grams up to and including this length
-                :param n_workers: number of processes to use if using multiprocessing
-                :param case: whether to lowercase input before calculating statistics
-                :param tokenize: whether to tokenize the input; otherwise assumes that the input
-                    is a string of space-separated tokens
+            n_gram (int): compute statistics for n-grams up to and including this length.
+            n_workers (int): number of processes to use if using multiprocessing.
+            case (bool): whether to lowercase input before calculating statistics.
+            tokenize (bool): whether to tokenize the input; otherwise assumes that the input
+                is a string of space-separated tokens.
         """
         if not is_spacy_available():
             raise ImportError(NO_SPACY_ERROR_MSG)

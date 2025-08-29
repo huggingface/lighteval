@@ -20,8 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-Common CLI argument types for LightEval main files.
+"""Common CLI argument types for LightEval main files.
 This module exports pre-defined argument types to reduce redundancy across main_*.py files.
 """
 

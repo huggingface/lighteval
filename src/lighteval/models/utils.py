@@ -35,8 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 def _get_dtype(dtype: Union[str, torch.dtype, None], config: Optional[AutoConfig] = None) -> Optional[torch.dtype]:
-    """
-    Get the torch dtype based on the input arguments.
+    """Get the torch dtype based on the input arguments.
 
     Args:
         dtype (Union[str, torch.dtype]): The desired dtype. Can be a string or a torch dtype.
@@ -45,7 +44,6 @@ def _get_dtype(dtype: Union[str, torch.dtype, None], config: Optional[AutoConfig
     Returns:
         torch.dtype: The torch dtype based on the input arguments.
     """
-
     if config is not None and hasattr(config, "quantization_config"):
         # must be infered
         return None
@@ -64,8 +62,7 @@ def _get_dtype(dtype: Union[str, torch.dtype, None], config: Optional[AutoConfig
 
 
 def _simplify_name(name_or_path: str) -> str:
-    """
-    If the model is loaded from disk, then the name will have the following format:
+    """If the model is loaded from disk, then the name will have the following format:
     /p/a/t/h/models--org--model_name/revision/model_files
     This function return the model_name as if it was loaded from the hub:
     org/model_name
@@ -116,7 +113,9 @@ def uses_chat_template(
     a chat template or not
 
     Args:
-        model_name (str): Model name on HF
+        model_name (str, optional): Model name on HF.
+        tokenizer (AutoTokenizer, optional): The tokenizer to check.
+        override_chat_template (bool, optional): Override the chat template detection.
 
     Returns:
         bool: True if Tokenizer config contains a chat template, False otherwise

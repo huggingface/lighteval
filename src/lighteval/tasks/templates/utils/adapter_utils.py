@@ -30,13 +30,14 @@ AdapterReturnTypeVar = TypeVar("AdapterReturnTypeVar")
 def create_adapter_from_dict(
     adapter: Mapping[str, Any] | Callable[[dict], AdapterReturnTypeVar],
 ) -> Callable[[dict], AdapterReturnTypeVar]:
-    """
-    Creates adapter function for the template input from a dict.
+    """Creates adapter function for the template input from a dict.
+
     Args:
         adapter: Dict of the form {key: value} where value is key in the input dict to get.
 
+    Returns:
+        Callable[[dict], AdapterReturnTypeVar]: A function that adapts dictionary input to the expected format
     """
-
     if not isinstance(adapter, Mapping):
         return adapter
 

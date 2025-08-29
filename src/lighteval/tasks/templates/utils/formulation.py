@@ -32,8 +32,7 @@ ChoicePrefix = Literal["Letters", "NativeLetters", "Numbers"]
 
 @dataclass
 class MCFFormulation:
-    """
-    MCF Formulation
+    """MCF Formulation
     Presenting the choices as A. B. C.
     The target is A, B, C
 
@@ -47,8 +46,7 @@ class MCFFormulation:
 
 @dataclass
 class HybridFormulation:
-    """
-    Hybrid Formulation
+    """Hybrid Formulation
     Presenting the choices as A. B. C.
     The target is then the answer itself not A, B, C
 
@@ -62,8 +60,7 @@ class HybridFormulation:
 
 @dataclass
 class CFFormulation:
-    """
-    CF Formulation
+    """CF Formulation
     No choices are presented, the target is the answer itself
     """
 
@@ -88,8 +85,7 @@ def build_choices(
     translation_literals: TranslationLiterals,
     use_sentence_space: bool = True,
 ):
-    """
-    Builds a string version of the choices based on passed formulation for available options presentation.
+    """Builds a string version of the choices based on passed formulation for available options presentation.
     For Hybrid/MCF, the choices are presented as A. OptionA B. OptionB C. OptionC etc.
     For CF no choices are presented
 
@@ -101,6 +97,9 @@ def build_choices(
             The same value should be passed to `build_answers` function to ensure consistent tokenization.
 
         Defaults to True.
+
+    Returns:
+        str | None: Formatted choices string for Hybrid/MCF formulations, None for CF formulation
     """
     if isinstance(formulation, CFFormulation):
         return None
@@ -132,8 +131,7 @@ def build_answers(
     translation_literals: TranslationLiterals,
     use_sentence_space: bool = True,
 ) -> list[str]:
-    """
-    Builds a string version of the answers based on passed formulation.
+    """Builds a string version of the answers based on passed formulation.
     For MCF, the answers are presented as A, B, C etc.
     For Hybrid/CF, the answers are presented as the answer itself.
 
@@ -143,6 +141,9 @@ def build_answers(
         translation_literals (TranslationLiterals): The translation literals scoped to required language.
         use_sentence_space (bool, optional): Whether to use sentence or word space in front of the answer. Defaults to True.
             The same value should be passed to `build_choices` function to ensure consistent tokenization.
+
+    Returns:
+        list[str]: List of formatted answer strings
     """
     if isinstance(formulation, MCFFormulation):
         prefixes = get_prefix(formulation.choice_prefix, translation_literals)
