@@ -113,11 +113,6 @@ def fake_evaluate_task(
         def load_tasks(self):
             return {task_name_fs: lighteval_task}
 
-        # def get_tasks_configs(self, task: str):
-        #    config = lighteval_task.config
-        #    config.num_fewshots = n_fewshot
-        #    config.full_name = f"{task_name}|{config.num_fewshots}"
-        #    return [config]
 
     # This is due to logger complaining we have no initialised the accelerator
     # It's hard to mock as it's global singleton
