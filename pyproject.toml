@@ -104,7 +104,6 @@ extended_tasks = [
   "langdetect", # ifeval
   "openai>1.87", # llm as a judge using openai models
   "tiktoken",
-  "emoji", "spacy", "syllapy"  # ifbench
 ]
 s3 = ["s3fs"]
 multilingual = [
