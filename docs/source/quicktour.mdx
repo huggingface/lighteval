@@ -27,7 +27,7 @@ To evaluate `GPT-2` on the Truthful QA benchmark with [🤗
 ```bash
 lighteval accelerate \
      "model_name=openai-community/gpt2" \
-     "leaderboard|truthfulqa:mc|0|0"
+     "leaderboard|truthfulqa:mc|0"
 ```
 
 Here, we first choose a backend (either `accelerate`, `nanotron`, `endpoint`, or `vllm`), and then specify the model and task(s) to run.
@@ -38,11 +38,8 @@ Valid key-value pairs correspond with the backend configuration, and are detaile
 The syntax for the task specification might be a bit hard to grasp at first. The format is as follows:
 
 ```txt
-{suite}|{task}|{num_few_shot}|{0 for strict `num_few_shots`, or 1 to allow a truncation if context size is too small}
+{suite}|{task}|{num_few_shot}
 ```
-
-If the fourth value is set to 1, lighteval will check if the prompt (including the few-shot examples) is too long for the context size of the task or the model.
-If so, the number of few shot examples is automatically reduced.
 
 Tasks have a function applied at the sample level and one at the corpus level. For example,
 - an exact match can be applied per sample, then averaged over the corpus to give the final score
@@ -52,7 +49,7 @@ etc.
 If the task you are looking at has a sample level function (`sample_level_fn`) which can be parametrized, you can pass parameters in the CLI.
 For example
 ```txt
-{suite}|{task}@{parameter_name1}={value1},{parameter_name2}={value2},...|0|0
+{suite}|{task}@{parameter_name1}={value1}@{parameter_name2}={value2},...|0
 ```
 
 All officially supported tasks can be found at the [tasks_list](available-tasks) and in the
@@ -71,7 +68,7 @@ When specifying a path to file, it should start with `./`.
 lighteval accelerate \
      "model_name=openai-community/gpt2" \
      ./path/to/lighteval/examples/tasks/recommended_set.txt
-# or, e.g., "leaderboard|truthfulqa:mc|0|0|,leaderboard|gsm8k|3|1"
+# or, e.g., "leaderboard|truthfulqa:mc|0,leaderboard|gsm8k|3"
 ```
 
 ## Evaluate a model on one or more GPUs
@@ -90,7 +87,7 @@ You can then evaluate a model using data parallelism on 8 GPUs like follows:
 accelerate launch --multi_gpu --num_processes=8 -m \
     lighteval accelerate \
     "model_name=openai-community/gpt2" \
-    "leaderboard|truthfulqa:mc|0|0"
+    "leaderboard|truthfulqa:mc|0"
 ```
 
 Here, `--override_batch_size` defines the batch size per device, so the effective
@@ -103,7 +100,7 @@ To evaluate a model using pipeline parallelism on 2 or more GPUs, run:
 ```bash
 lighteval accelerate \
     "model_name=openai-community/gpt2,model_parallel=True" \
-    "leaderboard|truthfulqa:mc|0|0"
+    "leaderboard|truthfulqa:mc|0"
 ```
 
 This will automatically use accelerate to distribute the model across the GPUs.
@@ -134,7 +131,7 @@ think tokens.
 ```bash
 lighteval vllm \
     "model_name=mistralai/Magistral-Small-2507,dtype=float16,data_parallel_size=4" \
-    "lighteval|aime24|0|0" \
+    "lighteval|aime24|0" \
     --remove-reasoning-tags \
     --reasoning-tags="[('[THINK]','[/THINK]')]"
 ```

@@ -98,6 +98,7 @@ def fake_evaluate_task(
     # Mock the Registry.get_task_dict method
 
     task_name = f"{lighteval_task.suite[0]}|{lighteval_task.name}"
+    task_name_fs = f"{lighteval_task.suite[0]}|{lighteval_task.name}|{n_fewshot}"
 
     task_dict = {task_name: lighteval_task}
     evaluation_tracker = EvaluationTracker(output_dir="outputs")
@@ -105,18 +106,12 @@ def fake_evaluate_task(
     # Create a mock Registry class
 
     class FakeRegistry(Registry):
-        def __init__(self, custom_tasks: Optional[Union[str, Path, ModuleType]] = None):
-            super().__init__(custom_tasks=custom_tasks)
+        def __init__(self, tasks: Optional[str], custom_tasks: Optional[Union[str, Path, ModuleType]] = None):
+            self.tasks_list = [task_name_fs]
+            self.task_to_configs = {task_name_fs: [lighteval_task.config]}
 
-        def get_task_dict(self, task_names: list[str]):
-            return task_dict
-
-        def get_tasks_configs(self, task: str):
-            config = lighteval_task.config
-            config.num_fewshots = n_fewshot
-            config.truncate_fewshots = False
-            config.full_name = f"{task_name}|{config.num_fewshots}"
-            return [config]
+        def load_tasks(self):
+            return {task_name_fs: lighteval_task}
 
     # This is due to logger complaining we have no initialised the accelerator
     # It's hard to mock as it's global singleton
