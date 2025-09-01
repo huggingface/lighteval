@@ -113,7 +113,6 @@ def fake_evaluate_task(
         def load_tasks(self):
             return {task_name_fs: lighteval_task}
 
-
     # This is due to logger complaining we have no initialised the accelerator
     # It's hard to mock as it's global singleton
     if is_accelerate_available():
