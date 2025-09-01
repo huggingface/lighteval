@@ -411,8 +411,6 @@ class Registry:
         Args:
             meta_table: meta_table containing tasks
                 configurations. If not provided, it will be loaded from TABLE_PATH.
-            cache_dir: Directory to store cached data. If not
-                provided, the default cache directory will be used.
 
         Returns:
             Dict[str, LightevalTaskConfig]: A dictionary of task names mapped to their corresponding LightevalTaskConfig.
