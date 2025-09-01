@@ -284,10 +284,7 @@ class Registry:
             try:
                 if task.count("|") == 3:
                     logger.warning(
-                        "Deprecation warning: You provided 4 arguments in your task name, but we no longer support the `truncate_fewshot` option."
-                    )
-                    logger.warning(
-                        "We will ignore the parameter for now, but it will fail in a couple of versions, so you should change your task name to `suite|task|num_fewshot`."
+                        "Deprecation warning: You provided 4 arguments in your task name, but we no longer support the `truncate_fewshot` option. We will ignore the parameter for now, but it will fail in a couple of versions, so you should change your task name to `suite|task|num_fewshot`."
                     )
                     suite_name, task_name, few_shot, _ = tuple(task.split("|"))
                 else:
