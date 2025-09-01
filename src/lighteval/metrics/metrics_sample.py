@@ -1214,7 +1214,9 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
         """
         if self.k is None:
             raise Exception("You did not set the value of k")
+
         golds = doc.get_golds()
+
         if len(golds) > 1:
             raise Exception("Cannot compute maj@k with several golds")
 
@@ -1222,7 +1224,7 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
         new_doc = Doc(
             choices=processed_choices,
             query=doc.query,
-            gold_index=doc.gold_index,
+            gold_index=list(range(len(processed_choices))),
         )
         all_answers = []
         for pred in model_response.final_text[: self.k]:
@@ -1406,8 +1408,8 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
         metrics = {}
         for k in ks:
             for t in thresholds:
-                metrics[f"{self.name}@{k}_{t}"] = compute_g_pass_at_k(n, c, k, t)
-            metrics[f"m{self.name}@{k}"] = compute_mg_pass_at_k(n, c, k)
+                metrics[f"{self.name}{k}_{t}"] = compute_g_pass_at_k(n, c, k, t)
+            metrics[f"m{self.name}{k}"] = compute_mg_pass_at_k(n, c, k)
 
         return metrics
 
@@ -1419,8 +1421,8 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
         metrics = []
         for k in ks:
             for t in thresholds:
-                metrics.append(f"{self.name}@{k}_{t}")
-            metrics.append(f"m{self.name}@{k}")
+                metrics.append(f"{self.name}{k}_{t}")
+            metrics.append(f"m{self.name}{k}")
 
         return metrics
 

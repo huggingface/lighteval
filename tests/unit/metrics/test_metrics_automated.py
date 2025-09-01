@@ -28,6 +28,7 @@ You can define test cases with expected inputs and outputs, and the framework wi
 automatically run them and verify the results.
 """
 
+import copy
 import json
 import logging
 from dataclasses import field
@@ -71,34 +72,34 @@ class AutomatedMetricTester:
     # Mapping of metric names to Metrics enum values
     METRIC_CLASSES = {
         # Map metric names to their corresponding Metrics enum values
-        "exact_match": Metrics.exact_match,
+        "exact_match": Metrics.exact_match,  #
         "f1_score": Metrics.f1_score,
-        "loglikelihood_acc": Metrics.loglikelihood_acc,
-        "recall_at_k": Metrics.recall_at_k,
-        "mrr": Metrics.mrr,
+        "loglikelihood_acc": Metrics.loglikelihood_acc,  #
+        "recall_at_k": Metrics.recall_at_k,  #
+        "mrr": Metrics.mrr,  #
         "rouge1": Metrics.rouge1,
-        "rouge2": Metrics.rouge2,
-        "rougeL": Metrics.rougeL,
-        "rougeLsum": Metrics.rougeLsum,
-        "rouge_t5": Metrics.rouge_t5,
-        "extractiveness": Metrics.extractiveness,
-        "bleurt": Metrics.bleurt,
-        "copyright": Metrics.copyright,
-        "drop": Metrics.drop,
-        "avg_at_k": Metrics.avg_at_k,
-        "avg_at_k_math": Metrics.avg_at_k_math,
-        "g_pass_at_k": Metrics.g_pass_at_k,
-        "g_pass_at_k_math": Metrics.g_pass_at_k_math,
-        "g_pass_at_k_latex": Metrics.g_pass_at_k_latex,
-        "maj_at_k": Metrics.maj_at_k,
-        "pass_at_k": Metrics.pass_at_k,
-        "pass_at_k_math": Metrics.pass_at_k_math,
-        "pass_at_k_letters": Metrics.pass_at_k_letters,
+        "rouge2": Metrics.rouge2,  #
+        "rougeL": Metrics.rougeL,  #
+        "rougeLsum": Metrics.rougeLsum,  #
+        "rouge_t5": Metrics.rouge_t5,  #
+        "extractiveness": Metrics.extractiveness,  #
+        "bleurt": Metrics.bleurt,  #
+        "copyright": Metrics.copyright,  #
+        "drop": Metrics.drop,  #
+        "avg_at_k": Metrics.avg_at_k,  #
+        "avg_at_k_math": Metrics.avg_at_k_math,  #
+        "g_pass_at_k": Metrics.g_pass_at_k,  #
+        "g_pass_at_k_math": Metrics.g_pass_at_k_math,  #
+        "g_pass_at_k_latex": Metrics.g_pass_at_k_latex,  #
+        "maj_at_k": Metrics.maj_at_k,  #
+        "pass_at_k": Metrics.pass_at_k,  #
+        "pass_at_k_math": Metrics.pass_at_k_math,  #
+        "pass_at_k_letters": Metrics.pass_at_k_letters,  #
         "gpqa_instruct_metric": Metrics.gpqa_instruct_metric,
         "gpqa_instruct_pass_at_k": Metrics.gpqa_instruct_pass_at_k,
         "expr_gold_metric": Metrics.expr_gold_metric,
-        "acc_golds_likelihood": Metrics.acc_golds_likelihood,
-        "truthfulqa_mc_metrics": Metrics.truthfulqa_mc_metrics,
+        "acc_golds_likelihood": Metrics.acc_golds_likelihood,  #
+        "truthfulqa_mc_metrics": Metrics.truthfulqa_mc_metrics,  #
         # "faithfulness": Metrics.faithfulness, issue with tokenizer
         # "prediction_perplexity": Metrics.prediction_perplexity,
         # "target_perplexity": Metrics.target_perplexity,
@@ -149,7 +150,8 @@ class AutomatedMetricTester:
 
         # Get the metric from the Metrics enum
         if metric_params != {}:
-            metric_enum_value = self.METRIC_CLASSES[metric_class].value(metric_params)
+            metric = self.METRIC_CLASSES[metric_class].value
+            metric_enum_value = copy.deepcopy(metric)(metric_params)
         else:
             metric_enum_value = self.METRIC_CLASSES[metric_class].value
 
