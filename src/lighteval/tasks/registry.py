@@ -36,7 +36,12 @@ from types import ModuleType
 import lighteval.tasks.default_tasks as default_tasks
 from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
-from lighteval.utils.imports import CANNOT_USE_EXTENDED_TASKS_MSG, can_load_extended_tasks
+from lighteval.utils.imports import (
+    CANNOT_USE_EXTENDED_TASKS_MSG,
+    CANNOT_USE_MULTILINGUAL_TASKS_MSG,
+    can_load_extended_tasks,
+    can_load_multilingual_tasks,
+)
 
 
 # Import community tasks
@@ -104,15 +109,20 @@ OPTIONAL_SUITES = [
 
 DEFAULT_SUITES = CORE_SUITES + OPTIONAL_SUITES
 
-TRUNCATE_FEW_SHOTS_DEFAULTS = True
-
 
 class Registry:
     """
     The Registry class is used to manage the task registry and get task classes.
     """
 
-    def __init__(self, custom_tasks: str | Path | ModuleType | None = None):
+    def __init__(
+        self,
+        tasks: str | Path | None = None,
+        custom_tasks: str | Path | ModuleType | None = None,
+        load_community: bool = False,
+        load_extended: bool = False,
+        load_multilingual: bool = False,
+    ):
         """
         Initialize the Registry class.
         Registry is responsible for holding a dict of task and their config, initializing a LightevalTask instance when asked.
@@ -131,51 +141,86 @@ class Registry:
         """
         self._custom_tasks = custom_tasks
 
-    def get_tasks_from_configs(self, task_configs: list[LightevalTaskConfig]) -> dict[str, LightevalTask]:
-        return {f"{config.full_name}": LightevalTask(config=config) for config in task_configs}
+        if tasks is None:
+            logger.warning(
+                "You passed no task name. This should only occur if you are using the CLI to inspect tasks."
+            )
+            self.tasks_list = []
+        else:
+            self.tasks_list = self._get_full_task_list_from_input_string(tasks)
+        # These parameters are dynamically set by the task names provided, thanks to `activate_suites_to_load`,
+        # except in the `tasks` CLI command to display the full list
+        self._load_community = load_community
+        self._load_extended = load_extended
+        self._load_multilingual = load_multilingual
+        self._activate_loading_of_optional_suite()  # we dynamically set the loading parameters
 
-    def get_tasks_configs(self, task: str) -> list[LightevalTaskConfig]:
-        """
-        task is a string of the form "suite|task|few_shot|truncate_few_shots,suite|task|few_shot|truncate_few_shots"
+        # We load all task to
+        self._task_registry = self._load_full_registry()
 
-        returns a LightevalTaskConfig object based on the task name and fewshot and truncate_few_shots values.
-        """
-        task_to_params = self.taskinfo_selector(task)
-        configs = []
+        self.task_to_configs = self._update_task_configs()
 
-        for task_name, task_param in task_to_params.items():
-            # We can have multiple versions of the same task running (for ex, different few shots, different metric params, etc)
-            for subtask_param in task_param:
-                config = self.task_registry.get(task_name)
-                if config is None:
-                    raise ValueError(f"Cannot find task {task_name} in task list or in custom task registry")
+    def _get_full_task_list_from_input_string(self, tasks: str | Path) -> list[str]:
+        """Converts an input string (either a path to file with a list of tasks or a string of comma-separated tasks) into an actual list"""
+        if os.path.exists(tasks):
+            with open(tasks, "r") as f:
+                tasks_list = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+        else:
+            tasks_list = tasks.split(",")
 
-                config = copy.deepcopy(config)
-                config.num_fewshots = subtask_param["fewshots"]
-                config.truncate_fewshots = subtask_param["truncate_fewshots"]
-                config.full_name = f"{task_name}|{config.num_fewshots}"
-                # If some tasks are parametrizable and in cli, we set attributes here
-                for metric in [m for m in config.metrics if "@" in m.metric_name]:  # parametrizable metric
-                    for attribute, value in subtask_param["metric_params"].items():
-                        setattr(metric.sample_level_fn, attribute, value)
-                    required = getattr(metric.sample_level_fn, "attribute_must_be_set", [])
-                    for attribute in required:
-                        if getattr(metric.sample_level_fn, attribute) is None:
-                            raise ValueError(
-                                f"Metric {metric.metric_name} for task {task_name} "
-                                f"was not correctly parametrized. Forgot to set '{attribute}'."
-                            )
+        # We might have tasks provided as task groups in the custom tasks
+        # We load the whole task_groups mapping
+        if self._custom_tasks is None:
+            task_groups = {}
+        else:
+            custom_tasks_module = Registry.create_custom_tasks_module(custom_tasks=self._custom_tasks)
+            tasks_group_dict = {}
+            if hasattr(custom_tasks_module, "TASKS_GROUPS"):
+                tasks_group_dict = custom_tasks_module.TASKS_GROUPS
 
-                configs.append(config)
+            # We should allow defining task groups as comma-separated strings or lists of tasks
+            task_groups = {k: v if isinstance(v, list) else v.split(",") for k, v in tasks_group_dict.items()}
 
-        return configs
+        # Then link actual task_group to task list if needed
+        # (At this point the strings are either task name/superset name or group names)
+        expanded_tasks_list: list[str] = []
+        for maybe_task_group in tasks_list:
+            # We either expand the group (in case it's a group name), or we keep it as is (in case it's a task name or superset name)
+            expanded_tasks = task_groups.get(maybe_task_group, [maybe_task_group])
+            if len(expanded_tasks) > 1:
+                logger.info(f"Expanding task group {maybe_task_group} to {expanded_tasks}")
+            expanded_tasks_list.extend(expanded_tasks)
 
-    @property
-    @lru_cache
-    def task_registry(self) -> dict[str, LightevalTaskConfig]:
+        # We remove exact duplicates
+        expanded_tasks_list = list(set(expanded_tasks_list))
+
+        return expanded_tasks_list
+
+    def _activate_loading_of_optional_suite(self) -> None:
+        """Dynamically selects which of the optional suite we want to load."""
+        suites = {task.split("|")[0] for task in self.tasks_list}
+
+        for suite_name in suites:
+            if suite_name not in DEFAULT_SUITES:
+                logger.warning(
+                    f"Suite {suite_name} unknown. This is not normal, unless you are testing adding new evaluations."
+                )
+
+        if "extended" in suites:
+            if not can_load_extended_tasks():
+                raise ImportError(CANNOT_USE_EXTENDED_TASKS_MSG)
+            self._load_extended = True
+        if "multilingual" in suites:
+            if not can_load_multilingual_tasks():
+                raise ImportError(CANNOT_USE_MULTILINGUAL_TASKS_MSG)
+            self._load_multilingual = True
+        if "community" in suites:
+            self._load_community = True
+
+    def _load_full_registry(self) -> dict[str, LightevalTaskConfig]:
         """
         Returns:
-            dict[str, LazyLightevalTask]: A dictionary mapping task names (suite|task) to their corresponding LightevalTask classes.
+            dict[str, LightevalTaskConfig]: A dictionary mapping task names (suite|task) to their corresponding LightevalTask classes.
 
         Example:
             {
@@ -188,30 +233,27 @@ class Registry:
 
         if self._custom_tasks is not None:
             custom_tasks_module.append(Registry.create_custom_tasks_module(custom_tasks=self._custom_tasks))
-        if can_load_extended_tasks():
+
+        # Need to load extended tasks
+        if self._load_extended:
             for extended_task_module in AVAILABLE_EXTENDED_TASKS_MODULES:
                 custom_tasks_module.append(extended_task_module)
         else:
             logger.warning(CANNOT_USE_EXTENDED_TASKS_MSG)
 
-        # Load community tasks
-        community_modules = load_community_tasks()
-        for community_task_module in community_modules:
-            custom_tasks_module.append(community_task_module)
+        # Need to load community tasks
+        if self._load_community:
+            community_modules = load_community_tasks()
+            for community_task_module in community_modules:
+                custom_tasks_module.append(community_task_module)
 
-        # Load multilingual tasks
-        MULTILINGUAL_TASKS_AVAILABLE = False
-        multilingual_tasks = None
-        try:
+        # Need to load multilingual tasks
+        if self._load_multilingual:
             import lighteval.tasks.multilingual.tasks as multilingual_tasks
 
-            MULTILINGUAL_TASKS_AVAILABLE = True
-        except ImportError as e:
-            logger.warning(f"Could not load multilingual tasks: {e}. You may need to install additional dependencies.")
-
-        if MULTILINGUAL_TASKS_AVAILABLE and multilingual_tasks is not None:
             custom_tasks_module.append(multilingual_tasks)
 
+        # We load all
         for module in custom_tasks_module:
             custom_task_configs.extend(module.TASKS_TABLE)
             logger.info(f"Found {len(module.TASKS_TABLE)} custom tasks in {module.__file__}")
@@ -230,84 +272,72 @@ class Registry:
 
         return {**default_tasks_registry, **custom_tasks_registry}
 
-    def taskinfo_selector(self, tasks: str) -> dict[str, list[dict]]:
+    def _update_task_configs(self) -> dict[str, LightevalTaskConfig]:  # noqa: C901
         """
-        Converts a input string of tasks name to task information usable by lighteval.
-
-        Args:
-            tasks (str): A string containing a comma-separated list of tasks definitions in the
-                format: "task_definition", where it can be
-                containing a list of tasks.
-                where task_definition can be:
-                - path to a file containing a list of tasks (one per line)
-                - task group defined in TASKS_GROUPS dict in custom tasks file
-                - task name with few shot in format "suite|task|few_shot|truncate_few_shots"
-                - task superset in format "suite|task_superset|few_shot|truncate_few_shots" (superset will run all tasks with format "suite|task_superset:{subset}|few_shot|truncate_few_shots")
-
-
-        Returns:
-            tuple[list[str], dict[str, list[tuple[int, bool]]]]: A tuple containing:
-                - A sorted list of unique task names in the format "suite|task".
-                - A dictionary mapping each task name to a list of tuples representing the few_shot and truncate_few_shots values.
+        Updates each config depending on the input tasks (we replace all provided params, like few shot number, sampling params, etc)
         """
-        task_to_params = collections.defaultdict(list)
+        task_to_configs = collections.defaultdict(list)
 
-        # We can provide a path to a file with a list of tasks or a string of comma-separated tasks
-        if os.path.exists(tasks):
-            with open(tasks, "r") as f:
-                tasks_list = [line.strip() for line in f if line.strip() and not line.startswith("#")]
-        else:
-            tasks_list = tasks.split(",")
-
-        # At this point the strings are either task name/superset name or group names
-        # Here we deal with group names and map them to corresponding tasks
-        expanded_tasks_list: list[str] = []
-        for maybe_task_group in tasks_list:
-            # We either expand the group (in case it's a group name), or we keep it as is (in case it's a task name or superset name)
-            expanded_tasks = self.task_groups_dict.get(maybe_task_group, [maybe_task_group])
-            if len(expanded_tasks) > 1:
-                logger.info(f"Expanding task group {maybe_task_group} to {expanded_tasks}")
-            expanded_tasks_list.extend(expanded_tasks)
-
-        for task in expanded_tasks_list:
+        # We map all tasks to their parameters
+        for task in self.tasks_list:
             metric_params_dict = {}
             try:
-                suite_name, task_name, few_shot, truncate_few_shots = tuple(task.split("|"))
+                if task.count("|") == 3:
+                    logger.warning(
+                        "Deprecation warning: You provided 4 arguments in your task name, but we no longer support the `truncate_fewshot` option. We will ignore the parameter for now, but it will fail in a couple of versions, so you should change your task name to `suite|task|num_fewshot`."
+                    )
+                    suite_name, task_name, few_shot, _ = tuple(task.split("|"))
+                else:
+                    suite_name, task_name, few_shot = tuple(task.split("|"))
                 if "@" in task_name:
-                    task_name, metric_params = task_name.split("@")
-                    # We convert k:v,k2:v2 to {"k": "v", "k2": "v2"}, then to correct type
-                    metric_params_dict = dict(item.split("=") for item in metric_params.split(",") if item)
+                    split_task_name = task_name.split("@")
+                    task_name, metric_params = split_task_name[0], split_task_name[1:]
+                    # We convert k:v to {"k": "v"}, then to correct type
+                    metric_params_dict = dict(item.split("=") for item in metric_params if item)
                     metric_params_dict = {k: ast.literal_eval(v) for k, v in metric_params_dict.items()}
+                few_shot = int(few_shot)
 
-                truncate_few_shots = int(truncate_few_shots)
             except ValueError:
-                raise ValueError(
-                    f"Cannot get task info from {task}. correct format is suite|task|few_shot|truncate_few_shots"
-                )
-
-            if truncate_few_shots not in [0, 1]:
-                raise ValueError(f"TruncateFewShots must be 0 or 1, got {truncate_few_shots}")
-
-            truncate_few_shots = bool(truncate_few_shots)
-            few_shot = int(few_shot)
-
-            if suite_name not in DEFAULT_SUITES:
-                logger.warning(
-                    f"Suite {suite_name} unknown. This is not normal, unless you are testing adding new evaluations."
-                )
+                raise ValueError(f"Cannot get task info from {task}. correct format is suite|task|few_shot")
 
             # This adds support for task supersets (eg: mmlu -> all the mmlu tasks)
-            for expanded_task in self.expand_task_definition(f"{suite_name}|{task_name}"):
-                # Store few_shot info for each task name (suite|task)
-                task_to_params[expanded_task].append(
-                    {
-                        "fewshots": few_shot,
-                        "truncate_fewshots": truncate_few_shots,
-                        "metric_params": metric_params_dict,
-                    }
-                )
+            for expanded_task in self._expand_task_definition(f"{suite_name}|{task_name}"):
+                # todo: it's likely we'll want this step at the list set up step, not here
 
-        return task_to_params
+                # We load each config
+                config = self._task_registry.get(expanded_task)
+                if config is None:
+                    raise ValueError(f"Cannot find task {expanded_task} in task list or in custom task registry")
+
+                config = copy.deepcopy(config)
+                config.num_fewshots = few_shot
+                config.full_name = f"{expanded_task}|{config.num_fewshots}"
+                # If some tasks are parametrizable and in cli, we set attributes here
+                for metric in [m for m in config.metrics if "@" in m.metric_name]:  # parametrizable metric
+                    for attribute, value in metric_params_dict.items():
+                        setattr(metric.sample_level_fn, attribute, value)
+                    required = getattr(metric.sample_level_fn, "attribute_must_be_set", [])
+                    for attribute in required:
+                        if getattr(metric.sample_level_fn, attribute) is None:
+                            raise ValueError(
+                                f"Metric {metric.metric_name} for task {expanded_task} "
+                                f"was not correctly parametrized. Forgot to set '{attribute}'."
+                            )
+
+                task_to_configs[expanded_task].append(config)
+
+        return task_to_configs
+
+    def load_tasks(self) -> dict[str, LightevalTask]:
+        if len(self.task_to_configs) == 0:  # we're in cli to analyse tasks, we return all tasks
+            return {f"{config.full_name}": LightevalTask(config=config) for config in self._task_registry.values()}
+
+        # We return only the tasks of interest
+        return {
+            f"{config.full_name}": LightevalTask(config=config)
+            for configs in self.task_to_configs.values()
+            for config in configs
+        }
 
     @property
     @lru_cache
@@ -323,34 +353,11 @@ class Registry:
         """
         # Note: sorted before groupby is important as the python implementation of groupby does not
         # behave like sql groupby. For more info see the docs of itertools.groupby
-        superset_dict = {k: list(v) for k, v in groupby(sorted(self.task_registry.keys()), lambda x: x.split(":")[0])}
+        superset_dict = {k: list(v) for k, v in groupby(sorted(self._task_registry.keys()), lambda x: x.split(":")[0])}
         # Only consider supersets with more than one task
         return {k: v for k, v in superset_dict.items() if len(v) > 1}
 
-    @property
-    @lru_cache
-    def task_groups_dict(self) -> dict[str, list[str]]:
-        """
-        Returns:
-            dict[str, list[str]]: A dictionary where keys are task group names and values are lists of task names (suite|task).
-
-        Example:
-            {
-                "all_custom": ["custom|task1", "custom|task2", "custom|task3"],
-                "group1": ["custom|task1", "custom|task2"],
-            }
-        """
-        if self._custom_tasks is None:
-            return {}
-        custom_tasks_module = Registry.create_custom_tasks_module(custom_tasks=self._custom_tasks)
-        tasks_group_dict = {}
-        if hasattr(custom_tasks_module, "TASKS_GROUPS"):
-            tasks_group_dict = custom_tasks_module.TASKS_GROUPS
-
-        # We should allow defining task groups as comma-separated strings or lists of tasks
-        return {k: v if isinstance(v, list) else v.split(",") for k, v in tasks_group_dict.items()}
-
-    def expand_task_definition(self, task_definition: str):
+    def _expand_task_definition(self, task_definition: str):
         """
         Args:
             task_definition (str): Task definition to expand. In format:
@@ -367,67 +374,6 @@ class Registry:
 
         # Then it must be a single task
         return [task_definition]
-
-    def print_all_tasks(self, suites: str | None = None):
-        """
-        Print all the tasks in the task registry.
-
-        Args:
-            suites: Comma-separated list of suites to display. If None, shows core suites only.
-                   Use 'all' to show all available suites (core + optional).
-                   Special handling for 'multilingual' suite with dependency checking.
-        """
-        # Parse requested suites
-        if suites is None:
-            requested_suites = CORE_SUITES.copy()
-        else:
-            requested_suites = [s.strip() for s in suites.split(",")]
-
-            # Handle 'all' special case
-            if "all" in requested_suites:
-                requested_suites = DEFAULT_SUITES.copy()
-
-            # Check for multilingual dependencies if requested
-            if "multilingual" in requested_suites:
-                import importlib.util
-
-                if importlib.util.find_spec("langcodes") is None:
-                    logger.warning(
-                        "Multilingual tasks require additional dependencies (langcodes). "
-                        "Install them with: pip install langcodes"
-                    )
-                    requested_suites.remove("multilingual")
-
-        # Get all tasks and filter by requested suites
-        all_tasks = list(self.task_registry.keys())
-        tasks_names = [task for task in all_tasks if task.split("|")[0] in requested_suites]
-
-        # Ensure all requested suites are present (even if empty)
-        suites_in_registry = {name.split("|")[0] for name in tasks_names}
-        for suite in requested_suites:
-            if suite not in suites_in_registry:
-                # We add a dummy task to make sure the suite is printed
-                tasks_names.append(f"{suite}|")
-
-        tasks_names.sort()
-
-        print(f"Displaying tasks for suites: {', '.join(requested_suites)}")
-        print("=" * 60)
-
-        for suite, g in groupby(tasks_names, lambda x: x.split("|")[0]):
-            tasks_in_suite = [name for name in g if name.split("|")[1]]  # Filter out dummy tasks
-            tasks_in_suite.sort()
-
-            print(f"\n- {suite}:")
-            if not tasks_in_suite:
-                print("  (no tasks in this suite)")
-            else:
-                for task_name in tasks_in_suite:
-                    print(f"  - {task_name}")
-
-        # Print summary
-        total_tasks = len([t for t in tasks_names if t.split("|")[1]])
-        print(f"\nTotal tasks displayed: {total_tasks}")
 
     @staticmethod
     def create_custom_tasks_module(custom_tasks: str | Path | ModuleType) -> ModuleType:
@@ -462,11 +408,9 @@ class Registry:
         Args:
             meta_table: meta_table containing tasks
                 configurations. If not provided, it will be loaded from TABLE_PATH.
-            cache_dir: Directory to store cached data. If not
-                provided, the default cache directory will be used.
 
         Returns:
-            Dict[str, LightevalTask]: A dictionary of task names mapped to their corresponding LightevalTask classes.
+            Dict[str, LightevalTaskConfig]: A dictionary of task names mapped to their corresponding LightevalTaskConfig.
         """
 
         if meta_table is None:
@@ -474,13 +418,69 @@ class Registry:
 
         tasks_with_config: dict[str, LightevalTaskConfig] = {}
         for config in meta_table:
-            if not any(suite in config.suite for suite in DEFAULT_SUITES):
-                logger.warning(
-                    f"This evaluation is not in any known suite: {config.name} is in {config.suite}, not in {DEFAULT_SUITES}. Skipping."
-                )
-                continue
             for suite in config.suite:
                 if suite in DEFAULT_SUITES:
                     tasks_with_config[f"{suite}|{config.name}"] = config
 
         return tasks_with_config
+
+    def print_all_tasks(self, suites: str | None = None):
+        """
+        Print all the tasks in the task registry.
+
+        Args:
+            suites: Comma-separated list of suites to display. If None, shows core suites only.
+                   Use 'all' to show all available suites (core + optional).
+                   Special handling for 'multilingual' suite with dependency checking.
+        """
+        # Parse requested suites
+        if suites is None:
+            requested_suites = CORE_SUITES.copy()
+        else:
+            requested_suites = [s.strip() for s in suites.split(",")]
+
+            # Handle 'all' special case
+            if "all" in requested_suites:
+                requested_suites = DEFAULT_SUITES.copy()
+
+            # Check for multilingual dependencies if requested
+            if "multilingual" in requested_suites:
+                import importlib.util
+
+                if importlib.util.find_spec("langcodes") is None:
+                    logger.warning(
+                        "Multilingual tasks require additional dependencies (langcodes). "
+                        "Install them with: pip install langcodes"
+                    )
+                    requested_suites.remove("multilingual")
+
+        # Get all tasks and filter by requested suites
+        all_tasks = list(self._task_registry.keys())
+        tasks_names = [task for task in all_tasks if task.split("|")[0] in requested_suites]
+
+        # Ensure all requested suites are present (even if empty)
+        suites_in_registry = {name.split("|")[0] for name in tasks_names}
+        for suite in requested_suites:
+            if suite not in suites_in_registry:
+                # We add a dummy task to make sure the suite is printed
+                tasks_names.append(f"{suite}|")
+
+        tasks_names.sort()
+
+        print(f"Displaying tasks for suites: {', '.join(requested_suites)}")
+        print("=" * 60)
+
+        for suite, g in groupby(tasks_names, lambda x: x.split("|")[0]):
+            tasks_in_suite = [name for name in g if name.split("|")[1]]  # Filter out dummy tasks
+            tasks_in_suite.sort()
+
+            print(f"\n- {suite}:")
+            if not tasks_in_suite:
+                print("  (no tasks in this suite)")
+            else:
+                for task_name in tasks_in_suite:
+                    print(f"  - {task_name}")
+
+        # Print summary
+        total_tasks = len([t for t in tasks_names if t.split("|")[1]])
+        print(f"\nTotal tasks displayed: {total_tasks}")
