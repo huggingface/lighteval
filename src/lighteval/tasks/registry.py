@@ -282,7 +282,7 @@ class Registry:
         for task in self.tasks_list:
             metric_params_dict = {}
             try:
-                if task.count("|") == 4:
+                if task.count("|") == 3:
                     logger.warning(
                         "Deprecation warning: You provided 4 arguments in your task name, but we no longer support the `truncate_fewshot` option."
                     )
