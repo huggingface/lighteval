@@ -166,6 +166,7 @@ class VLLMModelConfig(ModelConfig):
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
     max_num_seqs: PositiveInt = 128  # maximum number of sequences per iteration; This variable and `max_num_batched_tokens` effectively control the batch size at prefill stage. See https://github.com/vllm-project/vllm/issues/2492 for detailed explaination.
     max_num_batched_tokens: PositiveInt = 2048  # maximum number of tokens per batch
+    enable_prefix_caching: bool = True  # whether to enable prefix caching to speed up generation. May use more memory. Should be disabled for LFM2
     subfolder: str | None = None
     is_async: bool = False  # Whether to use the async version or sync version of the model
     override_chat_template: bool = None
@@ -259,6 +260,7 @@ class VLLMModel(LightevalModel):
             "seed": int(config.seed),
             "max_num_seqs": int(config.max_num_seqs),
             "max_num_batched_tokens": int(config.max_num_batched_tokens),
+            "enable_prefix_caching": config.enable_prefix_caching
         }
 
         if config.quantization is not None:
