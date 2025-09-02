@@ -72,35 +72,35 @@ class AutomatedMetricTester:
     # Mapping of metric names to Metrics enum values
     METRIC_CLASSES = {
         # Map metric names to their corresponding Metrics enum values
-        "exact_match": Metrics.exact_match,  #
+        "exact_match": Metrics.exact_match,
         "f1_score": Metrics.f1_score,
-        "loglikelihood_acc": Metrics.loglikelihood_acc,  #
-        "recall_at_k": Metrics.recall_at_k,  #
-        "mrr": Metrics.mrr,  #
+        "loglikelihood_acc": Metrics.loglikelihood_acc,
+        "recall_at_k": Metrics.recall_at_k,
+        "mrr": Metrics.mrr,
         "rouge1": Metrics.rouge1,
-        "rouge2": Metrics.rouge2,  #
-        "rougeL": Metrics.rougeL,  #
-        "rougeLsum": Metrics.rougeLsum,  #
-        "rouge_t5": Metrics.rouge_t5,  #
-        "extractiveness": Metrics.extractiveness,  #
-        "bleurt": Metrics.bleurt,  #
-        "copyright": Metrics.copyright,  #
-        "drop": Metrics.drop,  #
-        "avg_at_k": Metrics.avg_at_k,  #
-        "avg_at_k_math": Metrics.avg_at_k_math,  #
-        "g_pass_at_k": Metrics.g_pass_at_k,  #
-        "g_pass_at_k_math": Metrics.g_pass_at_k_math,  #
-        "g_pass_at_k_latex": Metrics.g_pass_at_k_latex,  #
-        "maj_at_k": Metrics.maj_at_k,  #
-        "pass_at_k": Metrics.pass_at_k,  #
-        "pass_at_k_math": Metrics.pass_at_k_math,  #
-        "pass_at_k_letters": Metrics.pass_at_k_letters,  #
+        "rouge2": Metrics.rouge2,
+        "rougeL": Metrics.rougeL,
+        "rougeLsum": Metrics.rougeLsum,
+        "rouge_t5": Metrics.rouge_t5,
+        "extractiveness": Metrics.extractiveness,
+        "bleurt": Metrics.bleurt,
+        "copyright": Metrics.copyright,
+        "drop": Metrics.drop,
+        "avg_at_k": Metrics.avg_at_k,
+        "avg_at_k_math": Metrics.avg_at_k_math,
+        "g_pass_at_k": Metrics.g_pass_at_k,
+        "g_pass_at_k_math": Metrics.g_pass_at_k_math,
+        "g_pass_at_k_latex": Metrics.g_pass_at_k_latex,
+        "maj_at_k": Metrics.maj_at_k,
+        "pass_at_k": Metrics.pass_at_k,
+        "pass_at_k_math": Metrics.pass_at_k_math,
+        "pass_at_k_letters": Metrics.pass_at_k_letters,
         "gpqa_instruct_metric": Metrics.gpqa_instruct_metric,
         "gpqa_instruct_pass_at_k": Metrics.gpqa_instruct_pass_at_k,
         "expr_gold_metric": Metrics.expr_gold_metric,
-        "acc_golds_likelihood": Metrics.acc_golds_likelihood,  #
-        "truthfulqa_mc_metrics": Metrics.truthfulqa_mc_metrics,  #
-        # "faithfulness": Metrics.faithfulness, issue with tokenizer
+        "acc_golds_likelihood": Metrics.acc_golds_likelihood,
+        "truthfulqa_mc_metrics": Metrics.truthfulqa_mc_metrics,
+        "faithfulness": Metrics.faithfulness,  # issue with tokenizer
         # "prediction_perplexity": Metrics.prediction_perplexity,
         # "target_perplexity": Metrics.target_perplexity,
         # "bert_score": Metrics.bert_score, issue with the scoring function, int too big to convert
@@ -273,125 +273,3 @@ class AutomatedMetricTester:
             # Single test suite
             test_suite = MetricTestSuite(**data)
             return self.run_test_suite(test_suite)
-
-    def save_test_suite_to_file(self, test_suite: MetricTestSuite, file_path: Union[str, Path]):
-        """Save a test suite to a JSON file."""
-        with open(file_path, "w") as f:
-            json.dump(test_suite.dict(), f, indent=2)
-
-    def create_example_test_suite(self) -> MetricTestSuite:
-        """Create an example test suite with various metrics."""
-        return MetricTestSuite(
-            name="Example Test Suite",
-            description="Example test cases for various metrics",
-            test_cases=[
-                MetricTestCase(
-                    name="Exact Match - Perfect Match",
-                    metric_class="exact_match",
-                    metric_params={},
-                    doc={
-                        "query": "What is the capital of France?",
-                        "choices": ["Paris", "London", "Berlin"],
-                        "gold_index": 0,
-                        "task_name": "test",
-                    },
-                    model_response={
-                        "text": ["Paris"],
-                        "logprobs": [],
-                        "output_tokens": [],
-                    },
-                    expected_output={"em": 1.0},
-                    description="Test exact match with perfect prediction",
-                ),
-                MetricTestCase(
-                    name="Exact Match - No Match",
-                    metric_class="exact_match",
-                    metric_params={},
-                    doc={
-                        "query": "What is the capital of France?",
-                        "choices": ["Paris", "London", "Berlin"],
-                        "gold_index": 0,
-                        "task_name": "test",
-                    },
-                    model_response={
-                        "text": ["London"],
-                        "logprobs": [],
-                        "output_tokens": [],
-                    },
-                    expected_output={"em": 0.0},
-                    description="Test exact match with wrong prediction",
-                ),
-                MetricTestCase(
-                    name="F1 Score - Good Match",
-                    metric_class="f1_score",
-                    metric_params={},
-                    doc={
-                        "query": "Summarize the text",
-                        "choices": ["The quick brown fox jumps over the lazy dog"],
-                        "gold_index": 0,
-                        "task_name": "test",
-                    },
-                    model_response={
-                        "text": ["The quick brown fox jumps over the lazy dog"],
-                        "logprobs": [],
-                        "output_tokens": [],
-                    },
-                    expected_output={"f1": 1.0},
-                    description="Test F1 score with perfect match",
-                ),
-                MetricTestCase(
-                    name="Loglikelihood Accuracy - Correct Choice",
-                    metric_class="loglikelihood_acc",
-                    metric_params={},
-                    doc={
-                        "query": "Choose the correct answer",
-                        "choices": ["A", "B", "C"],
-                        "gold_index": 0,
-                        "task_name": "test",
-                    },
-                    model_response={
-                        "text": ["A"],
-                        "logprobs": [0.5, 0.3, 0.2],  # A has highest logprob
-                        "output_tokens": [[1], [2], [3]],
-                    },
-                    expected_output={"acc": 1},
-                    description="Test loglikelihood accuracy with correct choice",
-                ),
-                MetricTestCase(
-                    name="ROUGE Score",
-                    metric_class="rouge1",
-                    metric_params={"methods": ["rouge1"]},
-                    doc={
-                        "query": "Summarize the text",
-                        "choices": ["The quick brown fox jumps over the lazy dog"],
-                        "gold_index": 0,
-                        "task_name": "test",
-                    },
-                    model_response={
-                        "text": ["The quick brown fox jumps over the lazy dog"],
-                        "logprobs": [],
-                        "output_tokens": [],
-                    },
-                    expected_output={"rouge1": 1.0},
-                    description="Test ROUGE score with perfect match",
-                ),
-            ],
-        )
-
-
-if __name__ == "__main__":
-    # Example usage
-    tester = AutomatedMetricTester()
-
-    # Create and run example test suite
-    example_suite = tester.create_example_test_suite()
-    results = tester.run_test_suite(example_suite)
-
-    # Print summary
-    passed = sum(1 for r in results if r["success"])
-    total = len(results)
-    print(f"\nTest Summary: {passed}/{total} tests passed")
-
-    # Save example test suite to file
-    tester.save_test_suite_to_file(example_suite, "example_test_suite.json")
-    print("Example test suite saved to example_test_suite.json")
