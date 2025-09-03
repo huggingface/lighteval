@@ -83,8 +83,6 @@ class Metric:
 
         # Once the parameters are updated, we need to adjust the
         # metric name to what will be returned
-        # if "math-g-pass" in self.metric_name:
-        # breakpoint()
         sample_params_name = "&".join(sample_params.keys())
         if isinstance(self, MetricGrouping):
             if hasattr(self.sample_level_fn, "metric_names"):
