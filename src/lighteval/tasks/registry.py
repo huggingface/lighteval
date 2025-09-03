@@ -282,7 +282,13 @@ class Registry:
         for task in self.tasks_list:
             metric_params_dict = {}
             try:
-                suite_name, task_name, few_shot = tuple(task.split("|"))
+                if task.count("|") == 3:
+                    logger.warning(
+                        "Deprecation warning: You provided 4 arguments in your task name, but we no longer support the `truncate_fewshot` option. We will ignore the parameter for now, but it will fail in a couple of versions, so you should change your task name to `suite|task|num_fewshot`."
+                    )
+                    suite_name, task_name, few_shot, _ = tuple(task.split("|"))
+                else:
+                    suite_name, task_name, few_shot = tuple(task.split("|"))
                 if "@" in task_name:
                     split_task_name = task_name.split("@")
                     task_name, metric_params = split_task_name[0], split_task_name[1:]
@@ -402,8 +408,6 @@ class Registry:
         Args:
             meta_table: meta_table containing tasks
                 configurations. If not provided, it will be loaded from TABLE_PATH.
-            cache_dir: Directory to store cached data. If not
-                provided, the default cache directory will be used.
 
         Returns:
             Dict[str, LightevalTaskConfig]: A dictionary of task names mapped to their corresponding LightevalTaskConfig.
