@@ -811,6 +811,9 @@ class BLEU(SampleLevelComputation):
         Returns:
             float: Score over the current sample's items.
         """
+        import nltk
+
+        nltk.download("punkt_tab")
         golds = doc.get_golds()
         predictions = model_response.final_text
         return np.mean([self._bleu_score(golds, p) for p in predictions])
