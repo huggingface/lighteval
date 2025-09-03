@@ -114,6 +114,9 @@ class CorpusLevelTranslationMetric(CorpusLevelComputation):
 
     def get_metric(self):
         if self.metric_type == "bleu":
+            import nltk
+
+            nltk.download("punkt_tab")
             return sacrebleu.BLEU(trg_lang=self.lang)
         elif self.metric_type == "chrf":
             return sacrebleu.CHRF()
