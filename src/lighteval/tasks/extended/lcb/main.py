@@ -113,6 +113,7 @@ lcb_codegen_metric = SampleLevelMetric(
     higher_is_better=True,
     sample_level_fn=codegen_metric,
     corpus_level_fn=np.mean,
+    batched_compute=False,
 )
 
 

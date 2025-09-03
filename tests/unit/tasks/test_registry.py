@@ -48,7 +48,7 @@ def test_custom_task_groups():
     """
     Tests that task info selector correctly handles custom task groups.
     """
-    registry = Registry(tasks="zero_and_one", custom_tasks="tests.tasks.test_registry")
+    registry = Registry(tasks="zero_and_one", custom_tasks="tests.unit.tasks.test_registry")
 
     assert set(registry.tasks_list) == {"custom|test_task_revision|0", "custom|test_task_revision|1"}
 
@@ -62,7 +62,7 @@ def test_custom_tasks():
     """
     Tests that task info selector correctly handles custom tasks.
     """
-    registry = Registry(tasks="custom|test_task_revision|0", custom_tasks="tests.tasks.test_registry")
+    registry = Registry(tasks="custom|test_task_revision|0", custom_tasks="tests.unit.tasks.test_registry")
 
     assert registry.tasks_list == ["custom|test_task_revision|0"]
     assert set(registry.task_to_configs.keys()) == {"custom|test_task_revision"}
@@ -133,7 +133,7 @@ def test_task_group_expansion_with_subset_expansion():
     """
     Tests that task info selector correctly handles a group with task superset is provided.
     """
-    registry = Registry(tasks="all_mmlu", custom_tasks="tests.tasks.test_registry")
+    registry = Registry(tasks="all_mmlu", custom_tasks="tests.unit.tasks.test_registry")
 
     # We have all mmlu tasks
     assert len(registry.task_to_configs.keys()) == 57
@@ -152,7 +152,7 @@ def test_task_duplicates():
     Tests that task info selector correctly handles if duplicate tasks are provided.
     """
     registry = Registry(
-        tasks="custom|test_task_revision|0,custom|test_task_revision|0", custom_tasks="tests.tasks.test_registry"
+        tasks="custom|test_task_revision|0,custom|test_task_revision|0", custom_tasks="tests.unit.tasks.test_registry"
     )
 
     assert list(registry.tasks_list) == ["custom|test_task_revision|0"]

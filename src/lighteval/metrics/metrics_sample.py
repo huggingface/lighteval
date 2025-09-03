@@ -811,6 +811,9 @@ class BLEU(SampleLevelComputation):
         Returns:
             float: Score over the current sample's items.
         """
+        import nltk
+
+        nltk.download("punkt_tab")
         golds = doc.get_golds()
         predictions = model_response.final_text
         return np.mean([self._bleu_score(golds, p) for p in predictions])
@@ -1125,6 +1128,7 @@ class SamplingMetric:
             else:
                 self.type_exact_match = "full"
             self.compute_score = self.default_sample_scoring
+            self.score_sample = self.default_sample_scoring
 
     def preprocess(self, text: str) -> str:
         if not text:
@@ -1168,7 +1172,7 @@ class AvgAtK(SamplingMetric, SampleLevelComputation):
         self.k = k
         self.attribute_must_be_set = ["k"]
 
-    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs):
+    def compute(self, model_response: ModelResponse, doc: Doc):
         """Computes the metric over a list of golds and predictions for one single sample.
         It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones,
         then compares it to the gold.
@@ -1181,8 +1185,8 @@ class AvgAtK(SamplingMetric, SampleLevelComputation):
             float: Aggregated score over the current sample's items.
         """
         all_scores = []
-        for i in range(self.k):
-            all_scores.append(self.compute_score(doc, model_response[i]))
+        for _ in range(self.k):
+            all_scores.append(self.score_sample(doc, model_response))
 
         avg_score = np.mean(all_scores)
         return avg_score
@@ -1199,7 +1203,7 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
         self.k = k
         self.attribute_must_be_set = ["k"]
 
-    def compute(self, model_response: ModelResponse, docs: Doc, **kwargs):
+    def compute(self, doc: Doc, model_response: ModelResponse):
         """Computes the metric over a list of golds and predictions for one single sample.
         It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones,
         then compares it to the gold.
@@ -1213,15 +1217,17 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
         """
         if self.k is None:
             raise Exception("You did not set the value of k")
-        golds = docs.get_golds()
+
+        golds = doc.get_golds()
+
         if len(golds) > 1:
             raise Exception("Cannot compute maj@k with several golds")
 
-        processed_choices = [self.preprocess(text=g) for g in docs.get_golds()]
+        processed_choices = [self.preprocess(text=g) for g in doc.get_golds()]
         new_doc = Doc(
             choices=processed_choices,
-            query=docs.query,
-            gold_index=docs.gold_index,
+            query=doc.query,
+            gold_index=list(range(len(processed_choices))),
         )
         all_answers = []
         for pred in model_response.final_text[: self.k]:
@@ -1230,7 +1236,7 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
         new_model_response = ModelResponse(
             text=[majority_prediction],
         )
-        return self.compute_score(new_model_response, new_doc)
+        return self.compute_score(new_doc, new_model_response)
 
     def num_samples(self):
         return self.k
@@ -1405,8 +1411,8 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
         metrics = {}
         for k in ks:
             for t in thresholds:
-                metrics[f"{self.name}@{k}_{t}"] = compute_g_pass_at_k(n, c, k, t)
-            metrics[f"m{self.name}@{k}"] = compute_mg_pass_at_k(n, c, k)
+                metrics[f"{self.name}{k}_{t}"] = compute_g_pass_at_k(n, c, k, t)
+            metrics[f"m{self.name}{k}"] = compute_mg_pass_at_k(n, c, k)
 
         return metrics
 
@@ -1418,8 +1424,8 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
         metrics = []
         for k in ks:
             for t in thresholds:
-                metrics.append(f"{self.name}@{k}_{t}")
-            metrics.append(f"m{self.name}@{k}")
+                metrics.append(f"{self.name}{k}_{t}")
+            metrics.append(f"m{self.name}{k}")
 
         return metrics
 
