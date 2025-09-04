@@ -1110,18 +1110,20 @@ class SamplingMetric:
         self.strip_strings = strip_strings
 
         if callable(sample_scoring_function):
-            self.score_sample = sample_scoring_function
+            self.compute_score = sample_scoring_function
             self.type_exact_match = None
-        else:
-            if isinstance(sample_scoring_function, str):
-                if sample_scoring_function not in ["prefix", "suffix", "full"]:
-                    raise ValueError(
-                        f"type_exact_match (used in parametrized_exact_match) must be one of prefix, suffix, or full. Was {sample_scoring_function} instead."
-                    )
-                self.type_exact_match = sample_scoring_function
-            else:
-                self.type_exact_match = "full"
+        elif isinstance(sample_scoring_function, str) or sample_scoring_function is None:
+            if sample_scoring_function is None:
+                sample_scoring_function = "full"
+            if sample_scoring_function not in ["prefix", "suffix", "full"]:
+                raise ValueError(
+                    f"type_exact_match (used in parametrized_exact_match) must be one of prefix, suffix, or full. Was {sample_scoring_function} instead."
+                )
+            self.type_exact_match = sample_scoring_function
             self.compute_score = self.default_sample_scoring
+        else:  # class
+            self.type_exact_match = None
+            self.compute_score = sample_scoring_function.compute
 
     def preprocess(self, text: str) -> str:
         if not text:
