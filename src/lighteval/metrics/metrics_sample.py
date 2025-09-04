@@ -1161,7 +1161,7 @@ class AvgAtK(SamplingMetric, SampleLevelComputation):
             sample_scoring_function (callable | str, optional): Function to use to compute the score for each sample.
                 If None, uses the default scoring function which is a simple exact match.
         """
-        super().__init__(kwargs)
+        super().__init__(**kwargs)
         self.k = k
         self.attribute_must_be_set = ["k"]
 
@@ -1191,7 +1191,7 @@ class AvgAtK(SamplingMetric, SampleLevelComputation):
 class MajAtK(SamplingMetric, SampleLevelComputation):
     def __init__(self, k: int = None, **kwargs):
         """An exact match class."""
-        super().__init__(kwargs)
+        super().__init__(**kwargs)
 
         self.k = k
         self.attribute_must_be_set = ["k"]
@@ -1241,7 +1241,7 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
             k (int): Threshold for the number of successful attempts.
             n (int): Number of samples to generate
         """
-        super().__init__(kwargs)
+        super().__init__(**kwargs)
         self.k = k
         self.n = n
         self.attribute_must_be_set = ["k"]
@@ -1269,7 +1269,7 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
         elif len(predictions) < self.n:
             logger.warning(f"Number of predictions is less than {self.n} for pass@k.")
 
-        processed_choices = [self.preprocess(gold=g) for g in doc.choices]
+        processed_choices = [self.preprocess(g) for g in doc.choices]
         new_doc = Doc(
             choices=processed_choices,
             query=doc.query,
@@ -1278,7 +1278,7 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
 
         all_scores = []
         for pred in predictions[: self.n]:
-            cur_pred = self.preprocess(pred=pred)
+            cur_pred = self.preprocess(pred)
             new_model_response = ModelResponse(
                 text=[cur_pred],
             )
@@ -1314,7 +1314,7 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
             n (int): Number of samples to generate.
             thresholds (list): Thresholds to control successful attempts in k generate.
         """
-        super().__init__(kwargs)
+        super().__init__(**kwargs)
         self._k = k
         self.n = n
         self.attribute_must_be_set = ["k"]
