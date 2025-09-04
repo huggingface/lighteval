@@ -22789,6 +22789,7 @@ _MMLU_REDUX_2_SUBSETS = [
     "world_religions",
 ]
 
+
 _mmlu_redux_2_tasks = {
     subset: LightevalTaskConfig(
         name=f"mmlu_redux_2:{subset}",
@@ -22801,7 +22802,10 @@ _mmlu_redux_2_tasks = {
         few_shots_split=None,
         few_shots_select=None,
         generation_size=1,
-        metrics=[Metrics.loglikelihood_acc],
+        metrics=[
+            Metrics.loglikelihood_acc,
+            Metrics.pass_at_k_letters(sample_params={"k": 1}),
+        ],
         stop_sequence=["\n"],
         version=0,
     )
