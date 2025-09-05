@@ -179,12 +179,12 @@ lighteval accelerate \
 # Run a custom task with zero-shot evaluation
 lighteval accelerate \
     "model_name=openai-community/gpt2" \
-    "community|myothertask|0|0" \
+    "community|myothertask|0" \
     --custom-tasks community_tasks/my_custom_task.py
 
 # Run a custom task with few-shot evaluation
 lighteval accelerate \
     "model_name=openai-community/gpt2" \
-    "community|myothertask|3|1" \
+    "community|myothertask|3" \
     --custom-tasks community_tasks/my_custom_task.py
 ```

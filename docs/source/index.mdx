@@ -49,7 +49,7 @@ pip install lighteval
 # Evaluate a model using Transformers backend
 lighteval accelerate \
     "model_name=openai-community/gpt2" \
-    "leaderboard|truthfulqa:mc|0|0"
+    "leaderboard|truthfulqa:mc|0"
 ```
 
 ### Save Results
@@ -58,13 +58,13 @@ lighteval accelerate \
 # Save locally
 lighteval accelerate \
     "model_name=openai-community/gpt2" \
-    "leaderboard|truthfulqa:mc|0|0" \
+    "leaderboard|truthfulqa:mc|0" \
     --output-dir ./results
 
 # Push to Hugging Face Hub
 lighteval accelerate \
     "model_name=openai-community/gpt2" \
-    "leaderboard|truthfulqa:mc|0|0" \
+    "leaderboard|truthfulqa:mc|0" \
     --push-to-hub \
     --results-org your-username
 ```
