@@ -70,8 +70,7 @@ class BatchCollator:
 
 
 class VLMTransformersModelConfig(ModelConfig):
-    """
-    Configuration class for VLM (image-text-to-text) models.
+    """Configuration class for VLM (image-text-to-text) models.
 
     Attributes:
         model_name (str):
@@ -103,6 +102,14 @@ class VLMTransformersModelConfig(ModelConfig):
             model at a quantized precision. Needed for 4-bit and 8-bit precision.
         trust_remote_code (bool): Whether to trust remote code during model
             loading.
+        compile (bool, optional, defaults to False): Whether to compile the model for faster inference.
+        device_map (str | None, optional, defaults to None): Device mapping strategy for model loading.
+        generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc.
+        system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
+            This prompt sets the behavior and context for the model during evaluation.
+        cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
     """
 
     model_name: str
@@ -140,7 +147,6 @@ class VLMTransformersModel(LightevalModel):
         config: VLMTransformersModelConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
-
         self.accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
         self.device = self.accelerator.device
         self.torch_dtype = _get_dtype(config.dtype)
@@ -287,8 +293,7 @@ class VLMTransformersModel(LightevalModel):
         return model
 
     def _create_auto_processor(self):
-        """
-        Create a transformers `Processor` for VLM (image-text-to-text) model.
+        """Create a transformers `Processor` for VLM (image-text-to-text) model.
 
         Returns:
             transformers.ProcessorMixin: The created processor.
@@ -338,8 +343,7 @@ class VLMTransformersModel(LightevalModel):
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
             docs (list[Docs]): list of docs containing the context and ending conditions.

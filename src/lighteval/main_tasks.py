@@ -38,9 +38,7 @@ def inspect(
     num_samples: Annotated[int, Option(help="Number of samples to display")] = 10,
     show_config: Annotated[bool, Option(help="Will display the full task config")] = False,
 ):
-    """
-    Inspect a tasks
-    """
+    """Inspect a tasks"""
     from dataclasses import asdict
     from pprint import pformat
 
@@ -74,9 +72,7 @@ def list(
         ),
     ] = None,
 ):
-    """
-    List all tasks
-    """
+    """List all tasks"""
     from lighteval.tasks.registry import Registry
 
     registry = Registry(custom_tasks=custom_tasks, load_community=True, load_extended=True, load_multilingual=True)
@@ -85,9 +81,7 @@ def list(
 
 @app.command()
 def create(template: str, task_name: str, dataset_name: str):
-    """
-    Create a new task
-    """
+    """Create a new task"""
     logger = logging.getLogger(__name__)
 
     logger.info(f"Creating task for dataset {dataset_name}")

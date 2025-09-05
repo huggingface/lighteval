@@ -425,17 +425,16 @@ def run_test(sample: dict[str, str], test=None, timeout: int = 6) -> list[int | 
 
 
 def reliability_guard(maximum_memory_bytes: Optional[int] = None):
-    """
-    This disables various destructive functions and prevents the generated code
+    """This disables various destructive functions and prevents the generated code
     from interfering with the test (e.g. fork bomb, killing other processes,
     removing filesystem files, etc.)
-    WARNING
+
+    Warning:
     This function is NOT a security sandbox. Untrusted code, including, model-
     generated code, should not be blindly executed outside of one. See the
     Codex paper for more information about OpenAI's code sandbox, and proceed
     with caution.
     """
-
     if maximum_memory_bytes is not None:
         import resource
 
@@ -568,14 +567,15 @@ def evaluate_generations(
     and the run their corresponding unit tests which are retrieved from the APPS dataset.
 
     Args:
-        generations: list of code generations (same order as samples in APPS dataset)
-        level: difficulty level used in the generation, can be "all", "introductory", "interview" or "competition"
+        samples_list (list): List of sample problems from the APPS dataset.
+        generations_list (list[list[str]]): List of code generations for each sample.
+        num_process_evaluate (int): Number of processes to use for evaluation.
+        timeout (int): Timeout for each evaluation in seconds.
 
     Returns:
-        results: dictionary of results, key is the problem index, value is a list of results for each generation
+        dict[int, list[int | bool]]: Dictionary of results, key is the problem index, value is a list of results for each generation
         [-2] = compile error, [-1] = runtime error [False] = failed test case [True] = passed test case
     """
-
     # generations are code generations in the same order of the dataset
 
     inputs = [

@@ -33,8 +33,8 @@ from lighteval.utils.language import Language
 
 # Defined for type hinting only
 class BoolQInput(TypedDict):
-    """
-    Input for the BoolQ task.
+    """Input for the BoolQ task.
+
     Args:
         question: The question of the BoolQ task (e.g. What is the capital of Germany?)
         answer: The answer of the BoolQ task (True = yes, False = no)
@@ -49,8 +49,8 @@ class BoolQInput(TypedDict):
 
 
 class BoolQAdapter(TypedDict):
-    """
-    Adapter for mapping from the dataset row into the BoolQInput format.
+    """Adapter for mapping from the dataset row into the BoolQInput format.
+
     Args:
         question: Column name in the row that contains the question of the BoolQ task (e.g. What is the capital of Germany?)
         answer: Column name in the row that contains the answer of the BoolQ task (True = yes, False = no)
@@ -69,8 +69,7 @@ def get_boolq_prompt_function(
     adapter: Callable[[dict], BoolQInput | None] | BoolQAdapter,
     formulation: Formulation = MCFFormulation(),
 ):
-    """
-    Create a templated prompt function for a BoolQ task.
+    """Create a templated prompt function for a BoolQ task.
     It leverages the translation literals (yes/no) for the choices. All other logic is the same as the mcq prompt function.
     Example tasks:
     - boolQ
@@ -78,6 +77,9 @@ def get_boolq_prompt_function(
 
     Format:
     See mcq prompt function for the format.
+
+    Returns:
+        Callable: A function that generates BoolQ prompts based on the given parameters
     """
     translation_literals = TRANSLATION_LITERALS[language]
 

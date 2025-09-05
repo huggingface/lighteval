@@ -49,7 +49,7 @@ def padding(arr, pad_token, dtype=torch.long):
 
 
 def sent_encode(tokenizer, sent):
-    "Encoding as sentence based on the tokenizer"
+    """Encoding as sentence based on the tokenizer"""
     sent = sent.strip()
     if sent == "":
         return tokenizer.build_inputs_with_special_tokens([])
@@ -73,20 +73,14 @@ def bert_encode(model, x, attention_mask, all_layers=False):
 
 
 def collate_idf(arr, tokenizer, idf_dict, device="cuda:0"):
-    """
-    Helper function that pads a list of sentences to have the same length and
+    """Helper function that pads a list of sentences to have the same length and
     loads idf score for words in the sentences.
 
     Args:
-        - :param: `arr` (list of str): sentences to process.
-        - :param: `tokenize` : a function that takes a string and return list
-                  of tokens.
-        - :param: `numericalize` : a function that takes a list of tokens and
-                  return list of token indexes.
-        - :param: `idf_dict` (dict): mapping a word piece index to its
-                               inverse document frequency
-        - :param: `pad` (str): the padding token.
-        - :param: `device` (str): device to use, e.g. 'cpu' or 'cuda'
+        arr (list of str): sentences to process.
+        tokenizer: a tokenizer that takes a string and returns tokens.
+        idf_dict (dict): mapping a word piece index to its inverse document frequency.
+        device (str): device to use, e.g. 'cpu' or 'cuda'.
     """
     arr = [sent_encode(tokenizer, a) for a in arr]
 
@@ -112,18 +106,20 @@ def get_bert_embedding(
     device="cuda:0",
     all_layers=False,
 ):
-    """
-    Compute BERT embedding in batches.
+    """Compute BERT embedding in batches.
 
     Args:
-        - :param: `all_sens` (list of str) : sentences to encode.
-        - :param: `model` : a BERT model from `pytorch_pretrained_bert`.
-        - :param: `tokenizer` : a BERT tokenizer corresponds to `model`.
-        - :param: `idf_dict` (dict) : mapping a word piece index to its
-                               inverse document frequency
-        - :param: `device` (str): device to use, e.g. 'cpu' or 'cuda'
-    """
+        all_sens (list of str): sentences to encode.
+        model: a BERT model from `pytorch_pretrained_bert`.
+        tokenizer: a BERT tokenizer corresponds to `model`.
+        idf_dict (dict): mapping a word piece index to its inverse document frequency.
+        batch_size (int): batch size for processing, -1 for all sentences.
+        device (str): device to use, e.g. 'cpu' or 'cuda'.
+        all_layers (bool): whether to return all layers or just the last layer.
 
+    Returns:
+        tuple: A tuple containing (total_embedding, mask, padded_idf)
+    """
     padded_sens, padded_idf, _, mask = collate_idf(all_sens, tokenizer, idf_dict, device=device)
 
     if batch_size == -1:
@@ -155,26 +151,18 @@ def greedy_cos_idf(
     hyp_idf,
     all_layers=False,
 ):
-    """
-    Compute greedy matching based on cosine similarity.
+    """Compute greedy matching based on cosine similarity.
 
     Args:
-        - :param: `ref_embedding` (torch.Tensor):
-                   embeddings of reference sentences, BxKxd,
-                   B: batch size, K: longest length, d: bert dimension
-        - :param: `ref_lens` (list of int): list of reference sentence length.
-        - :param: `ref_masks` (torch.LongTensor): BxKxK, BERT attention mask for
-                   reference sentences.
-        - :param: `ref_idf` (torch.Tensor): BxK, idf score of each word
-                   piece in the reference sentence
-        - :param: `hyp_embedding` (torch.Tensor):
-                   embeddings of candidate sentences, BxKxd,
-                   B: batch size, K: longest length, d: bert dimension
-        - :param: `hyp_lens` (list of int): list of candidate sentence length.
-        - :param: `hyp_masks` (torch.LongTensor): BxKxK, BERT attention mask for
-                   candidate sentences.
-        - :param: `hyp_idf` (torch.Tensor): BxK, idf score of each word
-                   piece in the candidate sentence
+        ref_embedding (torch.Tensor): embeddings of reference sentences, BxKxd,
+                   B: batch size, K: longest length, d: bert dimension.
+        ref_masks (torch.LongTensor): BxKxK, BERT attention mask for reference sentences.
+        ref_idf (torch.Tensor): BxK, idf score of each word piece in the reference sentence.
+        hyp_embedding (torch.Tensor): embeddings of candidate sentences, BxKxd,
+                   B: batch size, K: longest length, d: bert dimension.
+        hyp_masks (torch.LongTensor): BxKxK, BERT attention mask for candidate sentences.
+        hyp_idf (torch.Tensor): BxK, idf score of each word piece in the candidate sentence.
+        all_layers (bool): whether to use all layers or just the last layer.
     """
     ref_embedding.div_(torch.norm(ref_embedding, dim=-1).unsqueeze(-1))
     hyp_embedding.div_(torch.norm(hyp_embedding, dim=-1).unsqueeze(-1))
@@ -248,19 +236,18 @@ def bert_cos_score_idf(
     device="cuda:0",
     all_layers=False,
 ):
-    """
-    Compute BERTScore.
+    """Compute BERTScore.
 
     Args:
-        - :param: `model` : a BERT model in `pytorch_pretrained_bert`
-        - :param: `refs` (list of str): reference sentences
-        - :param: `hyps` (list of str): candidate sentences
-        - :param: `tokenizer` : a BERT tokenizer corresponds to `model`
-        - :param: `idf_dict` : a dictionary mapping a word piece index to its
-                               inverse document frequency
-        - :param: `verbose` (bool): turn on intermediate status update
-        - :param: `batch_size` (int): bert score processing batch size
-        - :param: `device` (str): device to use, e.g. 'cpu' or 'cuda'
+        model: a BERT model in `pytorch_pretrained_bert`.
+        refs (list of str): reference sentences.
+        hyps (list of str): candidate sentences.
+        tokenizer: a BERT tokenizer corresponds to `model`.
+        idf_dict: a dictionary mapping a word piece index to its inverse document frequency.
+        verbose (bool): turn on intermediate status update.
+        batch_size (int): bert score processing batch size.
+        device (str): device to use, e.g. 'cpu' or 'cuda'.
+        all_layers (bool): whether to use all layers or just the last layer.
     """
     preds = []
 
@@ -320,9 +307,7 @@ def bert_cos_score_idf(
 
 
 class BERTScorer:
-    """
-    BERTScore Scorer Object.
-    """
+    """BERTScore Scorer Object."""
 
     def __init__(
         self,
@@ -337,27 +322,28 @@ class BERTScorer:
         rescale_with_baseline=False,
         baseline_path=None,
     ):
-        """
-        Args:
-            - :param: `model_type` (str): contextual embedding model specification, default using the suggested
-                      model for the target langauge; has to specify at least one of
-                      `model_type` or `lang`
-            - :param: `num_layers` (int): the layer of representation to use.
-                      default using the number of layer tuned on WMT16 correlation data
-            - :param: `verbose` (bool): turn on intermediate status update
-            - :param: `idf` (bool): a booling to specify whether to use idf or not (this should be True even if `idf_sents` is given)
-            - :param: `device` (str): on which the contextual embedding model will be allocated on.
-                      If this argument is None, the model lives on cuda:0 if cuda is available.
-            - :param: `batch_size` (int): bert score processing batch size
-            - :param: `nthreads` (int): number of threads
-            - :param: `lang` (str): language of the sentences; has to specify
-                      at least one of `model_type` or `lang`. `lang` needs to be
-                      specified when `rescale_with_baseline` is True.
-            - :param: `return_hash` (bool): return hash code of the setting
-            - :param: `rescale_with_baseline` (bool): rescale bertscore with pre-computed baseline
-            - :param: `baseline_path` (str): customized baseline file
-        """
+        """Initialize BERTScorer.
 
+        Args:
+            model_type (str): Contextual embedding model specification, default using the suggested
+                model for the target language; has to specify at least one of
+                `model_type` or `lang`.
+            num_layers (int): The layer of representation to use.
+                Default using the number of layer tuned on WMT16 correlation data.
+            verbose (bool): Turn on intermediate status update.
+            idf (bool): A boolean to specify whether to use idf or not (this should be True even if `idf_sents` is given).
+            device (str): On which the contextual embedding model will be allocated on.
+                If this argument is None, the model lives on cuda:0 if cuda is available.
+            batch_size (int): BERT score processing batch size.
+            nthreads (int): Number of threads.
+            all_layers (bool): Whether to use all layers or just the last layer.
+            lang (str): Language of the sentences; has to specify
+                at least one of `model_type` or `lang`. `lang` needs to be
+                specified when `rescale_with_baseline` is True.
+            return_hash (bool): Return hash code of the setting.
+            rescale_with_baseline (bool): Rescale bertscore with pre-computed baseline.
+            baseline_path (str): Customized baseline file.
+        """
         assert lang is not None or model_type is not None, "Either lang or model_type should be specified"
 
         if rescale_with_baseline:
@@ -430,8 +416,7 @@ class BERTScorer:
         return self._baseline_vals
 
     def score(self, cands, refs, verbose=False, batch_size=64, return_hash=False):
-        """
-        Args:
+        """Args:
             - :param: `cands` (list of str): candidate sentences
             - :param: `refs` (list of str or list of list of str): reference sentences
 
@@ -442,7 +427,6 @@ class BERTScorer:
                       multiple references, the returned score of this candidate is
                       the *best* score among all references.
         """
-
         if self._model is None:
             logger.info(f"Loading BERTScorer model `{self._model_type}`")
             self._tokenizer = AutoTokenizer.from_pretrained(self._model_type)

@@ -33,9 +33,7 @@ if TYPE_CHECKING:
 
 
 class SamplingMethod(str, Enum):
-    """
-    Enum representing different sampling methods for text generation.
-    """
+    """Enum representing different sampling methods for text generation."""
 
     GENERATIVE = "GENERATIVE"
     LOGPROBS = "LOGPROBS"  # computes logprobs of choices
@@ -44,8 +42,7 @@ class SamplingMethod(str, Enum):
 
 @dataclass(slots=True)
 class Doc:
-    """
-    Dataclass representing a single evaluation sample for a benchmark.
+    """Dataclass representing a single evaluation sample for a benchmark.
 
     This class encapsulates all the information needed to evaluate a model on a single
     task instance. It contains the input query, expected outputs, metadata, and

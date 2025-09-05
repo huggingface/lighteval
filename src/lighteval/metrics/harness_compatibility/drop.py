@@ -48,6 +48,9 @@ class DropMetrics(SampleLevelComputation):
         For more information, please refer to the section 5 of the DROP paper (https://aclanthology.org/N19-1246/).
 
         Todo: this code is really hard to follow, simplify when possible
+
+        Returns:
+            dict: Dictionary containing 'em' (exact match) and 'f1' (F1 score) metrics
         """
         max_em = 0
         max_f1 = 0
@@ -74,12 +77,14 @@ class DropMetrics(SampleLevelComputation):
         return normalized_spans, token_bags
 
     def _get_metrics(self, predicted: List[str], gold: List[str]):
-        """
-        Takes a predicted answer and a gold answer (that are both either a string or a list of
+        """Takes a predicted answer and a gold answer (that are both either a string or a list of
         strings), and returns exact match and the DROP F1 metric for the prediction.  If you are
         writing a script for evaluating objects in memory (say, the output of predictions during
         validation, or while training), this is the function you want to call, after using
         :func:`answer_json_to_strings` when reading the gold answer from the released data file.
+
+        Returns:
+            tuple: A tuple containing (exact_match, f1_score) where exact_match is a float and f1_score is a float
         """
         pred_normalized_spans, pred_bags = self._answer_to_bags(predicted)
         gold_normalized_spans, gold_bags = self._answer_to_bags(gold)
@@ -117,9 +122,11 @@ class DropMetrics(SampleLevelComputation):
         return False
 
     def _align_bags(self, predicted: List[Set[str]], gold: List[Set[str]]) -> np.array:
-        """
-        Takes gold and predicted answer sets and first finds the optimal 1-1 alignment
+        """Takes gold and predicted answer sets and first finds the optimal 1-1 alignment
         between them and gets maximum metric values over all the answers.
+
+        Returns:
+            np.array: Array of maximum F1 scores for each aligned bag pair
         """
         scores = np.zeros([len(gold), len(predicted)])
         for gold_index, gold_item in enumerate(gold):

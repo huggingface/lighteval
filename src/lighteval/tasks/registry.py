@@ -49,7 +49,11 @@ AVAILABLE_COMMUNITY_TASKS_MODULES = []
 
 
 def load_community_tasks():
-    """Dynamically load community tasks, handling errors gracefully."""
+    """Dynamically load community tasks, handling errors gracefully.
+
+    Returns:
+        list: List of successfully loaded community task modules
+    """
     modules = []
     try:
         # Community tasks are in the lighteval directory, not under src
@@ -111,9 +115,7 @@ DEFAULT_SUITES = CORE_SUITES + OPTIONAL_SUITES
 
 
 class Registry:
-    """
-    The Registry class is used to manage the task registry and get task classes.
-    """
+    """The Registry class is used to manage the task registry and get task classes."""
 
     def __init__(
         self,
@@ -128,16 +130,27 @@ class Registry:
         Registry is responsible for holding a dict of task and their config, initializing a LightevalTask instance when asked.
 
         Args:
-            custom_tasks (Optional[Union[str, Path, ModuleType]]): Custom tasks to be included in registry. Can be a string path, Path object, or a module.
-                Each custom task should be a module with a TASKS_TABLE exposing a list of LightevalTaskConfig.
-                E.g:
-                TASKS_TABLE = [
-                    LightevalTaskConfig(
-                        name="custom_task",
-                        suite="custom",
-                        ...
-                    )
-                ]
+            tasks: Task specification string or path to file containing task list.
+            custom_tasks: Custom tasks to be included in the registry. Can be:
+                - A string path to a Python file containing custom tasks
+                - A Path object pointing to a custom tasks file
+                - A module object containing custom task configurations
+                - None for default behavior (no custom tasks)
+            load_community: Whether to load community-contributed tasks.
+            load_extended: Whether to load extended tasks with custom logic.
+            load_multilingual: Whether to load multilingual tasks.
+
+                Each custom task module should contain a TASKS_TABLE exposing
+                a list of LightevalTaskConfig objects.
+
+        Example:
+                    TASKS_TABLE = [
+                        LightevalTaskConfig(
+                            name="custom_task",
+                            suite="custom",
+                            ...
+                        )
+                    ]
         """
         self._custom_tasks = custom_tasks
 
@@ -342,8 +355,7 @@ class Registry:
     @property
     @lru_cache
     def _task_superset_dict(self):
-        """
-        Returns:
+        """Returns:
             dict[str, list[str]]: A dictionary where keys are task super set names (suite|task) and values are lists of task subset names (suite|task).
 
         Example:
@@ -363,10 +375,10 @@ class Registry:
             task_definition (str): Task definition to expand. In format:
                 - suite|task
                 - suite|task_superset (e.g lighteval|mmlu, which runs all the mmlu subtasks)
+
         Returns:
             list[str]: List of task names (suite|task)
         """
-
         # Try if it's a task superset
         tasks = self._task_superset_dict.get(task_definition, None)
         if tasks is not None:
@@ -402,8 +414,7 @@ class Registry:
 
     @staticmethod
     def create_task_config_dict(meta_table: list[LightevalTaskConfig] | None = None) -> dict[str, LightevalTaskConfig]:
-        """
-        Create configuration tasks based on the provided meta_table.
+        """Create configuration tasks based on the provided meta_table.
 
         Args:
             meta_table: meta_table containing tasks
@@ -412,7 +423,6 @@ class Registry:
         Returns:
             Dict[str, LightevalTaskConfig]: A dictionary of task names mapped to their corresponding LightevalTaskConfig.
         """
-
         if meta_table is None:
             meta_table = [config for config in vars(default_tasks).values() if isinstance(config, LightevalTaskConfig)]
 
@@ -425,8 +435,7 @@ class Registry:
         return tasks_with_config
 
     def print_all_tasks(self, suites: str | None = None):
-        """
-        Print all the tasks in the task registry.
+        """Print all the tasks in the task registry.
 
         Args:
             suites: Comma-separated list of suites to display. If None, shows core suites only.

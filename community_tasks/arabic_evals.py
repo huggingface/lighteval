@@ -843,6 +843,7 @@ class JudgeMetricWrapper(Metric):
         Args:
             responses (list[str]): The predicted answers
             formatted_docs (list[Doc]): Documents containing questions and gold answers
+            kwargs: Additional keyword arguments (not used)
 
         Returns:
             dict[str, float]: Dictionary containing evaluation scores

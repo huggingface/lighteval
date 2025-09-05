@@ -27,8 +27,7 @@ import torch
 
 @dataclass
 class ModelResponse:
-    """
-    A class to represent the response from a model during evaluation.
+    """A class to represent the response from a model during evaluation.
 
     This dataclass contains all the information returned by a model during inference,
     including generated text, log probabilities, token information, and metadata.
