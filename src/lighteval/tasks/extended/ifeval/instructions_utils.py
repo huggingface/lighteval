@@ -1657,7 +1657,7 @@ def split_into_sentences(text):
 
 
 def count_words(text):
-    """Counts the number of words.
+    """Counts the number of words (split on white spaces).
 
     Returns:
         int: The number of words in the text
@@ -1673,8 +1673,18 @@ def _get_sentence_tokenizer():
     return nltk.data.load("nltk:tokenizers/punkt/english.pickle")
 
 
+def count_stopwords(text):
+    """Counts the number of stopwords."""
+    nltk.download("stopwords")
+    stopwords = nltk.corpus.stopwords.words("english")
+    tokenizer = nltk.tokenize.RegexpTokenizer(r"\w+")
+    tokens = tokenizer.tokenize(text)
+    num_stopwords = len([t for t in tokens if t.lower() in stopwords])
+    return num_stopwords
+
+
 def count_sentences(text):
-    """Count the number of sentences.
+    """Count the number of sentences (split on `<stop>`).
 
     Returns:
         int: The number of sentences in the text

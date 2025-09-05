@@ -1192,14 +1192,14 @@ class AvgAtK(SamplingMetric, SampleLevelComputation):
 
 
 class MajAtK(SamplingMetric, SampleLevelComputation):
-    def __init__(self, k: int = None, **kwargs):
+    def __init__(self, k: int | None = None, **kwargs):
         """An exact match class.
 
         Args:
             k (int): The number of top choices to consider.
             **kwargs: Additional keyword arguments.
         """
-        super().__init__(**kwargs)
+        super().__init__(kwargs)
 
         self.k = k
         self.attribute_must_be_set = ["k"]

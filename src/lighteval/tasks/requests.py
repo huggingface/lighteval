@@ -98,12 +98,6 @@ class Doc:
             Name of the task or benchmark this Doc belongs to.
 
         ## Few-shot Learning Parameters
-        num_asked_few_shots (int):
-            Number of few-shot examples requested for this instance.
-
-        num_effective_few_shots (int):
-            Actual number of few-shot examples used (may differ from requested).
-
         fewshot_samples (list):
             List of Doc objects representing few-shot examples.
             These examples are prepended to the main query to provide context.
@@ -209,8 +203,6 @@ class Doc:
     task_name: str = ""
 
     # Fewshots parameters
-    num_asked_few_shots: int = 0
-    num_effective_few_shots: int = 0
     fewshot_samples: list = field(default_factory=list)
     sampling_methods: list[SamplingMethod] = field(default_factory=list)
     fewshot_sorting_class: str | None = None  # class to use to select balanced few-shot samples

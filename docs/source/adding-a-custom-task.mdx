@@ -43,7 +43,7 @@ dataset to a document to be used for evaluation.
 from lighteval.tasks.requests import Doc
 
 # Define as many as you need for your different tasks
-def prompt_fn(line, task_name: str = None):
+def prompt_fn(line: dict, task_name: str):
     """Defines how to go from a dataset line to a doc object.
     Follow examples in src/lighteval/tasks/default_prompts.py, or get more info
     about what this function should do in the README.
@@ -99,7 +99,7 @@ task = LightevalTaskConfig(
     name="myothertask",
     prompt_function=prompt_fn,  # Must be defined in the file or imported
     suite=["community"],
-    hf_repo="your_dataset_name",
+    hf_repo="your_dataset_repo_on_hf",
     hf_subset="default",
     hf_avail_splits=["train", "test"],
     evaluation_splits=["test"],
@@ -157,6 +157,11 @@ TASKS_TABLE = SUBSET_TASKS
 # TASKS_TABLE = [task]
 ```
 
+### Step 6: Creating a requirement file
+
+If your task has requirements, you need to create a `requirement.txt` file with
+only the required dependencies so that anyone can run your task.
+
 ## Running Your Custom Task
 
 Once your file is created, you can run the evaluation with the following command:
@@ -164,7 +169,7 @@ Once your file is created, you can run the evaluation with the following command
 ```bash
 lighteval accelerate \
     "model_name=HuggingFaceH4/zephyr-7b-beta" \
-    "community|{custom_task}|{fewshots}|{truncate_few_shot}" \
+    "community|{custom_task}|{fewshots}" \
     --custom-tasks {path_to_your_custom_task_file}
 ```
 

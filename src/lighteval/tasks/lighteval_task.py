@@ -55,7 +55,7 @@ class LightevalTaskConfig:
     Args:
         name (str): Short name of the evaluation task.
         prompt_function (Callable[[dict, str], Doc]): Function that converts dataset
-            items to Doc objects for evaluation. Takes a dataset item dict and task
+            row to Doc objects for evaluation. Takes a dataset row dict and task
             name as input.
         hf_repo (str): HuggingFace Hub repository path containing the evaluation dataset.
         hf_subset (str): Dataset subset/configuration name to use for this task.
@@ -139,7 +139,6 @@ class LightevalTaskConfig:
     must_remove_duplicate_docs: bool = False
 
     num_fewshots: int = 0
-    truncate_fewshots: bool = False
 
     version: int = 0
 
@@ -153,7 +152,7 @@ class LightevalTaskConfig:
         self.evaluation_splits = tuple(self.evaluation_splits)
         self.suite = tuple(self.suite)
         self.stop_sequence = self.stop_sequence if self.stop_sequence is not None else ()
-        self.full_name = f"{self.name}|{self.num_fewshots}"
+        self.full_name = f"{self.name}|{self.num_fewshots}"  # todo clefourrier: this is likely incorrect
 
     def print(self):
         md_writer = MarkdownTableWriter()
