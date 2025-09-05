@@ -109,6 +109,18 @@ def can_load_extended_tasks() -> bool:
 CANNOT_USE_EXTENDED_TASKS_MSG = "If you want to use extended_tasks, make sure you installed their dependencies using `pip install -e .[extended_tasks]`."
 
 
+def can_load_multilingual_tasks() -> bool:
+    try:
+        import lighteval.tasks.multilingual.tasks  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
+CANNOT_USE_MULTILINGUAL_TASKS_MSG = "If you want to use multilingual tasks, make sure you installed their dependencies using `pip install -e .[multilingual]`."
+
+
 def can_load_spacy_tokenizer(language: str) -> bool:
     imports = []
     packages = ["spacy", "stanza"]

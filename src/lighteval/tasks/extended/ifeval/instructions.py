@@ -20,7 +20,6 @@ import logging
 import random
 import re
 import string
-from typing import Dict, Optional, Sequence, Union
 
 import langdetect
 
@@ -28,8 +27,6 @@ import lighteval.tasks.extended.ifeval.instructions_utils as instructions_util
 
 
 logger = logging.getLogger(__name__)
-
-_InstructionArgsDtype = Optional[Dict[str, Union[int, str, Sequence[str]]]]
 
 _LANGUAGES = instructions_util.LANGUAGE_CODES
 
