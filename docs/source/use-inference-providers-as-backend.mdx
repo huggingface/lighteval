@@ -47,29 +47,6 @@ Optionally, you can charge them to an organization by setting `org_to_bill="<you
 Hugging Face Inference Providers supports a wide range of LLM providers see the [Inference Providers documentation](https://huggingface.co/docs/inference-providers/en/index) for the complete list.
 
 
-## Key Parameters
-
-### Provider Configuration
-- `model_name`: The Hugging Face model ID to use
-- `provider`: The inference provider (together, fireworks, novita, etc.)
-- `timeout`: Request timeout in seconds (null for default)
-- `proxies`: Proxy configuration (null for default)
-- `parallel_calls_count`: Number of parallel API calls (default: 10)
-- `org_to_bill`: Organization name for billing (optional)
-
-### Generation Parameters
-- `temperature`: Controls randomness in generation (0.0 = deterministic, 1.0 = random)
-- `max_new_tokens`: Maximum number of tokens to generate
-- `top_k`: Top-k sampling parameter
-- `top_p`: Nucleus sampling parameter
-- `repetition_penalty`: Penalty for repeating tokens
-- `stop_tokens`: List of tokens that stop generation
-
-### Advanced Configuration
-- `trust_remote_code`: Whether to trust remote code from the model
-- `use_auth_token`: Custom authentication token
-- `device_map`: Device mapping for model loading
-
 ## Billing and Costs
 
 ### Personal Account Billing

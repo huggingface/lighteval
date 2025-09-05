@@ -1,8 +1,24 @@
 # Adding a New Metric
 
-Lighteval provides a flexible system for creating custom metrics to evaluate model performance. This guide explains how to create and integrate new metrics into the evaluation framework.
-
 ## Before You Start
+
+### Two different types of metrics
+
+There are two types of metrics in Lighteval:
+
+#### Sample-Level Metrics
+- **Purpose**: Evaluate individual samples/predictions
+- **Input**: Takes a `Doc` (document/sample) and `ModelResponse` (model's prediction)
+- **Output**: Returns a float or boolean value for that specific sample
+- **Example**: Checking if a model's answer matches the correct answer for one question
+
+#### Corpus-Level Metrics
+- **Purpose**: Compute final scores across the entire dataset/corpus
+- **Input**: Takes the results from all sample-level evaluations
+- **Output**: Returns a single score representing overall performance
+- **Examples**:
+  - Simple aggregation: Calculating average accuracy across all test samples
+  - Complex metrics: BLEU score where sample-level metric prepares data (tokenization, etc.) and corpus-level metric computes the actual BLEU score
 
 ### Check Existing Metrics
 

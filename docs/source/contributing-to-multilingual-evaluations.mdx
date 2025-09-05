@@ -1,6 +1,6 @@
 # Contributing to Multilingual Evaluations
 
-Lighteval supports multilingual evaluations through a comprehensive system of translation literals and language-adapted templates. This guide explains how to contribute translations and create new multilingual tasks.
+Lighteval supports multilingual evaluations through a comprehensive system of translation literals and language-adapted templates.
 
 ## Contributing Translation Literals
 
@@ -53,14 +53,6 @@ Language.ENGLISH: TranslationLiterals(
 )
 ```
 
-### Translation Guidelines
-
-- **Accuracy**: Ensure translations are accurate and contextually appropriate
-- **Consistency**: Use consistent terminology across all literals
-- **Cultural Sensitivity**: Consider cultural differences in language usage
-- **Punctuation**: Only adjust punctuation if your language uses different conventions
-- **Indices**: Update the indices list if your language uses different alphabetical characters
-
 ## Contributing New Multilingual Tasks
 
 ### Prerequisites
@@ -81,11 +73,58 @@ For multilingual evaluations, the `prompt_function` should be implemented using 
 
 #### Template Types
 Available template types include:
-- **XNLI**: Natural language inference tasks
-- **COPA**: Causal reasoning tasks
-- **Multiple Choice**: Standard multiple choice questions
-- **Question Answering**: Open-ended question answering
+- **XNLI**: Natural language inference tasks - [`get_nli_prompt_function`](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/templates/nli.py#L162)
+- **COPA**: Causal reasoning tasks - [`get_copa_prompt_function`](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/templates/copa.py#L76)
+- **Multiple Choice**: Standard multiple choice questions - [`get_mcq_prompt_function`](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/templates/multichoice.py#L81)
+- **Question Answering**: Open-ended question answering - [`get_qa_prompt_function`](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/templates/qa.py#L46)
 - **Custom**: Specialized task templates
+
+#### Formulation Types
+
+##### Multiple Choice Formulation (MCF)
+Used for standard multiple choice questions where the model selects from lettered options:
+```python
+MCFFormulation()
+```
+
+**Example output:**
+```
+Question: What is the capital of France?
+A. London
+B. Paris
+C. Berlin
+D. Rome
+Answer: | A/B/C/D
+```
+
+##### Classification Formulation (CF)
+Used for classification tasks where the model generates the answer directly:
+```python
+CFFormulation()
+```
+
+**Example output:**
+```
+Question: What is the capital of France?
+Answer: | Paris
+```
+
+##### Hybrid Formulation
+Used for tasks that present choices but expect the full answer text:
+```python
+HybridFormulation()
+```
+
+**Example output:**
+```
+Question: What is the capital of France?
+A. London
+B. Paris
+C. Berlin
+D. Rome
+Answer: | Paris
+```
+
 
 ### Creating Your Multilingual Task
 
@@ -158,102 +197,15 @@ Follow the custom task guide to test if your task is correctly implemented.
 > [!TIP]
 > All [`~tasks.lighteval_task.LightevalTaskConfig`] parameters are strongly typed, including the inputs to the template function. Make sure to take advantage of your IDE's functionality to make it easier to correctly fill these parameters.
 
-### Formulation Types
-
-#### Multiple Choice Formulation (MCF)
-Used for standard multiple choice questions:
-```python
-MCFFormulation()
-```
-
-#### Classification Formulation (CF)
-Used for classification tasks:
-```python
-CFFormulation()
-```
-
-#### Hybrid Formulation
-Used for tasks that combine multiple approaches:
-```python
-HybridFormulation()
-```
-
-### Language Support
-
-Currently supported languages include:
-- **English** (ENGLISH)
-- **Spanish** (SPANISH)
-- **French** (FRENCH)
-- **German** (GERMAN)
-- **Italian** (ITALIAN)
-- **Portuguese** (PORTUGUESE)
-- **Russian** (RUSSIAN)
-- **Chinese** (CHINESE)
-- **Japanese** (JAPANESE)
-- **Korean** (KOREAN)
-- **Arabic** (ARABIC)
-- **Hindi** (HINDI)
-- **Turkish** (TURKISH)
-- **Dutch** (DUTCH)
-- **Polish** (POLISH)
-- **Swedish** (SWEDISH)
-- **Norwegian** (NORWEGIAN)
-- **Danish** (DANISH)
-- **Finnish** (FINNISH)
-
-### Best Practices
-
-#### Translation Literals
-- **Test your translations** with native speakers
-- **Consider regional variations** in language usage
-- **Maintain consistency** with existing translations
-- **Document any special considerations** in your PR
-
-#### Multilingual Tasks
-- **Choose appropriate templates** for your task type
-- **Test across multiple languages** to ensure consistency
-- **Consider cultural differences** in task interpretation
-- **Validate dataset quality** for each language
-- **Use appropriate metrics** for your task formulation
-
-#### Code Quality
-- **Follow existing code style** and conventions
-- **Add comprehensive documentation** for your task
-- **Include example usage** in your PR description
-- **Test thoroughly** before submitting
-
-### Testing Your Contribution
-
-#### Local Testing
-```bash
-# Test your task locally
-lighteval accelerate \
-    "model_name=openai-community/gpt2" \
-    "community|your_task_name|0|0" \
-    --max-samples 10
-```
-
-#### Validation Checklist
+### Validation Checklist
 - [ ] Translation literals are accurate and complete
 - [ ] Task works correctly across all target languages
 - [ ] Metrics are appropriate for the task type
 - [ ] Documentation is clear and comprehensive
 - [ ] Code follows project conventions
 
-### Submitting Your Contribution
-
-1. **Create a feature branch** for your changes
-2. **Add comprehensive tests** for your task
-3. **Update documentation** as needed
-4. **Open a pull request** with a clear description
-5. **Respond to review feedback** promptly
-
-Once everything is good, open a PR, and we'll be happy to review it!
-
 ### Getting Help
 
 - **GitHub Issues**: Report bugs or ask questions
 - **Discussions**: Join community discussions
 - **Documentation**: Review existing guides and examples
-
-For more detailed information about multilingual evaluations, see the [Multilingual Tasks Reference](package_reference/tasks).

@@ -322,24 +322,27 @@ class BERTScorer:
         rescale_with_baseline=False,
         baseline_path=None,
     ):
-        """Args:
-        - :param: `model_type` (str): contextual embedding model specification, default using the suggested
-                  model for the target langauge; has to specify at least one of
-                  `model_type` or `lang`
-        - :param: `num_layers` (int): the layer of representation to use.
-                  default using the number of layer tuned on WMT16 correlation data
-        - :param: `verbose` (bool): turn on intermediate status update
-        - :param: `idf` (bool): a booling to specify whether to use idf or not (this should be True even if `idf_sents` is given)
-        - :param: `device` (str): on which the contextual embedding model will be allocated on.
-                  If this argument is None, the model lives on cuda:0 if cuda is available.
-        - :param: `batch_size` (int): bert score processing batch size
-        - :param: `nthreads` (int): number of threads
-        - :param: `lang` (str): language of the sentences; has to specify
-                  at least one of `model_type` or `lang`. `lang` needs to be
-                  specified when `rescale_with_baseline` is True.
-        - :param: `return_hash` (bool): return hash code of the setting
-        - :param: `rescale_with_baseline` (bool): rescale bertscore with pre-computed baseline
-        - :param: `baseline_path` (str): customized baseline file
+        """Initialize BERTScorer.
+
+        Args:
+            model_type (str): Contextual embedding model specification, default using the suggested
+                model for the target language; has to specify at least one of
+                `model_type` or `lang`.
+            num_layers (int): The layer of representation to use.
+                Default using the number of layer tuned on WMT16 correlation data.
+            verbose (bool): Turn on intermediate status update.
+            idf (bool): A boolean to specify whether to use idf or not (this should be True even if `idf_sents` is given).
+            device (str): On which the contextual embedding model will be allocated on.
+                If this argument is None, the model lives on cuda:0 if cuda is available.
+            batch_size (int): BERT score processing batch size.
+            nthreads (int): Number of threads.
+            all_layers (bool): Whether to use all layers or just the last layer.
+            lang (str): Language of the sentences; has to specify
+                at least one of `model_type` or `lang`. `lang` needs to be
+                specified when `rescale_with_baseline` is True.
+            return_hash (bool): Return hash code of the setting.
+            rescale_with_baseline (bool): Rescale bertscore with pre-computed baseline.
+            baseline_path (str): Customized baseline file.
         """
         assert lang is not None or model_type is not None, "Either lang or model_type should be specified"
 

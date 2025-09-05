@@ -55,7 +55,7 @@ class LightevalTaskConfig:
     Args:
         name (str): Short name of the evaluation task.
         prompt_function (Callable[[dict, str], Doc]): Function that converts dataset
-            items to Doc objects for evaluation. Takes a dataset item dict and task
+            row to Doc objects for evaluation. Takes a dataset row dict and task
             name as input.
         hf_repo (str): HuggingFace Hub repository path containing the evaluation dataset.
         hf_subset (str): Dataset subset/configuration name to use for this task.

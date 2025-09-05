@@ -1657,7 +1657,7 @@ def split_into_sentences(text):
 
 
 def count_words(text):
-    """Counts the number of words.
+    """Counts the number of words (split on white spaces).
 
     Returns:
         int: The number of words in the text
@@ -1674,7 +1674,7 @@ def _get_sentence_tokenizer():
 
 
 def count_sentences(text):
-    """Count the number of sentences.
+    """Count the number of sentences (split on `<stop>`).
 
     Returns:
         int: The number of sentences in the text

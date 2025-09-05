@@ -272,42 +272,6 @@ def make_results_table(result_dict):
     return md_writer.dumps()
 
 
-def boolstring_to_bool(x: Union[str, bool, int]) -> Union[bool, None]:
-    """Converts various boolean representations to a boolean value.
-
-    Handles conversion from strings, booleans, and integers to boolean values.
-    Useful for managing configuration inputs that may be in different formats.
-
-    Args:
-        x: The value to convert. Can be a string, boolean, integer, or None.
-
-    Returns:
-        bool or None: The corresponding boolean value, or None if the input represents null/empty.
-
-    Raises:
-        ValueError: If the input cannot be converted to a boolean.
-
-    Examples:
-        >>> boolstring_to_bool("True")
-        True
-        >>> boolstring_to_bool("false")
-        False
-        >>> boolstring_to_bool(1)
-        True
-        >>> boolstring_to_bool("None")
-        None
-        >>> boolstring_to_bool("invalid")
-        ValueError: You tried to convert invalid to a boolean but it's not possible.
-    """
-    if x in [None, "None", "null", ""]:
-        return None
-    if x in ["True", "true", True, 1]:
-        return True
-    if x in ["False", "false", False, 0]:
-        return False
-    raise ValueError(f"You tried to convert {x} to a boolean but it's not possible.")
-
-
 def safe_divide(numerator: np.ndarray, denominator: float, default_value: float = 0.0) -> np.ndarray:
     return np.where(denominator != 0, numerator / denominator, default_value)
 

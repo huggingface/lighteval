@@ -94,7 +94,7 @@ class EvaluationTracker:
 
     The EvaluationTracker coordinates multiple specialized loggers to track different aspects of model evaluation:
 
-    - Details Logger (DetailsLogger): Records per-instance evaluation details and predictions
+    - Details Logger (DetailsLogger): Records per-sample evaluation details and predictions
     - Metrics Logger (MetricsLogger): Tracks aggregate evaluation metrics and scores
     - Versions Logger (VersionsLogger): Records task and dataset versions
     - General Config Logger (GeneralConfigLogger): Stores overall evaluation configuration
