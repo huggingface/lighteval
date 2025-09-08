@@ -133,10 +133,6 @@ def prompt_fn_oz_eval_task(line, task_name: str = None):
             - choices (list of str): List of option identifiers ["A", "B", "C", "D", "E"].
             - gold_index (int): Index of the correct answer within the 'choices' list.
 
-    Raises:
-        ValueError: If the 'choices' list does not contain exactly five items,
-                    or if 'answer_str' is not one of ["A", "B", "C", "D", "E"].
-
     Note:
         The OZ Eval dataset is available at https://huggingface.co/datasets/DjMel/oz-eval.
 
@@ -268,6 +264,7 @@ def create_task_config(
         suite: The suite of tasks.
         hf_avail_splits: Available splits (default is "test", "validation").
         few_shots_split: Split used for few-shot examples.
+        generation_size: Number of generations to produce (default is 5).
 
     Returns:
         A `LightevalTaskConfig` object for the task configuration.

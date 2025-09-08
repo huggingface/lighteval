@@ -36,8 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 class DeltaModelConfig(TransformersModelConfig):
-    """
-    Configuration class for delta models (weight difference models).
+    """Configuration class for delta models (weight difference models).
 
     This configuration is used to load models that represent the difference between a
     fine-tuned model and its base model. The delta weights are added to the base model

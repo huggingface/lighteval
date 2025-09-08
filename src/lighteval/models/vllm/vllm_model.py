@@ -74,8 +74,7 @@ STARTING_BATCH_SIZE = 512
 
 
 class VLLMModelConfig(ModelConfig):
-    """
-    Configuration class for VLLM inference engine.
+    """Configuration class for VLLM inference engine.
 
     This configuration is used to load and configure models using the VLLM inference engine,
     which provides high-performance inference for large language models with features like
@@ -128,6 +127,12 @@ class VLLMModelConfig(ModelConfig):
         override_chat_template (bool):
             If True, we force the model to use a chat template. If alse, we prevent the model from using
             a chat template. If None, we use the default (true if present in the tokenizer, false otherwise)
+        generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc.
+        system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
+            This prompt sets the behavior and context for the model during evaluation.
+        cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
 
     Example:
         ```python
@@ -229,22 +234,13 @@ class VLLMModel(LightevalModel):
         return self._max_length
 
     def _create_auto_model(self, config: VLLMModelConfig) -> Optional[LLM]:
-        """
-        Creates an instance of the pretrained HF model.
+        """Creates an instance of the pretrained HF model.
 
         Args:
-            pretrained (str): The name or path of the pretrained model.
-            revision (str): The revision of the model.
-            subfolder (Optional[str], optional): The subfolder within the model. Defaults to None.
-            max_memory (Optional[dict], optional): The maximum memory to allocate for the model per GPU. Defaults to None.
-            device_map (Optional[dict], optional): The device mapping for the model. Defaults to None.
-            torch_dtype (Optional[Union[str, torch.dtype]], optional): The torch data type for the model. Defaults to None.
-            quantization_config (Optional[Union[BitsAndBytesConfig, GPTQConfig]], optional): The quantization configuration for the model. Defaults to None.
-            trust_remote_code (bool, optional): Whether to trust remote code. Defaults to False.
-            cache_dir (str, optional): The cache directory for the model. Defaults to "/scratch".
+            config (VLLMModelConfig): The VLLM model configuration.
 
         Returns:
-            transformers.PreTrainedModel: The created auto model instance.
+            Optional[LLM]: The created auto model instance.
         """
         self.model_args = {
             "model": config.model_name,
@@ -305,15 +301,13 @@ class VLLMModel(LightevalModel):
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
-            list[GenerateReturn]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         return self._greedy_until(docs)
 
@@ -544,8 +538,7 @@ class AsyncVLLMModel(VLLMModel):
         torch.cuda.empty_cache()
 
     def _create_auto_model(self, config: VLLMModelConfig):
-        """
-        Creates an instance of the async vllm model loaded from HF. Requires using the v1 of VLLM.
+        """Creates an instance of the async vllm model loaded from HF. Requires using the v1 of VLLM.
 
         Returns:
             AsyncLLM: The created async VLLM instance
@@ -628,14 +621,13 @@ class AsyncVLLMModel(VLLMModel):
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
-            list[GenerateReturn]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         results = []
 
@@ -663,12 +655,11 @@ class AsyncVLLMModel(VLLMModel):
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met and
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met and
         stores the logprobs.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
+            docs (list[Doc]): List of documents containing the context and choices.
 
         Returns:
             list[ModelResponse]: list of generated responses.

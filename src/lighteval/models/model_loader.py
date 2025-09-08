@@ -61,14 +61,11 @@ logger = logging.getLogger(__name__)
 def load_model(  # noqa: C901
     config: ModelConfig,
 ) -> LightevalModel:
-    """
-    Load a model from a checkpoint, depending on the config type.
+    """Load a model from a checkpoint, depending on the config type.
 
     Args:
         config (ModelConfig): configuration of the model to load
 
-    Raises:
-        ValueError: If you try to have both the multichoice continuations start with a space and not to start with a space
     Returns:
         LightevalModel: The model that will be evaluated
     """

@@ -43,8 +43,8 @@ TRANSLATION_CONTEXT = "{source_label}{colon}{sentence_space}{source_text}{senten
 
 # Defined for type hinting only
 class TranslationInput(TypedDict):
-    """
-    Input for the Translation task.
+    """Input for the Translation task.
+
     Args:
         source_text: The source text to be translated
         target_text: The target text to be translated
@@ -58,8 +58,8 @@ class TranslationInput(TypedDict):
 
 
 class TranslationAdapter(TypedDict):
-    """
-    Adapter for mapping from the dataset row into the TranslationInput format.
+    """Adapter for mapping from the dataset row into the TranslationInput format.
+
     Args:
         source_text: Column name in the row that contains the source text to be translated
         target_text: Column name in the row that contains the target text to be translated
@@ -78,8 +78,7 @@ def get_translation_prompt_function(
     adapter: Callable[[dict], TranslationInput | None] | TranslationAdapter,
     formulation: Formulation = MCFFormulation(),
 ):
-    """
-    Create a templated prompt function for a Translation task.
+    """Create a templated prompt function for a Translation task.
     Example tasks:
     - WMT2016
     - WMT2017
@@ -101,9 +100,12 @@ def get_translation_prompt_function(
     Answer: | A/B
 
     Args:
+        source_language (Language): The source language for translation.
+        target_language (Language): The target language for translation.
         adapter (Callable[[dict], TranslationInput] | TranslationAdapter): Either a function that takes a dataset row and returns a TranslationInput, or a dictionary with keys corresponding to the field names in the dataset row.
             Note: Both TranslationAdapter and TranslationInput are TypeDicts, this means that the caller provides dictionary and doesn't initialize any class!
         formulation (Formulation, optional): The formulation to use for the task. Defaults to MCFFormulation().
+
     Returns:
         Callable: A function that generates Translation prompts based on the given parameters.
     """

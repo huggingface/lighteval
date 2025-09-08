@@ -1,19 +1,70 @@
 # Lighteval
 
-🤗 Lighteval is your all-in-one toolkit for evaluating LLMs across multiple
-backends—whether it's
-[transformers](https://github.com/huggingface/transformers),
-[tgi](https://github.com/huggingface/text-generation-inference),
-[inference providers](https://huggingface.co/docs/huggingface_hub/en/guides/inference),
-[vllm](https://github.com/vllm-project/vllm), or
-[nanotron](https://github.com/huggingface/nanotron)-with
-ease. Dive deep into your model’s performance by saving and exploring detailed,
-sample-by-sample results to debug and see how your models stack-up.
+🤗 Lighteval is your all-in-one toolkit for evaluating Large Language Models
+(LLMs) across multiple backends with ease. Dive deep into your model's
+performance by saving and exploring detailed, sample-by-sample results to debug
+and see how your models stack up.
 
-Customization at your fingertips: letting you effortlessly create [new
-tasks](adding-a-custom-task) and
-[metrics](adding-a-new-metric)
-tailored to your needs, or browsing all our existing tasks and metrics.
+## Key Features
 
-Seamlessly experiment, benchmark, and store your results on the Hugging Face
-Hub, S3, or locally.
+### 🚀 **Multi-Backend Support**
+Evaluate your models using the most popular and efficient inference backends:
+- `transformers`: Evaluate models on CPU or one or more GPUs using [🤗
+  Accelerate](https://github.com/huggingface/transformers)
+- `nanotron`: Evaluate models in distributed settings using [⚡️
+  Nanotron](https://github.com/huggingface/nanotron)
+- `vllm`: Evaluate models on one or more GPUs using [🚀
+  VLLM](https://github.com/vllm-project/vllm)
+- `custom`: Evaluate custom models (can be anything)
+- `sglang`: Evaluate models using [SGLang](https://github.com/sgl-project/sglang) as backend
+- `inference-endpoint`: Evaluate models using Hugging Face's [Inference Endpoints API](https://huggingface.co/inference-endpoints/dedicated)
+- `tgi`: Evaluate models using [🔗 Text Generation Inference](https://huggingface.co/docs/text-generation-inference/en/index) running locally
+- `litellm`: Evaluate models on any compatible API using [LiteLLM](https://www.litellm.ai/)
+- `inference-providers`: Evaluate models using [HuggingFace's inference providers](https://huggingface.co/docs/inference-providers/en/index) as backend**: Distributed training and evaluation
+
+### 📊 **Comprehensive Evaluation**
+- **Extensive Task Library**: 1000s pre-built evaluation tasks
+- **Custom Task Creation**: Build your own evaluation tasks
+- **Flexible Metrics**: Support for custom metrics and scoring
+- **Detailed Analysis**: Sample-by-sample results for deep insights
+
+### 🔧 **Easy Customization**
+Customization at your fingertips: create [new tasks](adding-a-custom-task),
+[metrics](adding-a-new-metric) or [model](evaluating-a-custom-model) tailored to your needs, or browse all our existing tasks and metrics.
+
+### ☁️ **Seamless Integration**
+Seamlessly experiment, benchmark, and store your results on the Hugging Face Hub, S3, or locally.
+
+## Quick Start
+
+### Installation
+
+```bash
+pip install lighteval
+```
+
+### Basic Usage
+
+```bash
+# Evaluate a model using Transformers backend
+lighteval accelerate \
+    "model_name=openai-community/gpt2" \
+    "leaderboard|truthfulqa:mc|0"
+```
+
+### Save Results
+
+```bash
+# Save locally
+lighteval accelerate \
+    "model_name=openai-community/gpt2" \
+    "leaderboard|truthfulqa:mc|0" \
+    --output-dir ./results
+
+# Push to Hugging Face Hub
+lighteval accelerate \
+    "model_name=openai-community/gpt2" \
+    "leaderboard|truthfulqa:mc|0" \
+    --push-to-hub \
+    --results-org your-username
+```
