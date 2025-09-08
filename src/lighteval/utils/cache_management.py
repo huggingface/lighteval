@@ -103,9 +103,9 @@ class SampleCache:
             return cached_indices
 
         for cache_file in cache_dir.rglob("*.parquet"):
+            task_name = str(cache_file.parent).split("/")[-1]
+            task_hash = cache_file.stem
             try:
-                task_name = cache_file.parent.split("/")[-1]
-                task_hash = cache_file.stem
                 dataset = load_dataset("parquet", data_files=str(cache_file), split="train")
                 sample_ids = {SamplingMethod.GENERATIVE: [], SamplingMethod.LOGPROBS: []}
                 for row in dataset:
@@ -113,7 +113,7 @@ class SampleCache:
                         # We only save indices of correctly formatted samples, though this means we need to load each at least once
                         self._load_sample(row, sample_type=sample_type)
                         cur_sample = row["sample_id"]
-                        sampling_method = self.get_sampling_method(cur_sample)
+                        sampling_method = self.get_sampling_method(row["sample"])
                         sample_ids[sampling_method].append(cur_sample)
                     except Exception:
                         continue
@@ -136,15 +136,15 @@ class SampleCache:
         config_str = json.dumps(config_dict, sort_keys=True, default=str)
         return hashlib.sha256(config_str.encode()).hexdigest()[:16]
 
-    def get_task_hash(self, task_name: str) -> str:
+    def get_task_hash(self, full_task_name: str) -> str:
         if self.registry is None:
             logger.warning(
                 "The task registry was not provided to the cache config. We can't test if the current task has the same hash as the saved tasks."
             )
             return "NO_HASH"
-        task_config: LightevalTaskConfig = self.registry.get_tasks_configs(task_name)
-        config_dict = task_config.model_dump()
-        config_str = json.dumps(config_dict, sort_keys=True, default=str)
+        task_suite, task_name, _ = full_task_name.split("|")
+        task_configs: list[LightevalTaskConfig] = sorted(self.registry.task_to_configs[f"{task_suite}|{task_name}"])
+        config_str = "|".join([task_config.__str__(lite=True) for task_config in task_configs])
         return hashlib.sha256(config_str.encode()).hexdigest()[:16]
 
     def get_cache_path(self, task_name: str, task_hash: str, sample_type: SampleType) -> Path:
@@ -222,9 +222,12 @@ class SampleCache:
             task_name = doc.task_name
             task_hash = self.get_task_hash(task_name)
             task_id = (task_name, task_hash)
-            if task_id in cached_indices and doc.id in cached_indices[task_id][sampling_method]:
-                tasks_with_cached_samples.add((task_name, task_hash))
-            else:
+            try:
+                if doc.id in cached_indices[task_id][sampling_method]:
+                    tasks_with_cached_samples.add((task_name, task_hash))
+                else:
+                    docs_not_cached.append(doc)
+            except KeyError:  # task id or sampling method not yet there
                 docs_not_cached.append(doc)
 
         return docs_not_cached, set(tasks_with_cached_samples)
@@ -267,6 +270,7 @@ class SampleCache:
         results: List[dict] | List[ModelResponse],
         task_ids: list[tuple[str, str]],
         sample_type: SampleType,
+        sampling_method: SamplingMethod,
     ):
         """Store new results for samples in docs"""
         if not results:
@@ -283,6 +287,9 @@ class SampleCache:
 
         # Concatenate it with existing data and save to file
         for (task_name, task_hash), task_data in processed_data.items():
+            if (task_name, task_hash) not in self.existing_indices.keys():
+                self.existing_indices[sample_type][(task_name, task_hash)] = {}
+
             cache_file = self.get_cache_path(task_name=task_name, task_hash=task_hash, sample_type=sample_type)
 
             # Load existing data if present
@@ -297,13 +304,19 @@ class SampleCache:
                     )
 
             # Merge with new data (new data overwrites existing)
-            existing_ids = {row["sample_id"] for row in existing_data}
-
-            if any(row["sample_id"] in existing_ids for row in task_data):
+            # We look at id + sampling method
+            existing_samples = {(row["sample_id"], self.get_sampling_method(row["sample"])) for row in existing_data}
+            if any(
+                (row["sample_id"], self.get_sampling_method(row["sample"])) in existing_samples for row in task_data
+            ):
                 logger.warning(
                     "Unexpected behavior: You have reprocessed already cached items - we will ignore the new version."
                 )
-            all_samples = existing_data + [row for row in task_data if row["sample_id"] not in existing_ids]
+            all_samples = existing_data + [
+                row
+                for row in task_data
+                if (row["sample_id"], self.get_sampling_method(row["sample"])) not in existing_samples
+            ]
 
             # Save updated dataset
             dataset = Dataset.from_list(all_samples)
@@ -314,7 +327,7 @@ class SampleCache:
             )
 
             # Refresh cached indices after storing new samples
-            self.existing_indices[sample_type][(task_name, task_hash)] = [
+            self.existing_indices[sample_type][(task_name, task_hash)][sampling_method] = [
                 sample["sample_id"] for sample in all_samples
             ]
 
@@ -368,14 +381,21 @@ def cached(cache_type_name: str, sampling_method: SamplingMethod = None):  # noq
             new_results = []
             if docs_not_cached:
                 notcached_task_names = {(doc.task_name, cache.get_task_hash(doc.task_name)) for doc in docs_not_cached}
+                notcached_task_names_str = ", ".join(
+                    f"{task_name} ({task_hash})" for task_name, task_hash in notcached_task_names
+                )
                 logger.info(
-                    f"Cache: Processing {len(docs_not_cached)}/{len(docs)} {cache_type.name.lower()} samples for tasks {', '.join(notcached_task_names)}"
+                    f"Cache: Processing {len(docs_not_cached)}/{len(docs)} {cache_type.name.lower()} samples for tasks {notcached_task_names_str}"
                 )
                 new_results = func(self, docs_not_cached, *args, **kwargs)
 
                 # Store new results in file cache
                 cache.store_samples(
-                    docs=docs_not_cached, results=new_results, task_ids=task_ids, sample_type=cache_type
+                    docs=docs_not_cached,
+                    results=new_results,
+                    task_ids=task_ids,
+                    sample_type=cache_type,
+                    sampling_method=sampling_method,
                 )
 
             # 3) Create final results by pulling from newly saved file cache
