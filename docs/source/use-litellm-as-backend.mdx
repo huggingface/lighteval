@@ -69,28 +69,4 @@ model_parameters:
     api_key: ""
 ```
 
-
-## Troubleshooting
-
-### Common Issues
-
-1. **API Key Errors**: Ensure your API key is correct and has sufficient permissions
-2. **Connection Errors**: Check that the base URL is accessible and the service is running
-3. **Model Not Found**: Verify the model name is correct for the specified provider
-4. **Rate Limiting**: Implement retry logic or reduce request frequency
-
-### Performance Tips
-
-- Implement retry logic for transient failures
-- Consider using batch processing for multiple evaluations
-- Monitor API usage and costs for cloud providers
-
-### Error Handling
-
-LiteLLM provides detailed error messages for common issues:
-- Invalid API keys
-- Model not available
-- Rate limiting
-- Network connectivity issues
-
 For more detailed error handling and debugging, refer to the [LiteLLM documentation](https://docs.litellm.ai/docs/).

@@ -66,28 +66,4 @@ model_parameters:
   org_to_bill: "my-organization"
 ```
 
-## Troubleshooting
-
-### Common Issues
-
-1. **API Key Errors**: Ensure your `HF_TOKEN` is set correctly
-2. **Provider Not Available**: Check that the provider supports your model
-3. **Billing Issues**: Verify you have sufficient credits or organization permissions
-4. **Timeout Errors**: Increase the timeout parameter for large models
-
-### Performance Tips
-
-- Use appropriate `parallel_calls_count` based on your needs
-- Monitor your usage to avoid unexpected costs
-- Consider using organization billing for team projects
-- Use appropriate timeout values for your model size
-
-### Error Handling
-
-Common error messages and solutions:
-- **"Provider not found"**: Check the provider name is correct
-- **"Model not available"**: Verify the model is supported by the provider
-- **"Insufficient credits"**: Add credits to your account or organization
-- **"Timeout"**: Increase the timeout parameter or use a smaller model
-
 For more detailed error handling and provider-specific information, refer to the [Hugging Face Inference Providers documentation](https://huggingface.co/docs/inference-endpoints/guides/inference_providers).

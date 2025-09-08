@@ -13,7 +13,6 @@ Create a Python file containing your custom model implementation. The model must
 Here's a basic example:
 
 ```python
-from typing import List
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
@@ -28,17 +27,17 @@ class MyCustomModel(LightevalModel):
         self._cache = SampleCache(config)
 
     @cached("predictions")  # Enable caching for better performance
-    def greedy_until(self, docs: List[Doc]) -> List[ModelResponse]:
+    def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
         # Implement generation logic
         pass
 
     @cached("predictions")  # Enable caching for better performance
-    def loglikelihood(self, docs: List[Doc]) -> List[ModelResponse]:
+    def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         # Implement loglikelihood computation
         pass
 
     @cached("predictions")  # Enable caching for better performance
-    def loglikelihood_rolling(self, docs: List[Doc]) -> List[ModelResponse]:
+    def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         # Implement rolling loglikelihood computation
         pass
 ```
@@ -113,15 +112,15 @@ Your custom model must implement these core methods:
 For generating text until a stop sequence or max tokens is reached. This is used for generative evaluations.
 
 ```python
-def greedy_until(self, docs: List[Doc]) -> List[ModelResponse]:
+def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
     """
     Generate text until stop sequence or max tokens.
 
     Args:
-        docs: List of documents containing prompts and generation parameters
+        docs: list of documents containing prompts and generation parameters
 
     Returns:
-        List of model responses with generated text
+        list of model responses with generated text
     """
     pass
 ```
@@ -130,15 +129,15 @@ def greedy_until(self, docs: List[Doc]) -> List[ModelResponse]:
 For computing log probabilities of specific continuations. This is used for multiple choice logprob evaluations.
 
 ```python
-def loglikelihood(self, docs: List[Doc]) -> List[ModelResponse]:
+def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
     """
     Compute log probabilities of continuations.
 
     Args:
-        docs: List of documents containing context and continuation pairs
+        docs: list of documents containing context and continuation pairs
 
     Returns:
-        List of model responses with log probabilities
+        list of model responses with log probabilities
     """
     pass
 ```
@@ -147,15 +146,15 @@ def loglikelihood(self, docs: List[Doc]) -> List[ModelResponse]:
 For computing rolling log probabilities of sequences. This is used for perplexity metrics.
 
 ```python
-def loglikelihood_rolling(self, docs: List[Doc]) -> List[ModelResponse]:
+def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
     """
     Compute rolling log probabilities of sequences.
 
     Args:
-        docs: List of documents containing text sequences
+        docs: list of documents containing text sequences
 
     Returns:
-        List of model responses with rolling log probabilities
+        list of model responses with rolling log probabilities
     """
     pass
 ```
@@ -184,7 +183,7 @@ def __init__(self, config):
 Add cache decorators to your prediction methods:
 ```python
 @cached("predictions")
-def greedy_until(self, docs: List[Doc]) -> List[ModelResponse]:
+def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
     # Your implementation...
 ```
 

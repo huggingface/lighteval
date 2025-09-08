@@ -8,9 +8,9 @@ There are two types of metrics in Lighteval:
 
 #### Sample-Level Metrics
 - **Purpose**: Evaluate individual samples/predictions
-- **Input**: Takes a `Doc` (document/sample) and `ModelResponse` (model's prediction)
+- **Input**: Takes a `Doc` and `ModelResponse` (model's prediction)
 - **Output**: Returns a float or boolean value for that specific sample
-- **Example**: Checking if a model's answer matches the correct answer for one question
+- **Example**: Checking if a model's answer matches the correct answer for one sample
 
 #### Corpus-Level Metrics
 - **Purpose**: Compute final scores across the entire dataset/corpus
@@ -94,7 +94,7 @@ with [`~metrics.utils.metric_utils.SampleLevelMetric`]:
 my_custom_metric = SampleLevelMetric(
     metric_name="custom_accuracy",
     higher_is_better=True,
-    category="accuracy",
+    category=SamplingMethod.GENERATIVE,
     sample_level_fn=custom_metric,
     corpus_level_fn=agg_function,
 )
@@ -113,7 +113,7 @@ custom_metric = SampleLevelMetricGrouping(
         "response_length": False,  # Shorter responses might be better
         "confidence": True
     },
-    category="comprehensive",
+    category=SamplingMethod.GENERATIVE,
     sample_level_fn=custom_metric,
     corpus_level_fn={
         "accuracy": np.mean,

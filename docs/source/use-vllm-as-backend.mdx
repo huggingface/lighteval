@@ -112,10 +112,3 @@ model_parameters:
 1. **Out of Memory Errors**: Reduce `gpu_memory_utilization` or `max_model_length`
 2. **Worker Process Issues**: Ensure `VLLM_WORKER_MULTIPROC_METHOD=spawn` is set for multi-GPU setups
 3. **Model Loading Errors**: Check that the model name and revision are correct
-
-### Performance Tips
-
-- Use tensor parallelism for large models that don't fit on a single GPU
-- Use data parallelism for smaller models to increase throughput
-- Adjust `gpu_memory_utilization` based on your GPU memory capacity
-- Consider using `bfloat16` or `float16` for faster inference
