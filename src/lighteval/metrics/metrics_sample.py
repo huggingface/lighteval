@@ -108,8 +108,9 @@ class ExactMatches(SampleLevelComputation):
         """Computes the metric over a list of golds and predictions for one single sample.
 
         Args:
-            golds (list[str]): Reference targets
-            predictions (list[str]): Predicted strings
+            doc (Doc): The document containing gold references.
+            model_response (ModelResponse): The model's response containing predictions.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             float: Aggregated score over the current sample's items.
@@ -186,8 +187,9 @@ class F1_score(SampleLevelComputation):
         """Computes the metric over a list of golds and predictions for one single sample.
 
         Args:
-            golds (list[str]): Reference targets
-            predictions (list[str]): Predicted strings
+            doc (Doc): The document containing gold references.
+            model_response (ModelResponse): The model's response containing predictions.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             float: Aggregated score over the current sample's items.
@@ -233,7 +235,7 @@ class LoglikelihoodAcc(SampleLevelComputation):
         is actually in the gold ones.
 
         Args:
-            normalization (Normalization): The normalization to apply.
+            logprob_normalization (LogProbNormalization | None): The normalization to apply.
         """
         self.logprob_normalization = logprob_normalization
 
@@ -248,12 +250,9 @@ class LoglikelihoodAcc(SampleLevelComputation):
         in the `gold_ixs`?
 
         Args:
-            gold_ixs (list[int]): All the gold choices indices
-            choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
-            unconditioned_logprob (list[float] | None): Unconditioned log-probabilities for PMI normalization, ordered as the choices.
-            choices_tokens (list[list[int]] | None): Tokenized choices for token normalization, ordered as the choices.
-            formatted_doc (Doc): Original document for the sample.
-                Used to get the original choices' length for possible normalization
+            doc (Doc): The document containing choices and gold indices.
+            model_response (ModelResponse): The model's response containing logprobs.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             int: The eval score: 1 if the best log-prob choice is in gold, 0 otherwise.
@@ -294,8 +293,8 @@ class NormalizedMultiChoiceProbability(SampleLevelComputation):
         it returns the aggregated probability (default is max).
 
         Args:
-            normalization (Normalization | None): The normalization to apply.
-            aggregation_function (Callable[[list[float]], float]): The function to use to aggregate gold probabilities in case of multiple golds.
+            log_prob_normalization (LogProbNormalization | None): The normalization to apply.
+            aggregation_function (Callable[[np.ndarray], float]): The function to use to aggregate gold probabilities in case of multiple golds.
         """
         self.log_prob_normalization = log_prob_normalization
         self.aggregation_function = aggregation_function
@@ -309,12 +308,9 @@ class NormalizedMultiChoiceProbability(SampleLevelComputation):
         """Computes the log likelihood probability: chance of choosing the best choice.
 
         Args:
-            gold_ixs (list[int]): All the gold choices indices
-            choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
-            unconditioned_logprob (list[float] | None): Unconditioned log-probabilities for PMI normalization, ordered as the choices.
-            choices_tokens (list[list[int]] | None): Tokenized choices for token normalization, ordered as the choices.
-            formatted_doc (Doc): Original document for the sample.
-                Used to get the original choices' length for possible normalization
+            doc (Doc): The document containing choices and gold indices.
+            model_response (ModelResponse): The model's response containing logprobs.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             float: The probability of the best log-prob choice being a gold choice.
@@ -372,11 +368,9 @@ class Probability(SampleLevelComputation):
         """Computes the log likelihood probability: chance of choosing the best choice.
 
         Args:
-            gold_ixs (list[int]): All the gold choices indices
-            choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
-            unconditioned_logprob (list[float] | None): Unconditioned log-probabilities for PMI normalization, ordered as the choices.
-            choices_tokens (list[list[int]] | None): Tokenized choices for token normalization, ordered as the choices.
-            reference_texts (list[str] | None): Reference texts for token normalization, ordered as the choices.
+            doc (Doc): The document containing choices and gold indices.
+            model_response (ModelResponse): The model's response containing logprobs.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             float: The probability of the best log-prob choice being a gold choice.
@@ -405,7 +399,7 @@ class Recall(SampleLevelComputation):
         """Recall metric class. It checks if the top `k` best choices include one of the golds or not.
 
         Args:
-            at (int): Depth level of the recall.
+            k (int): Depth level of the recall.
                 Recall at 1 is equivalent to a logprob accuracy without normalization.
         """
         self.recall_depth = k
@@ -415,8 +409,9 @@ class Recall(SampleLevelComputation):
         highest log probabilities) and see if there is an actual gold among them.
 
         Args:
-            gold_ixs (list[int]): All the gold choices indices
-            choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
+            doc (Doc): The document containing choices and gold indices.
+            model_response (ModelResponse): The model's response containing logprobs.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             int: Score: 1 if one of the top level predicted choices was correct, 0 otherwise.
@@ -442,10 +437,9 @@ class MRR(SampleLevelComputation):
         """Mean reciprocal rank. Measures the quality of a ranking of choices (ordered by correctness).
 
         Args:
-            gold_ixs (list[int]): All the gold choices indices
-            choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
-            formatted_doc (Doc): Original document for the sample.
-                Used to get the original choices' length for possible normalization
+            model_response (ModelResponse): The model's response containing logprobs.
+            doc (Doc): The document containing choices and gold indices.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             float: MRR score.
@@ -468,10 +462,12 @@ class AccGoldLikelihood(SampleLevelComputation):
         """Tests if at least one of predicted gold targets' argmax of logits equals the gold.
 
         Args:
-            argmax_logits_eq_gold_list (list[int]): List of scores 1/0 indicating whether the argmax of logits equals the gold
+            doc: The document containing gold references.
+            model_response: The model's response containing argmax logits.
+            **kwargs: Additional keyword arguments.
 
         Returns:
-            int: 1 if at least one of the possible golds has argmax of logits == gold, 0 otherwise
+            int: 1 if at least one of the possible golds has argmax of logits == gold, 0 otherwise.
         """
         return int(any(model_response.argmax_logits_eq_gold))
 
@@ -527,8 +523,9 @@ class ROUGE(SampleLevelComputation):
         """Computes the metric(s) over a list of golds and predictions for one single sample.
 
         Args:
-            golds (list[str]): Reference targets
-            predictions (list[str]): Predicted strings
+            doc (Doc): The document containing gold references.
+            model_response (ModelResponse): The model's response containing predictions.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             float or dict: Aggregated score over the current sample's items.
@@ -621,8 +618,9 @@ class BertScore(SampleLevelComputation):
         """Computes the prediction, recall and f1 score using the bert scorer.
 
         Args:
-            golds (list[str]): Reference targets
-            predictions (list[str]): Predicted strings
+            doc (Doc): The document containing gold references.
+            model_response (ModelResponse): The model's response containing predictions.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             dict: Scores over the current sample's items.
@@ -656,8 +654,7 @@ class Extractiveness(SampleLevelComputation):
         normalize_pred: callable = remove_braces_and_strip,
         input_column: str = "text",
     ):
-        """
-        Extractiveness metric class.
+        """Extractiveness metric class.
 
         Args:
             normalize_input (callable, optional): Function to normalize the input strings.
@@ -672,15 +669,15 @@ class Extractiveness(SampleLevelComputation):
         self.input_column = input_column
 
     def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict[str, float]:
-        """
-        Compute the extractiveness of the predictions.
+        """Compute the extractiveness of the predictions.
 
         This method calculates coverage, density, and compression scores for a single
         prediction against the input text.
 
         Args:
-            predictions (list[str]): Predicted strings, a list of length 1.
-            formatted_doc (Doc): The formatted document.
+            doc (Doc): The document containing input text.
+            model_response (ModelResponse): The model's response containing predictions.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             dict[str, float]: The extractiveness scores.
@@ -710,8 +707,7 @@ class Faithfulness(SampleLevelComputation):
         normalize_pred: Callable = remove_braces_and_strip,
         input_column: str = "text",
     ):
-        """
-        Faithfulness metric class.
+        """Faithfulness metric class.
 
         Args:
             normalize_input (callable, optional): Function to normalize the input strings.
@@ -726,14 +722,14 @@ class Faithfulness(SampleLevelComputation):
         self.input_column = input_column
 
     def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict[str, float]:
-        """
-        Compute the faithfulness of the predictions.
+        """Compute the faithfulness of the predictions.
 
         The SummaCZS (Summary Content Zero-Shot) model is used with configurable granularity and model variation.
 
         Args:
-            predictions (list[str]): Predicted strings, a list of length 1.
-            formatted_doc (Doc): The formatted document.
+            doc (Doc): The document containing input text.
+            model_response (ModelResponse): The model's response containing predictions.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             dict[str, float]: The faithfulness scores.
@@ -777,8 +773,9 @@ class BLEURT(SampleLevelComputation):
         """Uses the stored BLEURT scorer to compute the score on the current sample.
 
         Args:
-            golds (list[str]): Reference targets
-            predictions (list[str]): Predicted strings
+            doc (Doc): The document containing gold references.
+            model_response (ModelResponse): The model's response containing predictions.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             float: Score over the current sample's items.
@@ -805,8 +802,9 @@ class BLEU(SampleLevelComputation):
         """Computes the sentence level BLEU between the golds and each prediction, then takes the average.
 
         Args:
-            golds (list[str]): Reference targets
-            predictions (list[str]): Predicted strings
+            doc (Doc): The document containing gold references.
+            model_response (ModelResponse): The model's response containing predictions.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             float: Score over the current sample's items.
@@ -822,8 +820,8 @@ class BLEU(SampleLevelComputation):
         """Computes the BLEU score between a list of golds and the current prediction.
 
         Args:
-            golds (list[str]): Reference targets
-            predictions (str): One of the predicted strings
+            gold (list[str]): Reference targets.
+            pred (str): One of the predicted strings.
 
         Returns:
             float: Score over the current prediction.
@@ -858,8 +856,9 @@ class StringDistance(SampleLevelComputation):
         """Computes all the requested metrics on the golds and prediction.
 
         Args:
-            golds (list[str]): A list of possible golds. If it contains more than one item, only the first one is kept.
-            predictions (list[str]): Predicted strings.
+            doc (Doc): The document containing gold references.
+            model_response (ModelResponse): The model's response containing predictions.
+            **kwargs: Additional keyword arguments.
 
         Returns:
            dict: The different scores computed
@@ -918,6 +917,9 @@ class StringDistance(SampleLevelComputation):
             Lee, Katherine, et al.
             "Deduplicating training data makes language models better."
             arXiv preprint arXiv:2107.06499 (2021).
+
+        Returns:
+            float: Edit similarity score between 0 and 1
         """
         edist = edit_distance(s1, s2)
         return 1.0 - edist / max(len(s1), len(s2)) if len(s1) > 0 and len(s2) > 0 else 0
@@ -1000,8 +1002,7 @@ class JudgeLLMSimpleQA(JudgeLLM):
         )
 
     def compute(self, responses: list[ModelResponse], docs: list[Doc], **kwargs) -> list:
-        """
-        Compute the score of a generative task using a llm as a judge.
+        """Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
         return scores for turn 1 and 2. Also returns user_prompt and judgement
         which are ignored later by the aggregator.
@@ -1028,8 +1029,7 @@ class JudgeLLMSimpleQA(JudgeLLM):
 
 class JudgeLLMMTBench(JudgeLLM):
     def compute(self, model_response: list[ModelResponse], docs: list[Doc], **kwargs):
-        """
-        Compute the score of a generative task using a llm as a judge.
+        """Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
         return scores for turn 1 and 2. Also returns user_prompt and judgement
         which are ignored later by the aggregator.
@@ -1061,8 +1061,7 @@ class JudgeLLMMTBench(JudgeLLM):
 
 class JudgeLLMMixEval(JudgeLLM):
     def compute(self, model_responses: list[ModelResponse], docs: list[Doc], **kwargs):
-        """
-        Compute the score of a generative task using a llm as a judge.
+        """Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
         return scores for turn 1 and 2. Also returns user_prompt and judgement
         which are ignored later by the aggregator.
@@ -1160,13 +1159,8 @@ class AvgAtK(SamplingMetric, SampleLevelComputation):
         """Sample score averages all the individual k predictions scores.
 
         Args:
-            normalize_gold (callable, optional): Function to use to normalize the reference strings.
-                Defaults to None if no normalization is applied.
-            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
-                Defaults to None if no normalization is applied.
-            strip_strings (bool, optional): Whether to strip both reference and predictions. Defaults to False.
-            sample_scoring_function (callable | str, optional): Function to use to compute the score for each sample.
-                If None, uses the default scoring function which is a simple exact match.
+            k (int | None): The number of top choices to consider.
+            **kwargs: Additional keyword arguments.
         """
         super().__init__(**kwargs)
         self.k = k
@@ -1178,8 +1172,9 @@ class AvgAtK(SamplingMetric, SampleLevelComputation):
         then compares it to the gold.
 
         Args:
-            golds (list[str]): Reference targets
-            predictions (list[str]): k predicted strings
+            model_response (ModelResponse): The model's response containing predictions.
+            doc (Doc): The document containing gold references.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             float: Aggregated score over the current sample's items.
@@ -1192,13 +1187,23 @@ class AvgAtK(SamplingMetric, SampleLevelComputation):
         return avg_score
 
     def num_samples(self):
-        return self.k
+        """Get the number of samples for this metric.
+
+        Returns:
+            int: The number of samples (n if specified, otherwise k)
+        """
+        return self.n if self.n is not None else self.k
 
 
 class MajAtK(SamplingMetric, SampleLevelComputation):
     def __init__(self, k: int | None = None, **kwargs):
-        """An exact match class."""
-        super().__init__(**kwargs)
+        """An exact match class.
+
+        Args:
+            k (int): The number of top choices to consider.
+            **kwargs: Additional keyword arguments.
+        """
+        super().__init__(kwargs)
 
         self.k = k
         self.attribute_must_be_set = ["k"]
@@ -1209,8 +1214,9 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
         then compares it to the gold.
 
         Args:
-            golds (list[str]): Reference targets
-            predictions (list[str]): k predicted strings
+            model_response (ModelResponse): The model's response containing predictions.
+            docs (Doc): The document containing gold references.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             float: Aggregated score over the current sample's items.
@@ -1247,8 +1253,9 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
         """Computing pass at k
 
         Args:
-            k (int): Threshold for the number of successful attempts.
-            n (int): Number of samples to generate
+            k (int | None): Threshold for the number of successful attempts.
+            n (int | None): Number of samples to generate.
+            **kwargs: Additional keyword arguments.
         """
         super().__init__(**kwargs)
         self.k = k
@@ -1261,8 +1268,9 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
         then aggregates the scores over the samples using a pass@k.
 
         Args:
-            golds (list[str]): Reference targets
-            predictions (list[str]): k predicted strings
+            doc (Doc): The document containing gold references.
+            model_response (ModelResponse): The model's response containing predictions.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             float: Aggregated score over the current sample's items.
@@ -1319,9 +1327,11 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
         """Computing G-Pass@k from http://arxiv.org/abs/2412.13147
 
         Args:
-            k (int, list): The number of successful attempts to be considered.
-            n (int): Number of samples to generate.
-            thresholds (list): Thresholds to control successful attempts in k generate.
+            k (Union[int, list[int]] | None): The number of successful attempts to be considered.
+            n (int | None): Number of samples to generate.
+            thresholds (list[float]): Thresholds to control successful attempts in k generate.
+            name_prefix (str | None): Prefix for the metric name.
+            **kwargs: Additional keyword arguments.
         """
         super().__init__(**kwargs)
         self._k = k
@@ -1345,8 +1355,9 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
         then aggregates the scores over the samples using a pass@k.
 
         Args:
-            golds (list[str]): Reference targets
-            predictions (list[str]): k predicted strings
+            model_response (ModelResponse): The model's response containing predictions.
+            doc (Doc): The document containing gold references.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             float: Aggregated score over the current sample's items.

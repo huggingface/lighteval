@@ -108,6 +108,7 @@ class CorpusLevelTranslationMetric(CorpusLevelComputation):
 
         Args:
             metric_type (str): Can be any of bleu, chrf, or ter depending on the metric to use.
+            lang (str): Language code for the translation metric.
         """
         self.metric_type = metric_type
         self.lang = lang

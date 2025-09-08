@@ -1,36 +1,36 @@
-# Evaluate the model on a server or container
+# Using Hugging Face Inference Endpoints or TGI as Backend
 
 An alternative to launching the evaluation locally is to serve the model on a
 TGI-compatible server/container and then run the evaluation by sending requests
 to the server. The command is the same as before, except you specify a path to
-a yaml config file (detailed below):
+a YAML configuration file (detailed below):
 
 ```bash
 lighteval endpoint {tgi,inference-endpoint} \
-    "/path/to/config/file"\
-    <task parameters>
+    "/path/to/config/file" \
+    <task_parameters>
 ```
 
 There are two types of configuration files that can be provided for running on
 the server:
 
-### Hugging Face Inference Endpoints
+## Hugging Face Inference Endpoints
 
-To launch a model using HuggingFace's Inference Endpoints, you need to provide
+To launch a model using Hugging Face's Inference Endpoints, you need to provide
 the following file: `endpoint_model.yaml`. Lighteval will automatically deploy
 the endpoint, run the evaluation, and finally delete the endpoint (unless you
 specify an endpoint that was already launched, in which case the endpoint won't
 be deleted afterwards).
 
-__configuration file example:__
+### Configuration File Example
 
 ```yaml
 model_parameters:
-    reuse_existing: false # if true, ignore all params in instance, and don't delete the endpoint after evaluation
-# endpoint_name: "llama-2-7B-lighteval" # needs to be lower case without special characters
+    reuse_existing: false # If true, ignore all params in instance, and don't delete the endpoint after evaluation
+    # endpoint_name: "llama-2-7B-lighteval" # Needs to be lowercase without special characters
     model_name: "meta-llama/Llama-2-7b-hf"
-    revision: "main"  # defaults to "main"
-    dtype: "float16" # can be any of "awq", "eetq", "gptq", "4bit' or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
+    revision: "main"  # Defaults to "main"
+    dtype: "float16" # Can be any of "awq", "eetq", "gptq", "4bit" or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
     accelerator: "gpu"
     region: "eu-west-1"
     vendor: "aws"
@@ -40,16 +40,15 @@ model_parameters:
     endpoint_type: "protected"
     namespace: null # The namespace under which to launch the endpoint. Defaults to the current user's namespace
     image_url: null # Optionally specify the docker image to use when launching the endpoint model. E.g., launching models with later releases of the TGI container with support for newer models.
-    env_vars:
-    null # Optional environment variables to include when launching the endpoint. e.g., `MAX_INPUT_LENGTH: 2048`
+    env_vars: null # Optional environment variables to include when launching the endpoint. e.g., `MAX_INPUT_LENGTH: 2048`
 ```
 
-### Text Generation Inference (TGI)
+## Text Generation Inference (TGI)
 
-To use a model already deployed on a TGI server, for example on HuggingFace's
+To use a model already deployed on a TGI server, for example on Hugging Face's
 serverless inference.
 
-__configuration file example:__
+### Configuration File Example
 
 ```yaml
 model_parameters:
@@ -57,3 +56,101 @@ model_parameters:
     inference_server_auth: null
     model_id: null # Optional, only required if the TGI container was launched with model_id pointing to a local directory
 ```
+
+## Key Parameters
+
+### Hugging Face Inference Endpoints
+
+#### Model Configuration
+- `model_name`: The Hugging Face model ID to deploy
+- `revision`: Model revision (defaults to "main")
+- `dtype`: Data type for model weights ("float16", "bfloat16", "4bit", "8bit", etc.)
+- `framework`: Framework to use ("pytorch", "tensorflow")
+
+#### Infrastructure Settings
+- `accelerator`: Hardware accelerator ("gpu", "cpu")
+- `region`: AWS region for deployment
+- `vendor`: Cloud vendor ("aws", "azure", "gcp")
+- `instance_type`: Instance type (e.g., "nvidia-a10g", "nvidia-t4")
+- `instance_size`: Instance size ("x1", "x2", etc.)
+
+#### Endpoint Configuration
+- `endpoint_type`: Endpoint access level ("public", "protected", "private")
+- `namespace`: Organization namespace for deployment
+- `reuse_existing`: Whether to reuse an existing endpoint
+- `endpoint_name`: Custom endpoint name (lowercase, no special characters)
+
+#### Advanced Settings
+- `image_url`: Custom Docker image URL
+- `env_vars`: Environment variables for the endpoint
+
+### Text Generation Inference (TGI)
+
+#### Server Configuration
+- `inference_server_address`: URL of the TGI server
+- `inference_server_auth`: Authentication credentials
+- `model_id`: Model identifier (if using local model directory)
+
+## Usage Examples
+
+### Deploying a New Inference Endpoint
+
+```bash
+lighteval endpoint inference-endpoint \
+    "configs/endpoint_model.yaml" \
+    "lighteval|gsm8k|0"
+```
+
+### Using an Existing TGI Server
+
+```bash
+lighteval endpoint tgi \
+    "configs/tgi_server.yaml" \
+    "lighteval|gsm8k|0"
+```
+
+### Reusing an Existing Endpoint
+
+```yaml
+model_parameters:
+    reuse_existing: true
+    endpoint_name: "my-existing-endpoint"
+    # Other parameters will be ignored when reuse_existing is true
+```
+
+## Cost Management
+
+### Inference Endpoints
+- Endpoints are automatically deleted after evaluation (unless `reuse_existing: true`)
+- Costs are based on instance type and runtime
+- Monitor usage in the [Hugging Face billing dashboard](https://huggingface.co/settings/billing)
+
+### TGI Servers
+- No additional costs beyond your existing server infrastructure
+- Useful for cost-effective evaluation of already-deployed models
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Endpoint Deployment Failures**: Check instance availability in your region
+2. **Authentication Errors**: Ensure proper Hugging Face token permissions
+3. **Model Loading Errors**: Verify model name and revision are correct
+4. **Resource Constraints**: Choose appropriate instance type for your model size
+
+### Performance Tips
+
+- Use appropriate instance types for your model size
+- Consider using quantized models (4bit, 8bit) for cost savings
+- Reuse existing endpoints for multiple evaluations
+- Use serverless TGI for cost-effective evaluation
+
+### Error Handling
+
+Common error messages and solutions:
+- **"Instance not available"**: Try a different region or instance type
+- **"Model not found"**: Check the model name and revision
+- **"Insufficient permissions"**: Verify your Hugging Face token has endpoint deployment permissions
+- **"Endpoint already exists"**: Use `reuse_existing: true` or choose a different endpoint name
+
+For more detailed information about Hugging Face Inference Endpoints, see the [official documentation](https://huggingface.co/docs/inference-endpoints/).

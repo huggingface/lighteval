@@ -66,8 +66,7 @@ def get_hellaswag_prompt_function(
     formulation: Formulation = MCFFormulation(),
     wikihow_artifacts: list[str] = [" [title]"],
 ):
-    """
-    Create a templated prompt function for a Hellaswag task.
+    """Create a templated prompt function for a Hellaswag task.
 
     Format:
     Context Premise therefore/cause | (Continuation 1, Continuation 2, Continuation 3)
@@ -84,7 +83,6 @@ def get_hellaswag_prompt_function(
     Returns:
         Callable: A function that generates COPA prompts based on the given parameters.
     """
-
     translation_literals = TRANSLATION_LITERALS[language]
 
     def process_context(ctx):
