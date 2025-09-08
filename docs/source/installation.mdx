@@ -1,15 +1,26 @@
 # Installation
 
-You can install Lighteval either from PyPi or from source.
+Lighteval can be installed from PyPI or from source. This guide covers all installation options and dependencies.
 
-## From PyPi
+## System Requirements
+
+- **Python**: 3.10 or higher
+- **PyTorch**: 2.0 or higher (but less than 3.0)
+- **CUDA**: Optional, for GPU acceleration
+
+## From PyPI
+
+The simplest way to install Lighteval is from PyPI:
 
 ```bash
 pip install lighteval
 ```
 
-## From source
-Source install is mostly for people who intend to develop on `lighteval`
+This installs the core package with all essential dependencies for basic evaluation tasks.
+
+## From Source
+
+Source installation is recommended for developers who want to contribute to Lighteval or need the latest features:
 
 ```bash
 git clone https://github.com/huggingface/lighteval.git
@@ -17,32 +28,44 @@ cd lighteval
 pip install -e .
 ```
 
-## Extras
+## Optional Dependencies (Extras)
 
-Lighteval has optional dependencies that you can install by specifying the
-appropriate extras group.
-`pip install lighteval[<group>]` or `pip install -e .[<group>]`.
+Lighteval provides several optional dependency groups that you can install based on your needs. Use the format `pip install lighteval[<group>]` or `pip install -e .[<group>]` for source installation.
 
-If you want to use lighteval with `sglang`, try to follow [sglang install documentation](https://docs.sglang.ai/start/install.html).
+### Backend Extras
 
-| extra name   | description                                                               |
-|--------------|---------------------------------------------------------------------------|
-| tgi          | To use Text Generation Inference API to evaluate your model               |
-| nanotron     | To evaluate nanotron models                                               |
-| quantization | To evaluate quantized models                                              |
-| adapters     | To evaluate adapters models (delta and peft)                              |
-| tensorboardX | To upload your results to tensorboard                                     |
-| vllm         | To use vllm as backend for inference                                      |
-| sglang       | To use sglang as backend for inference                                    |
-| s3           | To upload results to s3                                                   |
+| Extra | Description | Dependencies |
+|-------|-------------|--------------|
+| `vllm` | Use VLLM as backend for high-performance inference | vllm>=0.10.0, ray, more_itertools |
+| `tgi` | Use Text Generation Inference API | text-generation>=0.6.0 |
+| `litellm` | Use LiteLLM for unified API access | litellm, diskcache |
+| `optimum` | Use Optimum for optimized models | optimum==1.12.0 |
+| `quantization` | Evaluate quantized models | bitsandbytes>=0.41.0, auto-gptq>=0.4.2 |
+| `adapters` | Evaluate adapter models (PEFT, Delta) | peft==0.3.0 |
+| `nanotron` | Evaluate Nanotron models | nanotron, tensorboardX |
 
+### Task and Feature Extras
 
-## Hugging Face login
+| Extra | Description | Dependencies |
+|-------|-------------|--------------|
+| `extended_tasks` | Extended evaluation tasks | langdetect, openai>1.87, tiktoken |
+| `multilingual` | Multilingual evaluation support | stanza, spacy[ja,ko,th], jieba, pyvi |
+| `math` | Mathematical reasoning tasks | latex2sympy2_extended==1.0.6 |
 
-If you want to push your results to the Hugging Face Hub or evaluate your own
-private models, don't forget to add your access token to the environment
-variable `HF_TOKEN`. You can do this by running:
+### Storage and Logging Extras
 
-```bash
-huggingface-cli login
-```
+| Extra | Description | Dependencies |
+|-------|-------------|--------------|
+| `s3` | Upload results to S3 | s3fs |
+| `tensorboardX` | Upload results to TensorBoard | tensorboardX |
+| `wandb` | Log results to Weights & Biases | wandb |
+| `trackio` | Log results to Trackio | trackio |
+
+### Development Extras
+
+| Extra | Description | Dependencies |
+|-------|-------------|--------------|
+| `quality` | Code quality tools | ruff>=v0.11.0, pre-commit |
+| `tests` | Testing dependencies | pytest>=7.4.0, deepdiff |
+| `docs` | Documentation building | hf-doc-builder, watchdog |
+| `dev` | All development dependencies | Includes accelerate, quality, tests, multilingual, math, extended_tasks, vllm |

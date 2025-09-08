@@ -46,8 +46,7 @@ DEFAULT_FORMAT = {"type": "text"}
 
 
 class JudgeLM:
-    """
-    A class representing a judge for evaluating answers using either the OpenAI or Transformers library.
+    """A class representing a judge for evaluating answers using either the OpenAI or Transformers library.
 
     Args:
         model (str): The name of the model.
@@ -186,8 +185,7 @@ class JudgeLM:
                 raise ValueError(f"Unsupported backend: {self.backend}")
 
     def dict_of_lists_to_list_of_dicts(self, dict_of_lists):
-        """
-        Transform a dictionary of lists into a list of dictionaries.
+        """Transform a dictionary of lists into a list of dictionaries.
 
         Each dictionary in the output list will contain one element from each list in the input dictionary,
         with the same keys as the input dictionary.
@@ -255,13 +253,13 @@ class JudgeLM:
         return scores, prompts, responses
 
     def evaluate_answer(self, question: str, answer: str, options: list[str] | None = None, gold: str | None = None):
-        """
-        Evaluates an answer using either Transformers or OpenAI API.
+        """Evaluates an answer using either Transformers or OpenAI API.
 
         Args:
-            questions (list[str]): The prompt asked to the evaluated model
-            answers (list[str]): Answer given by the evaluated model
-            references (list[str]): A list of reference answers
+            question (str): The prompt asked to the evaluated model.
+            answer (str): Answer given by the evaluated model.
+            options (list[str] | None): Optional list of answer options.
+            gold (str | None): Optional reference answer.
 
         Returns:
             A tuple containing the score, prompts, and judgment.

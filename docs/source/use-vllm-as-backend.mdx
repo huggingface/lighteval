@@ -1,11 +1,12 @@
-# Use VLLM as backend
+# Using VLLM as Backend
 
-Lighteval allows you to use `vllm` as backend allowing great speedups.
-To use, simply change the `model_args` to reflect the arguments you want to pass to vllm.
-
+Lighteval allows you to use VLLM as a backend, providing significant speedups for model evaluation.
+To use VLLM, simply change the `model_args` to reflect the arguments you want to pass to VLLM.
 
 > [!TIP]
-> Documentation for vllm engine args can be found [here](https://docs.vllm.ai/en/latest/serving/engine_args.html)
+> Documentation for VLLM engine arguments can be found [here](https://docs.vllm.ai/en/latest/serving/engine_args.html)
+
+## Basic Usage
 
 ```bash
 lighteval vllm \
@@ -13,11 +14,14 @@ lighteval vllm \
     "extended|ifeval|0"
 ```
 
-`vllm` is able to distribute the model across multiple GPUs using data
-parallelism, pipeline parallelism or tensor parallelism.
-You can choose the parallelism method by setting in the `model_args`.
+## Parallelism Options
 
-For example if you have 4 GPUs you can split it across using `tensor_parallelism`:
+VLLM can distribute the model across multiple GPUs using data parallelism, pipeline parallelism, or tensor parallelism.
+You can choose the parallelism method by setting the appropriate parameters in the `model_args`.
+
+### Tensor Parallelism
+
+For example, if you have 4 GPUs, you can split the model across them using tensor parallelism:
 
 ```bash
 export VLLM_WORKER_MULTIPROC_METHOD=spawn && lighteval vllm \
@@ -25,7 +29,9 @@ export VLLM_WORKER_MULTIPROC_METHOD=spawn && lighteval vllm \
     "extended|ifeval|0"
 ```
 
-Or, if your model fits on a single GPU, you can use `data_parallelism` to speed up the evaluation:
+### Data Parallelism
+
+If your model fits on a single GPU, you can use data parallelism to speed up the evaluation:
 
 ```bash
 export VLLM_WORKER_MULTIPROC_METHOD=spawn && lighteval vllm \
@@ -33,10 +39,10 @@ export VLLM_WORKER_MULTIPROC_METHOD=spawn && lighteval vllm \
     "extended|ifeval|0"
 ```
 
-## Use a config file
+## Using a Configuration File
 
-For more advanced configurations, you can use a config file for the model.
-An example of a config file is shown below and can be found at `examples/model_configs/vllm_model_config.yaml`.
+For more advanced configurations, you can use a YAML configuration file for the model.
+An example configuration file is shown below and can be found at `examples/model_configs/vllm_model_config.yaml`.
 
 ```bash
 lighteval vllm \
@@ -76,50 +82,33 @@ model_parameters:
 ```
 
 > [!WARNING]
-> In the case of OOM issues, you might need to reduce the context size of the
+> In case of out-of-memory (OOM) issues, you might need to reduce the context size of the
 > model as well as reduce the `gpu_memory_utilization` parameter.
 
 
-## Dynamically changing the metric configuration
+## Key VLLM Parameters
 
-For special kinds of metrics like `Pass@K` or LiveCodeBench's `codegen` metric, you may need to pass specific values like the number of
-generations. This can be done in the `yaml` file in the following way:
+### Memory Management
+- `gpu_memory_utilization`: Controls how much GPU memory VLLM can use (default: 0.9)
+- `max_model_length`: Maximum sequence length for the model
+- `swap_space`: Amount of CPU memory to use for swapping (in GB)
 
-```yaml
-model_parameters:
-    model_name: "HuggingFaceTB/SmolLM-1.7B-Instruct"
-    revision: "main"
-    dtype: "bfloat16"
-    tensor_parallel_size: 1
-    data_parallel_size: 1
-    pipeline_parallel_size: 1
-    gpu_memory_utilization: 0.9
-    max_model_length: 2048
-    swap_space: 4
-    seed: 1
-    trust_remote_code: True
-    add_special_tokens: True
-    multichoice_continuations_start_space: True
-    pairwise_tokenization: True
-    subfolder: null
-    generation_parameters:
-      presence_penalty: 0.0
-      repetition_penalty: 1.0
-      frequency_penalty: 0.0
-      temperature: 1.0
-      top_k: 50
-      min_p: 0.0
-      top_p: 1.0
-      seed: 42
-      stop_tokens: null
-      max_new_tokens: 1024
-      min_new_tokens: 0
-metric_options: # Optional metric arguments
-    codegen_pass@1:16:
-        num_samples: 16
-```
+### Parallelism Settings
+- `tensor_parallel_size`: Number of GPUs for tensor parallelism
+- `data_parallel_size`: Number of GPUs for data parallelism
+- `pipeline_parallel_size`: Number of GPUs for pipeline parallelism
 
-An optional key `metric_options` can be passed in the yaml file,
-using the name of the metric or metrics, as defined in the `Metric.metric_name`.
-In this case, the `codegen_pass@1:16` metric defined in our tasks will have the `num_samples` updated to 16,
-independently of  the number defined by default.
+### Generation Parameters
+- `temperature`: Controls randomness in generation (0.0 = deterministic, 1.0 = random)
+- `top_p`: Nucleus sampling parameter
+- `top_k`: Top-k sampling parameter
+- `max_new_tokens`: Maximum number of tokens to generate
+- `repetition_penalty`: Penalty for repeating tokens
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Out of Memory Errors**: Reduce `gpu_memory_utilization` or `max_model_length`
+2. **Worker Process Issues**: Ensure `VLLM_WORKER_MULTIPROC_METHOD=spawn` is set for multi-GPU setups
+3. **Model Loading Errors**: Check that the model name and revision are correct

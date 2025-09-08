@@ -1,6 +1,6 @@
 # Using the Python API
 
-Lighteval can be used from a custom python script. To evaluate a model you will need to set up an
+Lighteval can be used from a custom Python script. To evaluate a model, you will need to set up an
 [`~logging.evaluation_tracker.EvaluationTracker`], [`~pipeline.PipelineParameters`],
 a [`model`](package_reference/models) or a [`model_config`](package_reference/model_config),
 and a [`~pipeline.Pipeline`].
@@ -26,22 +26,22 @@ def main():
         output_dir="./results",
         save_details=True,
         push_to_hub=True,
-        hub_results_org="your user name",
+        hub_results_org="your_username",  # Replace with your actual username
     )
 
     pipeline_params = PipelineParameters(
         launcher_type=ParallelismManager.ACCELERATE,
-        custom_tasks_directory=None, # if using a custom task
-        # Remove the 2 parameters below once your configuration is tested
+        custom_tasks_directory=None,  # Set to path if using custom tasks
+        # Remove the parameter below once your configuration is tested
         max_samples=10
     )
 
     model_config = VLLMModelConfig(
-            model_name="HuggingFaceH4/zephyr-7b-beta",
-            dtype="float16",
+        model_name="HuggingFaceH4/zephyr-7b-beta",
+        dtype="float16",
     )
 
-    task = "helm|mmlu|5"
+    task = "lighteval|gsm8k|5"
 
     pipeline = Pipeline(
         tasks=task,
@@ -57,3 +57,47 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## Key Components
+
+### EvaluationTracker
+The `EvaluationTracker` handles logging and saving evaluation results. It can save results locally and optionally push them to the Hugging Face Hub.
+
+### PipelineParameters
+`PipelineParameters` configures how the evaluation pipeline runs, including parallelism settings and task configuration.
+
+### Model Configuration
+Model configurations define the model to be evaluated, including the model name, data type, and other model-specific parameters. Different backends (VLLM, Transformers, etc.) have their own configuration classes.
+
+### Pipeline
+The `Pipeline` orchestrates the entire evaluation process, taking the tasks, model configuration, and parameters to run the evaluation.
+
+## Running Multiple Tasks
+
+You can evaluate on multiple tasks by providing a comma-separated list or a file path:
+
+```python
+# Multiple tasks as comma-separated string
+tasks = "lighteval|aime24|0,lighteval|aime25|0"
+
+# Or load from a file
+tasks = "./path/to/tasks.txt"
+
+pipeline = Pipeline(
+    tasks=tasks,
+    # ... other parameters
+)
+```
+
+## Custom Tasks
+
+To use custom tasks, set the `custom_tasks_directory` parameter to the path containing your custom task definitions:
+
+```python
+pipeline_params = PipelineParameters(
+    custom_tasks_directory="./path/to/custom/tasks",
+    # ... other parameters
+)
+```
+
+For more information on creating custom tasks, see the [Adding a Custom Task](adding-a-custom-task) guide.
