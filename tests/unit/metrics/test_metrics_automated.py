@@ -118,8 +118,8 @@ class AutomatedMetricTester:
         "truthfulqa_mc_metrics": Metrics.truthfulqa_mc_metrics,
         # "faithfulness": Metrics.faithfulness,  # need GPU to run
         # "bert_score": Metrics.bert_score, issue with the scoring function, int too big to convert
+        # "simpleqa_judge": Metrics.simpleqa_judge, # Need to setup for compute costs
         "prediction_perplexity": Metrics.prediction_perplexity,
-        # "simpleqa_judge": Metrics.simpleqa_judge, Batched metrics not supported yet
         "bleu": Metrics.bleu,
         "bleu_1": Metrics.bleu_1,
         "bleu_4": Metrics.bleu_4,
@@ -219,14 +219,26 @@ class AutomatedMetricTester:
         doc = self.create_doc_from_dict(test_case.doc)
         model_response = self.create_model_response_from_dict(test_case.model_response)
 
-        # Create sample_params for the metric
-        sample_params = {
-            "doc": doc,
-            "model_response": model_response,
-        }
+        # Check if this is a batched metric
+        if hasattr(metric, "batched_compute") and metric.batched_compute:
+            # For batched metrics, we need to pass lists of docs and responses
+            sample_params = {
+                "docs": [doc],
+                "responses": [model_response],
+            }
+        else:
+            # For non-batched metrics, use individual doc and model_response
+            sample_params = {
+                "doc": doc,
+                "model_response": model_response,
+            }
 
         # Run the metric using the Metrics enum value
         actual_output = metric.compute_sample(**sample_params)
+
+        # For batched metrics, extract the first result since we're only testing with one sample
+        if hasattr(metric, "batched_compute") and metric.batched_compute and isinstance(actual_output, list):
+            actual_output = actual_output[0]
 
         # Compare with expected output
         success = self._compare_dict_outputs(actual_output, test_case.expected_output, test_case.tolerance)
