@@ -30,7 +30,7 @@ from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.prompt_manager import PromptManager
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import is_litellm_available
 
@@ -254,7 +254,7 @@ class LiteLLMClient(LightevalModel):
 
         return results
 
-    @cached("predictions")
+    @cached("predictions", SamplingMethod.GENERATIVE)
     def greedy_until(
         self,
         docs: list[Doc],
@@ -321,14 +321,14 @@ class LiteLLMClient(LightevalModel):
         """Return the maximum sequence length of the model."""
         return 4096
 
-    @cached("predictions")
+    @cached("predictions", SamplingMethod.LOGPROBS)
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
         raise NotImplementedError
 
-    @cached("predictions")
+    @cached("predictions", SamplingMethod.LOGPROBS)
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         raise NotImplementedError

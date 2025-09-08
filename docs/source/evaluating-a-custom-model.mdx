@@ -14,7 +14,7 @@ Here's a basic example:
 from typing import List
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_output import ModelResponse
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache, cached
 
 class MyCustomModel(LightevalModel):
@@ -25,17 +25,17 @@ class MyCustomModel(LightevalModel):
         # Enable caching (recommended)
         self._cache = SampleCache(config)
 
-    @cached("predictions")  # Enable caching for better performance
+    @cached("predictions", SamplingMethod.GENERATIVE)  # Enable caching for better performance
     def greedy_until(self, docs: List[Doc]) -> List[ModelResponse]:
         # Implement generation logic
         pass
 
-    @cached("predictions")  # Enable caching for better performance
+    @cached("loglikelihood", SamplingMethod.LOGPROBS)  # Enable caching for better performance
     def loglikelihood(self, docs: List[Doc]) -> List[ModelResponse]:
         # Implement loglikelihood computation
         pass
 
-    @cached("predictions")  # Enable caching for better performance
+    @cached("loglikelihood", SamplingMethod.LOGPROBS)  # Enable caching for better performance
     def loglikelihood_rolling(self, docs: List[Doc]) -> List[ModelResponse]:
         # Implement rolling loglikelihood computation
         pass
@@ -130,7 +130,7 @@ To enable caching in your custom model:
 
 3. **Add cache decorators** to your prediction methods:
    ```python
-   @cached("predictions")
+   @cached("predictions", SamplingMethod.GENERATIVE)
    def greedy_until(self, docs: List[Doc]) -> List[ModelResponse]:
        # Your implementation...
    ```

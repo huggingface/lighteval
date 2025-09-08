@@ -28,7 +28,7 @@ from transformers.models.auto.tokenization_auto import AutoTokenizer
 
 from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache, cached
 
 
@@ -88,11 +88,11 @@ class DummyModel(LightevalModel):
     def max_length(self) -> int:
         return 2048
 
-    @cached("predictions")
+    @cached("predictions", SamplingMethod.GENERATIVE)
     def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
         return [ModelResponse(text=["random baseline"]) for _ in range(len(docs))]
 
-    @cached("predictions")
+    @cached("predictions", SamplingMethod.LOGPROBS)
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         model_responses = []
         for doc in docs:
@@ -105,7 +105,7 @@ class DummyModel(LightevalModel):
 
         return model_responses
 
-    @cached("predictions")
+    @cached("predictions", SamplingMethod.LOGPROBS)
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         model_responses = []
         for doc in docs:
