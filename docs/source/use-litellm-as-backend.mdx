@@ -1,31 +1,32 @@
-# Litellm as backend
+# Using LiteLLM as Backend
 
-Lighteval allows to use litellm, a backend allowing you to call all LLM APIs
-using the OpenAI format [Bedrock, Huggingface, VertexAI, TogetherAI, Azure,
-OpenAI, Groq etc.].
+Lighteval allows you to use LiteLLM as a backend, enabling you to call all LLM APIs
+using the OpenAI format. LiteLLM supports various providers including Bedrock, Hugging Face, Vertex AI, Together AI, Azure,
+OpenAI, Groq, and many others.
 
-Documentation for available APIs and compatible endpoints can be found [here](https://docs.litellm.ai/docs/).
+> [!TIP]
+> Documentation for available APIs and compatible endpoints can be found [here](https://docs.litellm.ai/docs/).
 
-## Quick use
+## Basic Usage
 
 ```bash
 lighteval endpoint litellm \
     "provider=openai,model_name=gpt-3.5-turbo" \
-    "lighteval|gsm8k|0|0" \
+    "lighteval|gsm8k|0"
 ```
 
-## Using a config file
+## Using a Configuration File
 
-Litellm allows generation with any OpenAI compatible endpoint, for example you
-can evaluate a model running on a local vllm server.
+LiteLLM allows generation with any OpenAI-compatible endpoint. For example, you
+can evaluate a model running on a local VLLM server.
 
-To do so you will need to use a config file like so:
+To do so, you will need to use a configuration file like this:
 
 ```yaml
 model_parameters:
     model_name: "openai/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
-    base_url: "URL OF THE ENDPOINT YOU WANT TO USE"
-    api_key: "" # remove or keep empty as needed
+    base_url: "URL_OF_THE_ENDPOINT_YOU_WANT_TO_USE"
+    api_key: "" # Remove or keep empty as needed
     generation_parameters:
       temperature: 0.5
       max_new_tokens: 256
@@ -35,3 +36,37 @@ model_parameters:
       repetition_penalty: 1.0
       frequency_penalty: 0.0
 ```
+
+## Supported Providers
+
+LiteLLM supports a wide range of LLM providers:
+
+### Cloud Providers
+
+all cloud providers can be found in the [litellm documentation](https://docs.litellm.ai/docs/providers).
+
+### Local/On-Premise
+- **VLLM**: Local VLLM servers
+- **Hugging Face**: Local Hugging Face models
+- **Custom endpoints**: Any OpenAI-compatible API
+
+## Using with Local Models
+
+### VLLM Server
+To use with a local VLLM server:
+
+1. Start your VLLM server:
+```bash
+vllm serve HuggingFaceH4/zephyr-7b-beta --host 0.0.0.0 --port 8000
+```
+
+2. Configure LiteLLM to use the local server:
+```yaml
+model_parameters:
+    provider: "openai"
+    model_name: "HuggingFaceH4/zephyr-7b-beta"
+    base_url: "http://localhost:8000/v1"
+    api_key: ""
+```
+
+For more detailed error handling and debugging, refer to the [LiteLLM documentation](https://docs.litellm.ai/docs/).

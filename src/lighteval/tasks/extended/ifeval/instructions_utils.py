@@ -1657,7 +1657,11 @@ def split_into_sentences(text):
 
 
 def count_words(text):
-    """Counts the number of words."""
+    """Counts the number of words (split on white spaces).
+
+    Returns:
+        int: The number of words in the text
+    """
     tokenizer = nltk.tokenize.RegexpTokenizer(r"\w+")
     tokens = tokenizer.tokenize(text)
     num_words = len(tokens)
@@ -1669,13 +1673,31 @@ def _get_sentence_tokenizer():
     return nltk.data.load("nltk:tokenizers/punkt/english.pickle")
 
 
+def count_stopwords(text):
+    """Counts the number of stopwords."""
+    nltk.download("stopwords")
+    stopwords = nltk.corpus.stopwords.words("english")
+    tokenizer = nltk.tokenize.RegexpTokenizer(r"\w+")
+    tokens = tokenizer.tokenize(text)
+    num_stopwords = len([t for t in tokens if t.lower() in stopwords])
+    return num_stopwords
+
+
 def count_sentences(text):
-    """Count the number of sentences."""
+    """Count the number of sentences (split on `<stop>`).
+
+    Returns:
+        int: The number of sentences in the text
+    """
     tokenizer = _get_sentence_tokenizer()
     tokenized_sentences = tokenizer.tokenize(text)
     return len(tokenized_sentences)
 
 
 def generate_keywords(num_keywords):
-    """Randomly generates a few keywords."""
+    """Randomly generates a few keywords.
+
+    Returns:
+        list[str]: List of randomly selected keywords
+    """
     return random.sample(WORD_LIST, k=num_keywords)

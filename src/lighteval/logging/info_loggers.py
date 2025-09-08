@@ -25,7 +25,6 @@ import logging
 import os
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Union
 
 import git
 import xxhash
@@ -47,24 +46,39 @@ if is_nanotron_available():
 
 @dataclass(init=False)
 class GeneralConfigLogger:
-    """Logger for the evaluation parameters.
+    """Tracks general configuration and runtime information for model evaluations.
+
+    This logger captures key configuration parameters, model details, and timing information
+    to ensure reproducibility and provide insights into the evaluation process.
 
     Attributes:
-        lighteval_sha (str): Current commit sha of lighteval used for the evaluation (for reproducibility purposes)
-        num_fewshot_seeds (int): Number of seeds for the few-shot sampling.
-            If equal to or below 1, the experiment is done once only, with a single few-shot seed (equal to 0).
-            If above, the experiment is reproduced several times, with a different sampling/shuffling for the few-shot examples, which follows what is done in HELM for example.
-        override_batch_size (int): Manages the batch size.
-            If strictly positive, its value is used as the batch size for all experiments.
-            Else, the batch size is automatically inferred depending on what fits in memory.
-        max_samples (int): If set, cuts the number of samples per task to `max_samples`.
-            Note: This should only be used for debugging purposes!
-        job_id (int): If the evaluation suite is launched as a slurm job, stores the current job id.
-            Purely informative parameter used to retrieve scheduler logs.
-        start_time (float): Start time of the experiment. Logged at class init.
-        end_time (float): End time of the experiment. Logged when calling [`GeneralConfigLogger.log_end_time`]
-        total_evaluation_time_secondes (str): Inferred total evaluation time in seconds (from the start and end times).
-        model_config (ModelConfig): Model configuration
+        lighteval_sha (str): Git commit SHA of lighteval used for evaluation, enabling exact version reproducibility.
+            Set to "?" if not in a git repository.
+
+        num_fewshot_seeds (int): Number of random seeds used for few-shot example sampling.
+            - If <= 1: Single evaluation with seed=0
+            - If > 1: Multiple evaluations with different few-shot samplings (HELM-style)
+
+        max_samples (int, optional): Maximum number of samples to evaluate per task.
+            Only used for debugging - truncates each task's dataset.
+
+        job_id (int, optional): Slurm job ID if running on a cluster.
+            Used to cross-reference with scheduler logs.
+
+        start_time (float): Unix timestamp when evaluation started.
+            Automatically set during logger initialization.
+
+        end_time (float): Unix timestamp when evaluation completed.
+            Set by calling log_end_time().
+
+        total_evaluation_time_secondes (str): Total runtime in seconds.
+            Calculated as end_time - start_time.
+
+        model_config (ModelConfig): Complete model configuration settings.
+            Contains model architecture, tokenizer, and generation parameters.
+
+        model_name (str): Name identifier for the evaluated model.
+            Extracted from model_config.
     """
 
     # general
@@ -92,18 +106,14 @@ class GeneralConfigLogger:
     def log_args_info(
         self,
         num_fewshot_seeds: int,
-        max_samples: Union[None, int],
+        max_samples: int | None,
         job_id: str,
     ) -> None:
-        """
-        Logs the information about the arguments passed to the method.
+        """Logs the information about the arguments passed to the method.
 
         Args:
             num_fewshot_seeds (int): number of few-shot seeds.
-            override_batch_size (Union[None, int]): overridden batch size.
-                If strictly positive, its value is used as the batch size for all experiments.
-                Else, the batch size is automatically inferred depending on what fits in memory.
-            max_samples (Union[None, int]): maximum number of samples, if None, use all the samples available.
+            max_samples (int | None): maximum number of samples, if None, use all the samples available.
             job_id (str): job ID, used to retrieve logs.
         """
         self.num_fewshot_seeds = num_fewshot_seeds
@@ -111,12 +121,10 @@ class GeneralConfigLogger:
         self.job_id = job_id
 
     def log_model_info(self, model_config: ModelConfig) -> None:
-        """
-        Logs the model information.
+        """Logs the model information.
 
         Args:
             model_config: the model config used to initialize the model.
-
         """
         self.model_config = model_config
         self.model_name = model_config.model_name
@@ -169,11 +177,6 @@ class DetailsLogger:
             non_truncated (int): Total number of samples which did not need prompt truncation to fit the model context size for the current task.
             padded (int): Total umber of samples which needed padding during the batching step for the current task.
             non_padded (int): Total number of samples which did not need padding during the batching step for the current task.
-            effective_few_shots (float): Average effective few shots across all samples for the current task.
-                effective few shot is the number of few shots actually used to fit the prompt in the model context
-                length while allowing model generation of the expected size.
-            num_truncated_few_shots (int): Total number of samples which required truncated prompts to fit the model size for the current task.
-
         """
 
         hashes: dict = field(default_factory=dict)
@@ -181,8 +184,6 @@ class DetailsLogger:
         non_truncated: int = 0
         padded: int = 0
         non_padded: int = 0
-        effective_few_shots: float = 0
-        num_truncated_few_shots: int = 0
 
     @dataclass
     class CompiledDetailOverAllTasks:
@@ -196,11 +197,6 @@ class DetailsLogger:
             non_truncated (int): Total number of samples which did not need prompt truncation to fit the model context size across all tasks
             padded (int): Number of samples which needed padding during the batching step across all tasks.
             non_padded (int): Number of samples which did not need padding during the batching step across all tasks.
-            effective_few_shots (float): Average effective few shots across all samples across all tasks.
-                effective few shot is the number of few shots actually used to fit the prompt in the model context
-                length while allowing model generation of the expected size.
-            num_truncated_few_shots (int): Number of samples which required truncated prompts to fit the model size across all tasks.
-
         """
 
         hashes: dict = field(default_factory=dict)
@@ -208,12 +204,10 @@ class DetailsLogger:
         non_truncated: int = 0
         padded: int = 0
         non_padded: int = 0
-        num_truncated_few_shots: int = 0
 
     @dataclass
     class Hash:
-        """
-        Hashes important values for one sample ([`Doc`]) of one task ([`LightevalTask`])
+        """Hashes important values for one sample ([`Doc`]) of one task ([`LightevalTask`])
 
         Attributes:
             example (str): Hash of the [`Doc.query`]
@@ -230,8 +224,7 @@ class DetailsLogger:
 
     @dataclass
     class CompiledHash:
-        """
-        Hashes the aggregated hash values for all the sample ([`Doc`]) of one task ([`LightevalTask`])
+        """Hashes the aggregated hash values for all the sample ([`Doc`]) of one task ([`LightevalTask`])
 
         Attributes:
             example (str): Aggregated hash of all the [`Doc.query`] hashes for all samples of the current task.
@@ -268,12 +261,9 @@ class DetailsLogger:
 
         Args:
             task_name (str): Name of the current task of interest.
-            task (LightevalTask): Current task of interest.
             doc (Doc): Current sample that we want to store.
-            outputs (list[ModelResponse]): Model outputs for the current sample
-            metrics (_type_): Model scores for said sample on the current task's metrics.
-            llm_as_prompt_judgement (tuple[str, str]): Tuple containing the
-                prompt passed to the judge and the judgement for the current sample when using llm-as-judge metric.
+            model_response (ModelResponse): Model outputs for the current sample
+            metrics (dict): Model scores for said sample on the current task's metrics.
         """
         detail = self.Detail(doc, model_response, metrics)
         self.details[task_name].append(detail)
@@ -285,11 +275,7 @@ class DetailsLogger:
         self.hashes[task_name].append(hash)
 
     def aggregate(self):
-        """
-        Aggregate the details and hashes for each task and then for all tasks.
-        We end up with a dict of compiled details for each task and a dict of compiled details for all tasks.
-        """
-
+        """Hashes the details for each task and then for all tasks."""
         for task_name in self.hashes:
             compiled_hash = self.CompiledHash()
             compiled_hash.hash_examples = xxhash.xxh64(
@@ -342,15 +328,12 @@ class MetricsLogger:
             self.metrics_values[task_name][metric_name].append(metric_value)
 
     def aggregate(self, task_dict: dict[str, LightevalTask], bootstrap_iters: int = 1000):  # noqa: C901
-        """
-        Aggregate the metrics for each task and then for all tasks.
+        """Aggregate the metrics for each task and then for all tasks.
 
         Args:
             task_dict (dict[str, LightevalTask]): used to determine what aggregation function to use for each metric
             bootstrap_iters (int, optional): Number of runs used to run the statistical bootstrap. Defaults to 1000.
-
         """
-
         for task_name, metrics in self.metrics_values.items():
             task = task_dict[task_name]
 

@@ -52,8 +52,7 @@ else:
 
 
 class SGLangModelConfig(ModelConfig):
-    """
-    Configuration class for SGLang inference engine.
+    """Configuration class for SGLang inference engine.
 
     This configuration is used to load and configure models using the SGLang inference engine,
     which provides high-performance inference.
@@ -98,6 +97,12 @@ class SGLangModelConfig(ModelConfig):
         override_chat_template (bool):
             If True, we force the model to use a chat template. If alse, we prevent the model from using
             a chat template. If None, we use the default (true if present in the tokenizer, false otherwise)
+        generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc.
+        system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
+            This prompt sets the behavior and context for the model during evaluation.
+        cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
 
     Example:
         ```python
@@ -221,15 +226,13 @@ class SGLangModel(LightevalModel):
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
-            list[GenerateReturn]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         return self._greedy_until(docs)
 
@@ -319,7 +322,6 @@ class SGLangModel(LightevalModel):
         generate: bool = True,
     ) -> list:
         """Contains the actual logic of the generation."""
-
         logprob_start_len = None
         top_logprobs_num = None
         if generate:

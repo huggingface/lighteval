@@ -19,22 +19,33 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from typing import Optional
+
 
 import typer
-from typer import Argument, Option
+from typer import Argument
 from typing_extensions import Annotated
 
+from lighteval.cli_args import (
+    custom_tasks,
+    dataset_loading_processes,
+    job_id,
+    max_samples,
+    num_fewshot_seeds,
+    output_dir,
+    public_run,
+    push_to_hub,
+    push_to_tensorboard,
+    reasoning_tags,
+    remove_reasoning_tags,
+    results_org,
+    results_path_template,
+    save_details,
+    tasks,
+)
 from lighteval.models.custom.custom_model import CustomModelConfig
 
 
 app = typer.Typer()
-
-
-HELP_PANEL_NAME_1 = "Common Parameters"
-HELP_PANEL_NAME_2 = "Logging Parameters"
-HELP_PANEL_NAME_3 = "Debug Parameters"
-HELP_PANEL_NAME_4 = "Modeling Parameters"
 
 
 @app.command(rich_help_panel="Evaluation Backends")
@@ -42,67 +53,29 @@ def custom(
     # === general ===
     model_name: Annotated[str, Argument(help="The model name to evaluate")],
     model_definition_file_path: Annotated[str, Argument(help="The model definition file path to evaluate")],
-    tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
+    tasks: tasks.type,
     # === Common parameters ===
-    dataset_loading_processes: Annotated[
-        int, Option(help="Number of processes to use for dataset loading.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = 1,
-    custom_tasks: Annotated[
-        Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = None,
-    num_fewshot_seeds: Annotated[
-        int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = 1,
-    remove_reasoning_tags: Annotated[
-        bool | None,
-        Option(
-            help="Remove reasoning tags from responses (true to remove, false to leave - true by default).",
-            rich_help_panel=HELP_PANEL_NAME_1,
-        ),
-    ] = True,
-    reasoning_tags: Annotated[
-        str | None,
-        Option(
-            help="List of reasoning tags (provided as pairs) to remove from responses. Default is [('<think>', '</think>')].",
-            rich_help_panel=HELP_PANEL_NAME_1,
-        ),
-    ] = None,
+    dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
+    num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
+    remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
+    reasoning_tags: reasoning_tags.type = reasoning_tags.default,
     # === saving ===
-    output_dir: Annotated[
-        str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = "results",
-    results_path_template: Annotated[
-        str | None,
-        Option(
-            help="Template path for where to save the results, you have access to 3 variables, `output_dir`, `org` and `model`. for example a template can be `'{output_dir}/1234/{org}+{model}'`",
-            rich_help_panel=HELP_PANEL_NAME_2,
-        ),
-    ] = None,
-    push_to_hub: Annotated[
-        bool, Option(help="Push results to the huggingface hub.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = False,
-    push_to_tensorboard: Annotated[
-        bool, Option(help="Push results to tensorboard.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = False,
-    public_run: Annotated[
-        bool, Option(help="Push results and details to a public repo.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = False,
-    results_org: Annotated[
-        Optional[str], Option(help="Organization to push results to.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = None,
-    save_details: Annotated[
-        bool, Option(help="Save detailed, sample per sample, results.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = False,
+    output_dir: output_dir.type = output_dir.default,
+    results_path_template: results_path_template.type = results_path_template.default,
+    push_to_hub: push_to_hub.type = push_to_hub.default,
+    push_to_tensorboard: push_to_tensorboard.type = push_to_tensorboard.default,
+    public_run: public_run.type = public_run.default,
+    results_org: results_org.type = results_org.default,
+    save_details: save_details.type = save_details.default,
     # === debug ===
-    max_samples: Annotated[
-        Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
-    ] = None,
-    job_id: Annotated[
-        int, Option(help="Optional job id for future refenrence.", rich_help_panel=HELP_PANEL_NAME_3)
-    ] = 0,
+    max_samples: max_samples.type = max_samples.default,
+    job_id: job_id.type = job_id.default,
 ):
-    """
-    Evaluate custom models (can be anything).
+    """Evaluate custom models (can be anything).
+
+    Returns:
+        dict: Evaluation results containing metrics and scores for all tasks
     """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters

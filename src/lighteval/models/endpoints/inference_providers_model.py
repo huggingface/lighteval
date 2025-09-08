@@ -43,8 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 class InferenceProvidersModelConfig(ModelConfig):
-    """
-    Configuration class for HuggingFace's inference providers (like Together AI, Anyscale, etc.).
+    """Configuration class for HuggingFace's inference providers (like Together AI, Anyscale, etc.).
 
     inference providers doc: https://huggingface.co/docs/inference-providers/en/index
 
@@ -62,6 +61,12 @@ class InferenceProvidersModelConfig(ModelConfig):
         parallel_calls_count (NonNegativeInt):
             Number of parallel API calls to make. Defaults to 10.
             Higher values increase throughput but may hit rate limits.
+        generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc.
+        system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
+            This prompt sets the behavior and context for the model during evaluation.
+        cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
 
     Example:
         ```python
@@ -196,12 +201,10 @@ class InferenceProvidersClient(LightevalModel):
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
             list[ModelResponse]: list of generated responses.

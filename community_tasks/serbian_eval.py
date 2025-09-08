@@ -133,10 +133,6 @@ def prompt_fn_oz_eval_task(line, task_name: str = None):
             - choices (list of str): List of option identifiers ["A", "B", "C", "D", "E"].
             - gold_index (int): Index of the correct answer within the 'choices' list.
 
-    Raises:
-        ValueError: If the 'choices' list does not contain exactly five items,
-                    or if 'answer_str' is not one of ["A", "B", "C", "D", "E"].
-
     Note:
         The OZ Eval dataset is available at https://huggingface.co/datasets/DjMel/oz-eval.
 
@@ -268,6 +264,7 @@ def create_task_config(
         suite: The suite of tasks.
         hf_avail_splits: Available splits (default is "test", "validation").
         few_shots_split: Split used for few-shot examples.
+        generation_size: Number of generations to produce (default is 5).
 
     Returns:
         A `LightevalTaskConfig` object for the task configuration.
@@ -298,7 +295,7 @@ arc_easy = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.ARC_EASY.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 arc_challenge = create_task_config(
@@ -306,7 +303,7 @@ arc_challenge = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.ARC_CHALLENGE.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 # ============================================
@@ -318,14 +315,14 @@ hellaswag = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.HELLASWAG.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 piqa = create_task_config(
     task_name="serbian_evals:piqa",
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.PIQA.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 winogrande = create_task_config(
@@ -333,7 +330,7 @@ winogrande = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.WINOGRANDE.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 # ============================================
@@ -357,7 +354,7 @@ mmlu_anatomy = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_ANATOMY.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_astronomy = create_task_config(
@@ -365,7 +362,7 @@ mmlu_astronomy = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_ASTRONOMY.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_business_ethics = create_task_config(
@@ -373,7 +370,7 @@ mmlu_business_ethics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_BUSINESS_ETHICS.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_clinical_knowledge = create_task_config(
@@ -381,7 +378,7 @@ mmlu_clinical_knowledge = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_CLINICAL_KNOWLEDGE.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_miscellaneous = create_task_config(
@@ -389,7 +386,7 @@ mmlu_miscellaneous = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_MISCELLANEOUS.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_electrical_engineering = create_task_config(
@@ -397,7 +394,7 @@ mmlu_electrical_engineering = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_ELECTRONIC_ENGINEERING.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 # ============================================
@@ -409,7 +406,7 @@ mmlu_all = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_SERBIAN_ALL.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 # ============================================
@@ -421,7 +418,7 @@ mmlu_marketing = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_MARKETING.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_management = create_task_config(
@@ -429,7 +426,7 @@ mmlu_management = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_MANAGEMENT.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 # ============================================
@@ -441,7 +438,7 @@ mmlu_college_biology = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_COLLEGE_BIOLOGY.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_college_chemistry = create_task_config(
@@ -449,7 +446,7 @@ mmlu_college_chemistry = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_COLLEGE_CHEMISTRY.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_college_computer_science = create_task_config(
@@ -457,7 +454,7 @@ mmlu_college_computer_science = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_COLLEGE_COMPUTER_SCIENCE.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_college_mathematics = create_task_config(
@@ -465,7 +462,7 @@ mmlu_college_mathematics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_COLLEGE_MATHEMATICS.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_college_medicine = create_task_config(
@@ -473,7 +470,7 @@ mmlu_college_medicine = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_COLLEGE_MEDICINE.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_college_physics = create_task_config(
@@ -481,7 +478,7 @@ mmlu_college_physics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_COLLEGE_PHYSICS.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_computer_security = create_task_config(
@@ -489,7 +486,7 @@ mmlu_computer_security = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_COLLEGE_COMPUTER_SECURITY.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 # ============================================
@@ -501,7 +498,7 @@ mmlu_moral_disputes = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_MORAL_DISPUTES.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_moral_scenarios = create_task_config(
@@ -509,7 +506,7 @@ mmlu_moral_scenarios = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_MORAL_SCENARIOS.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_philosophy = create_task_config(
@@ -517,7 +514,7 @@ mmlu_philosophy = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_PHILOSOPHY.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_world_religions = create_task_config(
@@ -525,7 +522,7 @@ mmlu_world_religions = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_WORLD_RELIGIONS.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 # ============================================
@@ -537,7 +534,7 @@ mmlu_high_school_biology = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_BIOLOGY.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_high_school_chemistry = create_task_config(
@@ -545,7 +542,7 @@ mmlu_high_school_chemistry = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_CHEMISTRY.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_high_school_computer_science = create_task_config(
@@ -553,7 +550,7 @@ mmlu_high_school_computer_science = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_COMPUTER_SCIENCE.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_high_school_european_history = create_task_config(
@@ -561,7 +558,7 @@ mmlu_high_school_european_history = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_EURO_HISTORY.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_high_school_geography = create_task_config(
@@ -569,7 +566,7 @@ mmlu_high_school_geography = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_GEOGRAPHY.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_high_school_mathematics = create_task_config(
@@ -577,7 +574,7 @@ mmlu_high_school_mathematics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_MATHEMATICS.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_high_school_microeconomics = create_task_config(
@@ -585,7 +582,7 @@ mmlu_high_school_microeconomics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_MICROECONOMICS.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_high_school_physics = create_task_config(
@@ -593,7 +590,7 @@ mmlu_high_school_physics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_PHYSICS.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_high_school_psychology = create_task_config(
@@ -601,7 +598,7 @@ mmlu_high_school_psychology = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_PSYCHOLOGY.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_high_school_statistics = create_task_config(
@@ -609,7 +606,7 @@ mmlu_high_school_statistics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_STATISTICS.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_high_school_world_history = create_task_config(
@@ -617,7 +614,7 @@ mmlu_high_school_world_history = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_WORLD_HISTORY.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 # ============================================
@@ -629,7 +626,7 @@ mmlu_abstract_algebra = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_ABSTRACT_ALGEBRA.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_elementary_mathematics = create_task_config(
@@ -637,7 +634,7 @@ mmlu_elementary_mathematics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_ELEMENTARY_MATHEMATICS.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_formal_logic = create_task_config(
@@ -645,7 +642,7 @@ mmlu_formal_logic = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_FORMAL_LOGIC.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_conceptual_physics = create_task_config(
@@ -653,7 +650,7 @@ mmlu_conceptual_physics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_CONCEPTUAL_PHYSICS.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_econometrics = create_task_config(
@@ -661,7 +658,7 @@ mmlu_econometrics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_ECONOMETRICS.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_machine_learning = create_task_config(
@@ -669,7 +666,7 @@ mmlu_machine_learning = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_MACHINE_LEARNING.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 # ============================================
@@ -681,7 +678,7 @@ mmlu_global_facts = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_GLOBAL_FACT.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_logical_fallacies = create_task_config(
@@ -689,7 +686,7 @@ mmlu_logical_fallacies = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_LOGICAL_FALLACIES.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_sociology = create_task_config(
@@ -697,7 +694,7 @@ mmlu_sociology = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_SOCIOLOGY.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 mmlu_human_aging = create_task_config(
@@ -705,7 +702,7 @@ mmlu_human_aging = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HUMAN_AGING.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 # ============================================
@@ -717,7 +714,7 @@ boolq = create_task_config(
     prompt_function=boolq_serbian,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.BOOLQ.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 openbook_qa = create_task_config(
@@ -725,7 +722,7 @@ openbook_qa = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.OPENBOOK.value,
-    metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
 )
 
 

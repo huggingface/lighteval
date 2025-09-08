@@ -180,10 +180,7 @@ def apps(line, task_name: str = None):
 def arc_agi_2(line, task_name: str = None):
     # query from: https://github.com/arcprize/model_baseline/blob/main/src/prompts/system_prompt.txt
     def convert_2d_list_to_string(list_of_lists: list[list[int]]) -> str:
-        """
-        Convert a list of lists to a string
-        """
-
+        """Convert a list of lists to a string"""
         string_list = ""
 
         for row in list_of_lists:
@@ -746,6 +743,9 @@ def drop(line, task_name: str = None):
         """Flattens a dict of lists of validated answers.
         {"number": ['1', '8'], ...}
         -> [{"number": ['1'], ...}, {"number": ['8'], ...}]
+
+        Returns:
+            list: List of dictionaries with flattened validated answers
         """
         valid_answers = []
         for i in range(len(validated_answers["number"])):

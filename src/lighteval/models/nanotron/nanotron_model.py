@@ -179,7 +179,18 @@ class NanotronLightevalModel(LightevalModel):
         model_class: Optional[Type] = None,
     ):
         """Initializes a nanotron model for evaluation.
+
         Args:
+            checkpoint_path (str): Path to the model checkpoint.
+            nanotron_config (FullNanotronConfig): Configuration for the nanotron model.
+            parallel_context (ParallelContext): Parallel context for distributed training.
+            max_gen_toks (Optional[int]): Maximum number of tokens to generate.
+            max_length (Optional[int]): Maximum sequence length.
+            add_special_tokens (Optional[bool]): Whether to add special tokens.
+            dtype (Optional[Union[str, torch.dtype]]): Data type for the model.
+            trust_remote_code (bool): Whether to trust remote code.
+            debug_one_layer_model (bool): Whether to use a single layer for debugging.
+            model_class (Optional[Type]): Custom model class to use.
         """
         self.config = nanotron_config
         model_args = nanotron_config.nanotron_model
@@ -308,7 +319,6 @@ class NanotronLightevalModel(LightevalModel):
         trust_remote_code: bool = False,
     ) -> transformers.PreTrainedTokenizer:
         """Returns a pre-trained tokenizer from a pre-trained tokenizer configuration."""
-
         try:
             tokenizer = AutoTokenizer.from_pretrained(
                 pretrained if tokenizer is None else tokenizer,

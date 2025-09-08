@@ -50,8 +50,7 @@ class SampleType(Enum):
 
 
 class SampleCache:
-    """
-    Disk-based cache for sample evaluation results using HuggingFace datasets.
+    """Disk-based cache for sample evaluation results using HuggingFace datasets.
     The model hash is a hash of the model config, to make sure we rerun the eval if any parameter changes
     (generation param, model version, etc).
 
@@ -65,8 +64,7 @@ class SampleCache:
     """
 
     def __init__(self, model_config: ModelConfig):
-        """
-        Initialize the sample cache.
+        """Initialize the sample cache.
 
         Args:
             model_config: Configuration for the model being cached
@@ -128,7 +126,11 @@ class SampleCache:
         return cached_indices
 
     def get_model_hash(self, model_config: ModelConfig) -> str:
-        """Create a hash for model configuration."""
+        """Create a hash for model configuration.
+
+        Returns:
+            str: A 16-character hexadecimal hash of the model configuration
+        """
         # Use Pydantic's model_dump instead of asdict for BaseModel
         config_dict = model_config.model_dump()
         config_str = json.dumps(config_dict, sort_keys=True, default=str)
@@ -150,6 +152,7 @@ class SampleCache:
 
         Args:
             task_name: Name of the task
+            task_hash: Hash of the task config, obtainable with self.get_task_hash
             sample_type: Type of samples being cached
 
         Returns:
@@ -229,8 +232,7 @@ class SampleCache:
     def get_samples_from_cache(
         self, docs: List[Doc], task_ids: list | set, sample_type: SampleType
     ) -> List[dict | ModelResponse]:
-        """
-        Get cached samples for the given docs.
+        """Get cached samples for the given docs.
         Warning: Assumes all docs and task_names provided are stored in cache, will fail otherwise.
 
         Returns:
@@ -332,6 +334,9 @@ def cached(cache_type_name: str, sampling_method: SamplingMethod = None):  # noq
         @cached("predictions", "greedy")
         def greedy_until(self, docs: List[Doc], ...):
             # method implementation
+
+    Returns:
+        Callable: A decorator function that wraps the original function with caching functionality
     """
 
     def decorator(func: Callable):  # noqa C901

@@ -1,71 +1,70 @@
-# Saving and reading results
+# Saving and Reading Results
 
-## Saving results locally
+Lighteval provides comprehensive logging and result management through the `EvaluationTracker` class. This system allows you to save results locally and optionally push them to various platforms for collaboration and analysis.
 
-Lighteval will automatically save results and evaluation details in the
-directory set with the `--output-dir` option. The results will be saved in
+## Saving Results Locally
+
+Lighteval automatically saves results and evaluation details in the
+directory specified with the `--output-dir` option. The results are saved in
 `{output_dir}/results/{model_name}/results_{timestamp}.json`. [Here is an
 example of a result file](#example-of-a-result-file). The output path can be
 any [fsspec](https://filesystem-spec.readthedocs.io/en/latest/index.html)
-compliant path (local, s3, hf hub, gdrive, ftp, etc).
+compliant path (local, S3, Hugging Face Hub, Google Drive, FTP, etc.).
 
-To save the details of the evaluation, you can use the `--save-details`
-option. The details will be saved in a parquet file
+To save detailed evaluation information, you can use the `--save-details`
+option. The details are saved in Parquet files at
 `{output_dir}/details/{model_name}/{timestamp}/details_{task}_{timestamp}.parquet`.
 
-If you want results to be saved in a custom path, you can set the `results-path-template` option.
-This allows you to set a string template for the path. The template need to contain the following
-variables: `output_dir`, `model_name`, `org`. For example
+If you want results to be saved in a custom path structure, you can set the `results-path-template` option.
+This allows you to specify a string template for the path. The template must contain the following
+variables: `output_dir`, `model_name`, `org`. For example:
 `{output_dir}/{org}_{model}`. The template will be used to create the path for the results file.
 
-## Pushing results to the HuggingFace hub
+## Pushing Results to the Hugging Face Hub
 
-You can push the results and evaluation details to the HuggingFace hub. To do
-so, you need to set the `--push-to-hub` as well as the `--results-org`
-option. The results will be saved in a dataset with the name at
+You can push results and evaluation details to the Hugging Face Hub. To do
+so, you need to set the `--push-to-hub` option as well as the `--results-org`
+option. The results are saved in a dataset with the name
 `{results_org}/{model_org}/{model_name}`. To push the details, you need to set
 the `--save-details` option.
-The dataset created will be private by default, you can make it public by
+
+The dataset created will be private by default. You can make it public by
 setting the `--public-run` option.
 
+## Pushing Results to TensorBoard
 
-## Pushing results to Tensorboard
-
-You can push the results to Tensorboard by setting `--push-to-tensorboard`.
-This will create a Tensorboard dashboard in a HF org set with the `--results-org`
+You can push results to TensorBoard by setting `--push-to-tensorboard`.
+This creates a TensorBoard dashboard in a Hugging Face organization specified with the `--results-org`
 option.
 
+## Pushing Results to Weights & Biases or Trackio
 
-## Pushing results to Trackio or WandB
+You can push results to Weights & Biases by setting `--wandb`. This initializes a W&B
+run and logs the results.
 
-You can push the results to WandB by setting `--wandb`. This will init a WandB
-run and log the results.
+W&B arguments need to be set in your environment variables:
 
-Wandb args need to be set in your env variables.
-
-```
+```bash
 export WANDB_PROJECT="lighteval"
 ```
 
-You can find a list of variable in the [wandb documentation](https://docs.wandb.ai/guides/track/environment-variables/).
+You can find a complete list of variables in the [W&B documentation](https://docs.wandb.ai/guides/track/environment-variables/).
 
-If trackio is available in your environment `pip install
-lighteval[trackio]`, it will be used to log and push the results on a
-huggingface dataset. Choose the dataset name and org with:
+If Trackio is available in your environment (`pip install lighteval[trackio]`), it will be used to log and push results to a
+Hugging Face dataset. Choose the dataset name and organization with:
 
-```
+```bash
 export WANDB_SPACE_ID="org/name"
 ```
 
+## How to Load and Investigate Details
 
-
-## How to load and investigate details
-
-### Load from local detail files
+### Loading from Local Detail Files
 
 ```python
 from datasets import load_dataset
 import os
+import glob
 
 output_dir = "evals_doc"
 model_name = "HuggingFaceH4/zephyr-7b-beta"
@@ -73,7 +72,7 @@ timestamp = "latest"
 task = "lighteval|gsm8k|0"
 
 if timestamp == "latest":
-    path = f"{output_dir}/details/{model_org}/{model_name}/*/"
+    path = f"{output_dir}/details/{model_name}/*/"
     timestamps = glob.glob(path)
     timestamp = sorted(timestamps)[-1].split("/")[-2]
     print(f"Latest timestamp: {timestamp}")
@@ -87,7 +86,7 @@ for detail in details:
     print(detail)
 ```
 
-### Load from the HuggingFace hub
+### Loading from the Hugging Face Hub
 
 ```python
 from datasets import load_dataset
@@ -105,21 +104,83 @@ for detail in details:
     print(detail)
 ```
 
+## Detail File Structure
 
 The detail file contains the following columns:
-- __doc__: The doc used for the evaluation, this will contain the gold reference, the fewshots and other hyperparamters used for the task.
-- __model_response__: where you will find model generations, logprobs and the input that was sent to the model
-- __metric__: the value of the metrics for this sample
 
+- **`__doc__`**: The document used for evaluation, containing the gold reference, few-shot examples, and other hyperparameters used for the task.
+- **`__model_response__`**: Contains model generations, log probabilities, and the input that was sent to the model.
+- **`__metric__`**: The value of the metrics for this sample.
 
-## Example of a result file
+## EvaluationTracker Configuration
+
+The `EvaluationTracker` class provides several configuration options for customizing how results are saved and pushed:
+
+### Basic Configuration
+
+```python
+from lighteval.logging.evaluation_tracker import EvaluationTracker
+
+tracker = EvaluationTracker(
+    output_dir="./results",
+    save_details=True,
+    push_to_hub=True,
+    hub_results_org="your_username",
+    public=False
+)
+```
+
+### Advanced Configuration
+
+```python
+tracker = EvaluationTracker(
+    output_dir="./results",
+    results_path_template="{output_dir}/custom/{org}_{model}",
+    save_details=True,
+    push_to_hub=True,
+    push_to_tensorboard=True,
+    hub_results_org="my-org",
+    tensorboard_metric_prefix="eval",
+    public=True,
+    use_wandb=True
+)
+```
+
+### Key Parameters
+
+- **`output_dir`**: Local directory to save evaluation results and logs
+- **`results_path_template`**: Template for results directory structure
+- **`save_details`**: Whether to save detailed evaluation records (default: True)
+- **`push_to_hub`**: Whether to push results to Hugging Face Hub (default: False)
+- **`push_to_tensorboard`**: Whether to push metrics to TensorBoard (default: False)
+- **`hub_results_org`**: Hugging Face Hub organization to push results to
+- **`tensorboard_metric_prefix`**: Prefix for TensorBoard metrics (default: "eval")
+- **`public`**: Whether to make Hub datasets public (default: False)
+- **`use_wandb`**: Whether to log to Weights & Biases or Trackio (default: False)
+
+## Result File Structure
+
+The main results file contains several sections:
+
+### General Configuration
+- **`config_general`**: Overall evaluation configuration including model information, timing, and system details
+- **`summary_general`**: General statistics about the evaluation run
+
+### Task-Specific Information
+- **`config_tasks`**: Configuration details for each evaluated task
+- **`summary_tasks`**: Task-specific statistics and metadata
+- **`versions`**: Version information for tasks and datasets
+
+### Results
+- **`results`**: Actual evaluation metrics and scores for each task
+
+## Example of a Result File
 
 ```json
 {
   "config_general": {
     "lighteval_sha": "203045a8431bc9b77245c9998e05fc54509ea07f",
     "num_fewshot_seeds": 1,
-    "override_batch_size": 1,
     "max_samples": 1,
     "job_id": "",
     "start_time": 620979.879320166,
@@ -203,12 +264,9 @@ The detail file contains the following columns:
         "hash_input_tokens": "29916e7afe5cb51d",
         "hash_cont_tokens": "37f91ce23ef6d435"
       },
-      "truncated": 2,
-      "non_truncated": 0,
       "padded": 0,
       "non_padded": 2,
       "effective_few_shots": 0.0,
-      "num_truncated_few_shots": 0
     }
   },
   "summary_general": {
@@ -218,11 +276,8 @@ The detail file contains the following columns:
       "hash_input_tokens": "ac933feb14f96d7b",
       "hash_cont_tokens": "9d03fb26f8da7277"
     },
-    "truncated": 2,
-    "non_truncated": 0,
     "padded": 0,
     "non_padded": 2,
-    "num_truncated_few_shots": 0
   }
 }
 ```

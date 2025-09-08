@@ -56,8 +56,7 @@ else:
 
 
 class LiteLLMModelConfig(ModelConfig):
-    """
-    Configuration class for LiteLLM unified API client.
+    """Configuration class for LiteLLM unified API client.
 
     This configuration is used to connect to various LLM providers through the LiteLLM
     unified API. LiteLLM provides a consistent interface to multiple providers including
@@ -82,6 +81,12 @@ class LiteLLMModelConfig(ModelConfig):
             Maximum number of concurrent API requests to execute in parallel.
             Higher values can improve throughput for batch processing but may hit rate limits
             or exhaust API quotas faster. Default is 10.
+        generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc.
+        system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
+            This prompt sets the behavior and context for the model during evaluation.
+        cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
 
     Example:
         ```python
@@ -109,8 +114,7 @@ class LiteLLMClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
     def __init__(self, config: LiteLLMModelConfig) -> None:
-        """
-        IMPORTANT: Your API keys should be set in the environment variables.
+        """IMPORTANT: Your API keys should be set in the environment variables.
         If a base_url is not set, it will default to the public API.
         """
         self.config = config
@@ -259,12 +263,10 @@ class LiteLLMClient(LightevalModel):
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
             list[ModelResponse]: list of generated responses.

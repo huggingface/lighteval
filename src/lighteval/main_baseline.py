@@ -21,35 +21,23 @@
 # SOFTWARE.
 
 
-from typing import Optional
-
-from typer import Argument, Option
-from typing_extensions import Annotated
-
-
-HELP_PANEL_NAME_1 = "Common Parameters"
-HELP_PANEL_NAME_2 = "Logging Parameters"
-HELP_PANEL_NAME_3 = "Debug Parameters"
-HELP_PANEL_NAME_4 = "Modeling Parameters"
+from lighteval.cli_args import (
+    custom_tasks,
+    dataset_loading_processes,
+    max_samples,
+    output_dir,
+    tasks,
+)
 
 
 def baseline(
-    tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
-    custom_tasks: Annotated[
-        Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = None,
-    dataset_loading_processes: Annotated[
-        int, Option(help="Number of processes to use for dataset loading.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = 1,
-    output_dir: Annotated[
-        str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = "results",
-    max_samples: Annotated[
-        Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
-    ] = None,
+    tasks: tasks.type,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
+    dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
+    output_dir: output_dir.type = output_dir.default,
+    max_samples: max_samples.type = max_samples.default,
 ):
-    """
-    Compute baselines for given tasks.
+    """Compute baselines for given tasks.
 
     It has been tested with generative and accuracy tasks, but may not work correctly for other task types.
 
@@ -62,15 +50,13 @@ def baseline(
         This baseline computation may not be suitable for all task types and should be used with caution.
     """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
+    from lighteval.tasks.lighteval_task import LightevalTask
     from lighteval.tasks.registry import Registry
     from lighteval.tasks.requests import SamplingMethod
     from lighteval.utils.utils import as_list
 
-    registry = Registry(custom_tasks=custom_tasks)
-
-    task_configs: list[LightevalTaskConfig] = registry.get_tasks_configs(tasks)
-    tasks_dict: dict[str, LightevalTask] = registry.get_tasks_from_configs(task_configs)
+    registry = Registry(tasks=tasks, custom_tasks=custom_tasks)
+    tasks_dict: dict[str, LightevalTask] = registry.load_tasks()
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
