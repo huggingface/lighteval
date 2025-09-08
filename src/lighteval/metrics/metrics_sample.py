@@ -1109,6 +1109,7 @@ class SamplingMetric:
                 raise ValueError(f"Unknown normalization function: {normalize}")
         else:
             self.normalize = normalize
+
         self.strip_strings = strip_strings
 
         if callable(sample_scoring_function):
@@ -1203,19 +1204,18 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
             k (int): The number of top choices to consider.
             **kwargs: Additional keyword arguments.
         """
-        super().__init__(kwargs)
+        super().__init__(**kwargs)
 
         self.k = k
         self.attribute_must_be_set = ["k"]
 
-    def compute(self, doc: Doc, model_response: ModelResponse):
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs):
         """Computes the metric over a list of golds and predictions for one single sample.
-        It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones,
-        then compares it to the gold.
+        It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones, then compares it to the gold.
 
         Args:
+            doc (Doc): The document containing gold references.
             model_response (ModelResponse): The model's response containing predictions.
-            docs (Doc): The document containing gold references.
             **kwargs: Additional keyword arguments.
 
         Returns:
