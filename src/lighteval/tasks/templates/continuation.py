@@ -51,8 +51,8 @@ CONTINUATION_QUERY_MCF = "{instruction}{context}\n{options}{answer_word}{colon}"
 
 # Defined for type hinting only
 class ContinuationInput(TypedDict):
-    """
-    Input for the continuation task.
+    """Input for the continuation task.
+
     Args:
         context: The contextualization of choices (e.g. If I ask you a question, you should answer it)
         continuations: Possible continuations of the context (e.g. [you should answer it, you should leave])
@@ -67,8 +67,8 @@ class ContinuationInput(TypedDict):
 
 
 class ContinuationDictAdapter(TypedDict):
-    """
-    Adapter for mapping from the dataset row into the ContinuationInput format.
+    """Adapter for mapping from the dataset row into the ContinuationInput format.
+
     Args:
         context: Column name in the row that contains the contextualization of choices (e.g. If I ask you a question, you should answer it)
         continuations: Column name in the row that contains the possible continuations of the context (e.g. [you should answer it, you should leave])
@@ -88,8 +88,7 @@ def get_continuation_prompt_function(
     formulation: Formulation = MCFFormulation(),
     fix_formatting: bool = True,
 ):
-    """
-    Create a templated prompt function for a Continuation task.
+    """Create a templated prompt function for a Continuation task.
     Example tasks:
     - Hellaswag
     - XStoryCloze
@@ -120,6 +119,7 @@ def get_continuation_prompt_function(
             Note: Both ContinuationDictAdapter and ContinuationInput are TypeDicts, this means that the caller provides dictionary and doesn't initialize any class!
         formulation (Formulation, optional): The formulation (MCF/Hybrid/CF) to use for the task. Defaults to MCFFormulation().
         fix_formatting (bool, optional): Whether to fix the formatting of the text by capitalizing and fixing punctuation based on language. If False, the text will be used as-is. Defaults to True.
+
     Returns:
         Callable: A function that generates Continuation prompt based on the given parameters.
     """

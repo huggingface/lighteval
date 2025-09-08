@@ -1,7 +1,9 @@
-# Use SGLang as backend
+# Using SGLang as Backend
 
-Lighteval allows you to use `sglang` as backend allowing great speedups.
-To use, simply change the `model_args` to reflect the arguments you want to pass to sglang.
+Lighteval allows you to use SGLang as a backend, providing significant speedups for model evaluation.
+To use SGLang, simply change the `model_args` to reflect the arguments you want to pass to SGLang.
+
+## Basic Usage
 
 ```bash
 lighteval sglang \
@@ -9,11 +11,14 @@ lighteval sglang \
     "leaderboard|truthfulqa:mc|0"
 ```
 
-`sglang` is able to distribute the model across multiple GPUs using data
-parallelism and tensor parallelism.
-You can choose the parallelism method by setting in the `model_args`.
+## Parallelism Options
 
-For example if you have 4 GPUs you can split it across using `tp_size`:
+SGLang can distribute the model across multiple GPUs using data parallelism and tensor parallelism.
+You can choose the parallelism method by setting the appropriate parameters in the `model_args`.
+
+### Tensor Parallelism
+
+For example, if you have 4 GPUs, you can split the model across them using tensor parallelism with `tp_size`:
 
 ```bash
 lighteval sglang \
@@ -21,7 +26,9 @@ lighteval sglang \
     "leaderboard|truthfulqa:mc|0"
 ```
 
-Or, if your model fits on a single GPU, you can use `dp_size` to speed up the evaluation:
+### Data Parallelism
+
+If your model fits on a single GPU, you can use data parallelism with `dp_size` to speed up the evaluation:
 
 ```bash
 lighteval sglang \
@@ -29,10 +36,10 @@ lighteval sglang \
     "leaderboard|truthfulqa:mc|0"
 ```
 
-## Use a config file
+## Using a Configuration File
 
-For more advanced configurations, you can use a config file for the model.
-An example of a config file is shown below and can be found at `examples/model_configs/sglang_model_config.yaml`.
+For more advanced configurations, you can use a YAML configuration file for the model.
+An example configuration file is shown below and can be found at `examples/model_configs/sglang_model_config.yaml`.
 
 ```bash
 lighteval sglang \
@@ -41,7 +48,7 @@ lighteval sglang \
 ```
 
 > [!TIP]
-> Documentation for the config file of sglang can be found [here](https://docs.sglang.ai/backend/server_arguments.html)
+> Documentation for SGLang server arguments can be found [here](https://docs.sglang.ai/backend/server_arguments.html)
 
 ```yaml
 model_parameters:
@@ -74,5 +81,32 @@ model_parameters:
 ```
 
 > [!WARNING]
-> In the case of OOM issues, you might need to reduce the context size of the
-> model as well as reduce the `mem_fraction_static` and `chunked_prefill_size` parameter.
+> In case of out-of-memory (OOM) issues, you might need to reduce the context size of the
+> model as well as reduce the `mem_fraction_static` and `chunked_prefill_size` parameters.
+
+## Key SGLang Parameters
+
+### Memory Management
+- `mem_fraction_static`: Fraction of GPU memory to allocate for static tensors (default: 0.8)
+- `chunked_prefill_size`: Size of chunks for prefill operations (default: 4096)
+- `context_length`: Maximum context length for the model
+- `kv_cache_dtype`: Data type for key-value cache
+
+### Parallelism Settings
+- `tp_size`: Number of GPUs for tensor parallelism
+- `dp_size`: Number of GPUs for data parallelism
+
+### Model Configuration
+- `dtype`: Data type for model weights ("auto", "float16", "bfloat16", etc.)
+- `device`: Device to run the model on ("cuda", "cpu")
+- `trust_remote_code`: Whether to trust remote code from the model
+- `skip_tokenizer_init`: Skip tokenizer initialization for faster startup
+
+### Generation Parameters
+- `temperature`: Controls randomness in generation (0.0 = deterministic, 1.0 = random)
+- `top_p`: Nucleus sampling parameter
+- `top_k`: Top-k sampling parameter
+- `max_new_tokens`: Maximum number of tokens to generate
+- `repetition_penalty`: Penalty for repeating tokens
+- `presence_penalty`: Penalty for token presence
+- `frequency_penalty`: Penalty for token frequency

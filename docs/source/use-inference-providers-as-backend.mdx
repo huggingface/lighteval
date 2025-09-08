@@ -1,13 +1,12 @@
-# Inference Providers as backend
+# Using Inference Providers as Backend
 
-Lighteval allows to use Hugging Face's Inference Providers to evaluate llms on supported providers such as Black Forest Labs, Cerebras, Fireworks AI, Nebius, Together AI and many more.
-
-## Quick use
+Lighteval allows you to use Hugging Face's Inference Providers to evaluate LLMs on supported providers such as Black Forest Labs, Cerebras, Fireworks AI, Nebius, Together AI, and many more.
 
 > [!WARNING]
-> Do not forget to set your HuggingFace API key.
+> Do not forget to set your Hugging Face API key.
 > You can set it using the `HF_TOKEN` environment variable or by using the `huggingface-cli` command.
 
+## Basic Usage
 
 ```bash
 lighteval endpoint inference-providers \
@@ -15,9 +14,9 @@ lighteval endpoint inference-providers \
     "lighteval|gsm8k|0"
 ```
 
-## Using a config file
+## Using a Configuration File
 
-You can use config files to define the model and the provider to use.
+You can use configuration files to define the model and the provider to use.
 
 ```bash
 lighteval endpoint inference-providers \
@@ -25,7 +24,7 @@ lighteval endpoint inference-providers \
     "lighteval|gsm8k|0"
 ```
 
-with the following config file:
+With the following configuration file:
 
 ```yaml
 model_parameters:
@@ -42,3 +41,29 @@ model_parameters:
 
 By default, inference requests are billed to your personal account.
 Optionally, you can charge them to an organization by setting `org_to_bill="<your_org_name>"` (requires being a member of that organization).
+
+## Supported Providers
+
+Hugging Face Inference Providers supports a wide range of LLM providers see the [Inference Providers documentation](https://huggingface.co/docs/inference-providers/en/index) for the complete list.
+
+
+## Billing and Costs
+
+### Personal Account Billing
+By default, all inference requests are billed to your personal Hugging Face account. You can monitor your usage in the [Hugging Face billing dashboard](https://huggingface.co/settings/billing).
+
+### Organization Billing
+To bill requests to an organization:
+
+1. Ensure you are a member of the organization
+2. Add `org_to_bill="<organization_name>"` to your configuration
+3. The organization must have sufficient credits
+
+```yaml
+model_parameters:
+  model_name: "meta-llama/Llama-2-7b-chat-hf"
+  provider: "together"
+  org_to_bill: "my-organization"
+```
+
+For more detailed error handling and provider-specific information, refer to the [Hugging Face Inference Providers documentation](https://huggingface.co/docs/inference-endpoints/guides/inference_providers).

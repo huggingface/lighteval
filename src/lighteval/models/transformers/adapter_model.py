@@ -40,8 +40,7 @@ if is_peft_available():
 
 
 class AdapterModelConfig(TransformersModelConfig):
-    """
-    Configuration class for PEFT (Parameter-Efficient Fine-Tuning) adapter models.
+    """Configuration class for PEFT (Parameter-Efficient Fine-Tuning) adapter models.
 
     This configuration is used to load models that have been fine-tuned using PEFT adapters,
     such as LoRA, AdaLoRA, or other parameter-efficient fine-tuning methods. The adapter

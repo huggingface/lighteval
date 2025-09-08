@@ -70,8 +70,9 @@ class GenerativePreparator(Preparator):
         """Prepares an individual generative example to the format expected by metrics computed at the corpus level (aggregated).
 
         Args:
-            golds (list[str]): List of allowed targets for the current example
-            predictions (list[str]): List of generated predictions for the current example.
+            doc (Doc): The document containing gold references.
+            model_response (ModelResponse): The model's response containing predictions.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             GenerativeCorpusMetricInput: Stores the golds and predictions as such
@@ -95,8 +96,9 @@ class LoglikelihoodPreparator(Preparator):
         """Prepares an individual loglikelihood example to the format expected by metrics computed at the corpus level (aggregated).
 
         Args:
-            golds_ixs (list[int]): List of the gold indices among the possible choices
-            choices_logprob (list[float]): List of each choice's aggregated logprobs (usually with an average or weighted average).
+            doc (Doc): The document containing gold indices and choices.
+            model_response (ModelResponse): The model's response containing logprobs.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             LogprobCorpusMetricInput: Stores the golds indices and the model's choice (choice with the highest logprob)
@@ -147,13 +149,13 @@ class TargetPerplexityPreparator(Preparator):
         """Prepares an individual perplexity example to the format expected by metrics computed at the corpus level (aggregated).
 
         Args:
-            logprobs (list[float]): List of the log-probabilities computed for each item of the sequence or single aggregated logprob over the sequence
-            reference_text (str): Current reference text for which to compute the length in self.units_type
+            doc (Doc): The document containing gold references.
+            model_response (ModelResponse): The model's response containing logprobs.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             PerplexityCorpusMetricInput: Stores the measured logprobs and associated text lengths, counted in the reference unit.
         """
-
         logprobs_flat = np.sum(model_response.logprobs)
         reference_text_flat = " ".join(doc.get_golds())
         return PerplexityCorpusMetricInput(logprobs=logprobs_flat, weights=self.count_units(reference_text_flat))
@@ -192,13 +194,13 @@ class PerplexityPreparator(Preparator):
         """Prepares an individual perplexity example to the format expected by metrics computed at the corpus level (aggregated).
 
         Args:
-            logprobs (list[float]): List of the log-probabilities computed for each item of the sequence or single aggregated logprob over the sequence
-            reference_text (str): Current reference text for which to compute the length in self.units_type
+            doc (Doc): The document containing gold references.
+            model_response (ModelResponse): The model's response containing logprobs.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             PerplexityCorpusMetricInput: Stores the measured logprobs and associated text lengths, counted in the reference unit.
         """
-
         logprobs_flat = np.sum(model_response.logprobs)
 
         if doc.original_query is not None:
