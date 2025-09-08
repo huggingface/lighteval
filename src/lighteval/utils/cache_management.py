@@ -161,9 +161,9 @@ class SampleCache:
         return self.all_cache_dirs[sample_type] / task_name / f"{task_hash}.parquet"
 
     def get_sampling_method(self, sample: dict) -> str:
-        if "logprobs" in sample:
+        if len(sample.get("logprobs", [])) > 0:
             return SamplingMethod.LOGPROBS
-        if "text" in sample:
+        if len(sample.get("text", [])) > 0:
             return SamplingMethod.GENERATIVE
         return None
 
@@ -312,11 +312,12 @@ class SampleCache:
                 logger.warning(
                     "Unexpected behavior: You have reprocessed already cached items - we will ignore the new version."
                 )
-            all_samples = existing_data + [
+            new_data = [
                 row
                 for row in task_data
                 if (row["sample_id"], self.get_sampling_method(row["sample"])) not in existing_samples
             ]
+            all_samples = existing_data + new_data
 
             # Save updated dataset
             dataset = Dataset.from_list(all_samples)
@@ -374,7 +375,7 @@ def cached(cache_type_name: str, sampling_method: SamplingMethod = None):  # noq
             cached_count = len(docs) - len(docs_not_cached)
             if cached_count > 0:
                 logger.info(
-                    f"Cache: {cached_count}/{len(docs)} {cache_type.name.lower()} samples are cached for tasks {', '.join(tasks_with_cached_samples)}"
+                    f"Cache: {cached_count}/{len(docs)} {cache_type.name.lower()} samples are cached for tasks {', '.join(t[0] for t in tasks_with_cached_samples)}"
                 )
 
             # 2) Process not cached docs and save to file
@@ -402,7 +403,11 @@ def cached(cache_type_name: str, sampling_method: SamplingMethod = None):  # noq
             final_cached_results = cache.get_samples_from_cache(docs, task_ids, cache_type)
 
             # 4) We only keep samples with the correct sampling method
-            final_results = [s for s in final_cached_results if cache.get_sampling_method(s) == sampling_method]
+            final_results = [
+                s
+                for s in final_cached_results
+                if cache.get_sampling_method(cache._dump_sample(s, cache_type)) == sampling_method
+            ]
 
             if any(r is None for r in final_results):
                 raise ValueError("Problem while loading and aggregating items from cache.")
