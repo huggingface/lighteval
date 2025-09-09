@@ -31,12 +31,12 @@ class MyCustomModel(LightevalModel):
         # Implement generation logic
         pass
 
-    @cached("loglikelihood", SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(self, docs: List[Doc]) -> List[ModelResponse]:
         # Implement loglikelihood computation
         pass
 
-    @cached("loglikelihood", SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood_rolling(self, docs: List[Doc]) -> List[ModelResponse]:
         # Implement rolling loglikelihood computation
         pass
