@@ -43,13 +43,13 @@ from lighteval.logging.info_loggers import (
     TaskConfigLogger,
     VersionsLogger,
 )
-from lighteval.utils.imports import NO_TENSORBOARDX_WARN_MSG, is_nanotron_available, is_tensorboardX_available
+from lighteval.utils.imports import is_package_available, not_installed_error_message
 from lighteval.utils.utils import obj_to_markdown
 
 
 logger = logging.getLogger(__name__)
 
-if is_nanotron_available():
+if is_package_available("nanotron"):
     from nanotron.config import GeneralArgs  # type: ignore
 
 try:
@@ -659,11 +659,11 @@ class EvaluationTracker:
     def push_to_tensorboard(  # noqa: C901
         self, results: dict[str, dict[str, float]], details: dict[str, DetailsLogger.CompiledDetail]
     ):
-        if not is_tensorboardX_available:
-            logger.warning(NO_TENSORBOARDX_WARN_MSG)
+        if not is_package_available("tensorboardX"):
+            logger.warning(not_installed_error_message("tensorboardX"))
             return
 
-        if not is_nanotron_available():
+        if not is_package_available("nanotron"):
             logger.warning("You cannot push results to tensorboard without having nanotron installed. Skipping")
             return
 

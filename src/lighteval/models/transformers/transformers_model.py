@@ -55,7 +55,7 @@ from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import (
-    is_accelerate_available,
+    is_package_available,
 )
 from lighteval.utils.parallelism import find_executable_batch_size
 
@@ -227,7 +227,7 @@ class TransformersModel(LightevalModel):
 
         self.model_name = _simplify_name(config.model_name)
 
-        if is_accelerate_available():
+        if is_package_available("accelerate"):
             model_size, _ = calculate_maximum_sizes(self.model)
             model_size = convert_bytes(model_size)
         else:
@@ -290,7 +290,7 @@ class TransformersModel(LightevalModel):
         else:
             self._device = self.config.device
 
-        if is_accelerate_available():
+        if is_package_available("accelerate"):
             model_size, _ = calculate_maximum_sizes(self.model)
             model_size = convert_bytes(model_size)
         else:
@@ -331,7 +331,7 @@ class TransformersModel(LightevalModel):
 
     def init_model_parallel(self, model_parallel: bool | None = None) -> Tuple[bool, Optional[dict], Optional[str]]:
         """Compute all the parameters related to model_parallel"""
-        if not is_accelerate_available():
+        if not is_package_available("accelerate"):
             return False, None, None
 
         self.num_local_processes = int(os.environ.get("LOCAL_WORLD_SIZE", 1))

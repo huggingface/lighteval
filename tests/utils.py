@@ -34,7 +34,7 @@ from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.registry import Registry
 from lighteval.tasks.requests import Doc
-from lighteval.utils.imports import is_accelerate_available
+from lighteval.utils.imports import is_package_available
 
 
 class FakeModelConfig(ModelConfig):
@@ -115,7 +115,7 @@ def fake_evaluate_task(
 
     # This is due to logger complaining we have no initialised the accelerator
     # It's hard to mock as it's global singleton
-    if is_accelerate_available():
+    if is_package_available("accelerate"):
         from accelerate import Accelerator
 
         Accelerator()

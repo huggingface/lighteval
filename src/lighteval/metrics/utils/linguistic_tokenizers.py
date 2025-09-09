@@ -18,10 +18,8 @@ from functools import lru_cache
 from typing import Callable, Iterator
 
 from lighteval.utils.imports import (
-    NO_SPACY_TOKENIZER_ERROR_MSG,
-    NO_STANZA_TOKENIZER_ERROR_MSG,
-    can_load_spacy_tokenizer,
-    can_load_stanza_tokenizer,
+    Extras,
+    raise_if_package_not_available,
 )
 from lighteval.utils.language import Language
 
@@ -102,8 +100,8 @@ class NLTKTokenizer(WordTokenizer):
 class SpaCyTokenizer(WordTokenizer):
     def __init__(self, spacy_language: str, config=None):
         super().__init__()
-        if not can_load_spacy_tokenizer(spacy_language):
-            raise ImportError(NO_SPACY_TOKENIZER_ERROR_MSG)
+        raise_if_package_not_available(Extras.MULTILINGUAL, language=spacy_language)
+
         self.spacy_language = spacy_language
         self.config = config
         self._tokenizer = None
@@ -140,8 +138,7 @@ class SpaCyTokenizer(WordTokenizer):
 class StanzaTokenizer(WordTokenizer):
     def __init__(self, stanza_language: str, **stanza_kwargs):
         super().__init__()
-        if not can_load_stanza_tokenizer():
-            raise ImportError(NO_STANZA_TOKENIZER_ERROR_MSG)
+        raise_if_package_not_available("stanza")
         self.stanza_language = stanza_language
         self.stanza_kwargs = stanza_kwargs
         self._tokenizer = None

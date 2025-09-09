@@ -42,31 +42,19 @@ from lighteval.models.model_output import (
 from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.registry import Registry
 from lighteval.tasks.requests import SamplingMethod
-from lighteval.utils.imports import (
-    NO_ACCELERATE_ERROR_MSG,
-    NO_NANOTRON_ERROR_MSG,
-    NO_OPENAI_ERROR_MSG,
-    NO_SGLANG_ERROR_MSG,
-    NO_TGI_ERROR_MSG,
-    NO_VLLM_ERROR_MSG,
-    is_accelerate_available,
-    is_nanotron_available,
-    is_openai_available,
-    is_sglang_available,
-    is_tgi_available,
-    is_vllm_available,
-)
+from lighteval.utils.imports import is_package_available, raise_if_package_not_available
 from lighteval.utils.parallelism import test_all_gather
 from lighteval.utils.utils import make_results_table, remove_reasoning_tags
 
 
-if is_accelerate_available():
+if is_package_available("accelerate"):
     from accelerate import Accelerator, InitProcessGroupKwargs
 else:
     from unittest.mock import Mock
 
     Accelerator = InitProcessGroupKwargs = Mock()
-if is_nanotron_available():
+
+if is_package_available("nanotron"):
     from nanotron import distributed as dist
     from nanotron.parallel.context import ParallelContext
 
@@ -110,23 +98,17 @@ class PipelineParameters:
     def __post_init__(self):  # noqa C901
         # Import testing
         if self.launcher_type == ParallelismManager.ACCELERATE:
-            if not is_accelerate_available():
-                raise ImportError(NO_ACCELERATE_ERROR_MSG)
+            raise_if_package_not_available("accelerate")
         elif self.launcher_type == ParallelismManager.VLLM:
-            if not is_vllm_available():
-                raise ImportError(NO_VLLM_ERROR_MSG)
+            raise_if_package_not_available("vllm")
         elif self.launcher_type == ParallelismManager.SGLANG:
-            if not is_sglang_available():
-                raise ImportError(NO_SGLANG_ERROR_MSG)
+            raise_if_package_not_available("sglang")
         elif self.launcher_type == ParallelismManager.TGI:
-            if not is_tgi_available():
-                raise ImportError(NO_TGI_ERROR_MSG)
+            raise_if_package_not_available("tgi")
         elif self.launcher_type == ParallelismManager.NANOTRON:
-            if not is_nanotron_available():
-                raise ImportError(NO_NANOTRON_ERROR_MSG)
+            raise_if_package_not_available("nanotron")
         elif self.launcher_type == ParallelismManager.OPENAI:
-            if not is_openai_available():
-                raise ImportError(NO_OPENAI_ERROR_MSG)
+            raise_if_package_not_available("openai")
 
         # Convert reasoning tags to list if needed
         if not isinstance(self.reasoning_tags, list):
@@ -187,12 +169,12 @@ class Pipeline:
     def _init_parallelism_manager(self):
         accelerator, parallel_context = None, None
         if self.launcher_type == ParallelismManager.ACCELERATE:
-            if not is_accelerate_available():
+            if not is_package_available("accelerate"):
                 raise ValueError("You are trying to launch an accelerate model, but accelerate is not installed")
             accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
             test_all_gather(accelerator=accelerator)
         elif self.launcher_type == ParallelismManager.NANOTRON:
-            if not is_nanotron_available():
+            if not is_package_available("nanotron"):
                 raise ValueError("You are trying to launch a nanotron model, but nanotron is not installed")
             dist.initialize_torch_distributed()
             parallel_context = ParallelContext(

@@ -32,12 +32,12 @@ from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.cache_management import SampleCache, cached
-from lighteval.utils.imports import is_litellm_available
+from lighteval.utils.imports import is_package_available, requires
 
 
 logger = logging.getLogger(__name__)
 
-if is_litellm_available():
+if is_package_available("litellm"):
     import litellm
     from litellm import encode
     from litellm.caching.caching import Cache
@@ -110,6 +110,7 @@ class LiteLLMModelConfig(ModelConfig):
     concurrent_requests: int = 10
 
 
+@requires("litellm")
 class LiteLLMClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 

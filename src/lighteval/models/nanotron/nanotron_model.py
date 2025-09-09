@@ -50,7 +50,7 @@ from lighteval.tasks.requests import (
     Doc,
 )
 from lighteval.utils.cache_management import SampleCache, cached
-from lighteval.utils.imports import is_nanotron_available
+from lighteval.utils.imports import is_package_available
 from lighteval.utils.parallelism import find_executable_batch_size
 from lighteval.utils.utils import as_list
 
@@ -62,7 +62,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 TokenSequence = Union[List[int], torch.LongTensor, torch.Tensor, BatchEncoding]
 
-if is_nanotron_available():
+if is_package_available("nanotron"):
     from nanotron import distributed as dist
     from nanotron import logging
     from nanotron.config import GeneralArgs, ModelArgs, TokenizerArgs
