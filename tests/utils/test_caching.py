@@ -31,7 +31,7 @@ import torch
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
-from lighteval.utils.cache_management import SampleCache, SampleType
+from lighteval.utils.cache_management import SampleCache
 
 
 class TestCaching(unittest.TestCase):
@@ -152,16 +152,12 @@ class TestCaching(unittest.TestCase):
                 cache: SampleCache = model._cache
 
                 # Verify cache files were created
-                cache_file = cache.get_cache_path(task_name=self.task_name, sample_type=SampleType.PREDICTIONS)
+                cache_file = cache.get_cache_path(task_name=self.task_name)
                 self.assertTrue(cache_file.exists(), "Cache file not created")
 
                 # Test retrieving from cache
-                self.assertEqual(
-                    cache._get_cached_indices(SampleType.PREDICTIONS), {self.task_name: [doc.id for doc in self.docs]}
-                )
-                uncached_docs, tasks_with_cached_samples = cache.get_notcached_samples(
-                    docs=self.docs, sample_type=SampleType.PREDICTIONS
-                )
+                self.assertEqual(cache._get_cached_indices(), {self.task_name: [doc.id for doc in self.docs]})
+                uncached_docs, tasks_with_cached_samples = cache.get_notcached_samples(docs=self.docs)
 
                 self.assertEqual(tasks_with_cached_samples, {self.task_name})
                 self.assertEqual(
@@ -169,9 +165,7 @@ class TestCaching(unittest.TestCase):
                 )
 
                 # Verify cached results match original
-                cached_responses = cache.get_samples_from_cache(
-                    docs=self.docs, task_names=[self.task_name], sample_type=SampleType.PREDICTIONS
-                )
+                cached_responses = cache.get_samples_from_cache(docs=self.docs, task_names=[self.task_name])
                 for cached_response, response in zip(cached_responses, self.model_responses):
                     self.assertEqual(asdict(cached_response), asdict(response))
 
