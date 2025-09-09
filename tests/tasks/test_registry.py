@@ -167,3 +167,32 @@ def test_task_creation():
 
     assert isinstance(task, LightevalTask)
     assert task.name == "storycloze:2016"
+
+
+def test_fewshot_can_be_inferred():
+    """
+    Tests that fewshot can be inferred without being explicitely specified.
+    """
+    registry = Registry(tasks="lighteval|storycloze:2016")
+    tasks = registry.load_tasks()
+
+    assert "lighteval|storycloze:2016|0" in tasks
+    assert registry.task_to_configs["lighteval|storycloze:2016"][0].num_fewshots == 0
+
+
+def test_suite_can_be_inferred():
+    """
+    Tests that tasks registry correctly creates tasks
+    """
+    registry = Registry(tasks="storycloze:2016")
+    tasks = registry.load_tasks()
+    assert "lighteval|storycloze:2016|0" in tasks
+
+
+def test_multilingual_suite_can_be_inferred():
+    """
+    Tests that tasks registry correctly creates tasks
+    """
+    registry = Registry(tasks="indicnxnli_tam_hybrid", load_multilingual=True)
+    tasks = registry.load_tasks()
+    assert "lighteval|indicnxnli_tam_hybrid|0" in tasks
