@@ -12,9 +12,9 @@ import lighteval
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.models.vllm.vllm_model import VLLMModelConfig
 from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
-from lighteval.utils.imports import is_accelerate_available
+from lighteval.utils.imports import is_package_available
 
-if is_accelerate_available():
+if is_package_available("accelerate"):
     from datetime import timedelta
     from accelerate import Accelerator, InitProcessGroupKwargs
     accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])

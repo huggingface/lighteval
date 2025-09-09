@@ -38,13 +38,13 @@ from lighteval.models.utils import _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache, cached
-from lighteval.utils.imports import is_vllm_available
+from lighteval.utils.imports import is_package_available, requires
 
 
 logger = logging.getLogger(__name__)
 
 
-if is_vllm_available():
+if is_package_available("vllm"):
     import ray
     from more_itertools import distribute
     from vllm import LLM, RequestOutput, SamplingParams
@@ -179,6 +179,7 @@ class VLLMModelConfig(ModelConfig):
     override_chat_template: bool = None
 
 
+@requires("vllm")
 class VLLMModel(LightevalModel):
     def __init__(
         self,
@@ -531,6 +532,7 @@ class VLLMModel(LightevalModel):
         raise NotImplementedError()
 
 
+@requires("vllm")
 class AsyncVLLMModel(VLLMModel):
     """VLLM models which deploy async natively (no ray). Supports DP and PP/TP but not batch size > 1"""
 

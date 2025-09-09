@@ -47,7 +47,7 @@ from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import (
-    is_accelerate_available,
+    is_package_available,
 )
 
 
@@ -210,7 +210,7 @@ class VLMTransformersModel(LightevalModel):
     # Copied from ./transformers_model.py
     def init_model_parallel(self, model_parallel: bool | None = None) -> Tuple[bool, Optional[dict], Optional[str]]:
         """Compute all the parameters related to model_parallel"""
-        if not is_accelerate_available():
+        if not is_package_available("accelerate"):
             return False, None, None
 
         self.num_local_processes = int(os.environ.get("LOCAL_WORLD_SIZE", 1))

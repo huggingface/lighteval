@@ -51,7 +51,7 @@ from sympy import (
 from sympy.core.function import UndefinedFunction
 from sympy.core.relational import Relational
 
-from lighteval.utils.imports import requires_latex2sympy2_extended
+from lighteval.utils.imports import requires
 from lighteval.utils.timeout import timeout
 
 
@@ -308,7 +308,7 @@ def is_equation(expr: Basic | MatrixBase) -> bool:
     return False
 
 
-@requires_latex2sympy2_extended
+@requires("latex2sympy2_extended")
 def is_assignment_relation(expr: Basic | MatrixBase) -> bool:
     from latex2sympy2_extended.latex2sympy2 import is_expr_of_only_symbols
 

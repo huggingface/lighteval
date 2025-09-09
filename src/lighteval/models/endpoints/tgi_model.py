@@ -32,10 +32,10 @@ from lighteval.models.abstract_model import ModelConfig
 from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.utils.cache_management import SampleCache
-from lighteval.utils.imports import NO_TGI_ERROR_MSG, is_tgi_available
+from lighteval.utils.imports import is_package_available, requires
 
 
-if is_tgi_available():
+if is_package_available("tgi"):
     from text_generation import AsyncClient
 else:
     from unittest.mock import Mock
@@ -99,12 +99,11 @@ class TGIModelConfig(ModelConfig):
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite
 # the client functions, since they use a different client.
+@requires("tgi")
 class ModelClient(InferenceEndpointModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
     def __init__(self, config: TGIModelConfig) -> None:
-        if not is_tgi_available():
-            raise ImportError(NO_TGI_ERROR_MSG)
         headers = (
             {} if config.inference_server_auth is None else {"Authorization": f"Bearer {config.inference_server_auth}"}
         )

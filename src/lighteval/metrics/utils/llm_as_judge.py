@@ -34,7 +34,7 @@ from requests.exceptions import HTTPError
 from tqdm import tqdm
 from tqdm.asyncio import tqdm_asyncio
 
-from lighteval.utils.imports import is_litellm_available, is_openai_available, is_vllm_available
+from lighteval.utils.imports import raise_if_package_not_available
 from lighteval.utils.utils import as_list
 
 
@@ -151,8 +151,7 @@ class JudgeLM:
             # Both "openai" and "tgi" backends use the OpenAI-compatible API
             # They are handled separately to allow for backend-specific validation and setup
             case "openai" | "tgi":
-                if not is_openai_available():
-                    raise RuntimeError("OpenAI backend is not available.")
+                raise_if_package_not_available("openai")
                 if self.client is None:
                     from openai import OpenAI
 
@@ -162,13 +161,11 @@ class JudgeLM:
                 return self.__call_api_parallel
 
             case "litellm":
-                if not is_litellm_available():
-                    raise RuntimeError("litellm is not available.")
+                raise_if_package_not_available("litellm")
                 return self.__call_litellm
 
             case "vllm":
-                if not is_vllm_available():
-                    raise RuntimeError("vllm is not available.")
+                raise_if_package_not_available("vllm")
                 if self.pipe is None:
                     from vllm import LLM, SamplingParams
                     from vllm.transformers_utils.tokenizer import get_tokenizer

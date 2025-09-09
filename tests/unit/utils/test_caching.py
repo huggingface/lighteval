@@ -237,9 +237,9 @@ class TestCaching(unittest.TestCase):
     @patch("lighteval.models.endpoints.tgi_model.ModelClient._loglikelihood")
     def test_cache_tgi(self, mock_loglikelihood, mock_greedy_until, mock_requests_get):
         from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
-        from lighteval.utils.imports import is_tgi_available
+        from lighteval.utils.imports import is_package_available
 
-        if not is_tgi_available():
+        if not is_package_available("tgi"):
             pytest.skip("Skipping because missing the imports")
 
         # Mock TGI requests

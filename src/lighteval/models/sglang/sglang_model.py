@@ -35,12 +35,12 @@ from lighteval.models.utils import _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache, cached
-from lighteval.utils.imports import is_sglang_available
+from lighteval.utils.imports import is_package_available, requires
 
 
 logger = logging.getLogger(__name__)
 
-if is_sglang_available():
+if is_package_available("sglang"):
     from sglang import Engine
     from sglang.srt.hf_transformers_utils import get_tokenizer
 
@@ -138,6 +138,7 @@ class SGLangModelConfig(ModelConfig):
     override_chat_template: bool = None
 
 
+@requires("sglang")
 class SGLangModel(LightevalModel):
     def __init__(
         self,

@@ -43,16 +43,7 @@ from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConf
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModel, VLMTransformersModelConfig
 from lighteval.models.vllm.vllm_model import AsyncVLLMModel, VLLMModel, VLLMModelConfig
-from lighteval.utils.imports import (
-    NO_LITELLM_ERROR_MSG,
-    NO_SGLANG_ERROR_MSG,
-    NO_TGI_ERROR_MSG,
-    NO_VLLM_ERROR_MSG,
-    is_litellm_available,
-    is_sglang_available,
-    is_tgi_available,
-    is_vllm_available,
-)
+from lighteval.utils.imports import raise_if_package_not_available, requires
 
 
 logger = logging.getLogger(__name__)
@@ -101,19 +92,15 @@ def load_model(  # noqa: C901
         return load_inference_providers_model(config=config)
 
 
+@requires("tgi")
 def load_model_with_tgi(config: TGIModelConfig):
-    if not is_tgi_available():
-        raise ImportError(NO_TGI_ERROR_MSG)
-
     logger.info(f"Load model from inference server: {config.inference_server_address}")
     model = ModelClient(config=config)
     return model
 
 
+@requires("litellm")
 def load_litellm_model(config: LiteLLMModelConfig):
-    if not is_litellm_available():
-        raise ImportError(NO_LITELLM_ERROR_MSG)
-
     model = LiteLLMClient(config)
     return model
 
@@ -163,8 +150,7 @@ def load_model_with_accelerate_or_default(
     elif isinstance(config, DeltaModelConfig):
         model = DeltaModel(config=config)
     elif isinstance(config, VLLMModelConfig):
-        if not is_vllm_available():
-            raise ImportError(NO_VLLM_ERROR_MSG)
+        raise_if_package_not_available("vllm")
         if config.is_async:
             model = AsyncVLLMModel(config=config)
         else:
@@ -185,8 +171,6 @@ def load_inference_providers_model(config: InferenceProvidersModelConfig):
     return InferenceProvidersClient(config=config)
 
 
+@requires("sglang")
 def load_sglang_model(config: SGLangModelConfig):
-    if not is_sglang_available():
-        raise ImportError(NO_SGLANG_ERROR_MSG)
-
     return SGLangModel(config=config)
