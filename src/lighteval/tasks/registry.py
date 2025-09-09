@@ -36,12 +36,7 @@ from types import ModuleType
 import lighteval.tasks.default_tasks as default_tasks
 from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
-from lighteval.utils.imports import (
-    CANNOT_USE_EXTENDED_TASKS_MSG,
-    CANNOT_USE_MULTILINGUAL_TASKS_MSG,
-    can_load_extended_tasks,
-    can_load_multilingual_tasks,
-)
+from lighteval.utils.imports import Extras, raise_if_package_not_available
 
 
 # Import community tasks
@@ -122,7 +117,6 @@ class Registry:
         tasks: str | Path | None = None,
         custom_tasks: str | Path | ModuleType | None = None,
         load_community: bool = False,
-        load_extended: bool = False,
         load_multilingual: bool = False,
     ):
         """
@@ -158,17 +152,19 @@ class Registry:
             logger.warning(
                 "You passed no task name. This should only occur if you are using the CLI to inspect tasks."
             )
-            self.tasks_list = []
+            tasks = []
         else:
-            self.tasks_list = self._get_full_task_list_from_input_string(tasks)
+            tasks = self._get_full_task_list_from_input_string(tasks)
         # These parameters are dynamically set by the task names provided, thanks to `activate_suites_to_load`,
         # except in the `tasks` CLI command to display the full list
         self._load_community = load_community
-        self._load_extended = load_extended
         self._load_multilingual = load_multilingual
-        self._activate_loading_of_optional_suite()  # we dynamically set the loading parameters
 
-        # We load all task to
+        # Sanitize tasks by inferring suites/few shots when not specified
+        self.tasks_list = self._sanitize_tasks_list(tasks)
+
+        # Loads all the available tasks
+        self._activate_loading_of_optional_suite()  # we dynamically set the loading parameters
         self._task_registry = self._load_full_registry()
 
         self.task_to_configs = self._update_task_configs()
@@ -219,13 +215,8 @@ class Registry:
                     f"Suite {suite_name} unknown. This is not normal, unless you are testing adding new evaluations."
                 )
 
-        if "extended" in suites:
-            if not can_load_extended_tasks():
-                raise ImportError(CANNOT_USE_EXTENDED_TASKS_MSG)
-            self._load_extended = True
         if "multilingual" in suites:
-            if not can_load_multilingual_tasks():
-                raise ImportError(CANNOT_USE_MULTILINGUAL_TASKS_MSG)
+            raise_if_package_not_available(Extras.MULTILINGUAL)
             self._load_multilingual = True
         if "community" in suites:
             self._load_community = True
@@ -248,11 +239,8 @@ class Registry:
             custom_tasks_module.append(Registry.create_custom_tasks_module(custom_tasks=self._custom_tasks))
 
         # Need to load extended tasks
-        if self._load_extended:
-            for extended_task_module in AVAILABLE_EXTENDED_TASKS_MODULES:
-                custom_tasks_module.append(extended_task_module)
-        else:
-            logger.warning(CANNOT_USE_EXTENDED_TASKS_MSG)
+        for extended_task_module in AVAILABLE_EXTENDED_TASKS_MODULES:
+            custom_tasks_module.append(extended_task_module)
 
         # Need to load community tasks
         if self._load_community:
@@ -285,6 +273,65 @@ class Registry:
 
         return {**default_tasks_registry, **custom_tasks_registry}
 
+    @lru_cache()
+    def _get_suite_from_task(self):
+        registry = self._load_full_registry()
+        task_name_to_suite = {}
+        for task in registry.keys():
+            suite, task_name = task.rsplit("|", 1)
+            if task_name not in task_name_to_suite:
+                task_name_to_suite[task_name] = [suite]
+            else:
+                task_name_to_suite[task_name].append(suite)
+
+        return task_name_to_suite
+
+    def _infer_suite_name_from_task(self, taskname):
+        suite_from_task = self._get_suite_from_task()
+
+        if taskname not in suite_from_task:
+            raise ValueError(f"Requested task {taskname} is not available")
+
+        if len(suite_from_task[taskname]) > 1:
+            raise ValueError(f"More than one suite available for task {taskname}: {suite_from_task[taskname]}")
+
+        else:
+            return suite_from_task[taskname][0]
+
+    def _sanitize_tasks_list(self, tasks):
+        tasks_list = []
+        for task in tasks:
+            try:
+                if task.count("|") == 3:
+                    logger.warning(
+                        "Deprecation warning: You provided 4 arguments in your task name, but we no longer support the `truncate_fewshot` option. We will ignore the parameter for now, but it will fail in a couple of versions, so you should change your task name to `suite|task` or `suit|task|num_fewshot`."
+                    )
+                    suite_name, task_name, few_shot, _ = tuple(task.split("|"))
+                elif task.count("|") == 2:
+                    suite_name, task_name, few_shot = tuple(task.split("|"))
+                elif task.count("|") == 1:
+                    arg0, arg1 = tuple(task.split("|"))
+
+                    if arg1.isdigit():
+                        suite_name = self._infer_suite_name_from_task(task)
+                        task_name, few_shot = arg0, arg1
+                    else:
+                        suite_name, task_name = arg0, arg1
+                        few_shot = "0"
+                elif task.count("|") == 0:
+                    suite_name = self._infer_suite_name_from_task(task)
+                    task_name = task
+                    few_shot = "0"
+                else:
+                    raise ValueError(
+                        f"Cannot get task info from {task}. The correct format is:\n- task\n- suite|task\n- suite|task|few_shot"
+                    )
+            except ValueError:
+                raise ValueError(f"Cannot get  task info from {task}. correct format is suite|task|few_shot")
+
+            tasks_list.append("|".join([suite_name, task_name, few_shot]))
+        return tasks_list
+
     def _update_task_configs(self) -> dict[str, LightevalTaskConfig]:  # noqa: C901
         """
         Updates each config depending on the input tasks (we replace all provided params, like few shot number, sampling params, etc)
@@ -297,17 +344,33 @@ class Registry:
             try:
                 if task.count("|") == 3:
                     logger.warning(
-                        "Deprecation warning: You provided 4 arguments in your task name, but we no longer support the `truncate_fewshot` option. We will ignore the parameter for now, but it will fail in a couple of versions, so you should change your task name to `suite|task|num_fewshot`."
+                        "Deprecation warning: You provided 4 arguments in your task name, but we no longer support the `truncate_fewshot` option. We will ignore the parameter for now, but it will fail in a couple of versions, so you should change your task name to `suite|task` or `suit|task|num_fewshot`."
                     )
                     suite_name, task_name, few_shot, _ = tuple(task.split("|"))
-                else:
+                elif task.count("|") == 2:
                     suite_name, task_name, few_shot = tuple(task.split("|"))
+                elif task.count("|") == 1:
+                    suite_name, task_name = tuple(task.split("|"))
+                    few_shot = 0
+                elif task.count("|") == 0:
+                    suite_name = None
+                    task_name = task
+                    few_shot = 0
+                else:
+                    raise ValueError(
+                        f"Cannot get task info from {task}. The correct format is:\n- task\n- suite|task\n- suite|task|few_shot"
+                    )
+
                 if "@" in task_name:
                     split_task_name = task_name.split("@")
                     task_name, metric_params = split_task_name[0], split_task_name[1:]
                     # We convert k:v to {"k": "v"}, then to correct type
                     metric_params_dict = dict(item.split("=") for item in metric_params if item)
                     metric_params_dict = {k: ast.literal_eval(v) for k, v in metric_params_dict.items()}
+
+                if suite_name is None:
+                    suite_name = self._infer_suite_name_from_task(task)
+
                 few_shot = int(few_shot)
 
             except ValueError:
