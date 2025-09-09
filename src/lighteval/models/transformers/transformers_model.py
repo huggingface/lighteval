@@ -738,7 +738,7 @@ class TransformersModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
-    @cached("predictions", SamplingMethod.GENERATIVE)
+    @cached(SamplingMethod.GENERATIVE)
     def greedy_until(
         self,
         docs: list[Doc],
@@ -867,7 +867,7 @@ class TransformersModel(LightevalModel):
         else:
             return self._generate_padded(**kwargs)
 
-    @cached("predictions", SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(
         self,
         docs: list[Doc],
@@ -883,7 +883,7 @@ class TransformersModel(LightevalModel):
         """
         return self._loglikelihood_tokens(docs)
 
-    @cached("predictions", SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood_rolling(
         self,
         docs: list[Doc],

@@ -555,7 +555,7 @@ class InferenceEndpointModel(LightevalModel):
             for context, doc in zip(contexts, docs)
         ]
 
-    @cached("predictions", SamplingMethod.GENERATIVE)
+    @cached(SamplingMethod.GENERATIVE)
     def greedy_until(
         self,
         docs: List[Doc],
@@ -599,11 +599,11 @@ class InferenceEndpointModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
-    @cached("predictions", SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         return self._loglikelihood(docs, rolling=False)
 
-    @cached("predictions", SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood_rolling(self, docs: list[Doc], override_bs=None) -> list[ModelResponse]:
         return self._loglikelihood(docs, rolling=True)
 

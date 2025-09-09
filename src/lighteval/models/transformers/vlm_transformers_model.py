@@ -338,7 +338,7 @@ class VLMTransformersModel(LightevalModel):
 
         return 2048
 
-    @cached("predictions", SamplingMethod.GENERATIVE)
+    @cached(SamplingMethod.GENERATIVE)
     def greedy_until(
         self,
         docs: list[Doc],
@@ -428,14 +428,14 @@ class VLMTransformersModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
-    @cached("predictions", SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
         raise NotImplementedError()
 
-    @cached("predictions", SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood_rolling(
         self,
         docs: list[Doc],

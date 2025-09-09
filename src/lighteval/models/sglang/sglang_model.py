@@ -221,7 +221,7 @@ class SGLangModel(LightevalModel):
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
 
-    @cached("predictions", SamplingMethod.GENERATIVE)
+    @cached(SamplingMethod.GENERATIVE)
     def greedy_until(
         self,
         docs: list[Doc],
@@ -347,7 +347,7 @@ class SGLangModel(LightevalModel):
         )
         return outputs
 
-    @cached("predictions", SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         return self._loglikelihood_tokens(docs)
 
@@ -416,6 +416,6 @@ class SGLangModel(LightevalModel):
                 res.append(answer)
         return dataset.get_original_order(res)
 
-    @cached("predictions", SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         raise NotImplementedError()

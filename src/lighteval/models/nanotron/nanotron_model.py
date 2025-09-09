@@ -484,7 +484,7 @@ class NanotronLightevalModel(LightevalModel):
                 continuation = continuation.lstrip()
         return continuation
 
-    @cached("predictions", SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(self, requests: List[Doc]) -> List[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
@@ -507,7 +507,7 @@ class NanotronLightevalModel(LightevalModel):
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
-    @cached("predictions", SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood_rolling(self, requests: List[Doc]) -> List[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         for request in tqdm(
@@ -942,7 +942,7 @@ class NanotronLightevalModel(LightevalModel):
         return dataset.get_original_order(res)
 
     @torch.inference_mode()
-    @cached("predictions", SamplingMethod.GENERATIVE)
+    @cached(SamplingMethod.GENERATIVE)
     def greedy_until(
         self,
         requests: List[Doc],

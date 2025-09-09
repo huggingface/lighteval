@@ -87,11 +87,11 @@ class DummyModel(LightevalModel):
     def max_length(self) -> int:
         return 2048
 
-    @cached("predictions", SamplingMethod.GENERATIVE)
+    @cached(SamplingMethod.GENERATIVE)
     def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
         return [ModelResponse(text=["random baseline"]) for _ in range(len(docs))]
 
-    @cached("predictions", SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         model_responses = []
         for doc in docs:
@@ -104,7 +104,7 @@ class DummyModel(LightevalModel):
 
         return model_responses
 
-    @cached("predictions", SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         model_responses = []
         for doc in docs:
