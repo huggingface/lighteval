@@ -36,12 +36,7 @@ from types import ModuleType
 import lighteval.tasks.default_tasks as default_tasks
 from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
-from lighteval.utils.imports import (
-    CANNOT_USE_EXTENDED_TASKS_MSG,
-    CANNOT_USE_MULTILINGUAL_TASKS_MSG,
-    can_load_extended_tasks,
-    can_load_multilingual_tasks,
-)
+from lighteval.utils.imports import Extras, raise_if_package_not_available
 
 
 # Import community tasks
@@ -122,7 +117,6 @@ class Registry:
         tasks: str | Path | None = None,
         custom_tasks: str | Path | ModuleType | None = None,
         load_community: bool = False,
-        load_extended: bool = False,
         load_multilingual: bool = False,
     ):
         """
@@ -164,7 +158,6 @@ class Registry:
         # These parameters are dynamically set by the task names provided, thanks to `activate_suites_to_load`,
         # except in the `tasks` CLI command to display the full list
         self._load_community = load_community
-        self._load_extended = load_extended
         self._load_multilingual = load_multilingual
         self._activate_loading_of_optional_suite()  # we dynamically set the loading parameters
 
@@ -219,13 +212,8 @@ class Registry:
                     f"Suite {suite_name} unknown. This is not normal, unless you are testing adding new evaluations."
                 )
 
-        if "extended" in suites:
-            if not can_load_extended_tasks():
-                raise ImportError(CANNOT_USE_EXTENDED_TASKS_MSG)
-            self._load_extended = True
         if "multilingual" in suites:
-            if not can_load_multilingual_tasks():
-                raise ImportError(CANNOT_USE_MULTILINGUAL_TASKS_MSG)
+            raise_if_package_not_available(Extras.MULTILINGUAL)
             self._load_multilingual = True
         if "community" in suites:
             self._load_community = True
@@ -248,11 +236,8 @@ class Registry:
             custom_tasks_module.append(Registry.create_custom_tasks_module(custom_tasks=self._custom_tasks))
 
         # Need to load extended tasks
-        if self._load_extended:
-            for extended_task_module in AVAILABLE_EXTENDED_TASKS_MODULES:
-                custom_tasks_module.append(extended_task_module)
-        else:
-            logger.warning(CANNOT_USE_EXTENDED_TASKS_MSG)
+        for extended_task_module in AVAILABLE_EXTENDED_TASKS_MODULES:
+            custom_tasks_module.append(extended_task_module)
 
         # Need to load community tasks
         if self._load_community:
