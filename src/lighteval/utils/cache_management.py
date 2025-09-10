@@ -81,17 +81,16 @@ class SampleCache:
             model_config: Configuration for the model being cached
             cache_dir: Directory to store cache files
         """
-        self.cache_dir = Path(os.path.expanduser(model_config.cache_dir))
         self.model_config = model_config
         self.model_hash = self.get_model_hash(model_config)
 
+        self.cache_dir = (
+            Path(os.path.expanduser(self.model_config.cache_dir)) / self.model_config.model_name / self.model_hash
+        )
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+
         self.registry = None
 
-        # Create cache directory structure and load cached indices if present
-        self.all_cache_dirs = {}
-        self.existing_indices = {}
-        self.all_cache_dirs = self.cache_dir / self.model_config.model_name / self.model_hash
-        self.all_cache_dirs.mkdir(parents=True, exist_ok=True)
         self.existing_indices = self._load_cached_indices()
 
     def _init_registry(self, registry: Registry):
@@ -105,7 +104,7 @@ class SampleCache:
         """
         logger.info("[CACHING] Initializing data cache")
         cached_indices = {}
-        cache_dir = self.all_cache_dirs
+        cache_dir = self.cache_dir
 
         if not cache_dir.exists():
             return cached_indices
@@ -176,7 +175,7 @@ class SampleCache:
         Returns:
             Path: Path to the cache file for the given task and sample type
         """
-        return self.all_cache_dirs / task_id.task_name / task_id.task_hash / f"{task_id.sampling_method.name}.parquet"
+        return self.cache_dir / task_id.task_name / task_id.task_hash / f"{task_id.sampling_method.name}.parquet"
 
     def get_task_id(self, task_name: str, sampling_method: SamplingMethod) -> TaskID:
         """Returns a unique task indentifier. Depends on the task name,
@@ -355,7 +354,7 @@ def cached(sampling_method: SamplingMethod = None):  # noqa C901
         cache_type_name: Type of cache ("tokenization" or "predictions")
 
     Usage:
-        @cached("greedy")
+        @cached(SamplingMethod.GENERATIVE)
         def greedy_until(self, docs: List[Doc], ...):
             # method implementation
 

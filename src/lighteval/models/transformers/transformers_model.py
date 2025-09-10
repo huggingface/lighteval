@@ -883,7 +883,7 @@ class TransformersModel(LightevalModel):
         """
         return self._loglikelihood_tokens(docs)
 
-    @cached(SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(
         self,
         docs: list[Doc],

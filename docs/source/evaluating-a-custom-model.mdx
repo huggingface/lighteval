@@ -36,7 +36,7 @@ class MyCustomModel(LightevalModel):
         # Implement loglikelihood computation
         pass
 
-    @cached(SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(self, docs: List[Doc]) -> List[ModelResponse]:
         # Implement rolling loglikelihood computation
         pass
@@ -181,7 +181,7 @@ def __init__(self, config):
 
 3. Add cache decorators to your prediction methods:
    ```python
-   @cached("predictions", SamplingMethod.GENERATIVE)
+   @cached(SamplingMethod.GENERATIVE)
    def greedy_until(self, docs: List[Doc]) -> List[ModelResponse]:
        # Your implementation...
    ```

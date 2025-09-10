@@ -104,7 +104,7 @@ class DummyModel(LightevalModel):
 
         return model_responses
 
-    @cached(SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         model_responses = []
         for doc in docs:

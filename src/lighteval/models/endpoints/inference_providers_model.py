@@ -260,7 +260,7 @@ class InferenceProvidersClient(LightevalModel):
         """
         raise NotImplementedError
 
-    @cached(SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         raise NotImplementedError

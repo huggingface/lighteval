@@ -603,7 +603,7 @@ class InferenceEndpointModel(LightevalModel):
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         return self._loglikelihood(docs, rolling=False)
 
-    @cached(SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(self, docs: list[Doc], override_bs=None) -> list[ModelResponse]:
         return self._loglikelihood(docs, rolling=True)
 

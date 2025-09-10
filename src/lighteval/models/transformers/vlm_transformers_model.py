@@ -435,7 +435,7 @@ class VLMTransformersModel(LightevalModel):
     ) -> list[ModelResponse]:
         raise NotImplementedError()
 
-    @cached(SamplingMethod.LOGPROBS)
+    @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(
         self,
         docs: list[Doc],

@@ -30,7 +30,7 @@ import torch
 
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_output import ModelResponse
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache
 
 
@@ -95,12 +95,10 @@ class TestCaching(unittest.TestCase):
                     cache = SampleCache(config)
 
                     # Check directory structure
-                    cache_dirs = list(cache.all_cache_dirs.values())
-                    self.assertEqual(len(cache_dirs), 2)
-                    for folder in cache_dirs:
-                        self.assertTrue(folder.exists())
-                        self.assertIn(str(temp_dir), str(folder))
-                        self.assertIn(model_name, str(folder))
+                    folder = cache.cache_dir
+                    self.assertTrue(folder.exists())
+                    self.assertIn(str(temp_dir), str(folder))
+                    self.assertIn(model_name, str(folder))
 
     def test_cache_decorator_presence(self):
         """Test that @cached decorators are present on the right methods."""
@@ -142,30 +140,38 @@ class TestCaching(unittest.TestCase):
                         hasattr(method, "__wrapped__"), f"{method_name} missing @cached decorator for {model_class}"
                     )
 
-    def _test_cache(self, model: LightevalModel):
+    def _test_cache(self, model: LightevalModel, test_cases):
         """Test that the @cached decorator logic works correctly - called by all model specific functions below."""
-        for function_name in ["greedy_until", "loglikelihood", "loglikelihood_rolling"]:
+        for function_name, sampling_method in test_cases:
             with self.subTest(function_name=function_name):
                 process_inputs = getattr(model, function_name)
                 process_inputs(self.docs)
 
                 cache: SampleCache = model._cache
 
+                # Check task_id
+                task_id = cache.get_task_id(self.task_name, sampling_method)
+                self.assertEqual(task_id.task_name, self.task_name)
+                self.assertEqual(task_id.sampling_method, sampling_method)
+
                 # Verify cache files were created
-                cache_file = cache.get_cache_path(task_name=self.task_name)
+                cache_file = cache.get_cache_path(task_id)
                 self.assertTrue(cache_file.exists(), "Cache file not created")
 
                 # Test retrieving from cache
-                self.assertEqual(cache._get_cached_indices(), {self.task_name: [doc.id for doc in self.docs]})
-                uncached_docs, tasks_with_cached_samples = cache.get_notcached_samples(docs=self.docs)
-
-                self.assertEqual(tasks_with_cached_samples, {self.task_name})
+                self.assertEqual(cache._load_cached_indices()[task_id], [doc.id for doc in self.docs])
+                uncached_docs, tasks_with_cached_samples = cache.get_samples_to_process_and_cache(
+                    docs=self.docs, sampling_method=sampling_method
+                )
+                self.assertEqual(tasks_with_cached_samples, {task_id})
                 self.assertEqual(
                     len(uncached_docs), 0, f"{len(uncached_docs)} documents not found in cache when it should be 0"
                 )
 
                 # Verify cached results match original
-                cached_responses = cache.get_samples_from_cache(docs=self.docs, task_names=[self.task_name])
+                cached_responses = cache.get_samples_from_cache(
+                    docs=self.docs, task_ids=[task_id], sampling_method=sampling_method
+                )
                 for cached_response, response in zip(cached_responses, self.model_responses):
                     self.assertEqual(asdict(cached_response), asdict(response))
 
@@ -194,7 +200,14 @@ class TestCaching(unittest.TestCase):
             config = TransformersModelConfig(model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir)
             model = TransformersModel(config)
 
-            self._test_cache(model)
+            self._test_cache(
+                model,
+                [
+                    ("greedy_until", SamplingMethod.GENERATIVE),
+                    ("loglikelihood", SamplingMethod.LOGPROBS),
+                    ("loglikelihood_rolling", SamplingMethod.PERPLEXITY),
+                ],
+            )
 
     @patch("lighteval.models.vllm.vllm_model.VLLMModel._create_auto_model")
     @patch("lighteval.models.vllm.vllm_model.VLLMModel._greedy_until")
@@ -211,7 +224,14 @@ class TestCaching(unittest.TestCase):
             config = VLLMModelConfig(model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir)
             model = VLLMModel(config)
 
-            self._test_cache(model)
+            self._test_cache(
+                model,
+                [
+                    ("greedy_until", SamplingMethod.GENERATIVE),
+                    ("loglikelihood", SamplingMethod.LOGPROBS),
+                    ("loglikelihood_rolling", SamplingMethod.PERPLEXITY),
+                ],
+            )
 
     @patch("requests.get")
     @patch("lighteval.models.endpoints.tgi_model.ModelClient._greedy_until")
@@ -236,7 +256,14 @@ class TestCaching(unittest.TestCase):
             )
             model = ModelClient(config)
 
-            self._test_cache(model)
+            self._test_cache(
+                model,
+                [
+                    ("greedy_until", SamplingMethod.GENERATIVE),
+                    ("loglikelihood", SamplingMethod.LOGPROBS),
+                    ("loglikelihood_rolling", SamplingMethod.PERPLEXITY),
+                ],
+            )
 
     @patch("lighteval.models.endpoints.endpoint_model.InferenceEndpointModel._loglikelihood")
     @patch("lighteval.models.endpoints.endpoint_model.InferenceEndpointModel._greedy_until")
@@ -257,7 +284,14 @@ class TestCaching(unittest.TestCase):
             config = InferenceEndpointModelConfig(model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir)
             model = InferenceEndpointModel(config)
 
-            self._test_cache(model)
+            self._test_cache(
+                model,
+                [
+                    ("greedy_until", SamplingMethod.GENERATIVE),
+                    ("loglikelihood", SamplingMethod.LOGPROBS),
+                    ("loglikelihood_rolling", SamplingMethod.PERPLEXITY),
+                ],
+            )
 
     @patch("lighteval.models.sglang.sglang_model.SGLangModel._loglikelihood_tokens")
     @patch("lighteval.models.sglang.sglang_model.SGLangModel._greedy_until")
@@ -278,7 +312,13 @@ class TestCaching(unittest.TestCase):
             config = SGLangModelConfig(model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir)
             model = SGLangModel(config)
 
-            self._test_cache(model)
+            self._test_cache(
+                model,
+                [
+                    ("greedy_until", SamplingMethod.GENERATIVE),
+                    ("loglikelihood", SamplingMethod.LOGPROBS),
+                ],
+            )
 
     @patch("lighteval.models.transformers.vlm_transformers_model.VLMTransformersModel._greedy_until")
     @patch("lighteval.utils.imports.is_accelerate_available")
@@ -306,4 +346,9 @@ class TestCaching(unittest.TestCase):
             config = VLMTransformersModelConfig(model_name="HuggingFaceTB/SmolVLM-256M-Instruct", cache_dir=temp_dir)
             model = VLMTransformersModel(config)
 
-            self._test_cache(model)
+            self._test_cache(
+                model,
+                [
+                    ("greedy_until", SamplingMethod.GENERATIVE),
+                ],
+            )
