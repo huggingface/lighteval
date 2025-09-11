@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TaskID:
     """A unique ID for a grouping of task samples. It relies on the task name,
-    the task config (which gives the tash_hash), and the sampling method (linked to
+    the task config (which gives the task_hash), and the sampling method (linked to
     the metric type)
     """
 
