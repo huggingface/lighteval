@@ -58,7 +58,7 @@ class TaskID:
         return f"{self.task_name} ({self.task_hash}, {self.sampling_method.name})"
 
     def __hash__(self):
-        return int.from_bytes(hashlib.sha256(str(self).encode()).digest())
+        return int.from_bytes(hashlib.sha256(str(self).encode()).digest(), byteorder="big")
 
 
 class SampleCache:
