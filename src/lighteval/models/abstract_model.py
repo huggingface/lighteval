@@ -46,6 +46,8 @@ class ModelConfig(BaseModel, extra="forbid"):
     as well as shared attributes that are used by all models like generation parameters and system prompts.
 
     Attributes:
+        model_name (str):
+            The model name or unique id
         generation_parameters (GenerationParameters):
             Configuration parameters that control text generation behavior, including
             temperature, top_p, max_new_tokens, etc. Defaults to empty GenerationParameters.

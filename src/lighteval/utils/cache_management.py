@@ -111,6 +111,8 @@ class SampleCache:
 
         for cache_file in cache_dir.rglob("*.parquet"):
             try:
+                # cache_file.parts gives all the subfolders of the url, up to the file name
+                # last 3 are task_name/task_hash/file_name.parquet, so we take -3 and -2
                 task_name, task_hash = cache_file.parts[-3:-1]
                 sampling_method = SamplingMethod[cache_file.stem]  # removes the file extension
                 task_id = TaskID(task_name, task_hash, sampling_method)
