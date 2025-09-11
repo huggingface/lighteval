@@ -48,7 +48,7 @@ from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.prompt_manager import PromptManager
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache, cached
 
 
@@ -555,7 +555,7 @@ class InferenceEndpointModel(LightevalModel):
             for context, doc in zip(contexts, docs)
         ]
 
-    @cached("predictions")
+    @cached(SamplingMethod.GENERATIVE)
     def greedy_until(
         self,
         docs: List[Doc],
@@ -599,11 +599,11 @@ class InferenceEndpointModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
-    @cached("predictions")
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         return self._loglikelihood(docs, rolling=False)
 
-    @cached("predictions")
+    @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(self, docs: list[Doc], override_bs=None) -> list[ModelResponse]:
         return self._loglikelihood(docs, rolling=True)
 
