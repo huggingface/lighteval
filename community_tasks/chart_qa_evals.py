@@ -24,14 +24,14 @@
 """
 Task to evaluate VLMs on HuggingFaceM4/ChartQA.
 
-Example evaluation:
-lighteval accelerate "model_name=google/gemma-3-4b-it" "community|chart_qa|0" --custom-tasks community_tasks/chart_qa_evals.py --vision-model
+Example usage:
+lighteval accelerate "model_name=google/gemma-3-4b-it" "community|chart_qa:human|0" --custom-tasks community_tasks/chart_qa_evals.py --vision-model
 """
 
 import numpy as np
 
 from lighteval.metrics.dynamic_metrics import MultilingualExtractiveMatchMetric
-from lighteval.metrics.metrics import Metrics, SampleLevelMetric
+from lighteval.metrics.metrics import SampleLevelMetric
 from lighteval.metrics.utils.extractive_match_utils import (
     ExprExtractionConfig,
     LatexExtractionConfig,
@@ -43,10 +43,6 @@ from lighteval.utils.language import Language
 
 
 def prompt_fn(line, task_name: str = None):
-    """Defines how to go from a dataset line to a doc object.
-    Follow examples in src/lighteval/tasks/tasks_prompt_formatting.py, or get more info
-    about what this function should do in the README.
-    """
     return Doc(
         task_name=task_name,
         query="Answer the following question. The last line of your response should be of the following format: 'Answer: $ANSWER' (without quotes) where $ANSWER is the answer to the question.\n\n"
@@ -64,7 +60,7 @@ metric = SampleLevelMetric(
         language=Language.ENGLISH,
         gold_extraction_target=extraction_targets,
         pred_extraction_target=extraction_targets,
-        precision=6,
+        precision=4,
     ),
     category=SamplingMethod.GENERATIVE,
     corpus_level_fn=np.mean,
@@ -73,21 +69,20 @@ metric = SampleLevelMetric(
 
 task = LightevalTaskConfig(
     name="chart_qa",
-    prompt_function=prompt_fn,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
+    prompt_function=prompt_fn,
     suite=["community"],
     hf_repo="HuggingFaceM4/ChartQA",
     hf_subset="default",
     hf_avail_splits=["train", "val", "test"],
     evaluation_splits=["test"],
-    hf_filter=lambda line: line["human_or_machine"] == 0,
     few_shots_split=None,
     few_shots_select=None,
-    metrics=[metric],  # select your metric in Metrics
+    metrics=[metric],
 )
 
 human_task = LightevalTaskConfig(
     name="chart_qa:human",
-    prompt_function=prompt_fn,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
+    prompt_function=prompt_fn,
     suite=["community"],
     hf_repo="HuggingFaceM4/ChartQA",
     hf_subset="default",
@@ -96,7 +91,7 @@ human_task = LightevalTaskConfig(
     hf_filter=lambda line: line["human_or_machine"] == 0,
     few_shots_split=None,
     few_shots_select=None,
-    metrics=[metric],  # select your metric in Metrics
+    metrics=[metric],
 )
 
 TASKS_TABLE = [task, human_task]
