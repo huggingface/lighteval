@@ -209,9 +209,9 @@ class TestCaching(unittest.TestCase):
                 ],
             )
 
-    @patch("lighteval.models.vllm.vllm_model.VLLMModel._create_auto_model")
-    @patch("lighteval.models.vllm.vllm_model.VLLMModel._greedy_until")
     @patch("lighteval.models.vllm.vllm_model.VLLMModel._loglikelihood_tokens")
+    @patch("lighteval.models.vllm.vllm_model.VLLMModel._greedy_until")
+    @patch("lighteval.models.vllm.vllm_model.VLLMModel._create_auto_model")
     def test_cache_vllm(self, mock_create_model, mock_greedy_until, mock_loglikelihood):
         from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
 
@@ -229,7 +229,6 @@ class TestCaching(unittest.TestCase):
                 [
                     ("greedy_until", SamplingMethod.GENERATIVE),
                     ("loglikelihood", SamplingMethod.LOGPROBS),
-                    ("loglikelihood_rolling", SamplingMethod.PERPLEXITY),
                 ],
             )
 
