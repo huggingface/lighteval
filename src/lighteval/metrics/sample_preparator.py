@@ -81,6 +81,17 @@ class GenerativePreparator(Preparator):
         predictions = model_response.final_text
         return GenerativeCorpusMetricInput(golds=golds, preds=predictions)
 
+    def __str__(self):
+        attrs = vars(self)
+        attr_strs = []
+        for k, v in attrs.items():
+            if callable(v):
+                val_str = v.__name__
+            else:
+                val_str = str(v)
+            attr_strs.append(f"{k}={val_str}")
+        return f"{self.__class__.__name__}({', '.join(attr_strs)})"
+
 
 class LoglikelihoodPreparator(Preparator):
     def __init__(self, is_single_token: bool = False):

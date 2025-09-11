@@ -15,7 +15,7 @@ Here's a basic example:
 ```python
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_output import ModelResponse
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache, cached
 
 class MyCustomModel(LightevalModel):
@@ -26,18 +26,18 @@ class MyCustomModel(LightevalModel):
         # Enable caching (recommended)
         self._cache = SampleCache(config)
 
-    @cached("predictions")  # Enable caching for better performance
-    def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
+    @cached(SamplingMethod.GENERATIVE)
+    def greedy_until(self, docs: List[Doc]) -> List[ModelResponse]:
         # Implement generation logic
         pass
 
-    @cached("predictions")  # Enable caching for better performance
-    def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
+    @cached(SamplingMethod.LOGPROBS)
+    def loglikelihood(self, docs: List[Doc]) -> List[ModelResponse]:
         # Implement loglikelihood computation
         pass
 
-    @cached("predictions")  # Enable caching for better performance
-    def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
+    @cached(SamplingMethod.PERPLEXITY)
+    def loglikelihood_rolling(self, docs: List[Doc]) -> List[ModelResponse]:
         # Implement rolling loglikelihood computation
         pass
 ```
@@ -179,13 +179,12 @@ def __init__(self, config):
     self._cache = SampleCache(config)
 ```
 
-### Step 3: Add Cache Decorators
-Add cache decorators to your prediction methods:
-```python
-@cached("predictions")
-def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
-    # Your implementation...
-```
+3. Add cache decorators to your prediction methods:
+   ```python
+   @cached(SamplingMethod.GENERATIVE)
+   def greedy_until(self, docs: List[Doc]) -> List[ModelResponse]:
+       # Your implementation...
+   ```
 
 For detailed information about the caching system, see the [Caching Documentation](caching).
 
