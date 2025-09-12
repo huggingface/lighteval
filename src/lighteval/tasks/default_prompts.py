@@ -1862,6 +1862,27 @@ def mmlu_helm(line, task_name: str = None):
     )
 
 
+def mmlu_redux_2(line, topic, task_name: str = None):
+    """
+    Ref: https://arxiv.org/abs/2406.04127
+    """
+    query = f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n"
+    query += line["question"] + "\n"
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, line["choices"])])
+    query += "Answer: "
+
+    # Handle answer format - MMLU-Redux-2 uses integer indices directly
+    gold_ix = line["answer"] if isinstance(line["answer"], int) else int(line["answer"])
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=LETTER_INDICES[: len(line["choices"])],
+        gold_index=gold_ix,
+        instruction=f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n",
+    )
+
+
 def mmlu_qa_abstract_algebra(line, task_name: str = None):
     return mmlu_qa(line, "abstract_algebra", task_name)
 
