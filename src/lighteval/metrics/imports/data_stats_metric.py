@@ -32,10 +32,9 @@ from typing import Literal
 from lighteval.metrics.imports.data_stats_utils import Fragments
 from lighteval.utils.imports import NO_SPACY_ERROR_MSG, is_spacy_available
 
-
 logger = logging.getLogger(__name__)
 
-language_to_spacy_model_map = {
+LANGUAGE_TO_SPACY_MODEL_MAP = {
     "en": "en_core_web_sm",
     "de": "de_core_news_sm",
     "fr": "fr_core_news_sm",
@@ -97,11 +96,11 @@ class DataStatsMetric(Metric):
         self.language = language
         self.nlp = None
 
-        spacy_model = language_to_spacy_model_map.get(self.language, "en_core_web_sm")
+        spacy_model = LANGUAGE_TO_SPACY_MODEL_MAP.get(self.language, "en_core_web_sm")
         try:
             self.nlp = spacy.load(spacy_model)
         except OSError:
-            logger.info("Downloading the spacy %s model\n(don't worry, this will only happen once)", spacy_model)
+            logger.info(f"Downloading the spacy {spacy_model} model\n(don't worry, this will only happen once)")
             from spacy.cli import download
 
             download(spacy_model)
