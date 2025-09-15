@@ -27,17 +27,17 @@
 
 ### Unlock the Power of LLM Evaluation with Lighteval 🚀
 
-**Lighteval** is your all-in-one toolkit for evaluating LLMs across multiple
+**Lighteval** is your *all-in-one toolkit* for evaluating LLMs across multiple
 backends—whether your model is being **served somewhere** or **already loaded in memory**.
-Dive deep into your model’s performance by saving and exploring detailed,
-sample-by-sample results to debug and see how your models stack-up.
+Dive deep into your model's performance by saving and exploring *detailed,
+sample-by-sample results* to debug and see how your models stack-up.
 
-Customization at your fingertips: letting you either browse all our existing tasks and [metrics](https://huggingface.co/docs/lighteval/metric-list) or effortlessly create your own [custom task](https://huggingface.co/docs/lighteval/adding-a-custom-task) and [custom metric](https://huggingface.co/docs/lighteval/adding-a-new-metric), tailored to your needs.
+*Customization at your fingertips*: letting you either browse all our existing tasks and [metrics](https://huggingface.co/docs/lighteval/metric-list) or effortlessly create your own [custom task](https://huggingface.co/docs/lighteval/adding-a-custom-task) and [custom metric](https://huggingface.co/docs/lighteval/adding-a-new-metric), tailored to your needs.
 
 
 ## Available Tasks
 
-Lighteval supports **7,000+ evaluation tasks** across multiple domains and languages. Here's an overview of some popular benchmarks:
+Lighteval supports **7,000+ evaluation tasks** across multiple domains and languages. Here's an overview of some *popular benchmarks*:
 
 
 ### 📚 **Knowledge**
@@ -80,15 +80,15 @@ Lighteval supports **7,000+ evaluation tasks** across multiple domains and langu
 
 ## ⚡️ Installation
 
-Note that lighteval is currently completely untested on Windows, and we don't support it yet. (Should be fully functional on Mac/Linux)
+> **Note**: lighteval is currently *completely untested on Windows*, and we don't support it yet. (*Should be fully functional on Mac/Linux*)
 
 ```bash
 pip install lighteval
 ```
 
-Lighteval allows for many extras when installing, see [here](https://huggingface.co/docs/lighteval/installation) for a complete list.
+Lighteval allows for *many extras* when installing, see [here](https://huggingface.co/docs/lighteval/installation) for a **complete list**.
 
-If you want to push results to the Hugging Face Hub, add your access token as
+If you want to push results to the **Hugging Face Hub**, add your access token as
 an environment variable:
 
 ```shell
@@ -115,7 +115,7 @@ Lighteval offers the following entry points for model evaluation:
 Did not find what you need ? You can always make your custom model API by following [this guide](https://huggingface.co/docs/lighteval/main/en/evaluating-a-custom-model)
 - `lighteval custom`: Evaluate custom models (can be anything)
 
-Here’s a quick command to evaluate using the Accelerate backend:
+Here's a **quick command** to evaluate using the *Accelerate backend*:
 
 ```shell
 lighteval accelerate \
@@ -123,7 +123,7 @@ lighteval accelerate \
     "leaderboard|truthfulqa:mc|0"
 ```
 
-Or use the **python's API** to run a model already loaded in memory !
+Or use the **Python API** to run a model *already loaded in memory*!
 
 ```python
 from transformers import AutoModelForCausalLM
@@ -162,26 +162,26 @@ results = pipeline.get_results()
 
 ## 🙏 Acknowledgements
 
-Lighteval started as an extension of the fantastic [Eleuther AI
+Lighteval started as an extension of the *fantastic* [Eleuther AI
 Harness](https://github.com/EleutherAI/lm-evaluation-harness) (which powers the
 [Open LLM
 Leaderboard](https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard))
-and draws inspiration from the amazing
+and draws inspiration from the *amazing*
 [HELM](https://crfm.stanford.edu/helm/latest/) framework.
 
-While evolving Lighteval into its own standalone tool, we are grateful to the
-Harness and HELM teams for their pioneering work on LLM evaluations.
+While evolving Lighteval into its own *standalone tool*, we are grateful to the
+Harness and HELM teams for their **pioneering work** on LLM evaluations.
 
 ## 🌟 Contributions Welcome 💙💚💛💜🧡
 
-Got ideas? Found a bug? Want to add a
+**Got ideas?** Found a bug? Want to add a
 [task](https://huggingface.co/docs/lighteval/adding-a-custom-task) or
 [metric](https://huggingface.co/docs/lighteval/adding-a-new-metric)?
-Contributions are warmly welcomed!
+Contributions are *warmly welcomed*!
 
-If you're adding a new feature, please open an issue first.
+If you're adding a **new feature**, please *open an issue first*.
 
-If you open a PR, don't forget to run the styling!
+If you open a PR, don't forget to **run the styling**!
 
 ```bash
 pip install -e .[dev]
