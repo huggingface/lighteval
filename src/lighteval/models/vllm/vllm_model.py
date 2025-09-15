@@ -36,7 +36,7 @@ from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.models.utils import _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import is_vllm_available
 
@@ -259,6 +259,7 @@ class VLLMModel(LightevalModel):
             "seed": int(config.seed),
             "max_num_seqs": int(config.max_num_seqs),
             "max_num_batched_tokens": int(config.max_num_batched_tokens),
+            "enforce_eager": True,
         }
 
         if config.quantization is not None:
@@ -300,7 +301,7 @@ class VLLMModel(LightevalModel):
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
 
-    @cached("predictions")
+    @cached(SamplingMethod.GENERATIVE)
     def greedy_until(
         self,
         docs: list[Doc],
@@ -457,7 +458,7 @@ class VLLMModel(LightevalModel):
 
         return outputs
 
-    @cached("predictions")
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         return self._loglikelihood_tokens(docs)
 
@@ -485,7 +486,8 @@ class VLLMModel(LightevalModel):
                     tokenized_contexts_batch.append(tokenized_context)
 
             # Left truncate the inputs to the maximum length
-            inputs = [input[-self.max_length :] for input in inputs]
+            if self.max_length:  # can be None if the model is initialized with ray
+                inputs = [input[-self.max_length :] for input in inputs]
             outputs = self._generate(inputs, generate=False)
 
             flat_index = 0
@@ -525,7 +527,7 @@ class VLLMModel(LightevalModel):
 
         return dataset.get_original_order(res)
 
-    @cached("predictions")
+    @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         raise NotImplementedError()
 
@@ -620,7 +622,7 @@ class AsyncVLLMModel(VLLMModel):
         results = await asyncio.gather(*processed_requests)
         return results
 
-    @cached("predictions")
+    @cached(SamplingMethod.GENERATIVE)
     async def greedy_until(
         self,
         docs: list[Doc],
@@ -654,7 +656,7 @@ class AsyncVLLMModel(VLLMModel):
 
         return results
 
-    @cached("predictions")
+    @cached(SamplingMethod.LOGPROBS)
     async def loglikelihood(
         self,
         docs: list[Doc],
