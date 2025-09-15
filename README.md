@@ -28,29 +28,55 @@
 ### Unlock the Power of LLM Evaluation with Lighteval 🚀
 
 **Lighteval** is your all-in-one toolkit for evaluating LLMs across multiple
-backends—whether it's
-[transformers](https://github.com/huggingface/transformers),
-[tgi](https://github.com/huggingface/text-generation-inference),
-[vllm](https://github.com/vllm-project/vllm), or
-[nanotron](https://github.com/huggingface/nanotron)—with
-ease. Dive deep into your model’s performance by saving and exploring detailed,
+backends—whether your model is being **served somewhere** or **already loaded in memory**.
+Dive deep into your model’s performance by saving and exploring detailed,
 sample-by-sample results to debug and see how your models stack-up.
 
-Customization at your fingertips: letting you either browse all our existing [tasks](https://huggingface.co/docs/lighteval/available-tasks) and [metrics](https://huggingface.co/docs/lighteval/metric-list) or effortlessly create your own [custom task](https://huggingface.co/docs/lighteval/adding-a-custom-task) and [custom metric](https://huggingface.co/docs/lighteval/adding-a-new-metric), tailored to your needs.
-
-Seamlessly experiment, benchmark, and store your results on the Hugging Face
-Hub, S3, or locally.
+Customization at your fingertips: letting you either browse all our existing tasks and [metrics](https://huggingface.co/docs/lighteval/metric-list) or effortlessly create your own [custom task](https://huggingface.co/docs/lighteval/adding-a-custom-task) and [custom metric](https://huggingface.co/docs/lighteval/adding-a-new-metric), tailored to your needs.
 
 
-## 🔑 Key Features
+## Available Tasks
 
-- **Speed**: [Use vllm as backend for fast evals](https://huggingface.co/docs/lighteval/use-vllm-as-backend).
-- **Completeness**: [Use the accelerate backend to launch any models hosted on Hugging Face](https://huggingface.co/docs/lighteval/quicktour#accelerate).
-- **Seamless Storage**: [Save results in S3 or Hugging Face Datasets](https://huggingface.co/docs/lighteval/saving-and-reading-results).
-- **Python API**: [Simple integration with the Python API](https://huggingface.co/docs/lighteval/using-the-python-api).
-- **Custom Tasks**: [Easily add custom tasks](https://huggingface.co/docs/lighteval/adding-a-custom-task).
-- **Versatility**: Tons of [metrics](https://huggingface.co/docs/lighteval/metric-list) and [tasks](https://huggingface.co/docs/lighteval/available-tasks) ready to go.
+Lighteval supports **7,000+ evaluation tasks** across multiple domains and languages. Here's an overview of some popular benchmarks:
 
+### 🧠 **Core Language Understanding**
+- **NLU**: GLUE, SuperGLUE, TriviaQA, Natural Questions
+- **Commonsense**: HellaSwag, WinoGrande, ProtoQA
+- **Natural Language Inference**: XNLI
+- **Reading Comprehension**: SQuAD, XQuAD, MLQA, Belebele
+
+### 🌍 **Multilingual Evaluation**
+- **Cross-lingual**: XTREME, Flores200 (200 languages), XCOPA, XQuAD
+- **Language-specific**: 
+  - **Arabic**: ArabicMMLU
+  - **Filipino**: FilBench
+  - **French**: IFEval-fr, GPQA-fr, BAC-fr
+  - **German**: German RAG Eval
+  - **Serbian**: Serbian LLM Benchmark, OZ Eval
+  - **Turkic**: TUMLU (9 Turkic languages)
+  - **Chinese**: CMMLU, CEval, AGIEval
+  - **Russian**: RUMMLU, Russian SQuAD
+  - **And many more...**
+
+### 📚 **Knowledge & Facts**
+- **General Knowledge**: MMLU, MMLU-Pro, MMMU, BIG-Bench
+- **Question Answering**: TriviaQA, Natural Questions, SimpleQA, Humanities Last Exam (HLE)
+- **Specialized**: GPQA, AGIEval
+
+### 🧮 **Reasoning**
+- **Math Problems**: GSM8K, GSMPlus, MATH, MATH500
+- **Competition Math**: AIME24, AIME25
+- **Multilingual Math**: MGSM (Grade School Math in 10+ languages)
+- **General Reasoning**: MUSR, DROP (discrete reasoning)
+
+### 💻 **Code Generation**
+- **Coding Benchmarks**: LCB (LiveCodeBench)
+
+### 🎯 **Specialized Tasks**
+- **Instruction Following**: IFEval, IFEval-fr
+- **Long Context**: RULER
+- **Dialogue**: MT-Bench
+- **Holistic Evaluation**: HELM, BIG-Bench
 
 ## ⚡️ Installation
 
@@ -73,17 +99,19 @@ huggingface-cli login
 
 Lighteval offers the following entry points for model evaluation:
 
-- `lighteval accelerate` : evaluate models on CPU or one or more GPUs using [🤗
+- `lighteval accelerate`: Evaluate models on CPU or one or more GPUs using [🤗
   Accelerate](https://github.com/huggingface/accelerate)
-- `lighteval nanotron`: evaluate models in distributed settings using [⚡️
+- `lighteval nanotron`: Evaluate models in distributed settings using [⚡️
   Nanotron](https://github.com/huggingface/nanotron)
-- `lighteval vllm`: evaluate models on one or more GPUs using [🚀
+- `lighteval vllm`: Evaluate models on one or more GPUs using [🚀
   VLLM](https://github.com/vllm-project/vllm)
-- `lighteval endpoint`
-    - `inference-endpoint`: evaluate models on one or more GPUs using [🔗
-  Inference Endpoint](https://huggingface.co/inference-endpoints/dedicated)
-    - `tgi`: evaluate models on one or more GPUs using [🔗 Text Generation Inference](https://huggingface.co/docs/text-generation-inference/en/index)
-    - `openai`: evaluate models on one or more GPUs using [🔗 OpenAI API](https://platform.openai.com/)
+- `lighteval custom`: Evaluate custom models (can be anything)
+- `lighteval sglang`: Evaluate models using [SGLang](https://github.com/sgl-project/sglang) as backend
+- `lighteval endpoint`: Evaluate models using various endpoints as backend
+  - `lighteval endpoint inference-endpoint`: Evaluate models using Hugging Face's [Inference Endpoints API](https://huggingface.co/inference-endpoints/dedicated)
+  - `lighteval endpoint tgi`: Evaluate models using [🔗 Text Generation Inference](https://huggingface.co/docs/text-generation-inference/en/index) running locally
+  - `lighteval endpoint litellm`: Evaluate models on any compatible API using [LiteLLM](https://www.litellm.ai/)
+  - `lighteval endpoint inference-providers`: Evaluate models using [HuggingFace's inference providers](https://huggingface.co/docs/inference-providers/en/index) as backend
 
 Here’s a quick command to evaluate using the Accelerate backend:
 
@@ -91,6 +119,43 @@ Here’s a quick command to evaluate using the Accelerate backend:
 lighteval accelerate \
     "model_name=gpt2" \
     "leaderboard|truthfulqa:mc|0"
+```
+
+Or use the **python's API** to run a model already loaded in memory !
+
+```python
+from transformers import AutoModelForCausalLM
+
+from lighteval.logging.evaluation_tracker import EvaluationTracker
+from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
+from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
+
+
+MODEL_NAME = "meta-llama/Meta-Llama-3-8B-Instruct"
+BENCHMARKS = "lighteval|gsm8k|0"
+
+evaluation_tracker = EvaluationTracker(output_dir="./results")
+pipeline_params = PipelineParameters(
+    launcher_type=ParallelismManager.NONE,
+    max_samples=2
+)
+
+model = AutoModelForCausalLM.from_pretrained(
+  MODEL_NAME, device_map="auto"
+)
+config = TransformersModelConfig(model_name=MODEL_NAME, batch_size=1)
+model = TransformersModel.from_model(model, config)
+
+pipeline = Pipeline(
+    model=model,
+    pipeline_parameters=pipeline_params,
+    evaluation_tracker=evaluation_tracker,
+    tasks=BENCHMARKS,
+)
+
+results = pipeline.evaluate()
+pipeline.show_results()
+results = pipeline.get_results()
 ```
 
 ## 🙏 Acknowledgements
@@ -128,7 +193,7 @@ pre-commit run --all-files
   author = {Habib, Nathan and Fourrier, Clémentine and Kydlíček, Hynek and Wolf, Thomas and Tunstall, Lewis},
   title = {LightEval: A lightweight framework for LLM evaluation},
   year = {2023},
-  version = {0.8.0},
+  version = {0.10.0},
   url = {https://github.com/huggingface/lighteval}
 }
 ```
