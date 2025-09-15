@@ -26,7 +26,7 @@ import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Callable, Dict, Literal, Optional
+from typing import Callable, Literal, Optional
 
 from huggingface_hub import AsyncInferenceClient, InferenceTimeoutError
 from pydantic import BaseModel
@@ -36,6 +36,7 @@ from tqdm.asyncio import tqdm_asyncio
 
 from lighteval.utils.imports import is_litellm_available, is_openai_available, is_vllm_available
 from lighteval.utils.utils import as_list
+
 
 logging.getLogger("openai").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.ERROR)
