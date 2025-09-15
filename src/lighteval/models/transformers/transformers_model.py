@@ -52,7 +52,7 @@ from lighteval.models.model_output import (
 )
 from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import (
     is_accelerate_available,
@@ -738,7 +738,7 @@ class TransformersModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
-    @cached("predictions")
+    @cached(SamplingMethod.GENERATIVE)
     def greedy_until(
         self,
         docs: list[Doc],
@@ -867,7 +867,7 @@ class TransformersModel(LightevalModel):
         else:
             return self._generate_padded(**kwargs)
 
-    @cached("predictions")
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(
         self,
         docs: list[Doc],
@@ -883,7 +883,7 @@ class TransformersModel(LightevalModel):
         """
         return self._loglikelihood_tokens(docs)
 
-    @cached("predictions")
+    @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(
         self,
         docs: list[Doc],
