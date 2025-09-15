@@ -37,7 +37,6 @@ from tqdm.asyncio import tqdm_asyncio
 from lighteval.utils.imports import is_litellm_available, is_openai_available, is_vllm_available
 from lighteval.utils.utils import as_list
 
-
 logging.getLogger("openai").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -67,38 +66,19 @@ class LitellmBackendOptions:
 class JudgeLM:
     """A class representing a judge for evaluating answers using either the chosen backend.
 
-    Args:
+    Attributes:
         model (str): The name of the model.
         templates (Callable): A function taking into account the question, options, answer, and gold and returning the judge prompt.
         process_judge_response (Callable): A function for processing the judge's response.
         judge_backend (Literal["litellm", "openai", "transformers", "tgi", "vllm", "inference-providers"]): The backend for the judge.
         url (str | None): The URL for the OpenAI API.
         api_key (str | None): The API key for the OpenAI API (either OpenAI or HF key).
-        max_tokens (int): The maximum number of tokens to generate.
-        response_format (BaseModel | None): The format of the response from the API, used for the OpenAI and TGI backend. If not set,
-            no structured outputs will be generated, just text.
-        hf_provider (Optional[Literal["black-forest-labs", "cerebras", "cohere", "fal-ai", "fireworks-ai",
-            "inference-providers", "hyperbolic", "nebius", "novita", "openai", "replicate", "sambanova", "together"]]):
+        max_tokens (int): The maximum number of tokens to generate. Defaults to 512.
+        response_format (BaseModel | None): The format of the response from the API, used for the OpenAI and TGI backend.
+        hf_provider (Literal["black-forest-labs", "cerebras", "cohere", "fal-ai", "fireworks-ai",
+            "inference-providers", "hyperbolic", "nebius", "novita", "openai", "replicate", "sambanova", "together"] | None):
             The HuggingFace provider when using the inference-providers backend.
-        backend_options (Optional[Dict]): Options for the backend. Currently only supported for litellm.
-
-    Attributes:
-        model (str): The name of the model.
-        template (Callable): A function taking into account the question, options, answer, and gold and returning the judge prompt.
-        API_MAX_RETRY (int): The maximum number of retries for the API.
-        API_RETRY_SLEEP (int): The time to sleep between retries.
-        client (OpenAI | None): The OpenAI client.
-        pipe (LLM | AutoModel | None): The Transformers or vllm pipeline.
-        process_judge_response (Callable): A function for processing the judge's response.
-        url (str | None): The URL for the OpenAI API.
-        api_key (str | None): The API key for the OpenAI API (either OpenAI or HF key).
-        backend (Literal["litellm", "openai", "transformers", "tgi", "vllm", "inference-providers"]): The backend for the judge.
-        max_tokens (int): The maximum number of tokens to generate.
-        response_format (BaseModel | dict): The format of the response from the API, used for the OpenAI and TGI backend.
-        hf_provider (Optional[Literal["black-forest-labs", "cerebras", "cohere", "fal-ai", "fireworks-ai",
-            "inference-providers", "hyperbolic", "nebius", "novita", "openai", "replicate", "sambanova", "together"]]):
-            The HuggingFace provider when using the inference-providers backend.
-        backend_options (Union[LitellmBackendOptions, Dict]): Options for the backend. Currently only supported for litellm.
+        backend_options (dict | None): Options for the backend. Currently only supported for litellm.
 
     Methods:
         evaluate_answer: Evaluates an answer using the OpenAI API or Transformers library.
@@ -135,7 +115,7 @@ class JudgeLM:
                 "together",
             ]
         ] = None,
-        backend_options: Optional[Dict] = None,
+        backend_options: dict | None = None,
     ):
         self.model = model
         self.template = templates
@@ -155,7 +135,7 @@ class JudgeLM:
 
         self.response_format = response_format if not None else DEFAULT_FORMAT
 
-        self.backend_options = backend_options if backend_options else {}
+        self.backend_options = backend_options or {}
 
         # Override backend options dictionary with the corresponding dataclass to ensure all specified options are valid
         if judge_backend == "litellm":
