@@ -82,60 +82,17 @@ class MetricTestSuite(BaseModel):
     description: str | None = None
 
 
+SKIPPED_METRICS = [
+    "faithfulness",  # Need GPU to run
+    "bert_score",  # Issue with the scoring function, int too big to convert
+    "simpleqa_judge",  # Need to setup for compute costs
+]
+
+
 class AutomatedMetricTester:
     """Automated testing framework for LightEval metrics."""
 
-    # Mapping of metric names to Metrics enum values
-    METRIC_CLASSES = {
-        # Map metric names to their corresponding Metrics enum values
-        "exact_match": Metrics.exact_match,
-        "f1_score": Metrics.f1_score,
-        "loglikelihood_acc": Metrics.loglikelihood_acc,
-        "recall_at_k": Metrics.recall_at_k,
-        "mrr": Metrics.mrr,
-        "rouge1": Metrics.rouge1,
-        "rouge2": Metrics.rouge2,
-        "rougeL": Metrics.rougeL,
-        "rougeLsum": Metrics.rougeLsum,
-        "rouge_t5": Metrics.rouge_t5,
-        "extractiveness": Metrics.extractiveness,
-        "bleurt": Metrics.bleurt,
-        "copyright": Metrics.copyright,
-        "drop": Metrics.drop,
-        "avg_at_k": Metrics.avg_at_k,
-        "avg_at_k_math": Metrics.avg_at_k_math,
-        "g_pass_at_k": Metrics.g_pass_at_k,
-        "g_pass_at_k_math": Metrics.g_pass_at_k_math,
-        "g_pass_at_k_latex": Metrics.g_pass_at_k_latex,
-        "maj_at_k": Metrics.maj_at_k,
-        "pass_at_k": Metrics.pass_at_k,
-        "pass_at_k_math": Metrics.pass_at_k_math,
-        "pass_at_k_letters": Metrics.pass_at_k_letters,
-        "gpqa_instruct_metric": Metrics.gpqa_instruct_metric,
-        "gpqa_instruct_pass_at_k": Metrics.gpqa_instruct_pass_at_k,
-        "expr_gold_metric": Metrics.expr_gold_metric,
-        "acc_golds_likelihood": Metrics.acc_golds_likelihood,
-        "truthfulqa_mc_metrics": Metrics.truthfulqa_mc_metrics,
-        # "faithfulness": Metrics.faithfulness,  # need GPU to run
-        # "bert_score": Metrics.bert_score, issue with the scoring function, int too big to convert
-        # "simpleqa_judge": Metrics.simpleqa_judge, # Need to setup for compute costs
-        "prediction_perplexity": Metrics.prediction_perplexity,
-        "bleu": Metrics.bleu,
-        "bleu_1": Metrics.bleu_1,
-        "bleu_4": Metrics.bleu_4,
-        "bits_per_byte": Metrics.bits_per_byte,
-        "byte_perplexity": Metrics.byte_perplexity,
-        "target_perplexity": Metrics.target_perplexity,
-        "chrf": Metrics.chrf,
-        "chrf_plus": Metrics.chrf_plus,
-        "loglikelihood_f1": Metrics.loglikelihood_f1,
-        "multi_f1_numeric": Metrics.multi_f1_numeric,
-        "ter": Metrics.ter,
-        "word_perplexity": Metrics.word_perplexity,
-        "f1_score_macro": Metrics.f1_score_macro,
-        "f1_score_micro": Metrics.f1_score_micro,
-        "mcc": Metrics.mcc,
-    }
+    METRIC_CLASSES = [metric.value for metric in Metrics if metric.value.metric_name not in SKIPPED_METRICS]
 
     def __init__(self):
         self.test_results = []
