@@ -66,6 +66,17 @@ class SampleLevelComputation(ABC):
     def compute(self, model_response: ModelResponse, doc: Doc, **kwargs):
         raise NotImplementedError
 
+    def __str__(self):
+        attrs = vars(self)
+        attr_strs = []
+        for k, v in attrs.items():
+            if callable(v):
+                val_str = v.__name__
+            else:
+                val_str = str(v)
+            attr_strs.append(f"{k}={val_str}")
+        return f"{self.__class__.__name__}({', '.join(attr_strs)})"
+
 
 class ExactMatches(SampleLevelComputation):
     def __init__(
@@ -1109,10 +1120,11 @@ class SamplingMetric:
         self.strip_strings = strip_strings
 
         if callable(sample_scoring_function):
-            self.score_sample = sample_scoring_function
+            self.compute_score = sample_scoring_function
             self.type_exact_match = None
         elif isinstance(sample_scoring_function, SampleLevelComputation):
             self.score_sample = sample_scoring_function.compute
+            self.type_exact_match = None
         else:
             if isinstance(sample_scoring_function, str):
                 if sample_scoring_function not in ["prefix", "suffix", "full"]:
@@ -1199,7 +1211,7 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
             k (int): The number of top choices to consider.
             **kwargs: Additional keyword arguments.
         """
-        super().__init__(kwargs)
+        super().__init__(**kwargs)
 
         self.k = k
         self.attribute_must_be_set = ["k"]
@@ -1280,7 +1292,7 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
         elif len(predictions) < self.n:
             logger.warning(f"Number of predictions is less than {self.n} for pass@k.")
 
-        processed_choices = [self.preprocess(text=g) for g in doc.choices]
+        processed_choices = [self.preprocess(g) for g in doc.choices]
         new_doc = Doc(
             choices=processed_choices,
             query=doc.query,
@@ -1289,7 +1301,7 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
 
         all_scores = []
         for pred in predictions[: self.n]:
-            cur_pred = self.preprocess(text=pred)
+            cur_pred = self.preprocess(pred)
             new_model_response = ModelResponse(
                 text=[cur_pred],
             )

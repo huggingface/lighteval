@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import inspect
 import logging
 import random
 from dataclasses import asdict, dataclass, field
@@ -154,20 +153,28 @@ class LightevalTaskConfig:
         self.stop_sequence = self.stop_sequence if self.stop_sequence is not None else ()
         self.full_name = f"{self.name}|{self.num_fewshots}"  # todo clefourrier: this is likely incorrect
 
-    def print(self):
+    def __str__(self, lite: bool = False):
         md_writer = MarkdownTableWriter()
         md_writer.headers = ["Key", "Value"]
+
+        # These keys change through time
+        to_ignore = ["original_num_docs", "effective_num_docs"]
 
         values = []
 
         for k, v in asdict(self).items():
-            if k == "metric":
+            if lite and k in to_ignore:
+                continue
+            if k == "metrics":
                 for ix, metrics in enumerate(v):
                     for metric_k, metric_v in metrics.items():
-                        if inspect.ismethod(metric_v):
-                            values.append([f"{k} {ix}: {metric_k}", metric_v.__qualname__])
+                        if isinstance(metric_v, Callable):
+                            repr_v = metric_v.__name__
+                        elif isinstance(metric_v, Metric.get_allowed_types_for_metrics()):
+                            repr_v = str(metric_v)
                         else:
-                            values.append([f"{k} {ix}: {metric_k}", repr(metric_v)])
+                            repr_v = repr(metric_v)
+                        values.append([f"{k} {ix}: {metric_k}", repr_v])
 
             else:
                 if isinstance(v, Callable):
@@ -177,7 +184,10 @@ class LightevalTaskConfig:
 
         md_writer.value_matrix = values
 
-        print(md_writer.dumps())
+        return md_writer.dumps()
+
+    def print(self, lite: bool = False):
+        print(str(self, lite))
 
 
 class LightevalTask:
