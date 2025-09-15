@@ -39,11 +39,24 @@ Customization at your fingertips: letting you either browse all our existing tas
 
 Lighteval supports **7,000+ evaluation tasks** across multiple domains and languages. Here's an overview of some popular benchmarks:
 
-### 🧠 **Core Language Understanding**
-- **NLU**: GLUE, SuperGLUE, TriviaQA, Natural Questions
-- **Commonsense**: HellaSwag, WinoGrande, ProtoQA
-- **Natural Language Inference**: XNLI
-- **Reading Comprehension**: SQuAD, XQuAD, MLQA, Belebele
+
+### 📚 **Knowledge**
+- **General Knowledge**: MMLU, MMLU-Pro, MMMU, BIG-Bench
+- **Question Answering**: TriviaQA, Natural Questions, SimpleQA, Humanity's Last Exam (HLE)
+- **Specialized**: GPQA, AGIEval
+
+### 🧮 **Math, Code and Reasoning**
+- **Math Problems**: GSM8K, GSM-Plus, MATH, MATH500
+- **Competition Math**: AIME24, AIME25
+- **Multilingual Math**: MGSM (Grade School Math in 10+ languages)
+- **Coding Benchmarks**: LCB (LiveCodeBench)
+
+### 🎯 **Chat Model Evaluation**
+- **Instruction Following**: IFEval, IFEval-fr
+- **Reasoning**: MUSR, DROP (discrete reasoning)
+- **Long Context**: RULER
+- **Dialogue**: MT-Bench
+- **Holistic Evaluation**: HELM, BIG-Bench
 
 ### 🌍 **Multilingual Evaluation**
 - **Cross-lingual**: XTREME, Flores200 (200 languages), XCOPA, XQuAD
@@ -58,25 +71,12 @@ Lighteval supports **7,000+ evaluation tasks** across multiple domains and langu
   - **Russian**: RUMMLU, Russian SQuAD
   - **And many more...**
 
-### 📚 **Knowledge & Facts**
-- **General Knowledge**: MMLU, MMLU-Pro, MMMU, BIG-Bench
-- **Question Answering**: TriviaQA, Natural Questions, SimpleQA, Humanities Last Exam (HLE)
-- **Specialized**: GPQA, AGIEval
+### 🧠 **Core Language Understanding**
+- **NLU**: GLUE, SuperGLUE, TriviaQA, Natural Questions
+- **Commonsense**: HellaSwag, WinoGrande, ProtoQA
+- **Natural Language Inference**: XNLI
+- **Reading Comprehension**: SQuAD, XQuAD, MLQA, Belebele
 
-### 🧮 **Reasoning**
-- **Math Problems**: GSM8K, GSMPlus, MATH, MATH500
-- **Competition Math**: AIME24, AIME25
-- **Multilingual Math**: MGSM (Grade School Math in 10+ languages)
-- **General Reasoning**: MUSR, DROP (discrete reasoning)
-
-### 💻 **Code Generation**
-- **Coding Benchmarks**: LCB (LiveCodeBench)
-
-### 🎯 **Specialized Tasks**
-- **Instruction Following**: IFEval, IFEval-fr
-- **Long Context**: RULER
-- **Dialogue**: MT-Bench
-- **Holistic Evaluation**: HELM, BIG-Bench
 
 ## ⚡️ Installation
 
@@ -105,13 +105,15 @@ Lighteval offers the following entry points for model evaluation:
   Nanotron](https://github.com/huggingface/nanotron)
 - `lighteval vllm`: Evaluate models on one or more GPUs using [🚀
   VLLM](https://github.com/vllm-project/vllm)
-- `lighteval custom`: Evaluate custom models (can be anything)
 - `lighteval sglang`: Evaluate models using [SGLang](https://github.com/sgl-project/sglang) as backend
 - `lighteval endpoint`: Evaluate models using various endpoints as backend
   - `lighteval endpoint inference-endpoint`: Evaluate models using Hugging Face's [Inference Endpoints API](https://huggingface.co/inference-endpoints/dedicated)
   - `lighteval endpoint tgi`: Evaluate models using [🔗 Text Generation Inference](https://huggingface.co/docs/text-generation-inference/en/index) running locally
   - `lighteval endpoint litellm`: Evaluate models on any compatible API using [LiteLLM](https://www.litellm.ai/)
   - `lighteval endpoint inference-providers`: Evaluate models using [HuggingFace's inference providers](https://huggingface.co/docs/inference-providers/en/index) as backend
+
+Did not find what you need ? You can always make your custom model API by following [this guide](https://huggingface.co/docs/lighteval/main/en/evaluating-a-custom-model)
+- `lighteval custom`: Evaluate custom models (can be anything)
 
 Here’s a quick command to evaluate using the Accelerate backend:
 
