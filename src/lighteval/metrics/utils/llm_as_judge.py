@@ -25,7 +25,8 @@ import asyncio
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Callable, Literal, Optional
+from dataclasses import dataclass
+from typing import Callable, Dict, Literal, Optional
 
 from huggingface_hub import AsyncInferenceClient, InferenceTimeoutError
 from pydantic import BaseModel
@@ -45,16 +46,41 @@ logger = logging.getLogger(__name__)
 DEFAULT_FORMAT = {"type": "text"}
 
 
+@dataclass
+class LitellmBackendOptions:
+    """Options for the LiteLLM judge backend with default values.
+
+    Attributes:
+        caching (bool): Whether to enable caching for the API responses. Defaults to True.
+        concurrent_requests (int): The maximum number of concurrent requests to the API. Defaults to 10.
+        increase_max_tokens_for_reasoning (bool): Whether to increase the max tokens for certain reasoning
+            models. Defaults to True.
+    """
+
+    caching: bool = True
+    concurrent_requests: int = 10
+
+    # Increases max_tokens depending on the model used, see implementation below
+    increase_max_tokens_for_reasoning: bool = True
+
+
 class JudgeLM:
-    """A class representing a judge for evaluating answers using either the OpenAI or Transformers library.
+    """A class representing a judge for evaluating answers using either the chosen backend.
 
     Args:
         model (str): The name of the model.
         templates (Callable): A function taking into account the question, options, answer, and gold and returning the judge prompt.
         process_judge_response (Callable): A function for processing the judge's response.
-        judge_backend (Literal["openai", "transformers", "tgi", "vllm"]): The backend for the judge.
+        judge_backend (Literal["litellm", "openai", "transformers", "tgi", "vllm", "inference-providers"]): The backend for the judge.
         url (str | None): The URL for the OpenAI API.
         api_key (str | None): The API key for the OpenAI API (either OpenAI or HF key).
+        max_tokens (int): The maximum number of tokens to generate.
+        response_format (BaseModel | None): The format of the response from the API, used for the OpenAI and TGI backend. If not set,
+            no structured outputs will be generated, just text.
+        hf_provider (Optional[Literal["black-forest-labs", "cerebras", "cohere", "fal-ai", "fireworks-ai",
+            "inference-providers", "hyperbolic", "nebius", "novita", "openai", "replicate", "sambanova", "together"]]):
+            The HuggingFace provider when using the inference-providers backend.
+        backend_options (Optional[Dict]): Options for the backend. Currently only supported for litellm.
 
     Attributes:
         model (str): The name of the model.
@@ -66,7 +92,13 @@ class JudgeLM:
         process_judge_response (Callable): A function for processing the judge's response.
         url (str | None): The URL for the OpenAI API.
         api_key (str | None): The API key for the OpenAI API (either OpenAI or HF key).
-        backend (Literal["openai", "transformers", "tgi", "vllm"]): The backend for the judge
+        backend (Literal["litellm", "openai", "transformers", "tgi", "vllm", "inference-providers"]): The backend for the judge.
+        max_tokens (int): The maximum number of tokens to generate.
+        response_format (BaseModel | dict): The format of the response from the API, used for the OpenAI and TGI backend.
+        hf_provider (Optional[Literal["black-forest-labs", "cerebras", "cohere", "fal-ai", "fireworks-ai",
+            "inference-providers", "hyperbolic", "nebius", "novita", "openai", "replicate", "sambanova", "together"]]):
+            The HuggingFace provider when using the inference-providers backend.
+        backend_options (Union[LitellmBackendOptions, Dict]): Options for the backend. Currently only supported for litellm.
 
     Methods:
         evaluate_answer: Evaluates an answer using the OpenAI API or Transformers library.
@@ -103,6 +135,7 @@ class JudgeLM:
                 "together",
             ]
         ] = None,
+        backend_options: Optional[Dict] = None,
     ):
         self.model = model
         self.template = templates
@@ -121,6 +154,12 @@ class JudgeLM:
         self.max_tokens = max_tokens
 
         self.response_format = response_format if not None else DEFAULT_FORMAT
+
+        self.backend_options = backend_options if backend_options else {}
+
+        # Override backend options dictionary with the corresponding dataclass to ensure all specified options are valid
+        if judge_backend == "litellm":
+            self.backend_options = LitellmBackendOptions(**self.backend_options)
 
         # Validate that hf_provider is specified when using inference-providers backend
         if self.backend == "inference-providers" and self.hf_provider is None:
@@ -286,12 +325,22 @@ class JudgeLM:
     def __call_litellm(self, prompts):
         import litellm
 
+        if self.backend_options.caching:
+            from litellm.caching.caching import Cache, LiteLLMCacheType
+
+            litellm.cache = Cache(type=LiteLLMCacheType.DISK)
+
+        # Automatically drop parameters that are not supported by the currently used inference API
+        litellm.drop_params = True
+
         def __call_api(prompt):
             error_message = "ERROR: Failed to get response from the API."
             for _ in range(self.API_MAX_RETRY):
                 try:
-                    max_new_tokens = 512
-                    if "o1" in self.model or "o3" in self.model or "R1" in self.model:
+                    max_new_tokens = self.max_tokens
+
+                    is_reasoning_model = "o1" in self.model or "o3" in self.model or "R1" in self.model
+                    if is_reasoning_model and self.backend_options.increase_max_tokens_for_reasoning:
                         max_new_tokens = min(max_new_tokens * 10, 32000)
 
                     kwargs = {
@@ -319,7 +368,7 @@ class JudgeLM:
             return error_message
 
         results = []
-        with ThreadPoolExecutor(100) as executor:
+        with ThreadPoolExecutor(self.backend_options.concurrent_requests) as executor:
             for entry in tqdm(executor.map(__call_api, prompts), total=len(prompts)):
                 results.append(entry)
 
