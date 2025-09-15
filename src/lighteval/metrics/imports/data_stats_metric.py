@@ -32,6 +32,7 @@ from typing import Literal
 from lighteval.metrics.imports.data_stats_utils import Fragments
 from lighteval.utils.imports import NO_SPACY_ERROR_MSG, is_spacy_available
 
+
 logger = logging.getLogger(__name__)
 
 LANGUAGE_TO_SPACY_MODEL_MAP = {
