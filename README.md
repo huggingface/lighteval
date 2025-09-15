@@ -21,11 +21,13 @@
 
 ---
 
-**Documentation**: <a href="https://huggingface.co/docs/lighteval/main/en/index" target="_blank">HF's doc</a>
+<p align="center">
+  <a href="https://huggingface.co/docs/lighteval/main/en/index" target="_blank">
+    <img alt="Documentation" src="https://img.shields.io/badge/Documentation-4F4F4F?style=for-the-badge&logo=readthedocs&logoColor=white" />
+  </a>
+</p>
 
 ---
-
-### Unlock the Power of LLM Evaluation with Lighteval 🚀
 
 **Lighteval** is your *all-in-one toolkit* for evaluating LLMs across multiple
 backends—whether your model is being **served somewhere** or **already loaded in memory**.
