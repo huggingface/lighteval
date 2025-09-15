@@ -31,11 +31,11 @@ automatically run them and verify the results.
 import copy
 import json
 import logging
-import math
 from dataclasses import field
 from pathlib import Path
 from typing import Any
 
+import pytest
 from pydantic import BaseModel
 
 from lighteval.metrics.metrics import Metrics
@@ -254,12 +254,8 @@ class AutomatedMetricTester:
     def _compare_scalar_outputs(self, actual: Any, expected: Any, tolerance: float) -> bool:
         """Compare scalar outputs with tolerance."""
         if isinstance(actual, (int, float)) and isinstance(expected, (int, float)):
-            # For small values, use absolute tolerance only to avoid relative tolerance issues
-            # For values >= 1.0, we can use relative tolerance
-            if abs(expected) < 1.0:
-                return math.isclose(actual, expected, abs_tol=tolerance)
-            else:
-                return math.isclose(actual, expected, rel_tol=tolerance, abs_tol=tolerance)
+            # Use pytest.approx for float comparison
+            return actual == pytest.approx(expected, abs=tolerance)
         return actual == expected
 
     def _compare_dict_outputs(self, actual: Any, expected: Any, tolerance: float) -> bool:
