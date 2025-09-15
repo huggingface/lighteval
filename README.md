@@ -45,7 +45,7 @@ Lighteval supports **7,000+ evaluation tasks** across multiple domains and langu
 - **Question Answering**: TriviaQA, Natural Questions, SimpleQA, Humanity's Last Exam (HLE)
 - **Specialized**: GPQA, AGIEval
 
-### 🧮 **Math, Code and Reasoning**
+### 🧮 **Math and Code**
 - **Math Problems**: GSM8K, GSM-Plus, MATH, MATH500
 - **Competition Math**: AIME24, AIME25
 - **Multilingual Math**: MGSM (Grade School Math in 10+ languages)
