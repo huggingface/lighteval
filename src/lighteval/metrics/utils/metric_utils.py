@@ -50,7 +50,6 @@ class Metric:
         elif isinstance(self.sample_level_fn, Preparator):
             sample_level_fn = self.sample_level_fn.prepare
         else:
-            breakpoint()
             raise ValueError(
                 f"Incorrect type for {self.sample_level_fn}, should be a SampleLevelComputation or Preparator"
             )

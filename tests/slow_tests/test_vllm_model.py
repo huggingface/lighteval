@@ -23,12 +23,13 @@
 import json
 import os
 from functools import lru_cache, partial
-from typing import Callable, Tuple
+from typing import Callable
 
 import pytest
 from deepdiff import DeepDiff
 
 from lighteval.main_vllm import vllm  # noqa: E402
+from tests.slow_tests.sample_comparison import enhance_test_with_sample_comparison
 
 
 # Set env var for deterministic run of models
@@ -38,27 +39,28 @@ MODELS_ARGS = [
     {
         "model_name": "examples/model_configs/vllm_model_config.yaml",
         "results_file": "tests/reference_scores/SmolLM2-1.7B-Instruct-results-vllm.json",
-    }
+    },
 ]
 TASKS_PATH = "examples/test_tasks.txt"
 CUSTOM_TASKS_PATH = "examples/custom_tasks_tests.py"
+DETAILS_EXPECTED_DIR = "results/details/HuggingFaceTB/SmolLM2-1.7B-Instruct/2025-09-09T09-09-46.525265"
 
-ModelInput = Tuple[str, Callable[[], dict]]
+ModelInput = tuple[str, Callable[[], dict]]
 
 
 @lru_cache(maxsize=len(MODELS_ARGS))
 def run_model(model_name: str):
     """Runs the full main as a black box, using the input model and tasks, on 10 samples without parallelism"""
-    results = vllm(
+    results, details = vllm(
         model_args=model_name,
         tasks=TASKS_PATH,
         output_dir="",
         dataset_loading_processes=1,
-        save_details=False,
+        save_details=True,  # Enable detailed logging for sample-by-sample comparison
         max_samples=10,
         custom_tasks=CUSTOM_TASKS_PATH,
     )
-    return results
+    return results, details
 
 
 def generate_tests() -> list[ModelInput]:
@@ -83,7 +85,8 @@ def test_vllm_model(tests: list[ModelInput]):
     """Evaluates a model on a full task - is parametrized using pytest_generate_test"""
     model_args, get_predictions = tests
 
-    predictions = get_predictions()["results"]
+    predictions, details = get_predictions()
+    predictions = predictions["results"]
 
     # Load the reference results
     with open(model_args["results_file"], "r") as f:
@@ -97,4 +100,10 @@ def test_vllm_model(tests: list[ModelInput]):
 
     diff = DeepDiff(reference_results, predictions_dict, ignore_numeric_type_changes=True, math_epsilon=0.05)
 
-    assert diff == {}, f"Differences found: {diff}"
+    # Always check for sample-by-sample differences, even if high-level results match
+    enhanced_message = enhance_test_with_sample_comparison(diff, details, DETAILS_EXPECTED_DIR)
+    if enhanced_message:
+        assert False, enhanced_message
+    else:
+        # No differences found at any level, test passes
+        assert True

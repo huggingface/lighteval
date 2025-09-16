@@ -37,6 +37,5 @@ jobs:
       - name: Install the project
         run: uv sync --extra dev
 
-
       - name: Run tests
         run: uv run pytest --disable-pytest-warnings -o log_cli=true -o log_cli_level=INFO --runslow tests/slow_tests/

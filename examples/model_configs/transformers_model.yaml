@@ -13,5 +13,5 @@ model_parameters:
     #num_blocks: 4096
     #block_size: 64
     #max_new_tokens: 256
-    temperature: 0.0
-    top_p: 0.9
+    temperature: 0.9
+    #top_p: 0.9
