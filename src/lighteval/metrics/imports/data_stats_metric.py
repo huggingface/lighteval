@@ -30,7 +30,7 @@ from multiprocessing import Pool
 from typing import Literal
 
 from lighteval.metrics.imports.data_stats_utils import Fragments
-from lighteval.utils.imports import raise_if_package_not_available
+from lighteval.utils.imports import Extras, raise_if_package_not_available, requires
 
 
 logger = logging.getLogger(__name__)
@@ -55,6 +55,7 @@ def find_ngrams(input_list, n):
     return zip(*[input_list[i:] for i in range(n)])
 
 
+@requires(Extras.MULTILINGUAL)
 class DataStatsMetric(Metric):
     def __init__(
         self,

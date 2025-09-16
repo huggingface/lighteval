@@ -53,7 +53,9 @@ def is_multilingual_package_available(language: str):
 def raise_if_package_not_available(package_name: str | Extras, *, language: str = None, object_name: str = None):
     prefix = "You" if object_name is None else f"Through the use of {object_name}, you"
 
-    if package_name == Extras.MULTILINGUAL and not is_multilingual_package_available(language):
+    if package_name == Extras.MULTILINGUAL and (
+        (language is not None) or (not is_multilingual_package_available(language))
+    ):
         raise ImportError(prefix + not_installed_error_message(package_name)[3:])
 
     if not is_package_available(package_name):
@@ -61,20 +63,20 @@ def raise_if_package_not_available(package_name: str | Extras, *, language: str 
 
 
 def not_installed_error_message(package_name: str | Extras) -> str:
-    if package_name == Extras.MULTILINGUAL:
+    if package_name == Extras.MULTILINGUAL.value:
         return "You are trying to run an evaluation requiring multilingual capabilities. Please install the required extra: `pip install lighteval[multilingual]`"
-    elif package_name == Extras.EXTENDED:
+    elif package_name == Extras.EXTENDED.value:
         return "You are trying to run an evaluation requiring additional extensions. Please install the required extra: `pip install lighteval[extended] "
     elif package_name == "text_generation":
-        return "You are trying to start a text generation inference endpoint, but TGI is not present in your local environement. Please install it using pip."
+        return "You are trying to start a text generation inference endpoint, but TGI is not present in your local environment. Please install it using pip."
     elif package_name in ["bitsandbytes", "auto-gptq"]:
-        return f"You are trying to load a model quantized with `{package_name}`, which is not available in your local environement. Please install it using pip."
+        return f"You are trying to load a model quantized with `{package_name}`, which is not available in your local environment. Please install it using pip."
     elif package_name == "peft":
         return "You are trying to use adapter weights models, for which you need `peft`, which is not available in your environment. Please install it using pip."
     elif package_name == "openai":
         return "You are trying to use an Open AI LLM as a judge, for which you need `openai`, which is not available in your environment. Please install it using pip."
 
-    return f"You requested the use of `{package_name}` for this evaluation, but it is not available in your current environement. Please install it using pip."
+    return f"You requested the use of `{package_name}` for this evaluation, but it is not available in your current environment. Please install it using pip."
 
 
 class DummyObject(type):

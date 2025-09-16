@@ -25,8 +25,15 @@ from collections import Counter
 
 import emoji
 import nltk
-import spacy
-import syllapy
+
+from lighteval.utils.imports import is_package_available, requires
+
+
+if is_package_available("syllapy"):
+    import syllapy
+
+if is_package_available("spacy"):
+    import spacy
 
 import lighteval.tasks.extended.ifeval.instructions_utils as instructions_util
 
@@ -61,6 +68,7 @@ _NUM_CONJUNCTIONS = 6
 RESOURCES_DOWNLOADED: bool = False
 
 
+@requires("syllapy", "spacy")
 class Instruction:
     """An instruction template."""
 
