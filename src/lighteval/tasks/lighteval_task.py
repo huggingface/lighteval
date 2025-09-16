@@ -67,6 +67,9 @@ class LightevalTaskConfig:
             apply to dataset items. Defaults to None.
         hf_avail_splits (ListLike[str], optional): Available dataset splits.
             Defaults to ["train", "validation", "test"].
+        trust_remote_code (bool, optional): Whether to trust remote code when
+            loading datasets. Required for datasets with custom loading scripts.
+            Defaults to False.
 
     Evaluation Splits:
         evaluation_splits (ListLike[str], optional): Dataset splits to use for
@@ -141,6 +144,9 @@ class LightevalTaskConfig:
 
     version: int = 0
 
+    # Dataset loading configuration
+    trust_remote_code: bool = False
+
     def __post_init__(self):
         # If we got a Metrics enums instead of a Metric, we convert
         self.metrics = [metric.value if isinstance(metric, Metrics) else metric for metric in self.metrics]
@@ -214,6 +220,7 @@ class LightevalTask:
         self.dataset_config_name = config.hf_subset
         self.dataset_revision = config.hf_revision
         self.dataset_filter = config.hf_filter
+        self.trust_remote_code = config.trust_remote_code
         self.dataset: DatasetDict | None = None  # Delayed download
         self.evaluation_split = as_list(config.evaluation_splits)
         self._docs = None
@@ -442,6 +449,7 @@ class LightevalTask:
             path=task.dataset_path,
             name=task.dataset_config_name,
             revision=task.dataset_revision,
+            trust_remote_code=task.trust_remote_code,
         )
 
         if task.dataset_filter is not None:
