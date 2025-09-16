@@ -664,6 +664,7 @@ class Extractiveness(SampleLevelComputation):
         normalize_input: callable = remove_braces,
         normalize_pred: callable = remove_braces_and_strip,
         input_column: str = "text",
+        language: Literal["en", "de", "fr", "it"] = "en",
     ):
         """Extractiveness metric class.
 
@@ -673,11 +674,13 @@ class Extractiveness(SampleLevelComputation):
             normalize_pred (callable, optional): Function to use to normalize the predicted strings.
                 Defaults to remove_braces_and_strip from lighteval.metrics.normalizations if no normalization is applied.
             input_column (str): Column in the formatted_doc to use for the input. Defaults to "text".
+            language (str): Language ISO code for the input text. Defaults to "en".
         """
         self.stats_metric = None
         self.normalize_input = normalize_input
         self.normalize_pred = normalize_pred
         self.input_column = input_column
+        self.language = language
 
     def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict[str, float]:
         """Compute the extractiveness of the predictions.
@@ -694,7 +697,7 @@ class Extractiveness(SampleLevelComputation):
             dict[str, float]: The extractiveness scores.
         """
         if self.stats_metric is None:
-            self.stats_metric = DataStatsMetric()
+            self.stats_metric = DataStatsMetric(language=self.language)
 
         inp = doc.specific[self.input_column]
         prediction = model_response.final_text[0]
@@ -950,6 +953,7 @@ class JudgeLLM(SampleLevelComputation):
         url: str | None = None,
         hf_provider: str | None = None,
         max_tokens: int | None = None,
+        backend_options: dict | None = None,
     ) -> None:
         logger.debug(f"Initializing JudgeLLM with backend: {judge_backend}, model: {judge_model_name}")
 
@@ -996,6 +1000,7 @@ class JudgeLLM(SampleLevelComputation):
             url=url,
             hf_provider=hf_provider,
             max_tokens=max_tokens,
+            backend_options=backend_options,
         )
 
     def compute(self, responses: list[ModelResponse], docs: list[Doc], **kwargs) -> list:
