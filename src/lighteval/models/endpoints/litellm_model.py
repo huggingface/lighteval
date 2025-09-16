@@ -130,7 +130,7 @@ class LiteLLMModelConfig(ModelConfig):
     api_max_retry: int = 8
     api_retry_sleep: float = 1.0
     api_retry_multiplier: float = 2.0
-    timeout: float = None
+    timeout: float | None = None
 
 
 @requires("litellm")
