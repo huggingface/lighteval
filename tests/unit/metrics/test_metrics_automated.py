@@ -92,7 +92,7 @@ SKIPPED_METRICS = [
 class AutomatedMetricTester:
     """Automated testing framework for LightEval metrics."""
 
-    METRIC_CLASSES = [metric.value for metric in Metrics if metric.value.metric_name not in SKIPPED_METRICS]
+    METRIC_CLASSES = {metric.value.metric_name: metric for metric in Metrics if metric.value.metric_name not in SKIPPED_METRICS}
 
     def __init__(self):
         self.test_results = []
