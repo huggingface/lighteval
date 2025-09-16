@@ -125,6 +125,7 @@ class IFEvalMetrics(SampleLevelComputation):
         }
 
 
+@requires("langdetect")
 def agg_inst_level_acc(items):
     flat_items = [item for sublist in items for item in sublist]
     inst_level_acc = sum(flat_items) / len(flat_items)

@@ -43,7 +43,7 @@ from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConf
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModel, VLMTransformersModelConfig
 from lighteval.models.vllm.vllm_model import AsyncVLLMModel, VLLMModel, VLLMModelConfig
-from lighteval.utils.imports import raise_if_package_not_available, requires
+from lighteval.utils.imports import raise_if_package_not_available
 
 
 logger = logging.getLogger(__name__)
@@ -92,14 +92,12 @@ def load_model(  # noqa: C901
         return load_inference_providers_model(config=config)
 
 
-@requires("tgi")
 def load_model_with_tgi(config: TGIModelConfig):
     logger.info(f"Load model from inference server: {config.inference_server_address}")
     model = ModelClient(config=config)
     return model
 
 
-@requires("litellm")
 def load_litellm_model(config: LiteLLMModelConfig):
     model = LiteLLMClient(config)
     return model
@@ -171,6 +169,5 @@ def load_inference_providers_model(config: InferenceProvidersModelConfig):
     return InferenceProvidersClient(config=config)
 
 
-@requires("sglang")
 def load_sglang_model(config: SGLangModelConfig):
     return SGLangModel(config=config)

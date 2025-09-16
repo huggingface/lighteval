@@ -121,9 +121,6 @@ def test_all_gather(accelerator=None, parallel_context=None):
     Args:
         accelerator (Optional): The accelerator object used for parallelism.
         parallel_context (Optional): The parallel context object used for parallelism.
-
-    Raises:
-        ImportError: If the required accelerator or parallel context is not available.
     """
     if accelerator:
         raise_if_package_not_available("accelerate")

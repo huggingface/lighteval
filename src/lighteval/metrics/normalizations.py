@@ -450,9 +450,9 @@ def get_multilingual_normalizer(lang: Language, lower: bool = True) -> Callable[
     Returns:
         Callable[[str], str]: A function that normalizes text for the specified language
     """
-    tokenizer = get_word_tokenizer(lang)
 
     def _inner_normalizer(text: str) -> str:
+        tokenizer = get_word_tokenizer(lang)
         text = remove_articles(text, lang)
         text = remove_punc(text)
         if lower:
