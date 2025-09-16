@@ -15,14 +15,9 @@ import enum
 import functools
 import importlib
 import inspect
-import operator
-import re
-from enum import Enum
 from functools import lru_cache
-from typing import Callable
 
 from packaging.requirements import Requirement
-from packaging.version import Version
 
 
 class Extras(enum.Enum):
@@ -96,39 +91,6 @@ class DummyObject(type):
 
         for backend in cls._backends:
             raise_if_package_not_available(backend)
-
-
-class VersionComparison(Enum):
-    EQUAL = operator.eq
-    NOT_EQUAL = operator.ne
-    GREATER_THAN = operator.gt
-    LESS_THAN = operator.lt
-    GREATER_THAN_OR_EQUAL = operator.ge
-    LESS_THAN_OR_EQUAL = operator.le
-
-    @staticmethod
-    def from_string(version_string: str) -> Callable[[int | Version, int | Version], bool]:
-        string_to_operator = {
-            "=": VersionComparison.EQUAL.value,
-            "==": VersionComparison.EQUAL.value,
-            "!=": VersionComparison.NOT_EQUAL.value,
-            ">": VersionComparison.GREATER_THAN.value,
-            "<": VersionComparison.LESS_THAN.value,
-            ">=": VersionComparison.GREATER_THAN_OR_EQUAL.value,
-            "<=": VersionComparison.LESS_THAN_OR_EQUAL.value,
-        }
-
-        return string_to_operator[version_string]
-
-
-@lru_cache
-def split_package_version(package_version_str) -> tuple[str, str, str]:
-    pattern = r"([a-zA-Z0-9_-]+)([!<>=~]+)([0-9.]+)"
-    match = re.match(pattern, package_version_str)
-    if match:
-        return (match.group(1), match.group(2), match.group(3))
-    else:
-        raise ValueError(f"Invalid package version string: {package_version_str}")
 
 
 def requires(*backends):
