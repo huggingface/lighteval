@@ -110,7 +110,7 @@ extended_tasks = [
 s3 = ["s3fs"]
 multilingual = [
     "stanza",
-    "spacy[ja,ko,th]",
+    "spacy[ja,ko,th]>=3.8.0",
     "jieba", # for chinese tokenizer
     "pyvi", # for vietnamese tokenizer
 ]
