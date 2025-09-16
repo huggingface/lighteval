@@ -79,8 +79,8 @@
           "text": ["Das Wetter ist schön"]
         }
       ],
-      "expected_output": 85.0,
-      "tolerance": 5.0,
+      "expected_output": 100.0,
+      "tolerance": 0.1,
       "description": "High similarity - minor character differences (CHRF++ ≈ 85.0)"
     },
     {
@@ -119,8 +119,8 @@
           "text": ["ML"]
         }
       ],
-      "expected_output": 45.0,
-      "tolerance": 10.0,
+      "expected_output": 58.82,
+      "tolerance": 0.1,
       "description": "Moderate similarity - significant character omissions (CHRF++ ≈ 45.0)"
     },
     {

@@ -92,7 +92,7 @@ SKIPPED_METRICS = [
 class AutomatedMetricTester:
     """Automated testing framework for LightEval metrics."""
 
-    METRIC_CLASSES = {metric.value.metric_name: metric for metric in Metrics if metric.value.metric_name not in SKIPPED_METRICS}
+    METRIC_CLASSES = {metric.name: metric.value for metric in Metrics if metric.name not in SKIPPED_METRICS}
 
     def __init__(self):
         self.test_results = []
@@ -123,10 +123,10 @@ class AutomatedMetricTester:
 
         # Get the metric from the Metrics enum
         if metric_params != {}:
-            metric = self.METRIC_CLASSES[metric_class].value
+            metric = self.METRIC_CLASSES[metric_class]
             metric_enum_value = copy.deepcopy(metric)(metric_params)
         else:
-            metric_enum_value = self.METRIC_CLASSES[metric_class].value
+            metric_enum_value = self.METRIC_CLASSES[metric_class]
 
         # The Metrics enum values are already instantiated, so we just return them
         # The metric_params are ignored for now since the Metrics enum values are pre-configured

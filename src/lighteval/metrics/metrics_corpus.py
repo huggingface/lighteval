@@ -151,7 +151,15 @@ class CorpusLevelTranslationMetric(CorpusLevelComputation):
                     f"Multiple predictions present, keeping only the first prediction (when computing sacrebleu.{metric.__name__})."
                 )
             preds.append(pred[0])
-        return float(metric.corpus_score(hypotheses=preds, references=golds).score)
+
+        if self.metric_type == "bleu":
+            golds = [[gold[0] for gold in golds]]
+            breakpoint()
+
+        corpus_score = metric.corpus_score(hypotheses=preds, references=golds)
+        score = corpus_score.score
+        results = float(score)
+        return results
 
 
 class CorpusLevelPerplexityMetric(CorpusLevelComputation):
