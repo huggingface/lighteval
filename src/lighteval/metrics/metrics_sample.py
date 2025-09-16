@@ -950,6 +950,7 @@ class JudgeLLM(SampleLevelComputation):
         url: str | None = None,
         hf_provider: str | None = None,
         max_tokens: int | None = None,
+        backend_options: dict | None = None,
     ) -> None:
         logger.debug(f"Initializing JudgeLLM with backend: {judge_backend}, model: {judge_model_name}")
 
@@ -996,6 +997,7 @@ class JudgeLLM(SampleLevelComputation):
             url=url,
             hf_provider=hf_provider,
             max_tokens=max_tokens,
+            backend_options=backend_options,
         )
 
     def compute(self, responses: list[ModelResponse], docs: list[Doc], **kwargs) -> list:
