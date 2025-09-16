@@ -154,7 +154,6 @@ class CorpusLevelTranslationMetric(CorpusLevelComputation):
 
         if self.metric_type == "bleu":
             golds = [[gold[0] for gold in golds]]
-            breakpoint()
 
         corpus_score = metric.corpus_score(hypotheses=preds, references=golds)
         score = corpus_score.score
