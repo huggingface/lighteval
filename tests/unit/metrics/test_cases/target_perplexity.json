@@ -1,0 +1,101 @@
+{
+  "name": "Target Perplexity Test Suite",
+  "description": "Test cases for target_perplexity metric (sample-level perplexity of target text)",
+  "test_cases": [
+    {
+      "name": "Target Perplexity - Low Perplexity",
+      "metric_class": "target_perplexity",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the capital of France?",
+        "choices": ["Paris", "London", "Berlin"],
+        "gold_index": 0,
+        "task_name": "geography"
+      },
+      "model_response": {
+        "logprobs": [-0.1, -0.2, -0.3]
+      },
+      "expected_output": {
+        "ppl": 1.5
+      },
+      "tolerance": 0.01,
+      "description": "Low perplexity - model has high confidence in target text"
+    },
+    {
+      "name": "Target Perplexity - Moderate Perplexity",
+      "metric_class": "target_perplexity",
+      "metric_params": {},
+      "doc": {
+        "query": "What is 2 + 2?",
+        "choices": ["3", "4", "5"],
+        "gold_index": 1,
+        "task_name": "math"
+      },
+      "model_response": {
+        "logprobs": [-0.8, -0.3, -1.2]
+      },
+      "expected_output": {
+        "ppl": 2.0
+      },
+      "tolerance": 0.01,
+      "description": "Moderate perplexity - model has moderate confidence in target text"
+    },
+    {
+      "name": "Target Perplexity - High Perplexity",
+      "metric_class": "target_perplexity",
+      "metric_params": {},
+      "doc": {
+        "query": "What color is the sky?",
+        "choices": ["Red", "Blue", "Green"],
+        "gold_index": 1,
+        "task_name": "science"
+      },
+      "model_response": {
+        "logprobs": [-1.5, -0.1, -1.8]
+      },
+      "expected_output": {
+        "ppl": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "High perplexity - model has low confidence in target text"
+    },
+    {
+      "name": "Target Perplexity - Very High Perplexity",
+      "metric_class": "target_perplexity",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the largest planet?",
+        "choices": ["Mars", "Jupiter", "Saturn"],
+        "gold_index": 1,
+        "task_name": "astronomy"
+      },
+      "model_response": {
+        "logprobs": [-2.1, -0.2, -2.5]
+      },
+      "expected_output": {
+        "ppl": 8.2
+      },
+      "tolerance": 0.8,
+      "description": "Very high perplexity - model has very low confidence in target text"
+    },
+    {
+      "name": "Target Perplexity - Mixed Confidence",
+      "metric_class": "target_perplexity",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the weather like?",
+        "choices": ["Sunny", "Rainy", "Cloudy"],
+        "gold_index": 0,
+        "task_name": "weather"
+      },
+      "model_response": {
+        "logprobs": [-0.2, -1.8, -1.5]
+      },
+      "expected_output": {
+        "ppl": 1.2
+      },
+      "tolerance": 0.2,
+      "description": "Mixed confidence - high confidence in correct choice, low in others"
+    }
+  ]
+}

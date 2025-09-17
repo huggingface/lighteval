@@ -105,7 +105,11 @@ class CorpusLevelF1Score(CorpusLevelComputation):
         # Multi f1
         f1s = []
         for i in range(self.num_classes):
-            f1s.append(sklearn.metrics.f1_score(y_true=golds == i, y_pred=preds == i))
+            f1s.append(
+                sklearn.metrics.f1_score(
+                    y_true=[g == i for g in golds], y_pred=[p == i for p in preds], average=self.average
+                )
+            )
         return float(np.mean(f1s))
 
 
@@ -122,6 +126,9 @@ class CorpusLevelTranslationMetric(CorpusLevelComputation):
 
     def get_metric(self):
         if self.metric_type == "bleu":
+            import nltk
+
+            nltk.download("punkt_tab")
             return sacrebleu.BLEU(trg_lang=self.lang)
         elif self.metric_type == "chrf":
             return sacrebleu.CHRF()
@@ -144,7 +151,14 @@ class CorpusLevelTranslationMetric(CorpusLevelComputation):
                     f"Multiple predictions present, keeping only the first prediction (when computing sacrebleu.{metric.__name__})."
                 )
             preds.append(pred[0])
-        return float(metric.corpus_score(hypotheses=preds, references=golds).score)
+
+        if self.metric_type == "bleu":
+            golds = [[gold[0] for gold in golds]]
+
+        corpus_score = metric.corpus_score(hypotheses=preds, references=golds)
+        score = corpus_score.score
+        results = float(score)
+        return results
 
 
 class CorpusLevelPerplexityMetric(CorpusLevelComputation):
