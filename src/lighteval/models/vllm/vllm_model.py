@@ -85,6 +85,8 @@ class VLLMModelConfig(ModelConfig):
     Attributes:
         model_name (str):
             HuggingFace Hub model ID or path to the model to load.
+        tokenizer (str):
+            HuggingFace Hub model ID or path to the tokenizer to load.
         revision (str):
             Git revision of the model. Defaults to "main".
         dtype (str):
@@ -150,6 +152,7 @@ class VLLMModelConfig(ModelConfig):
     """
 
     model_name: str
+    tokenizer: str | None = None
     revision: str = "main"  # revision of the model
     dtype: str = "bfloat16"
     tensor_parallel_size: PositiveInt = 1  # how many GPUs to use for tensor parallelism
@@ -289,7 +292,9 @@ class VLLMModel(LightevalModel):
 
     def _create_auto_tokenizer(self, config: VLLMModelConfig):
         tokenizer = get_tokenizer(
-            config.model_name,
+            config.tokenizer
+            if config.tokenizer
+            else config.model_name,  # use HF tokenizer for non-HF models, like GGUF model.
             tokenizer_mode="auto",
             trust_remote_code=config.trust_remote_code,
             revision=config.revision,
