@@ -176,6 +176,8 @@ class Pipeline:
         self.model_config = model_config
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
+        # Must occur after model and task init
+        self.model._cache._init_registry(self.registry)
         # Must occur after model init
         self._init_accelerator_seeds()
 
@@ -241,10 +243,10 @@ class Pipeline:
         logger.info("--- LOADING TASKS ---")
 
         # The registry contains all the potential tasks
-        registry = Registry(tasks=tasks, custom_tasks=self.pipeline_parameters.custom_tasks_directory)
+        self.registry = Registry(tasks=tasks, custom_tasks=self.pipeline_parameters.custom_tasks_directory)
 
         # load the tasks from the configs and their datasets
-        self.tasks_dict: dict[str, LightevalTask] = registry.load_tasks()
+        self.tasks_dict: dict[str, LightevalTask] = self.registry.load_tasks()
         LightevalTask.load_datasets(self.tasks_dict, self.pipeline_parameters.dataset_loading_processes)
         self.documents_dict = {
             task.full_name: task.get_docs(self.pipeline_parameters.max_samples) for _, task in self.tasks_dict.items()

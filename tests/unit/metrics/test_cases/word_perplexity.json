@@ -1,0 +1,127 @@
+{
+  "name": "Word Perplexity Test Suite",
+  "description": "Test cases for word_perplexity metric (corpus-level weighted perplexity)",
+  "corpus_level": true,
+  "test_cases": [
+    {
+      "name": "Word Perplexity - Low Perplexity",
+      "metric_class": "word_perplexity",
+      "metric_params": {},
+      "metric_name": "word_perplexity",
+      "docs": [
+        {
+          "query": "The quick brown fox",
+          "choices": ["jumps over the lazy dog"],
+          "gold_index": 0,
+          "task_name": "completion"
+        },
+        {
+          "query": "It is a beautiful day",
+          "choices": ["in the neighborhood"],
+          "gold_index": 0,
+          "task_name": "completion"
+        },
+        {
+          "query": "Hello world",
+          "choices": ["how are you"],
+          "gold_index": 0,
+          "task_name": "completion"
+        }
+      ],
+      "model_responses": [
+        {
+          "logprobs": [-0.1, -0.2, -0.1, -0.3]
+        },
+        {
+          "logprobs": [-0.2, -0.1, -0.2, -0.1]
+        },
+        {
+          "logprobs": [-0.1, -0.1, -0.2]
+        }
+      ],
+      "expected_output": 1.1671273280939887,
+      "tolerance": 0.01,
+      "description": "Low perplexity - model has high confidence in predictions"
+    },
+    {
+      "name": "Word Perplexity - High Perplexity",
+      "metric_class": "word_perplexity",
+      "metric_params": {},
+      "metric_name": "word_perplexity",
+      "docs": [
+        {
+          "query": "The weather is",
+          "choices": ["unpredictable today"],
+          "gold_index": 0,
+          "task_name": "completion"
+        },
+        {
+          "query": "Mathematics is",
+          "choices": ["a complex subject"],
+          "gold_index": 0,
+          "task_name": "completion"
+        },
+        {
+          "query": "Artificial intelligence",
+          "choices": ["continues to evolve"],
+          "gold_index": 0,
+          "task_name": "completion"
+        }
+      ],
+      "model_responses": [
+        {
+          "logprobs": [-2.0, -1.8, -2.2, -1.9]
+        },
+        {
+          "logprobs": [-2.1, -1.7, -2.3, -1.8]
+        },
+        {
+          "logprobs": [-2.2, -1.9, -2.1, -1.6]
+        }
+      ],
+      "expected_output": 29.120097496837726,
+      "tolerance": 0.01,
+      "description": "High perplexity - model has low confidence in predictions"
+    },
+    {
+      "name": "Word Perplexity - Mixed Confidence",
+      "metric_class": "word_perplexity",
+      "metric_params": {},
+      "metric_name": "word_perplexity",
+      "docs": [
+        {
+          "query": "The sun rises",
+          "choices": ["in the east"],
+          "gold_index": 0,
+          "task_name": "completion"
+        },
+        {
+          "query": "Quantum physics",
+          "choices": ["is very complex"],
+          "gold_index": 0,
+          "task_name": "completion"
+        },
+        {
+          "query": "Birds can",
+          "choices": ["fly in the sky"],
+          "gold_index": 0,
+          "task_name": "completion"
+        }
+      ],
+      "model_responses": [
+        {
+          "logprobs": [-0.3, -0.2]
+        },
+        {
+          "logprobs": [-1.8, -1.9, -1.7]
+        },
+        {
+          "logprobs": [-0.4, -0.3, -0.2, -0.3]
+        }
+      ],
+      "expected_output": 2.7573931272726773,
+      "tolerance": 0.01,
+      "description": "Mixed confidence - combination of high and low confidence predictions"
+    }
+  ]
+}

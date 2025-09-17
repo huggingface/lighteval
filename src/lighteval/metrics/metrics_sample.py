@@ -66,6 +66,17 @@ class SampleLevelComputation(ABC):
     def compute(self, model_response: ModelResponse, doc: Doc, **kwargs):
         raise NotImplementedError
 
+    def __str__(self):
+        attrs = vars(self)
+        attr_strs = []
+        for k, v in attrs.items():
+            if callable(v):
+                val_str = v.__name__
+            else:
+                val_str = str(v)
+            attr_strs.append(f"{k}={val_str}")
+        return f"{self.__class__.__name__}({', '.join(attr_strs)})"
+
 
 class ExactMatches(SampleLevelComputation):
     def __init__(
@@ -653,6 +664,7 @@ class Extractiveness(SampleLevelComputation):
         normalize_input: callable = remove_braces,
         normalize_pred: callable = remove_braces_and_strip,
         input_column: str = "text",
+        language: Literal["en", "de", "fr", "it"] = "en",
     ):
         """Extractiveness metric class.
 
@@ -662,11 +674,13 @@ class Extractiveness(SampleLevelComputation):
             normalize_pred (callable, optional): Function to use to normalize the predicted strings.
                 Defaults to remove_braces_and_strip from lighteval.metrics.normalizations if no normalization is applied.
             input_column (str): Column in the formatted_doc to use for the input. Defaults to "text".
+            language (str): Language ISO code for the input text. Defaults to "en".
         """
         self.stats_metric = None
         self.normalize_input = normalize_input
         self.normalize_pred = normalize_pred
         self.input_column = input_column
+        self.language = language
 
     def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict[str, float]:
         """Compute the extractiveness of the predictions.
@@ -683,7 +697,7 @@ class Extractiveness(SampleLevelComputation):
             dict[str, float]: The extractiveness scores.
         """
         if self.stats_metric is None:
-            self.stats_metric = DataStatsMetric()
+            self.stats_metric = DataStatsMetric(language=self.language)
 
         inp = doc.specific[self.input_column]
         prediction = model_response.final_text[0]
@@ -809,6 +823,9 @@ class BLEU(SampleLevelComputation):
         Returns:
             float: Score over the current sample's items.
         """
+        import nltk
+
+        nltk.download("punkt_tab")
         golds = doc.get_golds()
         predictions = model_response.final_text
         return np.mean([self._bleu_score(golds, p) for p in predictions])
@@ -936,6 +953,7 @@ class JudgeLLM(SampleLevelComputation):
         url: str | None = None,
         hf_provider: str | None = None,
         max_tokens: int | None = None,
+        backend_options: dict | None = None,
     ) -> None:
         logger.debug(f"Initializing JudgeLLM with backend: {judge_backend}, model: {judge_model_name}")
 
@@ -982,6 +1000,7 @@ class JudgeLLM(SampleLevelComputation):
             url=url,
             hf_provider=hf_provider,
             max_tokens=max_tokens,
+            backend_options=backend_options,
         )
 
     def compute(self, responses: list[ModelResponse], docs: list[Doc], **kwargs) -> list:
@@ -1106,13 +1125,15 @@ class SamplingMetric:
                 raise ValueError(f"Unknown normalization function: {normalize}")
         else:
             self.normalize = normalize
+
         self.strip_strings = strip_strings
 
         if callable(sample_scoring_function):
-            self.score_sample = sample_scoring_function
+            self.compute_score = sample_scoring_function
             self.type_exact_match = None
         elif isinstance(sample_scoring_function, SampleLevelComputation):
             self.score_sample = sample_scoring_function.compute
+            self.type_exact_match = None
         else:
             if isinstance(sample_scoring_function, str):
                 if sample_scoring_function not in ["prefix", "suffix", "full"]:
@@ -1124,6 +1145,7 @@ class SamplingMetric:
             else:
                 self.type_exact_match = "full"
             self.compute_score = self.default_sample_scoring
+            self.score_sample = self.default_sample_scoring
 
     def preprocess(self, text: str) -> str:
         if not text:
@@ -1177,7 +1199,7 @@ class AvgAtK(SamplingMetric, SampleLevelComputation):
         """
         all_scores = []
         for i in range(self.k):
-            all_scores.append(self.compute_score(doc, model_response[i]))
+            all_scores.append(self.score_sample(doc, model_response[i]))
 
         avg_score = np.mean(all_scores)
         return avg_score
@@ -1199,19 +1221,18 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
             k (int): The number of top choices to consider.
             **kwargs: Additional keyword arguments.
         """
-        super().__init__(kwargs)
+        super().__init__(**kwargs)
 
         self.k = k
         self.attribute_must_be_set = ["k"]
 
-    def compute(self, model_response: ModelResponse, docs: Doc, **kwargs):
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs):
         """Computes the metric over a list of golds and predictions for one single sample.
-        It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones,
-        then compares it to the gold.
+        It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones, then compares it to the gold.
 
         Args:
+            doc (Doc): The document containing gold references.
             model_response (ModelResponse): The model's response containing predictions.
-            docs (Doc): The document containing gold references.
             **kwargs: Additional keyword arguments.
 
         Returns:
@@ -1219,15 +1240,17 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
         """
         if self.k is None:
             raise Exception("You did not set the value of k")
-        golds = docs.get_golds()
+
+        golds = doc.get_golds()
+
         if len(golds) > 1:
             raise Exception("Cannot compute maj@k with several golds")
 
-        processed_choices = [self.preprocess(text=g) for g in docs.get_golds()]
+        processed_choices = [self.preprocess(text=g) for g in doc.get_golds()]
         new_doc = Doc(
             choices=processed_choices,
-            query=docs.query,
-            gold_index=docs.gold_index,
+            query=doc.query,
+            gold_index=list(range(len(processed_choices))),
         )
         all_answers = []
         for pred in model_response.final_text[: self.k]:
@@ -1236,7 +1259,7 @@ class MajAtK(SamplingMetric, SampleLevelComputation):
         new_model_response = ModelResponse(
             text=[majority_prediction],
         )
-        return self.compute_score(new_model_response, new_doc)
+        return self.compute_score(new_doc, new_model_response)
 
     def num_samples(self):
         return self.k
@@ -1280,7 +1303,7 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
         elif len(predictions) < self.n:
             logger.warning(f"Number of predictions is less than {self.n} for pass@k.")
 
-        processed_choices = [self.preprocess(text=g) for g in doc.choices]
+        processed_choices = [self.preprocess(g) for g in doc.choices]
         new_doc = Doc(
             choices=processed_choices,
             query=doc.query,
@@ -1289,7 +1312,7 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
 
         all_scores = []
         for pred in predictions[: self.n]:
-            cur_pred = self.preprocess(text=pred)
+            cur_pred = self.preprocess(pred)
             new_model_response = ModelResponse(
                 text=[cur_pred],
             )
@@ -1416,8 +1439,8 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
         metrics = {}
         for k in ks:
             for t in thresholds:
-                metrics[f"{self.name}@{k}_{t}"] = compute_g_pass_at_k(n, c, k, t)
-            metrics[f"m{self.name}@{k}"] = compute_mg_pass_at_k(n, c, k)
+                metrics[f"{self.name}{k}_{t}"] = compute_g_pass_at_k(n, c, k, t)
+            metrics[f"m{self.name}{k}"] = compute_mg_pass_at_k(n, c, k)
 
         return metrics
 
@@ -1429,8 +1452,8 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
         metrics = []
         for k in ks:
             for t in thresholds:
-                metrics.append(f"{self.name}@{k}_{t}")
-            metrics.append(f"m{self.name}@{k}")
+                metrics.append(f"{self.name}{k}_{t}")
+            metrics.append(f"m{self.name}{k}")
 
         return metrics
 

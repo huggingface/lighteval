@@ -1,0 +1,31 @@
+{
+  "name": "Simpleqa Judge Test Suite",
+  "description": "Test cases for simpleqa_judge metric",
+  "test_cases": [
+    {
+      "name": "Simpleqa Judge - Basic Test",
+      "metric_class": "simpleqa_judge",
+      "metric_params": {},
+      "doc": {
+        "query": "Test query for simpleqa_judge",
+        "choices": [
+          "Test choice 1",
+          "Test choice 2",
+          "Test choice 3"
+        ],
+        "gold_index": 0,
+        "task_name": "test"
+      },
+      "model_response": {
+        "text": [
+          "Test choice 1"
+        ]
+      },
+      "expected_output": {
+        "simpleqa_judge": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Basic test case for simpleqa_judge metric"
+    }
+  ]
+}

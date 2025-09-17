@@ -1,0 +1,44 @@
+{
+  "name": "Acc Golds Likelihood Test Suite",
+  "description": "Test cases for acc_golds_likelihood metric",
+  "test_cases": [
+    {
+      "name": "Acc Golds Likelihood - Correct Likelihood",
+      "metric_class": "acc_golds_likelihood",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the capital of France?",
+        "choices": ["Paris", "London", "Berlin"],
+        "gold_index": 0,
+        "task_name": "geography"
+      },
+      "model_response": {
+        "argmax_logits_eq_gold": [1, 0, 0]
+      },
+      "expected_output": {
+        "acc": 1
+      },
+      "tolerance": 0.01,
+      "description": "Test acc golds likelihood with correct likelihood"
+    },
+    {
+      "name": "Acc Golds Likelihood - Incorrect Likelihood",
+      "metric_class": "acc_golds_likelihood",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the capital of France?",
+        "choices": ["Paris", "London", "Berlin"],
+        "gold_index": 0,
+        "task_name": "geography"
+      },
+      "model_response": {
+        "argmax_logits_eq_gold": [0, 0, 0]
+      },
+      "expected_output": {
+        "acc": 0
+      },
+      "tolerance": 0.01,
+      "description": "Test acc golds likelihood with incorrect likelihood"
+    }
+  ]
+}
