@@ -1,0 +1,48 @@
+{
+  "name": "Exact Match Test Suite",
+  "description": "Test cases for exact match metric",
+  "test_cases": [
+    {
+      "name": "Exact Match - Perfect Match",
+      "metric_class": "exact_match",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the capital of France?",
+        "choices": ["Paris", "London", "Berlin"],
+        "gold_index": 0,
+        "task_name": "test"
+      },
+      "model_response": {
+        "text": ["Paris"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "em": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test exact match with perfect prediction"
+    },
+    {
+      "name": "Exact Match - No Match",
+      "metric_class": "exact_match",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the capital of France?",
+        "choices": ["Paris", "London", "Berlin"],
+        "gold_index": 0,
+        "task_name": "test"
+      },
+      "model_response": {
+        "text": ["London"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "em": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test exact match with wrong prediction"
+    }
+  ]
+}

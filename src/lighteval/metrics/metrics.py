@@ -390,7 +390,7 @@ class Metrics(Enum):
         metric_name="mf1",
         sample_level_fn=LoglikelihoodPreparator(is_single_token=True),
         category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=CorpusLevelF1Score(average=None, num_classes=3),
+        corpus_level_fn=CorpusLevelF1Score(average="micro", num_classes=3),
         higher_is_better=True,
     )
     pass_at_k = SampleLevelMetric(

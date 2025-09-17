@@ -1,0 +1,90 @@
+{
+  "name": "Faithfulness Test Suite",
+  "description": "Test cases for faithfulness metric",
+  "test_cases": [
+    {
+      "name": "Faithfulness - Basic Test",
+      "metric_class": "faithfulness",
+      "metric_params": {},
+      "doc": {
+        "specific": {
+          "text": "Test query for faithfulness"
+        },
+        "query": "Test query for faithfulness",
+        "choices": [
+          "Test choice 1",
+          "Test choice 2",
+          "Test choice 3"
+        ],
+        "gold_index": 0,
+        "task_name": "test"
+      },
+      "model_response": {
+        "text": [
+          "Test choice 1"
+        ]
+      },
+      "expected_output": {
+        "summac": -0.516
+      },
+      "tolerance": 0.01,
+      "description": "Basic test case for faithfulness metric"
+    },
+    {
+      "name": "Faithfulness - High Faithfulness Test",
+      "metric_class": "faithfulness",
+      "metric_params": {},
+      "doc": {
+        "specific": {
+          "text": "The quick brown fox jumps over the lazy dog. This sentence contains all the letters of the English alphabet. It is commonly used for testing typing skills and font displays."
+        },
+        "query": "Summarize the text about the fox and dog",
+        "choices": [
+          "A fox jumps over a dog",
+          "The quick brown fox jumps over the lazy dog",
+          "A sentence with all alphabet letters"
+        ],
+        "gold_index": 1,
+        "task_name": "summarization"
+      },
+      "model_response": {
+        "text": [
+          "The quick brown fox jumps over the lazy dog. This sentence contains all the letters of the English alphabet."
+        ]
+      },
+      "expected_output": {
+        "summac": 0.20
+      },
+      "tolerance": 0.01,
+      "description": "Test case with high faithfulness - model output closely matches source text"
+    },
+    {
+      "name": "Faithfulness - Low Faithfulness Test",
+      "metric_class": "faithfulness",
+      "metric_params": {},
+      "doc": {
+        "specific": {
+          "text": "The weather today is sunny with clear skies. Temperature is expected to reach 25 degrees Celsius. There is no chance of rain according to the forecast."
+        },
+        "query": "What's the weather like?",
+        "choices": [
+          "It's sunny and warm",
+          "It's raining heavily",
+          "The weather is unclear"
+        ],
+        "gold_index": 0,
+        "task_name": "weather_qa"
+      },
+      "model_response": {
+        "text": [
+          "It's raining heavily with thunderstorms expected throughout the day. The temperature will drop to 10 degrees and there's a 90% chance of precipitation."
+        ]
+      },
+      "expected_output": {
+        "summac": -0.997
+      },
+      "tolerance": 0.01,
+      "description": "Test case with low faithfulness - model output contradicts source text"
+    }
+  ]
+}

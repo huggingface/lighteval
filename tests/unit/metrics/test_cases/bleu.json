@@ -1,0 +1,167 @@
+{
+  "name": "BLEU Test Suite",
+  "description": "Test cases for bleu metric (corpus-level BLEU)",
+  "corpus_level": true,
+  "test_cases": [
+    {
+      "name": "BLEU - Perfect Translations",
+      "metric_class": "bleu",
+      "metric_params": {},
+      "metric_name": "bleu",
+      "docs": [
+        {
+          "query": "Translate to French: The beautiful flowers are blooming in the garden today",
+          "choices": ["Les belles fleurs fleurissent dans le jardin aujourd'hui"],
+          "gold_index": 0,
+          "task_name": "translation"
+        },
+        {
+          "query": "Translate to Spanish: My family and I went to the beach last weekend",
+          "choices": ["Mi familia y yo fuimos a la playa el fin de semana pasado"],
+          "gold_index": 0,
+          "task_name": "translation"
+        },
+        {
+          "query": "Translate to German: The children are playing with their new toys in the park",
+          "choices": ["Die Kinder spielen mit ihren neuen Spielzeugen im Park"],
+          "gold_index": 0,
+          "task_name": "translation"
+        }
+      ],
+      "model_responses": [
+        {
+          "text": ["Les belles fleurs fleurissent dans le jardin aujourd'hui"]
+        },
+        {
+          "text": ["Mi familia y yo fuimos a la playa el fin de semana pasado"]
+        },
+        {
+          "text": ["Die Kinder spielen mit ihren neuen Spielzeugen im Park"]
+        }
+      ],
+      "expected_output": 100.0,
+      "tolerance": 0.01,
+      "description": "Perfect translations - exact word overlap (BLEU = 100.0)"
+    },
+    {
+      "name": "BLEU - High Similarity",
+      "metric_class": "bleu",
+      "metric_params": {},
+      "metric_name": "bleu",
+      "docs": [
+        {
+          "query": "Translate to French: The cat is sleeping",
+          "choices": ["Le chat dort"],
+          "gold_index": 0,
+          "task_name": "translation"
+        },
+        {
+          "query": "Translate to Spanish: I like pizza",
+          "choices": ["Me gusta la pizza"],
+          "gold_index": 0,
+          "task_name": "translation"
+        },
+        {
+          "query": "Translate to German: The weather is nice",
+          "choices": ["Das Wetter ist schön"],
+          "gold_index": 0,
+          "task_name": "translation"
+        }
+      ],
+      "model_responses": [
+        {
+          "text": ["Le chat dort"]
+        },
+        {
+          "text": ["Me gusta pizza"]
+        },
+        {
+          "text": ["Das Wetter ist schön"]
+        }
+      ],
+      "expected_output": 81.02,
+      "tolerance": 0.01,
+      "description": "High similarity - minor word differences (BLEU ≈ 85.0)"
+    },
+    {
+      "name": "BLEU - Moderate Similarity",
+      "metric_class": "bleu",
+      "metric_params": {},
+      "metric_name": "bleu",
+      "docs": [
+        {
+          "query": "Translate to French: The quick brown fox jumped gracefully over the lazy sleeping dog",
+          "choices": ["Le renard brun rapide a sauté gracieusement par-dessus le chien paresseux endormi"],
+          "gold_index": 0,
+          "task_name": "translation"
+        },
+        {
+          "query": "Translate to Spanish: Artificial intelligence is revolutionizing the way we interact with technology",
+          "choices": ["La inteligencia artificial está revolucionando la forma en que interactuamos con la tecnología"],
+          "gold_index": 0,
+          "task_name": "translation"
+        },
+        {
+          "query": "Translate to German: Machine learning algorithms can analyze complex patterns in large datasets",
+          "choices": ["Maschinelle Lernalgorithmen können komplexe Muster in großen Datensätzen analysieren"],
+          "gold_index": 0,
+          "task_name": "translation"
+        }
+      ],
+      "model_responses": [
+        {
+          "text": ["Le renard rapide a sauté par-dessus le chien"]
+        },
+        {
+          "text": ["La IA revoluciona la tecnología"]
+        },
+        {
+          "text": ["ML analysiert Daten"]
+        }
+      ],
+      "expected_output": 0.0,
+      "tolerance": 10.0,
+      "description": "Moderate similarity - significant word omissions (BLEU ≈ 45.0)"
+    },
+    {
+      "name": "BLEU - Low Similarity",
+      "metric_class": "bleu",
+      "metric_params": {},
+      "metric_name": "bleu",
+      "docs": [
+        {
+          "query": "Translate to French: The bright sun shines warmly through the scattered clouds in the azure summer sky",
+          "choices": ["Le soleil brillant brille chaudement à travers les nuages épars dans le ciel bleu azur d'été"],
+          "gold_index": 0,
+          "task_name": "translation"
+        },
+        {
+          "query": "Translate to Spanish: The full moon casts mysterious shadows across the tranquil lake at midnight",
+          "choices": ["La luna llena proyecta sombras misteriosas sobre el lago tranquilo a medianoche"],
+          "gold_index": 0,
+          "task_name": "translation"
+        },
+        {
+          "query": "Translate to German: The twinkling stars illuminate the dark velvet sky like scattered diamonds",
+          "choices": ["Die funkelnden Sterne erleuchten den dunklen Samthimmel wie verstreute Diamanten"],
+          "gold_index": 0,
+          "task_name": "translation"
+        }
+      ],
+      "model_responses": [
+        {
+          "text": ["Il fait mauvais temps aujourd'hui et le ciel est couvert"]
+        },
+        {
+          "text": ["Las montañas son muy altas y majestuosas"]
+        },
+        {
+          "text": ["Der Wind weht stark durch die Bäume"]
+        }
+      ],
+      "expected_output": 0.0,
+      "tolerance": 10.0,
+      "description": "Low similarity - minimal word overlap (BLEU ≈ 15.0)"
+    }
+  ]
+}

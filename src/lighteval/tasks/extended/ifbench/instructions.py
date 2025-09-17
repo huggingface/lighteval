@@ -142,7 +142,7 @@ class UniqueWordCountChecker(Instruction):
         """Build the instruction description.
 
         Args:
-          n: An integer specifying the number of unique words contained in the response.
+          N: An integer specifying the number of unique words contained in the response.
 
         Returns:
           A string representing the instruction description.
@@ -2113,7 +2113,7 @@ class RepeatChangeChecker(Instruction):
         """Build the instruction description.
 
         Args:
-          keyword: A string representing a keyword that is expected in the response.
+          prompt_to_repeat: The prompt that is meant to be repeated.
 
         Returns:
           A string representing the instruction description.
@@ -2187,11 +2187,12 @@ class RepeatSpanChecker(Instruction):
         """Build the instruction description.
 
         Args:
-        n_start: An integer representing the start index of the span.
-        n_end: An integer representing the end index of the span.
+            prompt_to_repeat: The prompt that is meant to be repeated.
+            n_start: An integer representing the start index of the span.
+            n_end: An integer representing the end index of the span.
 
         Returns:
-        A string representing the instruction description.
+            A string representing the instruction description.
         """
         if not prompt_to_repeat:
             raise ValueError("prompt_to_repeat must be set.")
