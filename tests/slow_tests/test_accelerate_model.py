@@ -43,7 +43,7 @@ MODELS_ARGS = [
 ]
 TASKS_PATH = "examples/test_tasks.txt"
 CUSTOM_TASKS_PATH = "examples/custom_tasks_tests.py"
-DETAILS_EXPECTED_DIR = "results/details/HuggingFaceTB/SmolLM2-1.7B-Instruct/2025-09-09T14-15-41.314059"
+DETAILS_EXPECTED_DIR = "results/details/HuggingFaceTB/SmolLM2-1.7B-Instruct/2025-09-17T11-36-26.924098"
 
 ModelInput = Tuple[str, Callable[[], dict]]
 
@@ -106,6 +106,3 @@ def test_accelerate_model_prediction(tests: list[ModelInput]):
     enhanced_message = enhance_test_with_sample_comparison(diff, details, DETAILS_EXPECTED_DIR)
     if enhanced_message:
         assert False, enhanced_message
-    else:
-        # No differences found at any level, test passes
-        assert True

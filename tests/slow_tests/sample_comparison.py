@@ -20,10 +20,33 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import math
 from dataclasses import asdict
 from pathlib import Path
 
 from datasets import Dataset
+
+
+def _to_plain_list(value):
+    """Convert tensors/arrays to Python lists; pass through other types."""
+    new_value = []
+    for item in value:
+        if hasattr(item, "tolist"):
+            item = item.tolist()
+        new_value.append(item)
+    return new_value
+
+
+def _logprobs_approximately_equal(current_logprobs, reference_logprobs, tolerance=1e-6):
+    """Compare logprobs with float approximation tolerance."""
+    current_logprobs = _to_plain_list(current_logprobs)
+    reference_logprobs = _to_plain_list(reference_logprobs)
+    if current_logprobs is None and reference_logprobs is None:
+        return True
+    if current_logprobs is None or reference_logprobs is None:
+        return False
+
+    return all(math.isclose(c, r, abs_tol=tolerance) for c, r in zip(current_logprobs, reference_logprobs))
 
 
 def load_sample_details(details_dir: str):
@@ -35,7 +58,10 @@ def load_sample_details(details_dir: str):
         return details
 
     for parquet_file in details_path.glob("details_*.parquet"):
-        task_name = parquet_file.stem.replace("details_", "").split("_")[0]  # Extract task name
+        # Extract task name from parquet filename, keeping the full task path with "|" separators
+        task_name = parquet_file.stem.replace("details_", "").rsplit("_", 1)[
+            0
+        ]  # Split from right to preserve task name with "|"
         dataset = Dataset.from_parquet(str(parquet_file))
         details[task_name] = list(dataset)
 
@@ -48,17 +74,36 @@ def _compare_model_responses(current, reference):
     current_resp = current["model_response"]
     reference_resp = reference["model_response"]
 
-    if current_resp.get("text") != reference_resp.get("text"):
-        sample_diff["text_difference"] = {
-            "current": current_resp.get("text"),
-            "reference": reference_resp.get("text"),
-        }
+    # Get all field names from both responses
+    all_fields = set(current_resp.keys()) | set(reference_resp.keys())
 
-    if current_resp.get("logprobs") != reference_resp.get("logprobs"):
-        sample_diff["logprobs_difference"] = {
-            "current": current_resp.get("logprobs"),
-            "reference": reference_resp.get("logprobs"),
-        }
+    for field_name in all_fields:
+        current_val = current_resp.get(field_name)
+        reference_val = reference_resp.get(field_name)
+
+        # Special handling for logprobs field
+        if field_name == "logprobs":
+            if not _logprobs_approximately_equal(current_val, reference_val):
+                sample_diff["{}_difference".format(field_name)] = {
+                    "current": current_val,
+                    "reference": reference_val,
+                }
+        elif field_name in ["input_tokens", "output_tokens"]:
+            current_val = _to_plain_list(current_val)
+            reference_val = _to_plain_list(reference_val)
+
+            if current_val != reference_val:
+                sample_diff["{}_difference".format(field_name)] = {
+                    "current": current_val,
+                    "reference": reference_val,
+                }
+        else:
+            # Standard comparison for other fields
+            if current_val != reference_val:
+                sample_diff["{}_difference".format(field_name)] = {
+                    "current": current_val,
+                    "reference": reference_val,
+                }
 
     return sample_diff
 
@@ -158,34 +203,25 @@ def _format_single_diff(diff):
     """Format a single sample difference."""
     output = []
     sample_idx = diff.get("sample_index", "unknown")
-    output.append(f"  Sample {sample_idx}:")
+    output.append("  Sample {}:".format(sample_idx))
 
-    if "text_difference" in diff:
-        output.append("    Text output differs:")
-        output.append(f"      Current: {diff['text_difference']['current']}")
-        output.append(f"      Reference: {diff['text_difference']['reference']}")
+    # Handle model response field differences
+    for key, value in diff.items():
+        if key.endswith("_difference") and key != "metric_differences":
+            field_name = key.replace("_difference", "")
+            output.append("    {} differs:".format(field_name.title()))
+            output.append("      Current: {}".format(value["current"]))
+            output.append("      Reference: {}".format(value["reference"]))
 
-    if "logprobs_difference" in diff:
-        output.append("    Logprobs differ:")
-        output.append(f"      Current: {diff['logprobs_difference']['current']}")
-        output.append(f"      Reference: {diff['logprobs_difference']['reference']}")
-
+    # Handle metric differences
     if "metric_differences" in diff:
         output.append("    Metrics differ:")
         for metric_name, metric_diff in diff["metric_differences"].items():
             output.append(
-                f"      {metric_name}: current={metric_diff['current']}, reference={metric_diff['reference']}"
+                "      {}: current={}, reference={}".format(
+                    metric_name, metric_diff["current"], metric_diff["reference"]
+                )
             )
-
-    if "query_difference" in diff:
-        output.append("    Query differs:")
-        output.append(f"      Current: {diff['query_difference']['current']}")
-        output.append(f"      Reference: {diff['query_difference']['reference']}")
-
-    if "choices_difference" in diff:
-        output.append("    Choices differ:")
-        output.append(f"      Current: {diff['choices_difference']['current']}")
-        output.append(f"      Reference: {diff['choices_difference']['reference']}")
 
     return output
 
