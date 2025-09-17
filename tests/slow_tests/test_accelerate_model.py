@@ -43,7 +43,7 @@ MODELS_ARGS = [
 ]
 TASKS_PATH = "examples/test_tasks.txt"
 CUSTOM_TASKS_PATH = "examples/custom_tasks_tests.py"
-DETAILS_EXPECTED_DIR = "results/details/HuggingFaceTB/SmolLM2-1.7B-Instruct/2025-09-17T11-36-26.924098"
+DETAILS_EXPECTED_DIR = "tests/reference_details/SmolLM2-1.7B-Instruct-transformers"
 
 ModelInput = Tuple[str, Callable[[], dict]]
 

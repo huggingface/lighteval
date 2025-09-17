@@ -42,7 +42,7 @@ MODELS_ARGS = [
     }
 ]
 TASKS = "lighteval|mmmu_pro:standard-4|0"
-DETAILS_EXPECTED_DIR = "results/details/HuggingFaceTB/Qwen2.5-VL-3B-Instruct/2025-09-09T14-15-41.314059"
+DETAILS_EXPECTED_DIR = "tests/reference_details/Qwen2.5-VL-3B-Instruct"
 
 ModelInput = Tuple[str, Callable[[], dict]]
 
