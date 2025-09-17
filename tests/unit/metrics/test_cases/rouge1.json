@@ -1,0 +1,28 @@
+{
+  "name": "ROUGE1 Test Suite",
+  "description": "Test cases for ROUGE1 metric",
+  "test_cases": [
+    {
+      "name": "ROUGE Score",
+      "metric_class": "rouge1",
+      "metric_params": {
+      },
+      "doc": {
+        "query": "Summarize the text",
+        "choices": ["The quick brown fox jumps over the lazy dog"],
+        "gold_index": 0,
+        "task_name": "test"
+      },
+      "model_response": {
+        "text": ["The quick brown fox jumps over the lazy dog"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "rouge1": 1
+      },
+      "tolerance": 0.01,
+      "description": "Test ROUGE score with perfect match"
+    }
+  ]
+}

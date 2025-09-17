@@ -1,0 +1,223 @@
+{
+  "name": "G Pass At K Latex Test Suite",
+  "description": "Comprehensive test cases for g_pass_at_k_latex metric covering various scenarios including multiple samples, different k values, thresholds, and mathematical content",
+  "test_cases": [
+    {
+      "name": "G Pass At K Latex - Basic Single Sample Correct",
+      "metric_class": "g_pass_at_k_latex",
+      "metric_params": {
+        "k": 1,
+        "n": 1,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is 2+2?",
+        "choices": ["$\\frac{1}{2}$"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["$\\frac{1}{2}$"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "latex_g-pass@1_0.0": 1.0,
+        "latex_g-pass@1_0.25": 1.0,
+        "latex_g-pass@1_0.5": 1.0,
+        "latex_g-pass@1_0.75": 1.0,
+        "latex_g-pass@1_1.0": 1.0,
+        "mlatex_g-pass@1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Basic test case with single correct sample"
+    },
+    {
+      "name": "G Pass At K Latex - Multiple Samples All Correct",
+      "metric_class": "g_pass_at_k_latex",
+      "metric_params": {
+        "k": 2,
+        "n": 3,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is the derivative of x^2?",
+        "choices": ["$2x$"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["$2x$", "$2x$", "$2x$"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "latex_g-pass@2_0.0": 1.0,
+        "latex_g-pass@2_0.25": 1.0,
+        "latex_g-pass@2_0.5": 1.0,
+        "latex_g-pass@2_0.75": 1.0,
+        "latex_g-pass@2_1.0": 1.0,
+        "mlatex_g-pass@2": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test case with multiple samples all correct"
+    },
+    {
+      "name": "G Pass At K Latex - Mixed Correct and Incorrect",
+      "metric_class": "g_pass_at_k_latex",
+      "metric_params": {
+        "k": 2,
+        "n": 4,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is the integral of x?",
+        "choices": ["$\\frac{x^2}{2}$"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["$\\frac{x^2}{2}$", "$x$", "$\\frac{x^2}{2}$", "$x^2$"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "latex_g-pass@2_0.0": 0.8333333333333334,
+        "latex_g-pass@2_0.25": 0.8333333333333334,
+        "latex_g-pass@2_0.5": 0.8333333333333334,
+        "latex_g-pass@2_0.75": 0.16666666666666666,
+        "latex_g-pass@2_1.0": 0.16666666666666666,
+        "mlatex_g-pass@2": 0.16666666666666666
+      },
+      "tolerance": 0.01,
+      "description": "Test case with mixed correct and incorrect samples"
+    },
+    {
+      "name": "G Pass At K Latex - Complex LaTeX Expression",
+      "metric_class": "g_pass_at_k_latex",
+      "metric_params": {
+        "k": 1,
+        "n": 2,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is the quadratic formula?",
+        "choices": ["$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$", "$x = \\frac{-b + \\sqrt{b^2 - 4ac}}{2a}$"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "latex_g-pass@1_0.0": 0.5,
+        "latex_g-pass@1_0.25": 0.5,
+        "latex_g-pass@1_0.5": 0.5,
+        "latex_g-pass@1_0.75": 0.5,
+        "latex_g-pass@1_1.0": 0.5,
+        "mlatex_g-pass@1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test case with complex LaTeX expression"
+    },
+    {
+      "name": "G Pass At K Latex - All Incorrect Samples",
+      "metric_class": "g_pass_at_k_latex",
+      "metric_params": {
+        "k": 1,
+        "n": 3,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is the limit of 1/x as x approaches infinity?",
+        "choices": ["$0$"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["$1$", "$\\infty$", "$\\text{undefined}$"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "latex_g-pass@1_0.0": 0.0,
+        "latex_g-pass@1_0.25": 0.0,
+        "latex_g-pass@1_0.5": 0.0,
+        "latex_g-pass@1_0.75": 0.0,
+        "latex_g-pass@1_1.0": 0.0,
+        "mlatex_g-pass@1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test case with all incorrect samples"
+    },
+    {
+      "name": "G Pass At K Latex - High K Value",
+      "metric_class": "g_pass_at_k_latex",
+      "metric_params": {
+        "k": 5,
+        "n": 8,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is the sum of the first n natural numbers?",
+        "choices": ["$\\frac{n(n+1)}{2}$"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["$\\frac{n(n+1)}{2}$", "$n(n+1)/2$", "$\\frac{n(n+1)}{2}$", "$n^2/2$", "$\\frac{n(n+1)}{2}$", "$n+1$", "$\\frac{n(n+1)}{2}$", "$n$"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "latex_g-pass@5_0.0": 1.0,
+        "latex_g-pass@5_0.25": 1.0,
+        "latex_g-pass@5_0.5": 0.8214285714285715,
+        "latex_g-pass@5_0.75": 0.28571428571428564,
+        "latex_g-pass@5_1.0": 0.017857142857142853,
+        "mlatex_g-pass@5": 0.1214285714285714
+      },
+      "tolerance": 0.01,
+      "description": "Test case with high k value and multiple correct samples"
+    },
+    {
+      "name": "G Pass At K Latex - Edge Case Single Sample",
+      "metric_class": "g_pass_at_k_latex",
+      "metric_params": {
+        "k": 1,
+        "n": 1,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is the value of pi?",
+        "choices": ["$\\pi$"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["$3.14159$"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "latex_g-pass@1_0.0": 0.0,
+        "latex_g-pass@1_0.25": 0.0,
+        "latex_g-pass@1_0.5": 0.0,
+        "latex_g-pass@1_0.75": 0.0,
+        "latex_g-pass@1_1.0": 0.0,
+        "mlatex_g-pass@1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Edge case with single incorrect sample"
+    }
+  ]
+}

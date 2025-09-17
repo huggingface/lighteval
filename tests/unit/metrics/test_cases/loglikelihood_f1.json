@@ -1,0 +1,286 @@
+{
+  "name": "Loglikelihood F1 Test Suite",
+  "description": "Comprehensive test cases for loglikelihood_f1 metric covering various scenarios including different logprob distributions, correct/incorrect predictions, and edge cases. This is a corpus-level F1 score metric.",
+  "test_cases": [
+    {
+      "name": "Loglikelihood F1 - Perfect Predictions",
+      "metric_class": "loglikelihood_f1",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the capital of France?",
+        "choices": ["London", "Paris", "Berlin"],
+        "gold_index": 1,
+        "task_name": "geography"
+      },
+      "model_response": {
+        "logprobs": [0.1, 0.8, 0.1],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "loglikelihood_f1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test loglikelihood F1 with perfect predictions across corpus"
+    },
+    {
+      "name": "Loglikelihood F1 - All Incorrect Predictions",
+      "metric_class": "loglikelihood_f1",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the largest planet in our solar system?",
+        "choices": ["Earth", "Jupiter", "Saturn"],
+        "gold_index": 1,
+        "task_name": "astronomy"
+      },
+      "model_response": {
+        "logprobs": [0.1, 0.3, 0.6],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "loglikelihood_f1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test loglikelihood F1 with all incorrect predictions across corpus"
+    },
+    {
+      "name": "Loglikelihood F1 - Mixed Predictions",
+      "metric_class": "loglikelihood_f1",
+      "metric_params": {},
+      "doc": {
+        "query": "Who wrote Romeo and Juliet?",
+        "choices": ["Charles Dickens", "William Shakespeare", "Jane Austen"],
+        "gold_index": 1,
+        "task_name": "literature"
+      },
+      "model_response": {
+        "logprobs": [0.2, 0.35, 0.45],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "loglikelihood_f1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test loglikelihood F1 with mixed predictions (some correct, some incorrect)"
+    },
+    {
+      "name": "Loglikelihood F1 - Very Confident Correct",
+      "metric_class": "loglikelihood_f1",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the chemical symbol for gold?",
+        "choices": ["Ag", "Au", "Fe"],
+        "gold_index": 1,
+        "task_name": "chemistry"
+      },
+      "model_response": {
+        "logprobs": [0.01, 0.98, 0.01],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "loglikelihood_f1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test loglikelihood F1 with very confident correct prediction"
+    },
+    {
+      "name": "Loglikelihood F1 - Very Confident Incorrect",
+      "metric_class": "loglikelihood_f1",
+      "metric_params": {},
+      "doc": {
+        "query": "What year did World War II end?",
+        "choices": ["1943", "1944", "1945"],
+        "gold_index": 2,
+        "task_name": "history"
+      },
+      "model_response": {
+        "logprobs": [0.95, 0.03, 0.02],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "loglikelihood_f1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test loglikelihood F1 with very confident incorrect prediction"
+    },
+    {
+      "name": "Loglikelihood F1 - Close Probabilities",
+      "metric_class": "loglikelihood_f1",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the speed of light?",
+        "choices": ["299,792,458 m/s", "300,000 km/s", "186,282 miles/s"],
+        "gold_index": 0,
+        "task_name": "physics"
+      },
+      "model_response": {
+        "logprobs": [0.33, 0.33, 0.34],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "loglikelihood_f1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test loglikelihood F1 with close probabilities but wrong choice highest"
+    },
+    {
+      "name": "Loglikelihood F1 - Negative Logprobs",
+      "metric_class": "loglikelihood_f1",
+      "metric_params": {},
+      "doc": {
+        "query": "How many sides does a hexagon have?",
+        "choices": ["4", "5", "6"],
+        "gold_index": 2,
+        "task_name": "geometry"
+      },
+      "model_response": {
+        "logprobs": [-2.0, -1.5, -0.5],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "loglikelihood_f1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test loglikelihood F1 with negative logprobs (correct choice highest)"
+    },
+    {
+      "name": "Loglikelihood F1 - All Negative Logprobs",
+      "metric_class": "loglikelihood_f1",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the main theme of 1984?",
+        "choices": ["Love", "Totalitarianism", "War"],
+        "gold_index": 1,
+        "task_name": "literature"
+      },
+      "model_response": {
+        "logprobs": [-5.0, -2.0, -4.0],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "loglikelihood_f1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test loglikelihood F1 with all negative logprobs (correct choice highest)"
+    },
+    {
+      "name": "Loglikelihood F1 - Single Choice",
+      "metric_class": "loglikelihood_f1",
+      "metric_params": {},
+      "doc": {
+        "query": "Is the Earth round?",
+        "choices": ["Yes"],
+        "gold_index": 0,
+        "task_name": "science"
+      },
+      "model_response": {
+        "logprobs": [0.9],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "loglikelihood_f1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test loglikelihood F1 with single choice (trivial case)"
+    },
+    {
+      "name": "Loglikelihood F1 - Multiple Gold Indices",
+      "metric_class": "loglikelihood_f1",
+      "metric_params": {},
+      "doc": {
+        "query": "Which are primary colors?",
+        "choices": ["Red", "Blue", "Green", "Yellow"],
+        "gold_index": [0, 1],
+        "task_name": "art"
+      },
+      "model_response": {
+        "logprobs": [0.4, 0.3, 0.2, 0.1],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "loglikelihood_f1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test loglikelihood F1 with multiple correct answers (first correct answer highest)"
+    },
+    {
+      "name": "Loglikelihood F1 - Multiple Gold Indices Wrong",
+      "metric_class": "loglikelihood_f1",
+      "metric_params": {},
+      "doc": {
+        "query": "Which are even numbers?",
+        "choices": ["2", "3", "4", "5"],
+        "gold_index": [0, 2],
+        "task_name": "math"
+      },
+      "model_response": {
+        "logprobs": [0.2, 0.5, 0.2, 0.1],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "loglikelihood_f1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test loglikelihood F1 with multiple correct answers but wrong choice highest"
+    },
+    {
+      "name": "Loglikelihood F1 - Zero Probabilities",
+      "metric_class": "loglikelihood_f1",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the capital of Japan?",
+        "choices": ["Tokyo", "Kyoto", "Osaka"],
+        "gold_index": 0,
+        "task_name": "geography"
+      },
+      "model_response": {
+        "logprobs": [0.0, 0.0, 0.0],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "loglikelihood_f1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test loglikelihood F1 with zero probabilities (first choice wins by default)"
+    },
+    {
+      "name": "Loglikelihood F1 - Very Small Differences",
+      "metric_class": "loglikelihood_f1",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the largest ocean?",
+        "choices": ["Atlantic", "Pacific", "Indian"],
+        "gold_index": 1,
+        "task_name": "geography"
+      },
+      "model_response": {
+        "logprobs": [0.333, 0.334, 0.333],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "loglikelihood_f1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test loglikelihood F1 with very small differences in probabilities"
+    },
+    {
+      "name": "Loglikelihood F1 - Balanced Predictions",
+      "metric_class": "loglikelihood_f1",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the square root of 16?",
+        "choices": ["2", "4", "8"],
+        "gold_index": 1,
+        "task_name": "math"
+      },
+      "model_response": {
+        "logprobs": [0.25, 0.5, 0.25],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "loglikelihood_f1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test loglikelihood F1 with balanced predictions (correct choice has highest probability)"
+    }
+  ]
+}

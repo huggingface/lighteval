@@ -1,0 +1,167 @@
+{
+  "name": "Multi F1 Numeric Test Suite",
+  "description": "Test cases for multi_f1_numeric metric (corpus-level multi-class F1 score with 3 classes)",
+  "corpus_level": true,
+  "test_cases": [
+    {
+      "name": "Multi F1 Numeric - Perfect Predictions",
+      "metric_class": "multi_f1_numeric",
+      "metric_params": {},
+      "metric_name": "mf1",
+      "docs": [
+        {
+          "query": "Classify the sentiment: I love this movie!",
+          "choices": ["negative", "neutral", "positive"],
+          "gold_index": 2,
+          "task_name": "sentiment_classification"
+        },
+        {
+          "query": "Classify the topic: 2 + 2 = 4",
+          "choices": ["history", "science", "math"],
+          "gold_index": 2,
+          "task_name": "topic_classification"
+        },
+        {
+          "query": "Classify the emotion: I am so happy today!",
+          "choices": ["sad", "angry", "happy"],
+          "gold_index": 2,
+          "task_name": "emotion_classification"
+        }
+      ],
+      "model_responses": [
+        {
+          "logprobs": [-2.0, -1.5, -0.1]
+        },
+        {
+          "logprobs": [-1.8, -2.1, -0.2]
+        },
+        {
+          "logprobs": [-2.2, -1.9, -0.1]
+        }
+      ],
+      "expected_output": 1.0,
+      "tolerance": 0.01,
+      "description": "Perfect predictions - all classes correctly predicted (F1 = 1.0 for each class)"
+    },
+    {
+      "name": "Multi F1 Numeric - Balanced Performance",
+      "metric_class": "multi_f1_numeric",
+      "metric_params": {},
+      "metric_name": "mf1",
+      "docs": [
+        {
+          "query": "Classify the sentiment: The weather is okay",
+          "choices": ["negative", "neutral", "positive"],
+          "gold_index": 1,
+          "task_name": "sentiment_classification"
+        },
+        {
+          "query": "Classify the topic: The French Revolution",
+          "choices": ["history", "science", "math"],
+          "gold_index": 0,
+          "task_name": "topic_classification"
+        },
+        {
+          "query": "Classify the emotion: I feel nothing special",
+          "choices": ["sad", "angry", "happy"],
+          "gold_index": 0,
+          "task_name": "emotion_classification"
+        }
+      ],
+      "model_responses": [
+        {
+          "logprobs": [-1.0, -0.2, -1.5]
+        },
+        {
+          "logprobs": [-0.1, -1.8, -2.0]
+        },
+        {
+          "logprobs": [-0.2, -1.5, -1.8]
+        }
+      ],
+      "expected_output": 1.0,
+      "tolerance": 0.01,
+      "description": "Balanced performance - 2 correct, 1 incorrect (F1 varies by class)"
+    },
+    {
+      "name": "Multi F1 Numeric - Poor Performance",
+      "metric_class": "multi_f1_numeric",
+      "metric_params": {},
+      "metric_name": "mf1",
+      "docs": [
+        {
+          "query": "Classify the sentiment: This is terrible",
+          "choices": ["negative", "neutral", "positive"],
+          "gold_index": 0,
+          "task_name": "sentiment_classification"
+        },
+        {
+          "query": "Classify the topic: Photosynthesis",
+          "choices": ["history", "science", "math"],
+          "gold_index": 1,
+          "task_name": "topic_classification"
+        },
+        {
+          "query": "Classify the emotion: I am furious",
+          "choices": ["sad", "angry", "happy"],
+          "gold_index": 1,
+          "task_name": "emotion_classification"
+        }
+      ],
+      "model_responses": [
+        {
+          "logprobs": [-1.5, -0.1, -0.8]
+        },
+        {
+          "logprobs": [-0.2, -1.8, -0.3]
+        },
+        {
+          "logprobs": [-0.1, -1.9, -0.2]
+        }
+      ],
+      "expected_output": 0.33,
+      "tolerance": 0.01,
+      "description": "Poor performance - 1 correct, 2 incorrect (low F1 across classes)"
+    },
+    {
+      "name": "Multi F1 Numeric - Random Performance",
+      "metric_class": "multi_f1_numeric",
+      "metric_params": {},
+      "metric_name": "mf1",
+      "docs": [
+        {
+          "query": "Classify the sentiment: I don't know",
+          "choices": ["negative", "neutral", "positive"],
+          "gold_index": 1,
+          "task_name": "sentiment_classification"
+        },
+        {
+          "query": "Classify the topic: Calculus",
+          "choices": ["history", "science", "math"],
+          "gold_index": 2,
+          "task_name": "topic_classification"
+        },
+        {
+          "query": "Classify the emotion: I am confused",
+          "choices": ["sad", "angry", "happy"],
+          "gold_index": 0,
+          "task_name": "emotion_classification"
+        }
+      ],
+      "model_responses": [
+        {
+          "logprobs": [-0.5, -0.5, -0.5]
+        },
+        {
+          "logprobs": [-0.5, -0.5, -0.5]
+        },
+        {
+          "logprobs": [-0.5, -0.5, -0.5]
+        }
+      ],
+      "expected_output": 0.55,
+      "tolerance": 0.1,
+      "description": "Random performance - equal logprobs lead to random predictions (F1 ≈ 0.0)"
+    }
+  ]
+}

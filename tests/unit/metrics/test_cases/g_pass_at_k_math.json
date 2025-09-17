@@ -1,0 +1,347 @@
+{
+  "name": "G Pass At K Math Test Suite",
+  "description": "Comprehensive test cases for g_pass_at_k_math metric covering various scenarios including multiple samples, different k values, thresholds, and mathematical content",
+  "test_cases": [
+    {
+      "name": "G Pass At K Math - Basic Single Sample Correct",
+      "metric_class": "g_pass_at_k_math",
+      "metric_params": {
+        "k": 1,
+        "n": 1,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is 2+2?",
+        "choices": ["4", "5", "6"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["4"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "math_g-pass@1_0.0": 1.0,
+        "math_g-pass@1_0.25": 1.0,
+        "math_g-pass@1_0.5": 1.0,
+        "math_g-pass@1_0.75": 1.0,
+        "math_g-pass@1_1.0": 1.0,
+        "mmath_g-pass@1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Basic test case with single correct sample"
+    },
+    {
+      "name": "G Pass At K Math - Multiple Samples All Correct",
+      "metric_class": "g_pass_at_k_math",
+      "metric_params": {
+        "k": 2,
+        "n": 3,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is the derivative of x^2?",
+        "choices": ["2x"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["2x", "2x", "2x"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "math_g-pass@2_0.0": 1.0,
+        "math_g-pass@2_0.25": 1.0,
+        "math_g-pass@2_0.5": 1.0,
+        "math_g-pass@2_0.75": 1.0,
+        "math_g-pass@2_1.0": 1.0,
+        "mmath_g-pass@2": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test case with multiple samples all correct"
+    },
+    {
+      "name": "G Pass At K Math - Mixed Correct and Incorrect",
+      "metric_class": "g_pass_at_k_math",
+      "metric_params": {
+        "k": 2,
+        "n": 4,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is the integral of x?",
+        "choices": ["x^2/2"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["x^2/2", "x", "x^2/2", "x^2"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "math_g-pass@2_0.0": 0.0,
+        "math_g-pass@2_0.25": 0.0,
+        "math_g-pass@2_0.5": 0.0,
+        "math_g-pass@2_0.75": 0.0,
+        "math_g-pass@2_1.0": 0.0,
+        "mmath_g-pass@2": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test case with mixed correct and incorrect samples"
+    },
+    {
+      "name": "G Pass At K Math - Decimal Numbers",
+      "metric_class": "g_pass_at_k_math",
+      "metric_params": {
+        "k": 1,
+        "n": 2,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is pi to 2 decimal places?",
+        "choices": ["3.14"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["3.14", "3.14159"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "math_g-pass@1_0.0": 0.5,
+        "math_g-pass@1_0.25": 0.5,
+        "math_g-pass@1_0.5": 0.5,
+        "math_g-pass@1_0.75": 0.5,
+        "math_g-pass@1_1.0": 0.5,
+        "mmath_g-pass@1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test case with decimal numbers"
+    },
+    {
+      "name": "G Pass At K Math - Fractions",
+      "metric_class": "g_pass_at_k_math",
+      "metric_params": {
+        "k": 1,
+        "n": 3,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is 1/2 + 1/4?",
+        "choices": ["3/4"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["3/4", "0.75", "1/2"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "math_g-pass@1_0.0": 0.6666666666666667,
+        "math_g-pass@1_0.25": 0.6666666666666667,
+        "math_g-pass@1_0.5": 0.6666666666666667,
+        "math_g-pass@1_0.75": 0.6666666666666667,
+        "math_g-pass@1_1.0": 0.6666666666666667,
+        "mmath_g-pass@1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test case with fractions"
+    },
+    {
+      "name": "G Pass At K Math - All Incorrect Samples",
+      "metric_class": "g_pass_at_k_math",
+      "metric_params": {
+        "k": 1,
+        "n": 3,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is the limit of 1/x as x approaches infinity?",
+        "choices": ["0"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["1", "infinity", "undefined"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "math_g-pass@1_0.0": 0.0,
+        "math_g-pass@1_0.25": 0.0,
+        "math_g-pass@1_0.5": 0.0,
+        "math_g-pass@1_0.75": 0.0,
+        "math_g-pass@1_1.0": 0.0,
+        "mmath_g-pass@1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test case with all incorrect samples"
+    },
+    {
+      "name": "G Pass At K Math - High K Value",
+      "metric_class": "g_pass_at_k_math",
+      "metric_params": {
+        "k": 5,
+        "n": 8,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is the sum of the first n natural numbers?",
+        "choices": ["n(n+1)/2"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["n(n+1)/2", "n*(n+1)/2", "n(n+1)/2", "n^2/2", "n(n+1)/2", "n+1", "n(n+1)/2", "n"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "math_g-pass@5_0.0": 0.0,
+        "math_g-pass@5_0.25": 0.0,
+        "math_g-pass@5_0.5": 0.0,
+        "math_g-pass@5_0.75": 0.0,
+        "math_g-pass@5_1.0": 0.0,
+        "mmath_g-pass@5": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test case with high k value and multiple correct samples"
+    },
+    {
+      "name": "G Pass At K Math - Negative Numbers",
+      "metric_class": "g_pass_at_k_math",
+      "metric_params": {
+        "k": 1,
+        "n": 2,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is -5 + 3?",
+        "choices": ["-2"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["-2", "2"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "math_g-pass@1_0.0": 0.5,
+        "math_g-pass@1_0.25": 0.5,
+        "math_g-pass@1_0.5": 0.5,
+        "math_g-pass@1_0.75": 0.5,
+        "math_g-pass@1_1.0": 0.5,
+        "mmath_g-pass@1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test case with negative numbers"
+    },
+    {
+      "name": "G Pass At K Math - Complex Expression",
+      "metric_class": "g_pass_at_k_math",
+      "metric_params": {
+        "k": 2,
+        "n": 4,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is (2+3)*4?",
+        "choices": ["20"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["20", "24", "20", "14"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "math_g-pass@2_0.0": 0.8333333333333334,
+        "math_g-pass@2_0.25": 0.8333333333333334,
+        "math_g-pass@2_0.5": 0.8333333333333334,
+        "math_g-pass@2_0.75": 0.16666666666666666,
+        "math_g-pass@2_1.0": 0.16666666666666666,
+        "mmath_g-pass@2": 0.16666666666666666
+      },
+      "tolerance": 0.01,
+      "description": "Test case with complex mathematical expression"
+    },
+    {
+      "name": "G Pass At K Math - Percentage",
+      "metric_class": "g_pass_at_k_math",
+      "metric_params": {
+        "k": 1,
+        "n": 2,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is 25% of 80?",
+        "choices": ["20"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["20", "25"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "math_g-pass@1_0.0": 0.5,
+        "math_g-pass@1_0.25": 0.5,
+        "math_g-pass@1_0.5": 0.5,
+        "math_g-pass@1_0.75": 0.5,
+        "math_g-pass@1_1.0": 0.5,
+        "mmath_g-pass@1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test case with percentage calculation"
+    },
+    {
+      "name": "G Pass At K Math - Edge Case Zero",
+      "metric_class": "g_pass_at_k_math",
+      "metric_params": {
+        "k": 1,
+        "n": 1,
+        "thresholds": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "strip_strings": true
+      },
+      "doc": {
+        "query": "What is 5 - 5?",
+        "choices": ["0"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["0"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "math_g-pass@1_0.0": 1.0,
+        "math_g-pass@1_0.25": 1.0,
+        "math_g-pass@1_0.5": 1.0,
+        "math_g-pass@1_0.75": 1.0,
+        "math_g-pass@1_1.0": 1.0,
+        "mmath_g-pass@1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Edge case with zero result"
+    }
+  ]
+}

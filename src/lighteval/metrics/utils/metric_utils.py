@@ -94,6 +94,10 @@ class Metric:
             self.metric_name = f"{self.metric_name}_with_{sample_params_name}"
         return self
 
+    @staticmethod
+    def get_allowed_types_for_metrics():
+        return (SampleLevelComputation, Preparator, CorpusLevelComputation, Callable)
+
 
 @dataclass
 class MetricGrouping(Metric):
