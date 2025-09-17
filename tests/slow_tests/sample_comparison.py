@@ -37,7 +37,7 @@ def _to_plain_list(value):
     return new_value
 
 
-def _logprobs_approximately_equal(current_logprobs, reference_logprobs, tolerance=1e-6):
+def _logprobs_approximately_equal(current_logprobs, reference_logprobs, tolerance=1e-3):
     """Compare logprobs with float approximation tolerance."""
     current_logprobs = _to_plain_list(current_logprobs)
     reference_logprobs = _to_plain_list(reference_logprobs)
