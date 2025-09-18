@@ -115,9 +115,9 @@ class Registry:
         self,
         tasks: str | Path | None = None,
         custom_tasks: str | Path | ModuleType | None = None,
-        load_community: bool = True,
-        load_extended: bool = True,
-        load_multilingual: bool = True,
+        load_community: bool = False,
+        load_extended: bool = False,
+        load_multilingual: bool = False,
     ):
         """
         Initialize the Registry class.
@@ -212,6 +212,13 @@ class Registry:
                 logger.warning(
                     f"Suite {suite_name} unknown. This is not normal, unless you are testing adding new evaluations."
                 )
+
+        if "extended" in suites:
+            self._load_extended = True
+        if "multilingual" in suites:
+            self._load_multilingual = True
+        if "community" in suites:
+            self._load_community = True
 
     def _load_full_registry(self) -> dict[str, LightevalTaskConfig]:
         """

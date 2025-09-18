@@ -42,7 +42,7 @@ from lighteval.models.model_output import (
 from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.registry import Registry
 from lighteval.tasks.requests import SamplingMethod
-from lighteval.utils.imports import is_package_available, raise_if_package_not_available
+from lighteval.utils.imports import is_package_available
 from lighteval.utils.parallelism import test_all_gather
 from lighteval.utils.utils import make_results_table, remove_reasoning_tags
 
@@ -96,21 +96,6 @@ class PipelineParameters:
     bootstrap_iters: int = 1000
 
     def __post_init__(self):  # noqa C901
-        # Import testing
-        if self.launcher_type == ParallelismManager.ACCELERATE:
-            raise_if_package_not_available("accelerate")
-        elif self.launcher_type == ParallelismManager.VLLM:
-            raise_if_package_not_available("vllm")
-        elif self.launcher_type == ParallelismManager.SGLANG:
-            raise_if_package_not_available("sglang")
-        elif self.launcher_type == ParallelismManager.TGI:
-            raise_if_package_not_available("tgi")
-        elif self.launcher_type == ParallelismManager.NANOTRON:
-            raise_if_package_not_available("nanotron")
-        elif self.launcher_type == ParallelismManager.OPENAI:
-            raise_if_package_not_available("openai")
-
-        # Convert reasoning tags to list if needed
         if not isinstance(self.reasoning_tags, list):
             try:
                 self.reasoning_tags = ast.literal_eval(self.reasoning_tags)

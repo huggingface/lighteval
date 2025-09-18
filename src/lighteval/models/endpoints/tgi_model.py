@@ -32,7 +32,7 @@ from lighteval.models.abstract_model import ModelConfig
 from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.utils.cache_management import SampleCache
-from lighteval.utils.imports import is_package_available, requires
+from lighteval.utils.imports import Extra, is_package_available, requires
 
 
 if is_package_available("tgi"):
@@ -99,7 +99,7 @@ class TGIModelConfig(ModelConfig):
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite
 # the client functions, since they use a different client.
-@requires("tgi")
+@requires(Extra.TGI)
 class ModelClient(InferenceEndpointModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 

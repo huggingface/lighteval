@@ -18,8 +18,7 @@ from functools import lru_cache
 from typing import Callable, Iterator
 
 from lighteval.utils.imports import (
-    Extras,
-    raise_if_package_not_available,
+    Extra,
     requires,
 )
 from lighteval.utils.language import Language
@@ -98,7 +97,7 @@ class NLTKTokenizer(WordTokenizer):
         return list(self.tokenizer.span_tokenize(text))
 
 
-@requires(Extras.MULTILINGUAL)
+@requires(Extra.MULTILINGUAL)
 class SpaCyTokenizer(WordTokenizer):
     def __init__(self, spacy_language: str, config=None):
         super().__init__()
@@ -139,7 +138,6 @@ class SpaCyTokenizer(WordTokenizer):
 class StanzaTokenizer(WordTokenizer):
     def __init__(self, stanza_language: str, **stanza_kwargs):
         super().__init__()
-        raise_if_package_not_available("stanza")
         self.stanza_language = stanza_language
         self.stanza_kwargs = stanza_kwargs
         self._tokenizer = None

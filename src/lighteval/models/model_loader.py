@@ -43,7 +43,6 @@ from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConf
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModel, VLMTransformersModelConfig
 from lighteval.models.vllm.vllm_model import AsyncVLLMModel, VLLMModel, VLLMModelConfig
-from lighteval.utils.imports import raise_if_package_not_available
 
 
 logger = logging.getLogger(__name__)
@@ -148,7 +147,6 @@ def load_model_with_accelerate_or_default(
     elif isinstance(config, DeltaModelConfig):
         model = DeltaModel(config=config)
     elif isinstance(config, VLLMModelConfig):
-        raise_if_package_not_available("vllm")
         if config.is_async:
             model = AsyncVLLMModel(config=config)
         else:

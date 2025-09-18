@@ -25,6 +25,7 @@ import functools
 import importlib
 
 import pytest
+from packaging.requirements import Requirement
 
 import lighteval.utils.imports as imports
 
@@ -40,7 +41,8 @@ def pretend_missing(*names):
         def wrapper(*args, **kwargs):
             from unittest.mock import patch
 
-            def fake(name):
+            def fake(requirement):
+                name = requirement.name if isinstance(requirement, Requirement) else requirement
                 return False if name in names else (importlib.util.find_spec(name) is not None)
 
             with patch.object(imports, "is_package_available", side_effect=fake):
@@ -73,9 +75,9 @@ def test_multilingual_required_for_xnli():
 
     with pytest.raises(
         ImportError,
-        match="Through the use of get_multilingual_normalizer, you are trying to run an evaluation requiring multilingual capabilities. Please install the required extra: `pip install lighteval[multilingual]`",
+        match="Through the use of get_multilingual_normalizer, you are trying to run an evaluation requiring multilingual capabilities.",
     ):
-        accelerate(model_args="model_name=gpt2,batch_size=1", tasks="lighteval|xnli_zho_mcf|0", max_samples=0)
+        accelerate(model_args="model_name=gpt2,batch_size=1", tasks="multilingual|xnli_zho_mcf|0", max_samples=0)
 
 
 @pretend_missing("vllm")
@@ -84,6 +86,6 @@ def test_vllm_required_for_vllm_usage():
 
     with pytest.raises(
         ImportError,
-        match="You requested the use of `vllm` for this evaluation, but it is not available in your current environment. Please install it using pip.'",
+        match="Through the use of VLLMModel, you requested the use of `vllm<0.10.2,>=0.10.0` for this evaluation, but it is not available in your current environment. Please install it using pip.",
     ):
-        vllm(model_args="model_name=gpt2,batch_size=1", tasks="lighteval|xnli_zho_mcf|0", max_samples=0)
+        vllm(model_args="model_name=gpt2", tasks="lighteval|aime24|0", max_samples=0)
