@@ -41,6 +41,11 @@ def is_package_available(package: str | Requirement | Extra):
 
     # If the package is a string, it will get the potential required version from the pyproject.toml
     if isinstance(package, str):
+        if package not in deps:
+            raise RuntimeError(
+                f"Package {package} was tested against, but isn't specified in the pyproject.toml file. Please specify"
+                f"it as a potential dependency or an extra for it to be checked."
+            )
         package = deps[package]
 
     # If the specified package is an "Extra", we will iterate through each required dependency of that extra
@@ -75,6 +80,10 @@ def required_dependencies() -> Tuple[Dict[str, Requirement], Dict[str, List[Requ
         extra = None
         if ";" in dep:
             dep, marker = dep.split(";", 1)
+
+            # The `metadata` function prints requirements as follows
+            # 'vllm<0.10.2,>=0.10.0; extra == "vllm"'
+            # The regex searches for "extra == <MARKER>" in order to parse the marker.
             match = re.search(r'extra\s*==\s*"(.*?)"', marker)
             extra = match.group(1) if match else None
         requirement = Requirement(dep.strip())
@@ -146,29 +155,37 @@ class DummyObject(type):
         for backend in cls._backends:
             raise_if_package_not_available(backend)
 
+        return super().__getattribute__(key)
 
-def requires(*backends):
+
+def parse_specified_backends(specified_backends):
+    requirements, _ = required_dependencies()
+    applied_backends = []
+
+    for backend in specified_backends:
+        if isinstance(backend, Extra):
+            applied_backends.append(backend if isinstance(backend, Extra) else requirements[backend])
+        elif backend not in requirements:
+            raise RuntimeError(
+                "A dependency was specified with @requires, but it is not defined in the possible dependencies "
+                f"defined in the pyproject.toml: `{backend}`."
+                f""
+                f"If editing the pyproject.toml to add a new dependency, remember to reinstall lighteval for the"
+                f"update to take effect."
+            )
+        else:
+            applied_backends.append(requirements[backend])
+
+    return applied_backends
+
+
+def requires(*specified_backends):
     """
     Decorator to raise an ImportError if the decorated object (function or class) requires a dependency
     which is not installed.
     """
 
-    requirements, _ = required_dependencies()
-
-    applied_backends = []
-    for backend in backends:
-        if isinstance(backend, Extra):
-            applied_backends.append(backend)
-        else:
-            if backend not in requirements:
-                raise RuntimeError(
-                    "A dependency was specified with @requires, but it is not defined in the possible dependencies "
-                    f"defined in the pyproject.toml: `{backend}`."
-                    f""
-                    f"If editing the pyproject.toml to add a new dependency, remember to reinstall lighteval for the"
-                    f"update to take effect."
-                )
-            applied_backends.append(requirements[backend])
+    applied_backends = parse_specified_backends(specified_backends)
 
     def inner_fn(_object):
         _object._backends = applied_backends
@@ -185,7 +202,7 @@ def requires(*backends):
             Placeholder.__name__ = _object.__name__
             Placeholder.__module__ = _object.__module__
 
-            return Placeholder
+            return _object if all(is_package_available(backend) for backend in applied_backends) else Placeholder
         else:
 
             @functools.wraps(_object)

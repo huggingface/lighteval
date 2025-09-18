@@ -32,6 +32,7 @@ from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache
+from lighteval.utils.imports import Extra, is_package_available
 
 
 class TestCaching(unittest.TestCase):
@@ -177,12 +178,9 @@ class TestCaching(unittest.TestCase):
 
     @patch("lighteval.models.transformers.transformers_model.TransformersModel._loglikelihood_tokens")
     @patch("lighteval.models.transformers.transformers_model.TransformersModel._padded_greedy_until")
-    @patch("lighteval.utils.imports.is_accelerate_available")
     @patch("lighteval.models.transformers.transformers_model.Accelerator")
     @patch("lighteval.models.transformers.transformers_model.TransformersModel._create_auto_model")
-    def test_cache_transformers(
-        self, mock_create_model, mock_accelerator, mock_is_accelerate_available, mock_greedy_until, mock_loglikelihood
-    ):
+    def test_cache_transformers(self, mock_create_model, mock_accelerator, mock_greedy_until, mock_loglikelihood):
         from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 
         # Skip the model creation phase
@@ -192,7 +190,6 @@ class TestCaching(unittest.TestCase):
         mock_accelerator_instance = Mock()
         mock_accelerator_instance.device = torch.device("cpu")
         mock_accelerator.return_value = mock_accelerator_instance
-        mock_is_accelerate_available = False  # noqa F841
 
         mock_greedy_until.return_value = self.model_responses
         mock_loglikelihood.return_value = self.model_responses
@@ -237,9 +234,8 @@ class TestCaching(unittest.TestCase):
     @patch("lighteval.models.endpoints.tgi_model.ModelClient._loglikelihood")
     def test_cache_tgi(self, mock_loglikelihood, mock_greedy_until, mock_requests_get):
         from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
-        from lighteval.utils.imports import is_package_available
 
-        if not is_package_available("tgi"):
+        if not is_package_available(Extra.TGI):
             pytest.skip("Skipping because missing the imports")
 
         # Mock TGI requests
@@ -320,12 +316,9 @@ class TestCaching(unittest.TestCase):
             )
 
     @patch("lighteval.models.transformers.vlm_transformers_model.VLMTransformersModel._greedy_until")
-    @patch("lighteval.utils.imports.is_accelerate_available")
     @patch("lighteval.models.transformers.vlm_transformers_model.Accelerator")
     @patch("lighteval.models.transformers.vlm_transformers_model.VLMTransformersModel._create_auto_model")
-    def test_cache_vlm_transformers(
-        self, mock_create_model, mock_accelerator, is_accelerate_available, mock_greedy_until
-    ):
+    def test_cache_vlm_transformers(self, mock_create_model, mock_accelerator, mock_greedy_until):
         from lighteval.models.transformers.vlm_transformers_model import (
             VLMTransformersModel,
             VLMTransformersModelConfig,
@@ -335,7 +328,6 @@ class TestCaching(unittest.TestCase):
         mock_accelerator_instance = Mock()
         mock_accelerator_instance.device = torch.device("cpu")
         mock_accelerator.return_value = mock_accelerator_instance
-        is_accelerate_available = False  # noqa F841
 
         # Skip the model creation phase
         mock_create_model = Mock()  # noqa F841

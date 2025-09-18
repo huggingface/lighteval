@@ -1,17 +1,17 @@
 # MIT License
-
+#
 # Copyright (c) 2024 The HuggingFace Team
-
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,75 +20,60 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# tests/utils/pretend_missing.py
-import functools
-import importlib
-
 import pytest
-from packaging.requirements import Requirement
 
-import lighteval.utils.imports as imports
-
-
-def pretend_missing(*names):
-    """
-    Decorator: pretend that certain packages are missing
-    by patching mypkg.utils.is_package_available.
-    """
-
-    def decorator(test_func):
-        @functools.wraps(test_func)
-        def wrapper(*args, **kwargs):
-            from unittest.mock import patch
-
-            def fake(requirement):
-                name = requirement.name if isinstance(requirement, Requirement) else requirement
-                return False if name in names else (importlib.util.find_spec(name) is not None)
-
-            with patch.object(imports, "is_package_available", side_effect=fake):
-                # If your module caches results at import time, reload here
-                import lighteval
-
-                importlib.reload(lighteval)
-
-                return test_func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
+from lighteval.utils.imports import Extra, is_package_available, requires
 
 
-@pretend_missing("langdetect")
-def test_langdetect_required_for_ifeval():
-    from lighteval.main_accelerate import accelerate
+def test_requires():
+    @requires("sglang")
+    class RandomModel:
+        pass
+
+    assert RandomModel.__name__ == "RandomModel"
+    assert RandomModel.__class__.__name__ == "DummyObject"
 
     with pytest.raises(
         ImportError,
-        match="Through the use of ifeval_prompt, you requested the use of `langdetect` for this evaluation, but it is not available in your current environment. Please install it using pip.",
+        match="Through the use of RandomModel, you requested the use of `sglang` for this evaluation, but it is not available in your current environment. Please install it using pip.",
     ):
-        accelerate(model_args="model_name=gpt2,batch_size=1", tasks="extended|ifeval|0", max_samples=0)
+        RandomModel()
 
 
-@pretend_missing("spacy", "stanza")
-def test_multilingual_required_for_xnli():
-    """
-    This checks that the Extra.MULTILINGUAL correctly raises if there are missing dependencies.
-    """
-    from lighteval.main_accelerate import accelerate
+def test_requires_with_extra():
+    @requires(Extra.TGI)
+    class RandomModel:
+        pass
 
     with pytest.raises(
         ImportError,
-        match="Through the use of get_multilingual_normalizer, you are trying to run an evaluation requiring multilingual capabilities.",
+        match=r"Through the use of RandomModel, you are trying to run an evaluation requiring tgi capabilities. Please install the required extra: `pip install lighteval\[tgi\]`",
     ):
-        accelerate(model_args="model_name=gpt2,batch_size=1", tasks="multilingual|xnli_zho_mcf|0", max_samples=0)
+        RandomModel()
 
 
-@pretend_missing("vllm")
-def test_vllm_required_for_vllm_usage():
-    from lighteval.main_vllm import vllm
-
+def test_requires_with_wrong_dependency():
     with pytest.raises(
-        ImportError,
-        match="Through the use of VLLMModel, you requested the use of `vllm<0.10.2,>=0.10.0` for this evaluation, but it is not available in your current environment. Please install it using pip.",
+        RuntimeError,
+        match="A dependency was specified with @requires, but it is not defined in the possible dependencies defined in the pyproject.toml: `random_dependency`",
     ):
-        vllm(model_args="model_name=gpt2", tasks="lighteval|aime24|0", max_samples=0)
+
+        @requires("random_dependency")
+        class RandomModel:
+            pass
+
+
+def test_is_package_available():
+    assert is_package_available("torch")
+
+
+def test_is_package_unavailable():
+    assert not is_package_available("tensorboardX")
+
+
+def test_is_package_is_not_specified_in_pyproject_toml():
+    with pytest.raises(
+        RuntimeError,
+        match="Package tensorflow was tested against, but isn't specified in the pyproject.toml file. Please specifyit as a potential dependency or an extra for it to be checked.",
+    ):
+        is_package_available("tensorflow")

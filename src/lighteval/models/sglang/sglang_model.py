@@ -138,7 +138,6 @@ class SGLangModelConfig(ModelConfig):
     override_chat_template: bool = None
 
 
-@requires("sglang")
 class SGLangModel(LightevalModel):
     def __init__(
         self,
@@ -187,7 +186,7 @@ class SGLangModel(LightevalModel):
     def max_length(self) -> int:
         return self._max_length
 
-    def _create_auto_model(self, config: SGLangModelConfig) -> Optional[Engine]:
+    def _create_auto_model(self, config: SGLangModelConfig) -> Optional["Engine"]:
         self.model_args = {
             "model_path": config.model_name,
             "trust_remote_code": config.trust_remote_code,
@@ -314,6 +313,7 @@ class SGLangModel(LightevalModel):
                 results.append(cur_response)
         return dataset.get_original_order(results)
 
+    @requires("sglang")
     def _generate(
         self,
         inputs: list[list[int]],

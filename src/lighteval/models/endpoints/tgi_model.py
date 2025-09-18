@@ -35,7 +35,7 @@ from lighteval.utils.cache_management import SampleCache
 from lighteval.utils.imports import Extra, is_package_available, requires
 
 
-if is_package_available("tgi"):
+if is_package_available(Extra.TGI):
     from text_generation import AsyncClient
 else:
     from unittest.mock import Mock
@@ -99,7 +99,6 @@ class TGIModelConfig(ModelConfig):
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite
 # the client functions, since they use a different client.
-@requires(Extra.TGI)
 class ModelClient(InferenceEndpointModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
@@ -134,6 +133,7 @@ class ModelClient(InferenceEndpointModel):
         # Initialize cache for tokenization and predictions
         self._cache = SampleCache(config)
 
+    @requires(Extra.TGI)
     def _async_process_request(
         self,
         context: str,
@@ -173,6 +173,7 @@ class ModelClient(InferenceEndpointModel):
 
         return generated_text
 
+    @requires(Extra.TGI)
     def _process_request(self, *args, **kwargs) -> TextGenerationOutput:
         return asyncio.run(self._async_process_request(*args, **kwargs))
 
