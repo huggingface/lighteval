@@ -28,7 +28,7 @@ from datasets import Dataset
 
 
 def _to_plain_list(value):
-    """Convert tensors/arrays to Python lists; pass through other types."""
+    """convert a list of tensors to a list of plain values"""
     new_value = []
     for item in value:
         if hasattr(item, "tolist"):
@@ -39,12 +39,13 @@ def _to_plain_list(value):
 
 def _logprobs_approximately_equal(current_logprobs, reference_logprobs, tolerance=1e-2):
     """Compare logprobs with float approximation tolerance."""
-    current_logprobs = _to_plain_list(current_logprobs)
-    reference_logprobs = _to_plain_list(reference_logprobs)
     if current_logprobs is None and reference_logprobs is None:
         return True
     if current_logprobs is None or reference_logprobs is None:
         return False
+
+    current_logprobs = _to_plain_list(current_logprobs)
+    reference_logprobs = _to_plain_list(reference_logprobs)
 
     return all(math.isclose(c, r, abs_tol=tolerance) for c, r in zip(current_logprobs, reference_logprobs))
 
@@ -89,6 +90,8 @@ def _compare_model_responses(current, reference):
                     "reference": reference_val,
                 }
         elif field_name in ["input_tokens", "output_tokens"]:
+            # input and ouput tokens are lists of tensors, we need to convert
+            # them to plain lists
             current_val = _to_plain_list(current_val)
             reference_val = _to_plain_list(reference_val)
 
