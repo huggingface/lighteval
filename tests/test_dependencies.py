@@ -71,6 +71,9 @@ def test_langdetect_required_for_ifeval():
 
 @pretend_missing("spacy", "stanza")
 def test_multilingual_required_for_xnli():
+    """
+    This checks that the Extra.MULTILINGUAL correctly raises if there are missing dependencies.
+    """
     from lighteval.main_accelerate import accelerate
 
     with pytest.raises(

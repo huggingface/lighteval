@@ -34,11 +34,17 @@ class Extra(enum.Enum):
 
 @lru_cache()
 def is_package_available(package: str | Requirement | Extra):
+    """
+    Check if a package is installed in the environment. Returns True if that's the case, False otherwise.
+    """
     deps, deps_by_extra = required_dependencies()
 
+    # If the package is a string, it will get the potential required version from the pyproject.toml
     if isinstance(package, str):
         package = deps[package]
 
+    # If the specified package is an "Extra", we will iterate through each required dependency of that extra
+    # and their version and check their existence.
     if isinstance(package, Extra):
         dependencies = deps_by_extra[package.value]
         return all(is_package_available(_package) for _package in dependencies)
@@ -57,6 +63,9 @@ def is_package_available(package: str | Requirement | Extra):
 
 @lru_cache()
 def required_dependencies() -> Tuple[Dict[str, Requirement], Dict[str, List[Requirement]]]:
+    """
+    Parse the pyproject.toml file and return a dictionary mapping package names to requirements.
+    """
     md = metadata("lighteval")
     requires_dist = md.get_all("Requires-Dist") or []
     deps_by_extra = defaultdict(list)
@@ -101,6 +110,10 @@ def raise_if_package_not_available(package: Requirement | Extra, *, language: st
 
 
 def not_installed_error_message(package: Requirement) -> str:
+    """
+    Custom error messages if need be.
+    """
+
     if package == Extra.MULTILINGUAL.value:
         return "You are trying to run an evaluation requiring multilingual capabilities. Please install the required extra: `pip install lighteval[multilingual]`"
     elif package == Extra.EXTENDED.value:
