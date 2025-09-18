@@ -164,15 +164,10 @@ results = pipeline.get_results()
 
 ## 🙏 Acknowledgements
 
-Lighteval started as an extension of the *fantastic* [Eleuther AI
-Harness](https://github.com/EleutherAI/lm-evaluation-harness) (which powers the
-[Open LLM
-Leaderboard](https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard))
-and draws inspiration from the *amazing*
-[HELM](https://crfm.stanford.edu/helm/latest/) framework.
+Lighteval took inspiration from the following *amazing* frameworks: Eleuther's [AI Harness](https://github.com/EleutherAI/lm-evaluation-harness) and Stanford's
+[HELM](https://crfm.stanford.edu/helm/latest/). We are grateful to their teams for their **pioneering work** on LLM evaluations.
 
-While evolving Lighteval into its own *standalone tool*, we are grateful to the
-Harness and HELM teams for their **pioneering work** on LLM evaluations.
+We'd also like to offer our thanks to all the community members who have contributed to the library, adding new features and reporting or fixing bugs.
 
 ## 🌟 Contributions Welcome 💙💚💛💜🧡
 
