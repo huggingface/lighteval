@@ -106,3 +106,5 @@ def test_accelerate_model_prediction(tests: list[ModelInput]):
     enhanced_message = enhance_test_with_sample_comparison(diff, details, DETAILS_EXPECTED_DIR)
     if enhanced_message:
         assert False, enhanced_message
+    else:
+        assert True

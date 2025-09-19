@@ -100,7 +100,7 @@ def _compare_model_responses(current, reference):
             reference_val = _to_plain_list(reference_val)
 
             if current_val != reference_val:
-                sample_diff["{}_difference".format(field_name)] = {
+                sample_diff[f"{field_name}_difference"] = {
                     "current": current_val,
                     "reference": reference_val,
                 }
@@ -203,24 +203,22 @@ def _format_single_diff(diff):
     """Format a single sample difference."""
     output = []
     sample_idx = diff.get("sample_index", "unknown")
-    output.append("  Sample {}:".format(sample_idx))
+    output.append(f"  Sample {sample_idx}:")
 
     # Handle model response field differences
     for key, value in diff.items():
         if key.endswith("_difference") and key != "metric_differences":
             field_name = key.replace("_difference", "")
-            output.append("    {} differs:".format(field_name.title()))
+            output.append(f"    {field_name.title()} differs:")
             output.append("      Current: {}".format(value["current"]))
-            output.append("      Reference: {}".format(value["reference"]))
+            output.append(f"      Reference: {value['reference']}")
 
     # Handle metric differences
     if "metric_differences" in diff:
         output.append("    Metrics differ:")
         for metric_name, metric_diff in diff["metric_differences"].items():
             output.append(
-                "      {}: current={}, reference={}".format(
-                    metric_name, metric_diff["current"], metric_diff["reference"]
-                )
+                f"      {metric_name}: current={metric_diff['current']}, reference={metric_diff['reference']}"
             )
 
     return output
