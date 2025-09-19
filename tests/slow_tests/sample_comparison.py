@@ -202,7 +202,7 @@ def _format_single_diff(diff):
     """Format a single sample difference."""
     output = []
     sample_idx = diff.get("sample_index", "unknown")
-    output.append("  Sample {}:".format(sample_idx))
+    output.append(f"  Sample {sample_idx}:")
 
     # Handle model response field differences
     for key, value in diff.items():
