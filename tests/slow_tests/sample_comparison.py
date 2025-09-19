@@ -99,7 +99,7 @@ def _compare_model_responses(current, reference):
             reference_val = _to_plain_list(reference_val)
 
             if current_val != reference_val:
-                sample_diff["{}_difference".format(field_name)] = {
+                sample_diff[f"{field_name}_difference"] = {
                     "current": current_val,
                     "reference": reference_val,
                 }
