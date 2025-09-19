@@ -35,12 +35,12 @@ from lighteval.models.utils import _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache, cached
-from lighteval.utils.imports import is_sglang_available
+from lighteval.utils.imports import is_package_available, requires
 
 
 logger = logging.getLogger(__name__)
 
-if is_sglang_available():
+if is_package_available("sglang"):
     from sglang import Engine
     from sglang.srt.hf_transformers_utils import get_tokenizer
 
@@ -186,7 +186,7 @@ class SGLangModel(LightevalModel):
     def max_length(self) -> int:
         return self._max_length
 
-    def _create_auto_model(self, config: SGLangModelConfig) -> Optional[Engine]:
+    def _create_auto_model(self, config: SGLangModelConfig) -> Optional["Engine"]:
         self.model_args = {
             "model_path": config.model_name,
             "trust_remote_code": config.trust_remote_code,
@@ -313,6 +313,7 @@ class SGLangModel(LightevalModel):
                 results.append(cur_response)
         return dataset.get_original_order(results)
 
+    @requires("sglang")
     def _generate(
         self,
         inputs: list[list[int]],

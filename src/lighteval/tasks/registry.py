@@ -36,12 +36,6 @@ from types import ModuleType
 import lighteval.tasks.default_tasks as default_tasks
 from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
-from lighteval.utils.imports import (
-    CANNOT_USE_EXTENDED_TASKS_MSG,
-    CANNOT_USE_MULTILINGUAL_TASKS_MSG,
-    can_load_extended_tasks,
-    can_load_multilingual_tasks,
-)
 
 
 # Import community tasks
@@ -220,12 +214,8 @@ class Registry:
                 )
 
         if "extended" in suites:
-            if not can_load_extended_tasks():
-                raise ImportError(CANNOT_USE_EXTENDED_TASKS_MSG)
             self._load_extended = True
         if "multilingual" in suites:
-            if not can_load_multilingual_tasks():
-                raise ImportError(CANNOT_USE_MULTILINGUAL_TASKS_MSG)
             self._load_multilingual = True
         if "community" in suites:
             self._load_community = True
@@ -251,8 +241,6 @@ class Registry:
         if self._load_extended:
             for extended_task_module in AVAILABLE_EXTENDED_TASKS_MODULES:
                 custom_tasks_module.append(extended_task_module)
-        else:
-            logger.warning(CANNOT_USE_EXTENDED_TASKS_MSG)
 
         # Need to load community tasks
         if self._load_community:

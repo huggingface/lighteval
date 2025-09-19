@@ -21,7 +21,11 @@ import random
 import re
 import string
 
-import langdetect
+from lighteval.utils.imports import is_package_available
+
+
+if is_package_available("langdetect"):
+    import langdetect
 
 import lighteval.tasks.extended.ifeval.instructions_utils as instructions_util
 

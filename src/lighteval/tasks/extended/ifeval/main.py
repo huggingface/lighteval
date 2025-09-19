@@ -31,9 +31,11 @@ from lighteval.metrics.utils.metric_utils import (
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.utils.imports import requires
 
 
 # Very specific task where there are no precise outputs but instead we test if the format obeys rules
+@requires("langdetect")
 def ifeval_prompt(line, task_name: str = ""):
     return Doc(
         task_name=task_name,
@@ -123,6 +125,7 @@ class IFEvalMetrics(SampleLevelComputation):
         }
 
 
+@requires("langdetect")
 def agg_inst_level_acc(items):
     flat_items = [item for sublist in items for item in sublist]
     inst_level_acc = sum(flat_items) / len(flat_items)

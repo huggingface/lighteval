@@ -27,12 +27,7 @@ import logging
 
 import torch
 
-from lighteval.utils.imports import (
-    NO_ACCELERATE_ERROR_MSG,
-    NO_NANOTRON_ERROR_MSG,
-    is_accelerate_available,
-    is_nanotron_available,
-)
+from lighteval.utils.imports import raise_if_package_not_available
 
 
 logger = logging.getLogger(__name__)
@@ -126,21 +121,16 @@ def test_all_gather(accelerator=None, parallel_context=None):
     Args:
         accelerator (Optional): The accelerator object used for parallelism.
         parallel_context (Optional): The parallel context object used for parallelism.
-
-    Raises:
-        ImportError: If the required accelerator or parallel context is not available.
     """
     if accelerator:
-        if not is_accelerate_available():
-            raise ImportError(NO_ACCELERATE_ERROR_MSG)
+        raise_if_package_not_available("accelerate")
         logger.info("Test gather tensor")
         test_tensor: torch.Tensor = torch.tensor([accelerator.process_index], device=accelerator.device)
         gathered_tensor: torch.Tensor = accelerator.gather(test_tensor)
         logger.info(f"gathered_tensor {gathered_tensor}, should be {list(range(accelerator.num_processes))}")
         accelerator.wait_for_everyone()
     elif parallel_context:
-        if not is_nanotron_available():
-            raise ImportError(NO_NANOTRON_ERROR_MSG)
+        raise_if_package_not_available("nanotron")
         from nanotron import distributed as dist
         from nanotron import logging
 

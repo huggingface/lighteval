@@ -32,10 +32,10 @@ from lighteval.models.abstract_model import ModelConfig
 from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.utils.cache_management import SampleCache
-from lighteval.utils.imports import NO_TGI_ERROR_MSG, is_tgi_available
+from lighteval.utils.imports import Extra, is_package_available, requires
 
 
-if is_tgi_available():
+if is_package_available(Extra.TGI):
     from text_generation import AsyncClient
 else:
     from unittest.mock import Mock
@@ -103,8 +103,6 @@ class ModelClient(InferenceEndpointModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
     def __init__(self, config: TGIModelConfig) -> None:
-        if not is_tgi_available():
-            raise ImportError(NO_TGI_ERROR_MSG)
         headers = (
             {} if config.inference_server_auth is None else {"Authorization": f"Bearer {config.inference_server_auth}"}
         )
@@ -135,6 +133,7 @@ class ModelClient(InferenceEndpointModel):
         # Initialize cache for tokenization and predictions
         self._cache = SampleCache(config)
 
+    @requires(Extra.TGI)
     def _async_process_request(
         self,
         context: str,
@@ -174,6 +173,7 @@ class ModelClient(InferenceEndpointModel):
 
         return generated_text
 
+    @requires(Extra.TGI)
     def _process_request(self, *args, **kwargs) -> TextGenerationOutput:
         return asyncio.run(self._async_process_request(*args, **kwargs))
 

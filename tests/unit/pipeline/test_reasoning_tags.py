@@ -35,7 +35,7 @@ from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.registry import Registry
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.imports import is_accelerate_available
+from lighteval.utils.imports import is_package_available
 
 
 class TestPipelineReasoningTags(unittest.TestCase):
@@ -129,7 +129,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
         )
 
         # Initialize accelerator if available
-        if is_accelerate_available():
+        if is_package_available("accelerate"):
             from accelerate import Accelerator
 
             Accelerator()
@@ -175,7 +175,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
         )
 
         # Initialize accelerator if available
-        if is_accelerate_available():
+        if is_package_available("accelerate"):
             from accelerate import Accelerator
 
             Accelerator()
@@ -221,7 +221,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
         )
 
         # Initialize accelerator if available
-        if is_accelerate_available():
+        if is_package_available("accelerate"):
             from accelerate import Accelerator
 
             Accelerator()
@@ -264,7 +264,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
         )
 
         # Initialize accelerator if available
-        if is_accelerate_available():
+        if is_package_available("accelerate"):
             from accelerate import Accelerator
 
             Accelerator()
@@ -310,7 +310,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
         )
 
         # Initialize accelerator if available
-        if is_accelerate_available():
+        if is_package_available("accelerate"):
             from accelerate import Accelerator
 
             Accelerator()
@@ -356,7 +356,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
         )
 
         # Initialize accelerator if available
-        if is_accelerate_available():
+        if is_package_available("accelerate"):
             from accelerate import Accelerator
 
             Accelerator()

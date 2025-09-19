@@ -34,13 +34,13 @@ from lighteval.models.abstract_model import ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.utils.imports import is_nanotron_available
+from lighteval.utils.imports import is_package_available
 
 
 logger = logging.getLogger(__name__)
 
 
-if is_nanotron_available():
+if is_package_available("nanotron"):
     pass
 
 

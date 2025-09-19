@@ -30,7 +30,7 @@ from multiprocessing import Pool
 from typing import Literal
 
 from lighteval.metrics.imports.data_stats_utils import Fragments
-from lighteval.utils.imports import NO_SPACY_ERROR_MSG, is_spacy_available
+from lighteval.utils.imports import Extra, requires
 
 
 logger = logging.getLogger(__name__)
@@ -55,6 +55,7 @@ def find_ngrams(input_list, n):
     return zip(*[input_list[i:] for i in range(n)])
 
 
+@requires(Extra.MULTILINGUAL)
 class DataStatsMetric(Metric):
     def __init__(
         self,
@@ -86,8 +87,6 @@ class DataStatsMetric(Metric):
                 determines the spaCy model used for tokenization. Currently supports English,
                 German, French, and Italian.
         """
-        if not is_spacy_available():
-            raise ImportError(NO_SPACY_ERROR_MSG)
         import spacy
 
         self.n_gram = n_gram

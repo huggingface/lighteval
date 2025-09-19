@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from lighteval.metrics.utils.linguistic_tokenizers import get_word_tokenizer
+from lighteval.utils.imports import Extra, requires
 from lighteval.utils.language import Language
 
 
@@ -444,15 +445,16 @@ def remove_punc(text: str) -> str:
     return "".join(ch for ch in text if ch not in PUNCT)
 
 
+@requires(Extra.MULTILINGUAL)
 def get_multilingual_normalizer(lang: Language, lower: bool = True) -> Callable[[str], str]:
     """Get a normalizer function for the specified language.
 
     Returns:
         Callable[[str], str]: A function that normalizes text for the specified language
     """
-    tokenizer = get_word_tokenizer(lang)
 
     def _inner_normalizer(text: str) -> str:
+        tokenizer = get_word_tokenizer(lang)
         text = remove_articles(text, lang)
         text = remove_punc(text)
         if lower:

@@ -34,12 +34,12 @@ from lighteval.metrics.utils.math_comparison import should_treat_as_complex
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.templates.utils.formulation import ChoicePrefix, get_prefix
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
-from lighteval.utils.imports import requires_latex2sympy2_extended
+from lighteval.utils.imports import requires
 from lighteval.utils.language import Language
 from lighteval.utils.timeout import timeout
 
 
-@requires_latex2sympy2_extended
+@requires("latex2sympy2_extended")
 def latex_normalization_config_default_factory():
     from latex2sympy2_extended.latex2sympy2 import NormalizationConfig
 
@@ -373,7 +373,7 @@ def get_extraction_regexes(
 
 # Small cache, to catche repeated calls invalid parsing
 @lru_cache(maxsize=20)
-@requires_latex2sympy2_extended
+@requires("latex2sympy2_extended")
 def parse_latex_with_timeout(latex: str, timeout_seconds: int):
     from latex2sympy2_extended.latex2sympy2 import latex2sympy
 
@@ -428,7 +428,7 @@ def convert_to_pct(number: Number):
     return sympy.Mul(number, sympy.Rational(1, 100), evaluate=False)
 
 
-@requires_latex2sympy2_extended
+@requires("latex2sympy2_extended")
 @lru_cache(maxsize=20)
 def extract_latex(
     match: re.Match, latex_config: LatexExtractionConfig, timeout_seconds: int
