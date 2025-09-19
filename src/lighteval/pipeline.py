@@ -437,3 +437,6 @@ class Pipeline:
     def get_results(self):
         self._init_final_dict()
         return self.final_dict
+
+    def get_details(self):
+        return self.evaluation_tracker.details_logger.details
