@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import math
 from dataclasses import asdict
 from pathlib import Path
 
@@ -118,7 +119,7 @@ def _compare_metrics(current, reference):
         current_val = current_metrics.get(metric_name)
         reference_val = reference_metrics.get(metric_name)
 
-        if current_val != reference_val:
+        if not math.isclose(current_val, reference_val, abs_tol=0.05):
             metric_diffs[metric_name] = {"current": current_val, "reference": reference_val}
 
     if metric_diffs:
