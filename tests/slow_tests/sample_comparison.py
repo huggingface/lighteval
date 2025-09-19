@@ -208,7 +208,7 @@ def _format_single_diff(diff):
     for key, value in diff.items():
         if key.endswith("_difference") and key != "metric_differences":
             field_name = key.replace("_difference", "")
-            output.append("    {} differs:".format(field_name.title()))
+            output.append(f"    {field_name.title()} differs:")
             output.append("      Current: {}".format(value["current"]))
             output.append("      Reference: {}".format(value["reference"]))
 
