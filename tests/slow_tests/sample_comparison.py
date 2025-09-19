@@ -92,25 +92,12 @@ def _compare_model_responses(current, reference):
         reference_val = reference_resp.get(field_name)
 
         # Special handling for logprobs field
-        if field_name == "logprobs":
-            if not _logprobs_approximately_equal(current_val, reference_val):
-                sample_diff["{}_difference".format(field_name)] = {
-                    "current": current_val,
-                    "reference": reference_val,
-                }
-        elif field_name in ["input_tokens", "output_tokens"]:
+        if field_name in ["input_tokens", "output_tokens"]:
             # input and ouput tokens are lists of tensors, we need to convert
             # them to plain lists
             current_val = _to_plain_list(current_val)
             reference_val = _to_plain_list(reference_val)
 
-            if current_val != reference_val:
-                sample_diff["{}_difference".format(field_name)] = {
-                    "current": current_val,
-                    "reference": reference_val,
-                }
-        else:
-            # Standard comparison for other fields
             if current_val != reference_val:
                 sample_diff["{}_difference".format(field_name)] = {
                     "current": current_val,
