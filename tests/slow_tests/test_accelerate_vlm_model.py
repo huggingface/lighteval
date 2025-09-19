@@ -56,7 +56,7 @@ def run_model(model_name: str):
         output_dir="",
         dataset_loading_processes=1,
         save_details=True,  # Enable detailed logging for sample-by-sample comparison
-        max_samples=10,
+        max_samples=30,
         vision_model=True,
     )
     return results, details

@@ -1,3 +1,6 @@
 *.json filter=lfs diff=lfs merge=lfs -text
 tests/unit/metrics/test_cases/*.json -filter -diff -merge text
+tests/reference_details/Qwen2.5-VL-3B-Instruct-transformers-vlm/details_lighteval|mmmu_pro:standard-4|0_2025-09-19T10-40-09.434683.parquet filter=lfs diff=lfs merge=lfs -text
+tests/reference_details/Qwen2.5-VL-3B-Instruct-transformers-vlm/details_lighteval|mmmu_pro:standard-10|0_2025-09-19T10-40-09.434683.parquet filter=lfs diff=lfs merge=lfs -text
+tests/reference_details/Qwen2.5-VL-3B-Instruct-transformers-vlm/details_lighteval|mmmu_pro:vision|0_2025-09-19T10-40-09.434683.parquet filter=lfs diff=lfs merge=lfs -text
 *.parquet filter=lfs diff=lfs merge=lfs -text
