@@ -217,9 +217,7 @@ def _format_single_diff(diff):
         output.append("    Metrics differ:")
         for metric_name, metric_diff in diff["metric_differences"].items():
             output.append(
-                "      {}: current={}, reference={}".format(
-                    metric_name, metric_diff["current"], metric_diff["reference"]
-                )
+                f"      {metric_name}: current={metric_diff['current']}, reference={metric_diff['reference']}"
             )
 
     return output
