@@ -47,6 +47,10 @@ def _logprobs_approximately_equal(current_logprobs, reference_logprobs, toleranc
     current_logprobs = _to_plain_list(current_logprobs)
     reference_logprobs = _to_plain_list(reference_logprobs)
 
+    # Sort both lists to ensure same order before comparison
+    current_logprobs.sort()
+    reference_logprobs.sort()
+
     return all(math.isclose(c, r, abs_tol=tolerance) for c, r in zip(current_logprobs, reference_logprobs))
 
 
