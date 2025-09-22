@@ -192,7 +192,7 @@ pre-commit run --all-files
   author = {Habib, Nathan and Fourrier, Clémentine and Kydlíček, Hynek and Wolf, Thomas and Tunstall, Lewis},
   title = {LightEval: A lightweight framework for LLM evaluation},
   year = {2023},
-  version = {0.10.0},
+  version = {0.11.0},
   url = {https://github.com/huggingface/lighteval}
 }
 ```
