@@ -47,5 +47,5 @@ jobs:
           nvidia-smi
           uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_vllm_model.py
           nvidia-smi
-          uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_accelerate_vlm_model.py
+          export VLLM_WORKER_MULTIPROC_METHOD=spawn && uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_accelerate_vlm_model.py
           nvidia-smi
