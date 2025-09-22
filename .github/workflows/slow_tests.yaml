@@ -42,4 +42,10 @@ jobs:
         run: nvidia-smi
 
       - name: Run tests
-        run: uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/
+        run: |
+          uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_accelerate_model.py
+          nvidia-smi
+          uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_vllm_model.py
+          nvidia-smi
+          uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_accelerate_vlm_model.py
+          nvidia-smi
