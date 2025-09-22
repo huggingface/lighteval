@@ -29,6 +29,7 @@ import pytest
 from deepdiff import DeepDiff
 
 from lighteval.main_vllm import vllm  # noqa: E402
+from tests.slow_tests.sample_comparison import enhance_test_with_sample_comparison
 
 
 # Set env var for deterministic run of models
@@ -42,6 +43,7 @@ MODELS_ARGS = [
 ]
 TASKS_PATH = "examples/test_tasks.txt"
 CUSTOM_TASKS_PATH = "examples/custom_tasks_tests.py"
+DETAILS_EXPECTED_DIR = "tests/reference_details/SmolLM2-1.7B-Instruct-vllm/"
 
 ModelInput = Tuple[str, Callable[[], dict]]
 
@@ -83,7 +85,8 @@ def test_vllm_model(tests: list[ModelInput]):
     """Evaluates a model on a full task - is parametrized using pytest_generate_test"""
     model_args, get_predictions = tests
 
-    predictions = get_predictions()["results"]
+    results, details = get_predictions()
+    results = results["results"]
 
     # Load the reference results
     with open(model_args["results_file"], "r") as f:
@@ -93,8 +96,13 @@ def test_vllm_model(tests: list[ModelInput]):
     reference_results = {k.replace("|", ":"): v for k, v in reference_results.items()}
 
     # Convert defaultdict values to regular dict for comparison
-    predictions_dict = {k: dict(v) if hasattr(v, "default_factory") else v for k, v in predictions.items()}
+    predictions_dict = {k: dict(v) if hasattr(v, "default_factory") else v for k, v in results.items()}
 
     diff = DeepDiff(reference_results, predictions_dict, ignore_numeric_type_changes=True, math_epsilon=0.05)
 
-    assert diff == {}, f"Differences found: {diff}"
+    enhanced_message = enhance_test_with_sample_comparison(diff, details, DETAILS_EXPECTED_DIR)
+    if enhanced_message:
+        assert False, enhanced_message
+    else:
+        # No differences found at any level, test passes
+        assert True

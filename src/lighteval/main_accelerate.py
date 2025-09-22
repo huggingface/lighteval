@@ -146,7 +146,8 @@ def accelerate(  # noqa C901
     pipeline.show_results()
 
     results = pipeline.get_results()
+    details = pipeline.get_details()
 
     pipeline.save_and_push_results()
 
-    return results
+    return results, details
