@@ -36,7 +36,7 @@ import numpy as np
 from aenum import extend_enum
 
 from lighteval.metrics.metrics import Metrics, SampleLevelMetric
-from lighteval.metrics.metrics_samples import SampleLevelComputation
+from lighteval.metrics.metrics_sample import SampleLevelComputation
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.extended.lcb.codegen_metrics import (
     codegen_metrics,
