@@ -28,8 +28,8 @@ The paper can be found here: https://arxiv.org/abs/2506.15787
 Before using this task, please ensure that SWI-Prolog and evaluate are installed on your system, as they are required for symbolic verification of the generated Prolog programs.
 """
 
+import logging
 import shutil
-import sys
 
 import numpy as np
 from evaluate import load
@@ -39,15 +39,22 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc, SamplingMethod
 
 
+logger = logging.getLogger(__name__)
+
+
 # Check for SWI-Prolog installation
 if shutil.which("swipl") is None:
-    sys.exit("Error: SWI-Prolog (swipl) is not installed or not in PATH. Please install SWI-Prolog to use this task.")
+    raise ImportError(
+        "SWI-Prolog (swipl) is not installed or not in PATH. "
+        "Please install SWI-Prolog to use this task. "
+        "You can install required dependencies with: pip install -r community_tasks/slr_bench_requirements.txt"
+    )
 
 # Load symbolic verifier
 try:
     symbolic_judge = load("AIML-TUDA/VerifiableRewardsForScalableLogicalReasoning")
 except Exception as e:
-    print(f"Warning: Could not load VerifiableRewards: {e}")
+    logger.error(f"Could not load VerifiableRewards: {e}")
     symbolic_judge = None
 
 
@@ -73,11 +80,12 @@ class VerifiableRewardMetric(SampleLevelComputation):
                 results = symbolic_judge.compute(predictions=[prediction], references=ref_format)
                 if isinstance(results, dict) and "accuracy" in results:
                     return results["accuracy"]
-            # Fallback: exact match
-            return float(prediction.strip() == doc.target.strip())
-        except Exception as e:
-            print(f"Error in VerifiableRewardMetric: {e}")
+
+            logger.error("Symbolic judge not available, returning 0.0")
             return 0.0
+        except Exception as e:
+            logger.error("Error during the computation of the metric")
+            raise RuntimeError(f"Failed to compute verifiable reward metric: {e}")
 
 
 custom_metric = SampleLevelMetric(
