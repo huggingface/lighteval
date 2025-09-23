@@ -1,18 +1,16 @@
-name: Slow end to end tests
+name: Slow end to end tests, against stable and main versions of dependencies
 
 on:
-  push:
-    branches:
-      - main
-      - v*-release
-  pull_request:
-    branches:
-      - main
+  schedule:
+    - cron: "0 */48 * * *"   # every 48 hours
 
 jobs:
   run_tests:
-    name: Run tests
+    name: Run tests (${{ matrix.dependency }})
     runs-on: 'aws-g4dn-2xlarge-use1-public-80'
+    strategy:
+      matrix:
+        dependency: [stable, vllm-transformers-main]
     steps:
       - name: Install Git LFS
         run: |
@@ -37,9 +35,15 @@ jobs:
       - name: Install the project
         run: uv sync --extra dev
 
+      - name: Override dependencies
+        if: matrix.dependency == 'vllm-transformers-main'
+        run: |
+          uv pip install --upgrade git+https://github.com/vllm-project/vllm.git@main
+          uv pip install --upgrade git+https://github.com/huggingface/transformers.git@main
 
       - name: run nvidia-smi
         run: nvidia-smi
 
       - name: Run tests
         run: uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/
+
