@@ -1,4 +1,4 @@
-name: Slow end to end tests, against stable and main versions of dependencies
+name: Slow end to end tests
 
 on:
   # Run automatically every Saturday at 00:00 UTC
