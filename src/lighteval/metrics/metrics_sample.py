@@ -1208,9 +1208,9 @@ class AvgAtK(SamplingMetric, SampleLevelComputation):
         """Get the number of samples for this metric.
 
         Returns:
-            int: The number of samples (n if specified, otherwise k)
+            int: The number of samples
         """
-        return self.n if self.n is not None else self.k
+        return self.k
 
 
 class MajAtK(SamplingMetric, SampleLevelComputation):
