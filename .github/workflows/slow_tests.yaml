@@ -1,12 +1,18 @@
 name: Slow end to end tests, against stable and main versions of dependencies
 
 on:
+  # Run automatically every Saturday at 00:00 UTC
+  schedule:
+    - cron: "0 0 * * 6"
+  
+  # Allow manual triggering via GitHub UI
+  workflow_dispatch:
+
+  # Optional: run on pushes to main or release branches
   push:
     branches:
       - main
       - v*-release
-  schedule:
-    - cron: "0 0 * * 6" # Every Saturday at midnight
 
 jobs:
   run_tests:
