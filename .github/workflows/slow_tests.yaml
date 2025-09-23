@@ -52,7 +52,7 @@ jobs:
       - name: Override dependencies
         if: matrix.dependency == 'vllm-transformers-main'
         run: |
-          uv pip install --upgrade git+https://github.com/vllm-project/vllm.git@main
+          VLLM_USE_PRECOMPILED=1 uv pip install --upgrade git+https://github.com/vllm-project/vllm.git@main
           uv pip install --upgrade git+https://github.com/huggingface/transformers.git@main
 
       - name: run nvidia-smi
