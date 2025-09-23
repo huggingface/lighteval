@@ -365,7 +365,7 @@ class Metrics(Enum):
         corpus_level_fn=CorpusLevelF1Score(None),
         higher_is_better=True,
     )
-    maj_at_k = SampleLevelMetric(
+    maj_at_n = SampleLevelMetric(
         metric_name="maj@k",
         sample_level_fn=MajAtN(),
         category=SamplingMethod.GENERATIVE,

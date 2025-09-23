@@ -1229,10 +1229,10 @@ class MajAtN(SamplingMetric, SampleLevelComputation):
             float: Aggregated score over the current sample's items.
         """
         if self.k is None:
-            raise Exception("You did not set the value of k")
+            raise Exception("You did not set the value of n")
         golds = docs.get_golds()
         if len(golds) > 1:
-            raise Exception("Cannot compute maj@k with several golds")
+            raise Exception("Cannot compute maj@n with several golds")
 
         processed_choices = [self.preprocess(text=g) for g in docs.get_golds()]
         new_doc = Doc(
