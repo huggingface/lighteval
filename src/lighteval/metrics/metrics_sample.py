@@ -1431,8 +1431,8 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
         metrics = {}
         for k in ks:
             for t in thresholds:
-                metrics[f"{self.name}@{k}_{t}"] = compute_g_pass_at_k(n, c, k, t)
-            metrics[f"m{self.name}@{k}"] = compute_mg_pass_at_k(n, c, k)
+                metrics[f"{self.name}{k}_{t}"] = compute_g_pass_at_k(n, c, k, t)
+            metrics[f"m{self.name}{k}"] = compute_mg_pass_at_k(n, c, k)
 
         return metrics
 
@@ -1444,8 +1444,8 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
         metrics = []
         for k in ks:
             for t in thresholds:
-                metrics.append(f"{self.name}@{k}_{t}")
-            metrics.append(f"m{self.name}@{k}")
+                metrics.append(f"{self.name}{k}_{t}")
+            metrics.append(f"m{self.name}{k}")
 
         return metrics
 
