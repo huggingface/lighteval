@@ -366,7 +366,7 @@ class Metrics(Enum):
         higher_is_better=True,
     )
     maj_at_n = SampleLevelMetric(
-        metric_name="maj@k",
+        metric_name="maj@n",
         sample_level_fn=MajAtN(),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
