@@ -41,7 +41,7 @@ from lighteval.metrics.metrics_sample import (
     MRR,
     ROUGE,
     AccGoldLikelihood,
-    AvgAtK,
+    AvgAtN,
     BertScore,
     ExactMatches,
     Extractiveness,
@@ -50,7 +50,7 @@ from lighteval.metrics.metrics_sample import (
     GPassAtK,
     JudgeLLMSimpleQA,
     LoglikelihoodAcc,
-    MajAtK,
+    MajAtN,
     PassAtK,
     Recall,
     StringDistance,
@@ -85,16 +85,16 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    avg_at_k = SampleLevelMetric(
-        metric_name="avg@k",
-        sample_level_fn=AvgAtK(strip_strings=True),
+    avg_at_n = SampleLevelMetric(
+        metric_name="avg@n",
+        sample_level_fn=AvgAtN(strip_strings=True),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    avg_at_k_math = SampleLevelMetric(
-        metric_name="avg@k",
-        sample_level_fn=AvgAtK(
+    avg_at_n_math = SampleLevelMetric(
+        metric_name="avg@n",
+        sample_level_fn=AvgAtN(
             sample_scoring_function=MultilingualExtractiveMatchMetric(
                 language=Language.ENGLISH,
                 gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
@@ -367,7 +367,7 @@ class Metrics(Enum):
     )
     maj_at_k = SampleLevelMetric(
         metric_name="maj@k",
-        sample_level_fn=MajAtK(),
+        sample_level_fn=MajAtN(),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
