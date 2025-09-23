@@ -90,9 +90,9 @@ class Metric:
                 # this is mostly for the gpass@k metrics which redefine submetric names
                 self.metric_name = self.sample_level_fn.metric_names
             else:
-                self.metric_name = [f"{metric}_with_{sample_params_values}" for metric in self.metric_name]
+                self.metric_name = [f"{metric}_{sample_params_values}" for metric in self.metric_name]
         else:
-            self.metric_name = f"{self.metric_name}_with_{sample_params_values}"
+            self.metric_name = f"{self.metric_name}_{sample_params_values}"
 
         return self
 
