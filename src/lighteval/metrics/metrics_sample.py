@@ -63,7 +63,7 @@ logger = logging.getLogger(__name__)
 
 class SampleLevelComputation(ABC):
     @abstractmethod
-    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs):
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs):
         raise NotImplementedError
 
     def __str__(self):
@@ -444,7 +444,7 @@ class MRR(SampleLevelComputation):
         """
         self.length_normalization = length_normalization
 
-    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs) -> float:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> float:
         """Mean reciprocal rank. Measures the quality of a ranking of choices (ordered by correctness).
 
         Args:
@@ -1181,7 +1181,7 @@ class AvgAtN(SamplingMetric, SampleLevelComputation):
         self.n = n
         self.attribute_must_be_set = ["n"]
 
-    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs):
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs):
         """Computes the metric over a list of golds and predictions for one single sample.
         It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones,
         then compares it to the gold.
@@ -1218,14 +1218,14 @@ class MajAtN(SamplingMetric, SampleLevelComputation):
         self.n = n
         self.attribute_must_be_set = ["n"]
 
-    def compute(self, model_response: ModelResponse, docs: Doc, **kwargs):
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs):
         """Computes the metric over a list of golds and predictions for one single sample.
         It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones,
         then compares it to the gold.
 
         Args:
+            doc (Doc): The document containing gold references.
             model_response (ModelResponse): The model's response containing predictions.
-            docs (Doc): The document containing gold references.
             **kwargs: Additional keyword arguments.
 
         Returns:
@@ -1233,15 +1233,16 @@ class MajAtN(SamplingMetric, SampleLevelComputation):
         """
         if self.k is None:
             raise Exception("You did not set the value of n")
-        golds = docs.get_golds()
+
+        golds = doc.get_golds()
         if len(golds) > 1:
             raise Exception("Cannot compute maj@n with several golds")
 
-        processed_choices = [self.preprocess(text=g) for g in docs.get_golds()]
+        processed_choices = [self.preprocess(text=g) for g in doc.get_golds()]
         new_doc = Doc(
             choices=processed_choices,
-            query=docs.query,
-            gold_index=docs.gold_index,
+            query=doc.query,
+            gold_index=doc.gold_index,
         )
         all_answers = []
         for pred in model_response.final_text[: self.n]:
@@ -1357,7 +1358,7 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
     def k(self, new_val):
         self._k = as_list(new_val)
 
-    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs) -> float:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs):
         """Computes the metric over a list of golds and predictions for one single item with possibly many samples.
         It applies normalisation (if needed) to model prediction and gold, computes their per prediction score,
         then aggregates the scores over the samples using a pass@k.
