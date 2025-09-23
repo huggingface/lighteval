@@ -1171,7 +1171,7 @@ class AvgAtN(SamplingMetric, SampleLevelComputation):
         """Sample score averages all the individual n predictions scores.
 
         Args:
-            n (int | None): Number of correct samples threshold
+            n (int | None): Number of samples to generate
             **kwargs: Additional keyword arguments.
         """
         super().__init__(**kwargs)
