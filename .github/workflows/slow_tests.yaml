@@ -1,8 +1,12 @@
 name: Slow end to end tests, against stable and main versions of dependencies
 
 on:
+  push:
+    branches:
+      - main
+      - v*-release
   schedule:
-    - cron: "0 */48 * * *"   # every 48 hours
+    - cron: "0 0 * * 6" # Every Saturday at midnight
 
 jobs:
   run_tests:
