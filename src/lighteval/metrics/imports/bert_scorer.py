@@ -37,6 +37,16 @@ from transformers import AutoModel, AutoTokenizer
 logger = logging.getLogger(__name__)
 
 
+def validate_tokenizer_length(tokenizer: AutoTokenizer, override_length: int | None) -> int:
+    if override_length:
+        return override_length
+    if tokenizer.model_max_length == int(1e30):
+        logger.warning("Could not read max_model_length attribute for BERTScorer's tokenizer - defaulting to 512.")
+        return 512
+    else:
+        return tokenizer.max_model_length
+
+
 def padding(arr, pad_token, dtype=torch.long):
     lens = torch.LongTensor([len(a) for a in arr])
     max_len = lens.max().item()
@@ -321,6 +331,7 @@ class BERTScorer:
         lang=None,
         rescale_with_baseline=False,
         baseline_path=None,
+        tokenizer_max_len: int | None = None,
     ):
         """Initialize BERTScorer.
 
@@ -343,6 +354,7 @@ class BERTScorer:
             return_hash (bool): Return hash code of the setting.
             rescale_with_baseline (bool): Rescale bertscore with pre-computed baseline.
             baseline_path (str): Customized baseline file.
+            tokenizer_max_len (int, optional): will override the tokenizer's max model length if set.
         """
         assert lang is not None or model_type is not None, "Either lang or model_type should be specified"
 
@@ -366,6 +378,7 @@ class BERTScorer:
 
         # Model and tokenizer are lazily loaded in `score()`.
         self._tokenizer = None
+        self._tokenizer_len = tokenizer_max_len
         self._model = None
 
         self._idf_dict = None
@@ -430,6 +443,10 @@ class BERTScorer:
         if self._model is None:
             logger.info(f"Loading BERTScorer model `{self._model_type}`")
             self._tokenizer = AutoTokenizer.from_pretrained(self._model_type)
+            self._tokenizer.max_model_length = validate_tokenizer_length(
+                tokenizer=self._tokenizer, override_length=self._tokenizer_len
+            )
+
             self._model = AutoModel.from_pretrained(self._model_type)
             self._model.eval()
             self._model.to(self.device)
