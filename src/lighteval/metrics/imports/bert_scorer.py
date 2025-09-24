@@ -44,7 +44,7 @@ def validate_tokenizer_length(tokenizer: AutoTokenizer, override_length: int | N
         logger.warning("Could not read max_model_length attribute for BERTScorer's tokenizer - defaulting to 512.")
         return 512
     else:
-        return tokenizer.max_model_length
+        return tokenizer.model_max_length
 
 
 def padding(arr, pad_token, dtype=torch.long):
