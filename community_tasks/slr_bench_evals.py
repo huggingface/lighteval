@@ -50,12 +50,8 @@ if shutil.which("swipl") is None:
         "You can install required dependencies with: pip install -r community_tasks/slr_bench_requirements.txt"
     )
 
-# Load symbolic verifier
-try:
-    symbolic_judge = load("AIML-TUDA/VerifiableRewardsForScalableLogicalReasoning")
-except Exception as e:
-    logger.error(f"Could not load VerifiableRewards: {e}")
-    symbolic_judge = None
+# Load the symbolic judge for evaluating Prolog programs
+symbolic_judge = load("AIML-TUDA/VerifiableRewardsForScalableLogicalReasoning")
 
 
 def prompt_fn(line: dict, task_name: str):
@@ -76,13 +72,10 @@ class VerifiableRewardMetric(SampleLevelComputation):
                     "evaluation_config": {"positive_predicate": "eastbound", "negative_predicate": "westbound"},
                 }
             ]
-            if symbolic_judge is not None:
-                results = symbolic_judge.compute(predictions=[prediction], references=ref_format)
-                if isinstance(results, dict) and "accuracy" in results:
-                    return results["accuracy"]
 
-            logger.error("Symbolic judge not available, returning 0.0")
-            return 0.0
+            results = symbolic_judge.compute(predictions=[prediction], references=ref_format)
+            return results["accuracy"]
+
         except Exception as e:
             logger.error("Error during the computation of the metric")
             raise RuntimeError(f"Failed to compute verifiable reward metric: {e}")
