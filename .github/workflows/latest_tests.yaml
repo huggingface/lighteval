@@ -57,8 +57,3 @@ jobs:
         run: |
           VLLM_WORKER_MULTIPROC_METHOD=spawn uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_vllm_model.py
           uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_accelerate_model.py
-        env:
-          VLLM_ATTENTION_BACKEND: "FLASHINFER"
-          VLLM_USE_FLASH_ATTN: "0"
-
-
