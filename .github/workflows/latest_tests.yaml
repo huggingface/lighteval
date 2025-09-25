@@ -51,5 +51,8 @@ jobs:
         run: uv pip freeze
 
       - name: Run tests
-        run: uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/
+        run: |
+          uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_vllm_model.py
+          uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_accelerate_model.py
+
 
