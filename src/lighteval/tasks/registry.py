@@ -325,7 +325,7 @@ class Registry:
                                 f"was not correctly parametrized. Forgot to set '{attribute}'."
                             )
 
-                task_to_configs[expanded_task].append(config)
+                task_to_configs[expanded_task + f"|{few_shot}"].append(config)
 
         return task_to_configs
 
