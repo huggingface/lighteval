@@ -52,7 +52,7 @@ jobs:
 
       - name: Run tests
         run: |
-          uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_vllm_model.py
+          VLLM_WORKER_MULTIPROC_METHOD=spawn uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_vllm_model.py
           uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_accelerate_model.py
 
 
