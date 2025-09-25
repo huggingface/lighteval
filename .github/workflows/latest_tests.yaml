@@ -47,6 +47,9 @@ jobs:
       - name: run nvidia-smi
         run: nvidia-smi
 
+      - name: Pip freeze
+        run: uv pip freeze
+
       - name: Run tests
         run: uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/
 
