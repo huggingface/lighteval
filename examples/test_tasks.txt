@@ -25,6 +25,3 @@ lighteval|bigbench:temporal_sequences|3
 lighteval|bigbench:tracking_shuffled_objects_five_objects|3
 lighteval|bigbench:tracking_shuffled_objects_seven_objects|3
 test|gsm8k|0
-lighteval|aime25|0
-extended|ifeval|0
-extended|lcb:codegeneration_v4|0

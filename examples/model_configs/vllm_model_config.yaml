@@ -1,6 +1,6 @@
 model_parameters:
-  model_name: "Qwen/Qwen3-4B-Thinking-2507"
-  revision: "main"
+  model_name: "HuggingFaceTB/SmolLM2-1.7B-Instruct"
+  revision: "57aa3c6599c53705406c648e7acca7e11dc45ea3"
   dtype: "float16"
   tensor_parallel_size: 1
   data_parallel_size: 1
