@@ -28,6 +28,9 @@ jobs:
           sudo apt-get update && sudo apt-get install -y git-lfs
           git lfs install
 
+      - name: Install Python development headers
+        run: sudo apt-get update && sudo apt-get install -y python3.10-dev
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -54,5 +57,8 @@ jobs:
         run: |
           VLLM_WORKER_MULTIPROC_METHOD=spawn uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_vllm_model.py
           uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/test_accelerate_model.py
+        env:
+          VLLM_ATTENTION_BACKEND: "FLASHINFER"
+          VLLM_USE_FLASH_ATTN: "0"
 
 
