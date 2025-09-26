@@ -235,7 +235,8 @@ class GenerationParameters(BaseModel, extra="forbid"):
 
 
 class ChatTemplateParameters(BaseModel):
-    reasoning_effort: str = None
+    reasoning_effort: str | None = None
+    enable_thinking: bool | None = None
 
     def to_transformers_dict(self) -> dict:
         """Selects relevant chat template parameters for transformers models.
@@ -245,5 +246,6 @@ class ChatTemplateParameters(BaseModel):
         """
         args = {
             "reasoning_effort": self.reasoning_effort,
+            "enable_thinking": self.enable_thinking,
         }
         return {k: v for k, v in args.items() if v is not None}
