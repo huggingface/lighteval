@@ -32,20 +32,18 @@ from tqdm.asyncio import tqdm as async_tqdm
 from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset
-from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.endpoints.endpoint_model import ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig
 from lighteval.tasks.prompt_manager import PromptManager
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.utils.cache_management import SampleCache, cached
 
 
 logger = logging.getLogger(__name__)
 
 
 class InferenceProvidersModelConfig(ModelConfig):
-    """
-    Configuration class for HuggingFace's inference providers (like Together AI, Anyscale, etc.).
+    """Configuration class for HuggingFace's inference providers (like Together AI, Anyscale, etc.).
 
     inference providers doc: https://huggingface.co/docs/inference-providers/en/index
 
@@ -63,6 +61,12 @@ class InferenceProvidersModelConfig(ModelConfig):
         parallel_calls_count (NonNegativeInt):
             Number of parallel API calls to make. Defaults to 10.
             Higher values increase throughput but may hit rate limits.
+        generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc.
+        system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
+            This prompt sets the behavior and context for the model during evaluation.
+        cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
 
     Example:
         ```python
@@ -103,12 +107,7 @@ class InferenceProvidersClient(LightevalModel):
         Args:
             config: Configuration object containing model and provider settings
         """
-        self.model_info = ModelInfo(
-            model_name=config.model_name,
-            model_sha="",
-            model_dtype=None,
-            model_size=-1,
-        )
+        self.config = config
         self.model_name = config.model_name
         self.provider = config.provider
         self.generation_parameters = config.generation_parameters
@@ -134,6 +133,9 @@ class InferenceProvidersClient(LightevalModel):
         self.prompt_manager = PromptManager(
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
 
     async def __call_api(self, prompt: List[dict], num_samples: int) -> Optional[ChatCompletionOutput]:
         """Make API call with exponential backoff retry logic.
@@ -194,19 +196,18 @@ class InferenceProvidersClient(LightevalModel):
 
         return results
 
+    @cached(SamplingMethod.GENERATIVE)
     def greedy_until(
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         results = []
@@ -252,12 +253,14 @@ class InferenceProvidersClient(LightevalModel):
             logger.warning("Tokenizer was not correctly loaded. Max model context length is assumed to be 30K tokens")
             return 30000
 
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
         raise NotImplementedError
 
+    @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         raise NotImplementedError

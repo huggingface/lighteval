@@ -1,0 +1,75 @@
+{
+  "name": "Drop Test Suite",
+  "description": "Test cases for drop metric",
+  "test_cases": [
+    {
+      "name": "DROP - Correct Answer",
+      "metric_class": "drop",
+      "metric_params": {},
+      "doc": {
+        "query": "What is 2 + 2?",
+        "specific": {
+          "golds_no_preprocessing": ["4"]
+        },
+        "choices": ["4"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["4"]
+      },
+      "expected_output": {
+        "em": 1.0,
+        "f1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test DROP with correct answer"
+    },
+    {
+      "name": "DROP - Wrong Answer",
+      "metric_class": "drop",
+      "metric_params": {},
+      "doc": {
+        "query": "What is 2 + 2?",
+        "specific": {
+          "golds_no_preprocessing": ["4"]
+        },
+        "choices": ["4"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["5"]
+      },
+      "expected_output": {
+        "em": 0.0,
+        "f1": 0.0
+      },
+      "tolerance": 0.01,
+      "description": "Test DROP with wrong answer"
+    },
+    {
+      "name": "DROP - Partial Match",
+      "metric_class": "drop",
+      "metric_params": {},
+      "doc": {
+        "query": "What is the sum of 2 and 2?",
+        "specific": {
+          "golds_no_preprocessing": ["4", "four"]
+        },
+        "choices": ["4", "four"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["4"]
+      },
+      "expected_output": {
+        "em": 1.0,
+        "f1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test DROP with partial match"
+    }
+  ]
+}

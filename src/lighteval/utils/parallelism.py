@@ -27,24 +27,21 @@ import logging
 
 import torch
 
-from lighteval.utils.imports import (
-    NO_ACCELERATE_ERROR_MSG,
-    NO_NANOTRON_ERROR_MSG,
-    is_accelerate_available,
-    is_nanotron_available,
-)
+from lighteval.utils.imports import raise_if_package_not_available
 
 
 logger = logging.getLogger(__name__)
 
 
 def should_reduce_batch_size(exception: Exception) -> bool:
-    """
-    Checks if `exception` relates to CUDA out-of-memory, CUDNN not supported, or CPU out-of-memory
+    """Checks if `exception` relates to CUDA out-of-memory, CUDNN not supported, or CPU out-of-memory
 
     Args:
         exception (`Exception`):
             An exception
+
+    Returns:
+        bool: True if the exception is related to memory issues that can be resolved by reducing batch size
     """
     _statements = [
         "CUDA out of memory.",  # CUDA OOM
@@ -58,8 +55,7 @@ def should_reduce_batch_size(exception: Exception) -> bool:
 
 
 def find_executable_batch_size(function: callable = None, starting_batch_size: int = 128):
-    """
-    A basic decorator that will try to execute `function`. If it fails from exceptions related to out-of-memory or
+    """A basic decorator that will try to execute `function`. If it fails from exceptions related to out-of-memory or
     CUDNN, the batch size is cut in half and passed to `function`
 
     `function` must take in a `batch_size` parameter as its first argument.
@@ -71,7 +67,6 @@ def find_executable_batch_size(function: callable = None, starting_batch_size: i
             The batch size to try and fit into memory
 
     Example:
-
     ```python
     >>> from lighteval.utils_parallelism import find_executable_batch_size
 
@@ -83,6 +78,9 @@ def find_executable_batch_size(function: callable = None, starting_batch_size: i
 
     >>> train(model, optimizer)
     ```
+
+    Returns:
+        Callable: A decorator function that automatically adjusts batch size to fit in memory
     """
     if function is None:
         return functools.partial(find_executable_batch_size, starting_batch_size=starting_batch_size)
@@ -118,27 +116,21 @@ def find_executable_batch_size(function: callable = None, starting_batch_size: i
 
 
 def test_all_gather(accelerator=None, parallel_context=None):
-    """
-    Test the gather operation in a parallel setup.
+    """Test the gather operation in a parallel setup.
 
     Args:
         accelerator (Optional): The accelerator object used for parallelism.
         parallel_context (Optional): The parallel context object used for parallelism.
-
-    Raises:
-        ImportError: If the required accelerator or parallel context is not available.
     """
     if accelerator:
-        if not is_accelerate_available():
-            raise ImportError(NO_ACCELERATE_ERROR_MSG)
+        raise_if_package_not_available("accelerate")
         logger.info("Test gather tensor")
         test_tensor: torch.Tensor = torch.tensor([accelerator.process_index], device=accelerator.device)
         gathered_tensor: torch.Tensor = accelerator.gather(test_tensor)
         logger.info(f"gathered_tensor {gathered_tensor}, should be {list(range(accelerator.num_processes))}")
         accelerator.wait_for_everyone()
     elif parallel_context:
-        if not is_nanotron_available():
-            raise ImportError(NO_NANOTRON_ERROR_MSG)
+        raise_if_package_not_available("nanotron")
         from nanotron import distributed as dist
         from nanotron import logging
 

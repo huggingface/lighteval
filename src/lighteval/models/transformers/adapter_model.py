@@ -30,18 +30,18 @@ from transformers import AutoModelForCausalLM
 
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.utils import _get_dtype
-from lighteval.utils.imports import NO_PEFT_ERROR_MSG, is_peft_available
+from lighteval.utils.imports import is_package_available, requires
 
 
 logger = logging.getLogger(__name__)
 
-if is_peft_available():
+if is_package_available("peft"):
     from peft import PeftModel
 
 
+@requires("peft")
 class AdapterModelConfig(TransformersModelConfig):
-    """
-    Configuration class for PEFT (Parameter-Efficient Fine-Tuning) adapter models.
+    """Configuration class for PEFT (Parameter-Efficient Fine-Tuning) adapter models.
 
     This configuration is used to load models that have been fine-tuned using PEFT adapters,
     such as LoRA, AdaLoRA, or other parameter-efficient fine-tuning methods. The adapter
@@ -51,8 +51,6 @@ class AdapterModelConfig(TransformersModelConfig):
         base_model (str):
             HuggingFace Hub model ID or path to the base model. This is the original
             pre-trained model that the adapter was trained on.
-        adapter_weights (bool):
-            Flag indicating that this is an adapter model. Must be set to True.
 
     Note:
         - Requires the `peft` library to be installed, `pip install lighteval[adapters]`
@@ -60,11 +58,6 @@ class AdapterModelConfig(TransformersModelConfig):
     """
 
     base_model: str
-    adapter_weights: bool
-
-    def model_post_init(self, __context):
-        if not is_peft_available():
-            raise ImportError(NO_PEFT_ERROR_MSG)
 
 
 class AdapterModel(TransformersModel):

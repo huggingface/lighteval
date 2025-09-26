@@ -20,12 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from lighteval.models.utils import ModelConfig
+from lighteval.models.abstract_model import ModelConfig
 
 
 class CustomModelConfig(ModelConfig):
-    """
-    Configuration class for loading custom model implementations in Lighteval.
+    """Configuration class for loading custom model implementations in Lighteval.
 
     This config allows users to define and load their own model implementations by specifying
     a Python file containing a custom model class that inherits from LightevalModel.

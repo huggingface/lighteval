@@ -40,13 +40,14 @@ from transformers.configuration_utils import PretrainedConfig
 from transformers.utils.quantization_config import BitsAndBytesConfig
 
 from lighteval.data import GenerativeTaskDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name
+from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name
 from lighteval.tasks.prompt_manager import PromptManager
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import (
-    is_accelerate_available,
+    is_package_available,
 )
 
 
@@ -69,8 +70,7 @@ class BatchCollator:
 
 
 class VLMTransformersModelConfig(ModelConfig):
-    """
-    Configuration class for VLM (image-text-to-text) models.
+    """Configuration class for VLM (image-text-to-text) models.
 
     Attributes:
         model_name (str):
@@ -102,6 +102,14 @@ class VLMTransformersModelConfig(ModelConfig):
             model at a quantized precision. Needed for 4-bit and 8-bit precision.
         trust_remote_code (bool): Whether to trust remote code during model
             loading.
+        compile (bool, optional, defaults to False): Whether to compile the model for faster inference.
+        device_map (str | None, optional, defaults to None): Device mapping strategy for model loading.
+        generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc.
+        system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
+            This prompt sets the behavior and context for the model during evaluation.
+        cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
     """
 
     processor: str | None = None
@@ -138,7 +146,6 @@ class VLMTransformersModel(LightevalModel):
         config: VLMTransformersModelConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
-
         self.accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
         self.device = self.accelerator.device
         self.torch_dtype = _get_dtype(config.dtype)
@@ -169,11 +176,8 @@ class VLMTransformersModel(LightevalModel):
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
 
-        self.model_info = ModelInfo(
-            model_name=self.config.model_name,
-            model_sha=self.model_sha,
-            model_dtype=config.dtype,
-        )
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
 
     @property
     def tokenizer(self):
@@ -205,7 +209,7 @@ class VLMTransformersModel(LightevalModel):
     # Copied from ./transformers_model.py
     def init_model_parallel(self, model_parallel: bool | None = None) -> Tuple[bool, Optional[dict], Optional[str]]:
         """Compute all the parameters related to model_parallel"""
-        if not is_accelerate_available():
+        if not is_package_available("accelerate"):
             return False, None, None
 
         self.num_local_processes = int(os.environ.get("LOCAL_WORLD_SIZE", 1))
@@ -288,8 +292,7 @@ class VLMTransformersModel(LightevalModel):
         return model
 
     def _create_auto_processor(self):
-        """
-        Create a transformers `Processor` for VLM (image-text-to-text) model.
+        """Create a transformers `Processor` for VLM (image-text-to-text) model.
 
         Returns:
             transformers.ProcessorMixin: The created processor.
@@ -334,21 +337,26 @@ class VLMTransformersModel(LightevalModel):
 
         return 2048
 
+    @cached(SamplingMethod.GENERATIVE)
     def greedy_until(
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Docs]): list of docs containing the context and ending conditions.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
+        return self._greedy_until(docs)
 
+    def _greedy_until(
+        self,
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
+        """Wrapper for the greedy until logic, to avoid interface changes in the future"""
         # Tokenizing context for sorting in the dataset
 
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
@@ -419,12 +427,14 @@ class VLMTransformersModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
         raise NotImplementedError()
 
+    @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(
         self,
         docs: list[Doc],

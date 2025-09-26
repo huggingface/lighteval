@@ -180,10 +180,7 @@ def apps(line, task_name: str = None):
 def arc_agi_2(line, task_name: str = None):
     # query from: https://github.com/arcprize/model_baseline/blob/main/src/prompts/system_prompt.txt
     def convert_2d_list_to_string(list_of_lists: list[list[int]]) -> str:
-        """
-        Convert a list of lists to a string
-        """
-
+        """Convert a list of lists to a string"""
         string_list = ""
 
         for row in list_of_lists:
@@ -746,6 +743,9 @@ def drop(line, task_name: str = None):
         """Flattens a dict of lists of validated answers.
         {"number": ['1', '8'], ...}
         -> [{"number": ['1'], ...}, {"number": ['8'], ...}]
+
+        Returns:
+            list: List of dictionaries with flattened validated answers
         """
         valid_answers = []
         for i in range(len(validated_answers["number"])):
@@ -1859,6 +1859,27 @@ def mmlu_helm(line, task_name: str = None):
         gold_index=gold_ix,
         fewshot_sorting_class=line["choices"][gold_ix],
         instruction=f"The following are multiple choice questions (with answers) about {subject.replace('_', ' ')}.\n\n",
+    )
+
+
+def mmlu_redux_2(line, topic, task_name: str = None):
+    """
+    Ref: https://arxiv.org/abs/2406.04127
+    """
+    query = f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n"
+    query += line["question"] + "\n"
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, line["choices"])])
+    query += "Answer: "
+
+    # Handle answer format - MMLU-Redux-2 uses integer indices directly
+    gold_ix = line["answer"] if isinstance(line["answer"], int) else int(line["answer"])
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=LETTER_INDICES[: len(line["choices"])],
+        gold_index=gold_ix,
+        instruction=f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n",
     )
 
 

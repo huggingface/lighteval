@@ -34,17 +34,12 @@ from transformers import (
 )
 
 from lighteval.data import GenerativeTaskDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo, TokenSequence
+from lighteval.models.abstract_model import LightevalModel, TokenSequence
 from lighteval.models.model_output import (
-    GenerativeResponse,
-    LoglikelihoodResponse,
-    LoglikelihoodSingleTokenResponse,
+    ModelResponse,
 )
 from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
+    Doc,
 )
 
 
@@ -74,7 +69,7 @@ class LocalMTClient(LightevalModel):
     where src and tgt are ISO language codes (2 or 3 letter codes supported).
 
     Example:
-        ```lighteval custom facebook/seamless-m4t-v2-large examples/custom_models/local_mt_model.py "lighteval|wmt20:fr-de|0|0" --max-samples 10 --save-details
+        ```lighteval custom facebook/seamless-m4t-v2-large examples/custom_models/local_mt_model.py "lighteval|wmt20:fr-de|0" --max-samples 10 --save-details
         ```
 
     Note:
@@ -88,13 +83,7 @@ class LocalMTClient(LightevalModel):
         self.model_definition_file_path = config.model_definition_file_path
         self.batch_size = 32
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        self.model_info = ModelInfo(
-            model_name=config.model,
-            model_sha="",
-            model_dtype=None,
-            model_size=-1,
-        )
+        self.config = config
 
         # Update model initialization to handle both models
         if "seamless-m4t" in config.model:
@@ -125,9 +114,9 @@ class LocalMTClient(LightevalModel):
 
     def greedy_until(
         self,
-        requests: list[GreedyUntilRequest],
+        requests: list[Doc],
         override_bs: Optional[int] = None,
-    ) -> list[GenerativeResponse]:
+    ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
         Results are cached to disk to avoid repeated translations.
@@ -137,7 +126,7 @@ class LocalMTClient(LightevalModel):
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
 
         def get_langs(task_name: str) -> tuple[str, str]:
@@ -210,7 +199,7 @@ class LocalMTClient(LightevalModel):
                 # Create responses for the batch
                 for input_tokens, output_tokens, translation in zip(input_ids, output_ids, translations):
                     results.append(
-                        GenerativeResponse(
+                        ModelResponse(
                             input_tokens=input_tokens,
                             generated_tokens=output_tokens,
                             result=translation,
@@ -262,24 +251,12 @@ class LocalMTClient(LightevalModel):
         """Return the maximum sequence length of the model."""
         return 4096
 
-    def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
         raise NotImplementedError
 
-    def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood_rolling(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
-        raise NotImplementedError
-
-    def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodSingleTokenResponse]:
-        """Tokenize the context and continuation and compute the log likelihood of those
-        tokenized sequences.
-        """
         raise NotImplementedError

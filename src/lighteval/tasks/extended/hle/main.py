@@ -206,8 +206,8 @@ hle_metrics = CorpusLevelMetricGrouping(
     metric_name=["accuracy", "confidence_half_width", "calibration_error"],
     higher_is_better=dict.fromkeys(["accuracy", "confidence_half_width", "calibration_error"], True),
     category=SamplingMethod.GENERATIVE,
-    sample_level_fn=JudgeLLMHLE().compute,
-    corpus_level_fn=JudgeLLMHLE().compute_corpus,
+    sample_level_fn=JudgeLLMHLE(),
+    corpus_level_fn=JudgeLLMHLE(),
 )
 extend_enum(Metrics, "hle_metrics", hle_metrics)
 
@@ -224,7 +224,6 @@ hle = LightevalTaskConfig(
     generation_size=8192,
     metrics=[Metrics.exact_match, Metrics.hle_metrics],
     stop_sequence=[],
-    trust_dataset=True,
     version=0,
 )
 

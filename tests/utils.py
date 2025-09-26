@@ -28,13 +28,18 @@ from unittest.mock import patch
 from transformers import AutoTokenizer
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.registry import Registry
 from lighteval.tasks.requests import Doc
-from lighteval.utils.imports import is_accelerate_available
+from lighteval.utils.cache_management import SampleCache
+from lighteval.utils.imports import is_package_available
+
+
+class FakeModelConfig(ModelConfig):
+    model_name: str = "fake_model"
 
 
 class FakeModel(LightevalModel):
@@ -47,9 +52,11 @@ class FakeModel(LightevalModel):
         loglikelihood_rolling_responses: list[ModelResponse] = [],
     ):
         self._tokenizer = None
+        self.config = FakeModelConfig()
         self.greedy_until_responses = greedy_until_responses
         self.loglikelihood_responses = loglikelihood_responses
         self.loglikelihood_rolling_responses = loglikelihood_rolling_responses
+        self._cache = SampleCache(self.config)
 
     @property
     def tokenizer(self):
@@ -64,10 +71,6 @@ class FakeModel(LightevalModel):
     @property
     def max_length(self) -> int:
         return 2048
-
-    @property
-    def model_info(self):
-        return ModelInfo(model_name="fake_model")
 
     def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
         ret_resp, self.greedy_until_responses = (
@@ -97,6 +100,7 @@ def fake_evaluate_task(
     # Mock the Registry.get_task_dict method
 
     task_name = f"{lighteval_task.suite[0]}|{lighteval_task.name}"
+    task_name_fs = f"{lighteval_task.suite[0]}|{lighteval_task.name}|{n_fewshot}"
 
     task_dict = {task_name: lighteval_task}
     evaluation_tracker = EvaluationTracker(output_dir="outputs")
@@ -104,22 +108,16 @@ def fake_evaluate_task(
     # Create a mock Registry class
 
     class FakeRegistry(Registry):
-        def __init__(self, custom_tasks: Optional[Union[str, Path, ModuleType]] = None):
-            super().__init__(custom_tasks=custom_tasks)
+        def __init__(self, tasks: Optional[str], custom_tasks: Optional[Union[str, Path, ModuleType]] = None):
+            self.tasks_list = [task_name_fs]
+            self.task_to_configs = {task_name_fs: [lighteval_task.config]}
 
-        def get_task_dict(self, task_names: list[str]):
-            return task_dict
-
-        def get_tasks_configs(self, task: str):
-            config = lighteval_task.config
-            config.num_fewshots = n_fewshot
-            config.truncate_fewshots = False
-            config.full_name = f"{task_name}|{config.num_fewshots}"
-            return [config]
+        def load_tasks(self):
+            return {task_name_fs: lighteval_task}
 
     # This is due to logger complaining we have no initialised the accelerator
     # It's hard to mock as it's global singleton
-    if is_accelerate_available():
+    if is_package_available("accelerate"):
         from accelerate import Accelerator
 
         Accelerator()

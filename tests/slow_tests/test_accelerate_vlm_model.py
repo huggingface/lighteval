@@ -29,6 +29,7 @@ import pytest
 from deepdiff import DeepDiff
 
 from lighteval.main_accelerate import accelerate  # noqa: E402
+from tests.slow_tests.sample_comparison import enhance_test_with_sample_comparison
 
 
 # Set env var for deterministic run of models
@@ -40,7 +41,8 @@ MODELS_ARGS = [
         "results_file": "tests/reference_scores/Qwen2.5-VL-3B-Instruct-results-vlm.json",
     }
 ]
-TASKS = "lighteval|mmmu_pro:standard-4|0|0"
+TASKS = "lighteval|mmmu_pro:standard-4|0"
+DETAILS_EXPECTED_DIR = "tests/reference_details/Qwen2.5-VL-3B-Instruct-vlm/"
 
 ModelInput = Tuple[str, Callable[[], dict]]
 
@@ -48,7 +50,7 @@ ModelInput = Tuple[str, Callable[[], dict]]
 @lru_cache(maxsize=len(MODELS_ARGS))
 def run_model(model_name: str):
     """Runs the full main as a black box, using the input model and tasks, on 10 samples without parallelism"""
-    results = accelerate(
+    results, details = accelerate(
         model_args=model_name,
         tasks=TASKS,
         output_dir="",
@@ -57,7 +59,7 @@ def run_model(model_name: str):
         max_samples=30,
         vision_model=True,
     )
-    return results
+    return results, details
 
 
 def generate_tests() -> list[ModelInput]:
@@ -90,12 +92,19 @@ def test_accelerate_model_prediction(tests: list[ModelInput]):
     reference_results = {k.replace("|", ":"): v for k, v in reference_results.items()}
 
     # Get the predictions
-    predictions = get_predictions()["results"]
+    results, details = get_predictions()
+    results = results["results"]
 
     # Convert defaultdict values to regular dict for comparison
-    predictions_dict = {k: dict(v) if hasattr(v, "default_factory") else v for k, v in predictions.items()}
+    predictions_dict = {k: dict(v) if hasattr(v, "default_factory") else v for k, v in results.items()}
 
     # Compare the predictions with the reference results
     diff = DeepDiff(reference_results, predictions_dict, ignore_numeric_type_changes=True, math_epsilon=0.05)
 
-    assert diff == {}, f"Differences found: {diff}"
+    # Always check for sample-by-sample differences, even if high-level results match
+    enhanced_message = enhance_test_with_sample_comparison(diff, details, DETAILS_EXPECTED_DIR)
+    if enhanced_message:
+        assert False, enhanced_message
+    else:
+        # No differences found at any level, test passes
+        assert True

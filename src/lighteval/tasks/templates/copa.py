@@ -38,8 +38,8 @@ COPA_QUERY = "{context}{word_space}{cause_or_effect}"
 
 # Defined for type hinting only
 class COPAInput(TypedDict):
-    """
-    Input for the COPA task.
+    """Input for the COPA task.
+
     Args:
         cause_effect: The type of the COPA task (X therefore Y / X because Y)
         context: The contextualization of choices (e.g. You are young)
@@ -56,8 +56,8 @@ class COPAInput(TypedDict):
 
 
 class COPAAdapter(TypedDict):
-    """
-    Adapter for mapping from the dataset row into the COPAInput format.
+    """Adapter for mapping from the dataset row into the COPAInput format.
+
     Args:
         cause_effect: Column name in the row that contains the type of the COPA task (X therefore Y / X because Y)
         context: Column name in the row that contains the contextualization of choices (e.g. You are young)
@@ -78,8 +78,7 @@ def get_copa_prompt_function(
     adapter: Callable[[dict], COPAInput | None] | COPAAdapter,
     formulation: Formulation = MCFFormulation(),
 ):
-    """
-    Create a templated prompt function for a COPA task.
+    """Create a templated prompt function for a COPA task.
     Example tasks:
     - COPA
     - PARUS
@@ -108,6 +107,7 @@ def get_copa_prompt_function(
             Note: Both COPAAdapter and COPAInput are TypeDicts, this means that the caller provides dictionary and doesn't initialize any class!
             Note: The gold_idx must be an index or list of indices in the continuations list, indicating the correct continuation(s).
         formulation (Formulation, optional): The formulation to use for the task. Defaults to MCFFormulation().
+
     Returns:
         Callable: A function that generates COPA prompts based on the given parameters.
     """

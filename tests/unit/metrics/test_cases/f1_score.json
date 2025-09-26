@@ -1,0 +1,153 @@
+{
+  "name": "F1 Score Test Suite",
+  "description": "Test cases for F1 score metric",
+  "test_cases": [
+    {
+      "name": "F1 Score - Perfect Match",
+      "metric_class": "f1_score",
+      "metric_params": {},
+      "doc": {
+        "query": "Summarize the text",
+        "choices": ["The quick brown fox jumps over the lazy dog"],
+        "gold_index": 0,
+        "task_name": "summarization"
+      },
+      "model_response": {
+        "text": ["The quick brown fox jumps over the lazy dog"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "f1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test F1 score with perfect match"
+    },
+    {
+      "name": "F1 Score - Partial Match",
+      "metric_class": "f1_score",
+      "metric_params": {},
+      "doc": {
+        "query": "Summarize the text",
+        "choices": ["The quick brown fox jumps over the lazy dog"],
+        "gold_index": 0,
+        "task_name": "summarization"
+      },
+      "model_response": {
+        "text": ["The quick brown fox"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "f1": 0.6153846153846154
+      },
+      "tolerance": 0.1,
+      "description": "Test F1 score with partial match"
+    },
+    {
+      "name": "F1 Score - No Match",
+      "metric_class": "f1_score",
+      "metric_params": {},
+      "doc": {
+        "query": "Summarize the text",
+        "choices": ["The quick brown fox jumps over the lazy dog"],
+        "gold_index": 0,
+        "task_name": "summarization"
+      },
+      "model_response": {
+        "text": ["A cat sleeps on the mat"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "f1": 0.13333333333333333
+      },
+      "tolerance": 0.01,
+      "description": "Test F1 score with no match"
+    },
+    {
+      "name": "F1 Score - Different Word Order",
+      "metric_class": "f1_score",
+      "metric_params": {},
+      "doc": {
+        "query": "Summarize the text",
+        "choices": ["The quick brown fox jumps over the lazy dog"],
+        "gold_index": 0,
+        "task_name": "summarization"
+      },
+      "model_response": {
+        "text": ["The brown quick fox jumps over the dog lazy"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "f1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test F1 score with different word order (bag of words)"
+    },
+    {
+      "name": "F1 Score - Extra Words",
+      "metric_class": "f1_score",
+      "metric_params": {},
+      "doc": {
+        "query": "Summarize the text",
+        "choices": ["The quick brown fox jumps over the lazy dog"],
+        "gold_index": 0,
+        "task_name": "summarization"
+      },
+      "model_response": {
+        "text": ["The quick brown fox jumps over the lazy dog and runs fast"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "f1": 0.8
+      },
+      "tolerance": 0.1,
+      "description": "Test F1 score with extra words in prediction"
+    },
+    {
+      "name": "F1 Score - Missing Words",
+      "metric_class": "f1_score",
+      "metric_params": {},
+      "doc": {
+        "query": "Summarize the text",
+        "choices": ["The quick brown fox jumps over the lazy dog"],
+        "gold_index": 0,
+        "task_name": "summarization"
+      },
+      "model_response": {
+        "text": ["The fox jumps over the dog"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "f1": 0.8
+      },
+      "tolerance": 0.1,
+      "description": "Test F1 score with missing words in prediction"
+    },
+    {
+      "name": "F1 Score - Multiple Gold References",
+      "metric_class": "f1_score",
+      "metric_params": {},
+      "doc": {
+        "query": "Summarize the text",
+        "choices": ["The quick brown fox jumps over the lazy dog", "A fox jumps over a dog"],
+        "gold_index": [0, 1],
+        "task_name": "summarization"
+      },
+      "model_response": {
+        "text": ["The quick brown fox jumps over the lazy dog"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "f1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "Test F1 score with multiple gold references"
+    }
+  ]
+}

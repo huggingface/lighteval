@@ -26,21 +26,22 @@ import random
 
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.utils.cache_management import SampleCache, cached
 
 
 class DummyModelConfig(ModelConfig):
-    """
-    Configuration class for dummy models used for testing and baselines.
+    """Configuration class for dummy models used for testing and baselines.
 
     This configuration is used to create dummy models that generate random responses
     or baselines for evaluation purposes. Useful for testing evaluation pipelines
     without requiring actual model inference.
 
     Attributes:
+        model_name (str):
+            Name of your choice - "dummy" by default
         seed (int):
             Random seed for reproducible dummy responses. Defaults to 42.
             This seed controls the randomness of the generated responses and log probabilities.
@@ -48,11 +49,13 @@ class DummyModelConfig(ModelConfig):
     Example:
         ```python
         config = DummyModelConfig(
+            model_name="my_dummy",
             seed=123,
         )
         ```
     """
 
+    model_name: str = "dummy"
     seed: int = 42
 
 
@@ -66,7 +69,9 @@ class DummyModel(LightevalModel):
         self.config = config
         self._random = random.Random(self.config.seed)
         self._tokenizer = None
-        self.model_info = ModelInfo(model_name="dummy", model_sha=str(config.seed))
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
 
     @property
     def tokenizer(self):
@@ -82,9 +87,11 @@ class DummyModel(LightevalModel):
     def max_length(self) -> int:
         return 2048
 
+    @cached(SamplingMethod.GENERATIVE)
     def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
         return [ModelResponse(text=["random baseline"]) for _ in range(len(docs))]
 
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         model_responses = []
         for doc in docs:
@@ -97,6 +104,7 @@ class DummyModel(LightevalModel):
 
         return model_responses
 
+    @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         model_responses = []
         for doc in docs:

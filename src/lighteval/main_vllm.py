@@ -19,96 +19,66 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
 from typing import Optional
 
-from typer import Argument, Option
+from typer import Option
 from typing_extensions import Annotated
 
-
-HELP_PANEL_NAME_1 = "Common Parameters"
-HELP_PANEL_NAME_2 = "Logging Parameters"
-HELP_PANEL_NAME_3 = "Debug Parameters"
-HELP_PANEL_NAME_4 = "Modeling Parameters"
+from lighteval.cli_args import (
+    HELP_PANEL_NAME_4,
+    custom_tasks,
+    dataset_loading_processes,
+    job_id,
+    load_responses_from_details_date_id,
+    max_samples,
+    model_args,
+    num_fewshot_seeds,
+    output_dir,
+    public_run,
+    push_to_hub,
+    push_to_tensorboard,
+    reasoning_tags,
+    remove_reasoning_tags,
+    results_org,
+    results_path_template,
+    save_details,
+    tasks,
+    wandb,
+)
 
 
 def vllm(
     # === general ===
-    model_args: Annotated[
-        str,
-        Argument(
-            help="Model arguments in the form key1=value1,key2=value2,... or path to yaml config file (see examples/model_configs/transformers_model.yaml)"
-        ),
-    ],
-    tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
+    model_args: model_args.type,
+    tasks: tasks.type,
     # === Common parameters ===
     cot_prompt: Annotated[
         Optional[str], Option(help="Use chain of thought prompt for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
     ] = None,
-    dataset_loading_processes: Annotated[
-        int, Option(help="Number of processes to use for dataset loading.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = 1,
-    custom_tasks: Annotated[
-        Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = None,
-    num_fewshot_seeds: Annotated[
-        int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = 1,
-    load_responses_from_details_date_id: Annotated[
-        Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = None,
-    remove_reasoning_tags: Annotated[
-        bool, Option(help="Remove reasoning tags from responses.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = False,
-    reasoning_tags: Annotated[
-        str | None,
-        Option(
-            help="List of reasoning tags (provided as pairs) to remove from responses. Default is [('<think>', '</think>')].",
-            rich_help_panel=HELP_PANEL_NAME_1,
-        ),
-    ] = None,
+    dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
+    num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
+    load_responses_from_details_date_id: load_responses_from_details_date_id.type = load_responses_from_details_date_id.default,
+    remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
+    reasoning_tags: reasoning_tags.type = reasoning_tags.default,
     # === saving ===
-    output_dir: Annotated[
-        str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = "results",
-    results_path_template: Annotated[
-        str | None,
-        Option(
-            help="Template path for where to save the results, you have access to 3 variables, `output_dir`, `org` and `model`. for example a template can be `'{output_dir}/1234/{org}+{model}'`",
-            rich_help_panel=HELP_PANEL_NAME_2,
-        ),
-    ] = None,
-    push_to_hub: Annotated[
-        bool, Option(help="Push results to the huggingface hub.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = False,
-    push_to_tensorboard: Annotated[
-        bool, Option(help="Push results to tensorboard.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = False,
-    public_run: Annotated[
-        bool, Option(help="Push results and details to a public repo.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = False,
-    results_org: Annotated[
-        Optional[str], Option(help="Organization to push results to.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = None,
-    save_details: Annotated[
-        bool, Option(help="Save detailed, sample per sample, results.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = False,
-    wandb: Annotated[
-        bool,
-        Option(
-            help="Push results to wandb. This will only work if you have wandb installed and logged in. We use env variable to configure wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/",
-            rich_help_panel=HELP_PANEL_NAME_2,
-        ),
-    ] = False,
+    output_dir: output_dir.type = output_dir.default,
+    results_path_template: results_path_template.type = results_path_template.default,
+    push_to_hub: push_to_hub.type = push_to_hub.default,
+    push_to_tensorboard: push_to_tensorboard.type = push_to_tensorboard.default,
+    public_run: public_run.type = public_run.default,
+    results_org: results_org.type = results_org.default,
+    save_details: save_details.type = save_details.default,
+    wandb: wandb.type = wandb.default,
     # === debug ===
-    max_samples: Annotated[
-        Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
-    ] = None,
-    job_id: Annotated[
-        int, Option(help="Optional job id for future reference.", rich_help_panel=HELP_PANEL_NAME_3)
-    ] = 0,
+    max_samples: max_samples.type = max_samples.default,
+    job_id: job_id.type = job_id.default,
 ):
-    """
-    Evaluate models using vllm as backend.
+    """Evaluate models using vllm as backend.
+
+    Returns:
+        dict: Evaluation results containing metrics and scores for all tasks
     """
     import yaml
 
@@ -124,7 +94,7 @@ def vllm(
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
-        wandb=wandb,
+        use_wandb=wandb,
     )
 
     pipeline_params = PipelineParameters(
@@ -161,7 +131,8 @@ def vllm(
     pipeline.show_results()
 
     results = pipeline.get_results()
+    details = pipeline.get_details()
 
     pipeline.save_and_push_results()
 
-    return results
+    return results, details

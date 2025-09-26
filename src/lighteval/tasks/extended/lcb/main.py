@@ -22,11 +22,11 @@
 """Usage:
 lighteval vllm \
     "pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=bfloat16,data_parallel_size=8,max_model_length=32768,gpu_memory_utilization=0.8,generation_parameters={temperature:0.6,top_p:0.95}" \
-    "extended|lcb:codegeneration|0|0"
+    "extended|lcb:codegeneration|0"
 
 lighteval vllm \
     "pretrained=Qwen/Qwen2.5-Coder-3B-Instruct,dtype=bfloat16,data_parallel_size=8,max_model_length=32768,gpu_memory_utilization=0.8,generation_parameters={temperature:0.2,top_p:0.95}" \
-    "extended|lcb:codegeneration|0|0"
+    "extended|lcb:codegeneration|0"
 """
 
 import json
@@ -36,6 +36,8 @@ import numpy as np
 from aenum import extend_enum
 
 from lighteval.metrics.metrics import Metrics, SampleLevelMetric
+from lighteval.metrics.metrics_sample import SampleLevelComputation
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.extended.lcb.codegen_metrics import (
     codegen_metrics,
     extract_code,
@@ -79,36 +81,41 @@ def lcb_codegeneration_prompt_fn(line, task_name: str = "lcb:codegeneration") ->
     )
 
 
-def codegen_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> float:
-    """Estimates the Pass@1 metric for the code generation task.
-    Extract the code from each prediction, Runs it for each sample and generations,
-    and computes the Pass@1 over the outputs.
-    """
-    # Extract generated code snippets
-    generated_code_snippets = [[extract_code(pred) for pred in predictions]]  # noqa: F841
-    evaluation_sample = {  # noqa: F841
-        "inputs": formatted_doc.specific["inputs"],
-        "outputs": formatted_doc.specific["outputs"],
-        "fn_name": formatted_doc.specific["fn_name"],
-    }
-    # This is a list of lists because
-    evaluation_sample = [{"input_output": json.dumps(evaluation_sample)}]
+class CodegenMetric(SampleLevelComputation):
+    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs) -> dict:
+        """Estimates the Pass@1 metric for the code generation task.
+        Extract the code from each prediction, Runs it for each sample and generations,
+        and computes the Pass@1 over the outputs.
+        """
+        assert doc.specific is not None, "Doc specific field is required for codegen_metric"
 
-    metrics, _ = codegen_metrics(
-        evaluation_sample,
-        generated_code_snippets,
-        k_list=[1],  # Only run for Pass@1
-        num_process_evaluate=8,
-    )
-    return metrics["pass@1"]
+        predictions = model_response.final_text
+        # Extract generated code snippets
+        generated_code_snippets = [[extract_code(pred) for pred in predictions]]  # noqa: F841
+        evaluation_sample = {  # noqa: F841
+            "inputs": doc.specific["inputs"],
+            "outputs": doc.specific["outputs"],
+            "fn_name": doc.specific["fn_name"],
+        }
+        # This is a list of lists because
+        evaluation_sample = [{"input_output": json.dumps(evaluation_sample)}]
+
+        metrics, _ = codegen_metrics(
+            evaluation_sample,
+            generated_code_snippets,
+            k_list=[1],  # Only run for Pass@1
+            num_process_evaluate=8,
+        )
+        return metrics["pass@1"]
 
 
 lcb_codegen_metric = SampleLevelMetric(
     metric_name="codegen_pass@1:16",  # This is the way of informing the number of generations currently
     category=SamplingMethod.GENERATIVE,
     higher_is_better=True,
-    sample_level_fn=codegen_metric,
+    sample_level_fn=CodegenMetric(),
     corpus_level_fn=np.mean,
+    batched_compute=False,
 )
 
 
@@ -149,14 +156,13 @@ for subset in configs:
         name=name,
         suite=["extended"],
         prompt_function=lcb_codegeneration_prompt_fn,
-        hf_repo="livecodebench/code_generation_lite",
+        hf_repo="lighteval/code_generation_lite",
         hf_subset=subset,  # https://github.com/LiveCodeBench/LiveCodeBench/tree/main?tab=readme-ov-file#dataset-versions
         hf_avail_splits=["test"],
         evaluation_splits=["test"],
         generation_size=32768,
         metrics=[Metrics.lcb_codegen_metric],
         stop_sequence=[],  # no stop sequence, will use EOS token
-        trust_dataset=True,
         version=0,
     )
     tasks.append(task)

@@ -1,0 +1,69 @@
+{
+  "name": "Bleurt Test Suite",
+  "description": "Test cases for bleurt metric",
+  "test_cases": [
+    {
+      "name": "BLEURT - Perfect Match",
+      "metric_class": "bleurt",
+      "metric_params": {},
+      "doc": {
+        "query": "Summarize the text",
+        "choices": ["The quick brown fox jumps over the lazy dog"],
+        "gold_index": 0,
+        "task_name": "summarization"
+      },
+      "model_response": {
+        "text": ["The quick brown fox jumps over the lazy dog"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "bleurt": 0.82
+      },
+      "tolerance": 0.1,
+      "description": "Test BLEURT with perfect match"
+    },
+    {
+      "name": "BLEURT - Partial Match",
+      "metric_class": "bleurt",
+      "metric_params": {},
+      "doc": {
+        "query": "Summarize the text",
+        "choices": ["The quick brown fox jumps over the lazy dog"],
+        "gold_index": 0,
+        "task_name": "summarization"
+      },
+      "model_response": {
+        "text": ["The quick brown fox"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "bleurt": -0.14
+      },
+      "tolerance": 0.2,
+      "description": "Test BLEURT with partial match"
+    },
+    {
+      "name": "BLEURT - Different Content",
+      "metric_class": "bleurt",
+      "metric_params": {},
+      "doc": {
+        "query": "Summarize the text",
+        "choices": ["The quick brown fox jumps over the lazy dog"],
+        "gold_index": 0,
+        "task_name": "summarization"
+      },
+      "model_response": {
+        "text": ["A cat sleeps on the mat"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "bleurt": -1.11
+      },
+      "tolerance": 0.2,
+      "description": "Test BLEURT with completely different content"
+    }
+  ]
+}

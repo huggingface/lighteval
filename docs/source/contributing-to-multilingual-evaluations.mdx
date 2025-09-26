@@ -1,58 +1,147 @@
-# Contributing to multilingual evaluations
+# Contributing to Multilingual Evaluations
 
-## Contributing a small translation
+Lighteval supports multilingual evaluations through a comprehensive system of translation literals and language-adapted templates.
+
+## Contributing Translation Literals
+
+### What Are Translation Literals?
 
 We define 19 `literals`, basic keywords or punctuation signs used when creating evaluation prompts in an automatic manner, such as `yes`, `no`, `because`, etc.
 
-We welcome translations in your language!
+These literals are essential for:
+- **Consistent prompt formatting** across languages
+- **Automatic prompt generation** for multilingual tasks
+- **Proper localization** of evaluation templates
 
-To contribute, you'll need to
-1. Open the [translation_literals](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/templates/utils/translation_literals.py) file
-2. Edit the file to add or expand the literal for your language of interest.
+### How to Contribute Translations
+
+We welcome translations in your language! To contribute:
+
+1. **Open the translation literals file**: [translation_literals.py](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/templates/utils/translation_literals.py)
+
+2. **Edit the file** to add or expand the literal for your language of interest
+
+3. **Open a PR** with your modifications
+
+### Translation Literals Structure
 
 ```python
-    Language.ENGLISH: TranslationLiterals(
-        language=Language.ENGLISH,
-        question_word="question", # Usage: "Question: How are you?"
-        answer="answer", # Usage: "Answer: I am fine"
-        confirmation_word="right", # Usage: "He is smart, right?"
-        yes="yes", # Usage: "Yes, he is"
-        no="no", # Usage: "No, he is not"
-        also="also", # Usage: "Also, she is smart."
-        cause_word="because", # Usage: "She is smart, because she is tall"
-        effect_word="therefore", # Usage: "He is tall therefore he is smart"
-        or_word="or", # Usage: "He is tall or small"
-        true="true", # Usage: "He is smart, true, false or neither?"
-        false="false", # Usage: "He is smart, true, false or neither?"
-        neither="neither", # Usage: "He is smart, true, false or neither?"
-        # Punctuation and spacing: only adjust if your language uses something different than in English
-        full_stop=".",
-        comma=",",
-        question_mark="?",
-        exclamation_mark="!",
-        word_space=" ",
-        sentence_space=" ",
-        colon=":",
-        # The first characters of your alphabet used in enumerations, if different from English
-        indices=["A", "B", "C", ...]
-    )
+Language.ENGLISH: TranslationLiterals(
+    language=Language.ENGLISH,
+    question_word="question",  # Usage: "Question: How are you?"
+    answer="answer",  # Usage: "Answer: I am fine"
+    confirmation_word="right",  # Usage: "He is smart, right?"
+    yes="yes",  # Usage: "Yes, he is"
+    no="no",  # Usage: "No, he is not"
+    also="also",  # Usage: "Also, she is smart."
+    cause_word="because",  # Usage: "She is smart, because she is tall"
+    effect_word="therefore",  # Usage: "He is tall therefore he is smart"
+    or_word="or",  # Usage: "He is tall or small"
+    true="true",  # Usage: "He is smart, true, false or neither?"
+    false="false",  # Usage: "He is smart, true, false or neither?"
+    neither="neither",  # Usage: "He is smart, true, false or neither?"
+    # Punctuation and spacing: only adjust if your language uses something different than in English
+    full_stop=".",
+    comma=",",
+    question_mark="?",
+    exclamation_mark="!",
+    word_space=" ",
+    sentence_space=" ",
+    colon=":",
+    # The first characters of your alphabet used in enumerations, if different from English
+    indices=["A", "B", "C", ...]
+)
 ```
 
-3. Open a PR with your modifications! And voilà!
+## Contributing New Multilingual Tasks
 
-## Contributing a new multilingual task
+### Prerequisites
 
-You should first read our guide on [adding a custom task](adding-a-custom-task), to better understand the different parameters we use.
+Before creating a new multilingual task, you should:
 
-Then, you should take a look at the current [multilingual tasks](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/multilingual/tasks.py) file, to understand how they are defined. For multilingual evaluations the `prompt_function` should be implemented by language-adapted template. The template will take care of correct formatting, correct and consistent usage of language adjusted prompt anchors (e.g Question/Answer) and punctuation.
+1. **Read the custom task guide**: [Adding a Custom Task](adding-a-custom-task)
+2. **Understand multilingual task structure**: Review the [multilingual tasks](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/multilingual/tasks.py) file
+3. **Browse available templates**: Check the [templates directory](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks/templates)
 
-Browse the list of all templates [here](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks/templates) to see which are the most adapted to your own task.
+### Key Concepts
 
-Then, when ready, to define your own task, you should:
-1. create a Python file as indicated in the above guide
-2. import the relevant templates for your task type (XNLI, Copa, Multiple choice, Question Answering, etc)
-3. define one or a list of tasks for each relevant language and evaluation formulation (for multichoice) using our parametrizable [`~tasks.lighteval_task.LightevalTaskConfig`] class
+#### Language-Adapted Templates
+For multilingual evaluations, the `prompt_function` should be implemented using language-adapted templates. These templates handle:
+- **Correct formatting** for each language
+- **Consistent usage** of language-adjusted prompt anchors (e.g., Question/Answer)
+- **Proper punctuation** and spacing conventions
 
+#### Template Types
+Available template types include:
+- **XNLI**: Natural language inference tasks - [`get_nli_prompt_function`](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/templates/nli.py#L162)
+- **COPA**: Causal reasoning tasks - [`get_copa_prompt_function`](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/templates/copa.py#L76)
+- **Multiple Choice**: Standard multiple choice questions - [`get_mcq_prompt_function`](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/templates/multichoice.py#L81)
+- **Question Answering**: Open-ended question answering - [`get_qa_prompt_function`](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/templates/qa.py#L46)
+- **Custom**: Specialized task templates
+
+#### Formulation Types
+
+##### Multiple Choice Formulation (MCF)
+Used for standard multiple choice questions where the model selects from lettered options:
+```python
+MCFFormulation()
+```
+
+**Example output:**
+```
+Question: What is the capital of France?
+A. London
+B. Paris
+C. Berlin
+D. Rome
+Answer: | A/B/C/D
+```
+
+##### Classification Formulation (CF)
+Used for classification tasks where the model generates the answer directly:
+```python
+CFFormulation()
+```
+
+**Example output:**
+```
+Question: What is the capital of France?
+Answer: | Paris
+```
+
+##### Hybrid Formulation
+Used for tasks that present choices but expect the full answer text:
+```python
+HybridFormulation()
+```
+
+**Example output:**
+```
+Question: What is the capital of France?
+A. London
+B. Paris
+C. Berlin
+D. Rome
+Answer: | Paris
+```
+
+
+### Creating Your Multilingual Task
+
+#### Step 1: Create the Task File
+Create a Python file following the custom task guide structure.
+
+#### Step 2: Import Required Components
+```python
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.multilingual.language import Language
+from lighteval.tasks.multilingual.formulations import MCFFormulation, CFFormulation, HybridFormulation
+from lighteval.tasks.multilingual.templates import get_template_prompt_function
+from lighteval.tasks.multilingual.metrics import get_metrics_for_formulation, loglikelihood_acc_metric
+from lighteval.tasks.multilingual.normalization import LogProbTokenNorm, LogProbCharNorm
+```
+
+#### Step 3: Define Your Tasks
 ```python
 your_tasks = [
     LightevalTaskConfig(
@@ -64,22 +153,22 @@ your_tasks = [
         metric=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=None),
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=None),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
         # In this function, you choose which template to follow and for which language and formulation
         prompt_function=get_template_prompt_function(
             language=language,
-            # then use the adapter to define the mapping between the
+            # Use the adapter to define the mapping between the
             # keys of the template (left), and the keys of your dataset
             # (right)
             # To know which template keys are required and available,
             # consult the appropriate adapter type and doc-string.
             adapter=lambda line: {
                 "key": line["relevant_key"],
-                ...
+                # Add more mappings as needed
             },
             formulation=formulation,
         ),
@@ -93,15 +182,30 @@ your_tasks = [
         hf_avail_splits=["train"],
     )
     for language in [
-        Language.YOUR_LANGUAGE, ...
+        Language.YOUR_LANGUAGE,  # Add your target languages
+        # Language.SPANISH,
+        # Language.FRENCH,
+        # etc.
     ]
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
 ```
-4. then, you can go back to the guide to test if your task is correctly implemented!
+
+#### Step 4: Test Your Implementation
+Follow the custom task guide to test if your task is correctly implemented.
 
 > [!TIP]
 > All [`~tasks.lighteval_task.LightevalTaskConfig`] parameters are strongly typed, including the inputs to the template function. Make sure to take advantage of your IDE's functionality to make it easier to correctly fill these parameters.
 
+### Validation Checklist
+- [ ] Translation literals are accurate and complete
+- [ ] Task works correctly across all target languages
+- [ ] Metrics are appropriate for the task type
+- [ ] Documentation is clear and comprehensive
+- [ ] Code follows project conventions
 
-Once everything is good, open a PR, and we'll be happy to review it!
+### Getting Help
+
+- **GitHub Issues**: Report bugs or ask questions
+- **Discussions**: Join community discussions
+- **Documentation**: Review existing guides and examples

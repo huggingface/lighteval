@@ -38,8 +38,8 @@ NLI_TEMPLATE_CONT_CF = "{sentence_space}{label}{comma}{word_space}{hypothesis}"
 
 
 class NLIInput(TypedDict):
-    """
-    Input for the Natural Language Inference (NLI) task.
+    """Input for the Natural Language Inference (NLI) task.
+
     Args:
         premise: The premise of the NLI task (e.g. He can speak French)
         hypothesis: The hypothesis of the NLI task (e.g. He can speak anglo-saxon language)
@@ -54,8 +54,8 @@ class NLIInput(TypedDict):
 
 
 class NLIAdapter(TypedDict):
-    """
-    Adapter for mapping from the dataset row into the NLIInput format.
+    """Adapter for mapping from the dataset row into the NLIInput format.
+
     Args:
         premise: Column name in the row that contains the premise of the NLI task (e.g. He can speak French)
         hypothesis: Column name in the row that contains the hypothesis of the NLI task (e.g. He can speak anglo-saxon language)
@@ -77,8 +77,7 @@ def _nli_prompt_function_natural(
     adapter: Callable[[dict], NLIInput | None] | NLIAdapter,
     relations: list[RelationType],
 ):
-    """
-    Create a templated prompt function for a Natural Language Inference (NLI) task.
+    """Create a templated prompt function for a Natural Language Inference (NLI) task.
     Example tasks:
     - ANLI
     - XNLI
@@ -166,8 +165,7 @@ def get_nli_prompt_function(
     relations: list[RelationType],
     formulation: Formulation = MCFFormulation(),
 ):
-    """
-    Create a templated prompt function for a Natural Language Inference (NLI) task.
+    """Create a templated prompt function for a Natural Language Inference (NLI) task.
     Example tasks:
     - ANLI
     - XNLI

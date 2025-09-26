@@ -221,7 +221,6 @@ class SummaCImager:
                     truncation=True,
                     max_length=self.max_input_length,
                     return_tensors="pt",
-                    truncation_strategy="only_first",
                 )
                 batch_tokens = {k: v.to(self.device) for k, v in batch_tokens.items()}
                 with torch.no_grad():

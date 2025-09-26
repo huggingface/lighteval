@@ -5,10 +5,12 @@ line-length = 119
 [tool.ruff.lint]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 # Never enforce `E501` (line length violations).
-ignore = ["E501"]
-select = ["C", "E", "F", "I", "W", "CPY"]
-fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT"]
+ignore = ["E501", "D100", "D101", "D102", "D103", "D104", "D415", "D105", "DOC501", "DOC201"]
+select = ["C", "E", "F", "I", "W", "CPY", "D417", "DOC"]
 preview = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.lint.isort]
 lines-after-imports = 2
@@ -30,7 +32,7 @@ where = ["src"]
 
 [project]
 name = "lighteval"
-version = "0.10.1.dev0"
+version = "0.11.1.dev0"
 authors = [
   { name="Nathan Habib", email="nathan.habib@huggingface.com" },
   { name="Clémentine Fourrier", email="clementine@huggingface.com" },
@@ -59,9 +61,10 @@ dependencies = [
     "huggingface_hub[hf_xet]>=0.30.2",
     "torch>=2.0,<3.0",
     "GitPython>=3.1.41", # for logging
-    "datasets>=3.5.0,<4.0.0",
+    "datasets>=4.0.0",
     "pydantic",
-    "numpy<2",  # pinned to avoid incompatibilities
+    "numpy>=2",  # pinned to avoid incompatibilities
+    "hf-xet>=1.1.8",  # pinned to avoid failing test suite
     # Prettiness
     "typer",
     "termcolor==2.3.0",
@@ -79,13 +82,14 @@ dependencies = [
     "protobuf",
     "pycountry",
     "fsspec>=2023.12.2",
-    "httpx == 0.27.2",
+    "httpx>=0.27.2",
     "latex2sympy2_extended==1.0.6",
+    "langcodes",
 ]
 
 [project.optional-dependencies]
-litellm = ["litellm", "diskcache"]
-tgi = ["text-generation>=0.6.0"]
+litellm = ["litellm[caching]", "diskcache"]
+tgi = ["text-generation>=0.7.0"]
 optimum = ["optimum==1.12.0"]
 quantization = ["bitsandbytes>=0.41.0", "auto-gptq>=0.4.2"]
 adapters = ["peft==0.3.0"]
@@ -94,25 +98,28 @@ nanotron = [
   "tensorboardX"
 ]
 tensorboardX = ["tensorboardX"]
-vllm = ["vllm>=0.10.0", "ray", "more_itertools"]
+vllm = ["vllm>=0.10.0,<0.10.2", "ray", "more_itertools"]
+sglang = ["sglang"]
 quality = ["ruff>=v0.11.0","pre-commit"]
-tests = ["pytest>=7.4.0","deepdiff"]
+tests = ["pytest>=7.4.0","deepdiff","pip>=25.2"]
 dev = ["lighteval[accelerate,quality,tests,multilingual,math,extended_tasks,vllm]"]
 docs = ["hf-doc-builder", "watchdog"]
 extended_tasks = [
   "langdetect", # ifeval
   "openai>1.87", # llm as a judge using openai models
-  "tiktoken"
+  "tiktoken",
+  "emoji", "spacy", "syllapy"  # ifbench
 ]
 s3 = ["s3fs"]
 multilingual = [
     "stanza",
-    "spacy[ja,ko,th]",
+    "spacy[ja,ko,th]>=3.8.0",
     "jieba", # for chinese tokenizer
     "pyvi", # for vietnamese tokenizer
 ]
 math = ["latex2sympy2_extended==1.0.6"]
 wandb = ["wandb"]
+trackio = ["trackio"]
 
 [project.urls]
 Homepage = "https://github.com/huggingface/lighteval"

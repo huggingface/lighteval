@@ -32,18 +32,19 @@ from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig, _simplify_name, uses_chat_template
+from lighteval.models.utils import _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
-from lighteval.tasks.requests import Doc
-from lighteval.utils.imports import is_vllm_available
+from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.utils.cache_management import SampleCache, cached
+from lighteval.utils.imports import is_package_available, requires
 
 
 logger = logging.getLogger(__name__)
 
 
-if is_vllm_available():
+if is_package_available("vllm"):
     import ray
     from more_itertools import distribute
     from vllm import LLM, RequestOutput, SamplingParams
@@ -73,8 +74,7 @@ STARTING_BATCH_SIZE = 512
 
 
 class VLLMModelConfig(ModelConfig):
-    """
-    Configuration class for VLLM inference engine.
+    """Configuration class for VLLM inference engine.
 
     This configuration is used to load and configure models using the VLLM inference engine,
     which provides high-performance inference for large language models with features like
@@ -85,6 +85,8 @@ class VLLMModelConfig(ModelConfig):
     Attributes:
         model_name (str):
             HuggingFace Hub model ID or path to the model to load.
+        tokenizer (str | None):
+            HuggingFace Hub model ID or path to the tokenizer to load.
         revision (str):
             Git revision of the model. Defaults to "main".
         dtype (str):
@@ -97,6 +99,8 @@ class VLLMModelConfig(ModelConfig):
             Number of GPUs to use for pipeline parallelism. Defaults to 1.
         gpu_memory_utilization (NonNegativeFloat):
             Fraction of GPU memory to use. Lower this if running out of memory. Defaults to 0.9.
+        enable_prefix_caching (bool):
+            Whether to enable prefix caching to speed up generation. May use more memory. Should be disabled for LFM2. Defaults to True.
         max_model_length (PositiveInt | None):
             Maximum sequence length for the model. If None, automatically inferred.
             Reduce this if encountering OOM issues (4096 is usually sufficient).
@@ -124,6 +128,15 @@ class VLLMModelConfig(ModelConfig):
             Subfolder within the model repository. Defaults to None.
         is_async (bool):
             Whether to use the async version of VLLM. Defaults to False.
+        override_chat_template (bool):
+            If True, we force the model to use a chat template. If alse, we prevent the model from using
+            a chat template. If None, we use the default (true if present in the tokenizer, false otherwise)
+        generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc.
+        system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
+            This prompt sets the behavior and context for the model during evaluation.
+        cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
 
     Example:
         ```python
@@ -140,12 +153,14 @@ class VLLMModelConfig(ModelConfig):
         ```
     """
 
+    tokenizer: str | None = None
     revision: str = "main"  # revision of the model
     dtype: str = "bfloat16"
     tensor_parallel_size: PositiveInt = 1  # how many GPUs to use for tensor parallelism
     data_parallel_size: PositiveInt = 1  # how many GPUs to use for data parallelism
     pipeline_parallel_size: PositiveInt = 1  # how many GPUs to use for pipeline parallelism
     gpu_memory_utilization: NonNegativeFloat = 0.9  # lower this if you are running out of memory
+    enable_prefix_caching: bool = None  # whether to enable prefix caching to speed up generation. May use more memory. Should be disabled for LFM2
     max_model_length: PositiveInt | None = (
         None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
     )
@@ -163,16 +178,20 @@ class VLLMModelConfig(ModelConfig):
     max_num_batched_tokens: PositiveInt = 2048  # maximum number of tokens per batch
     subfolder: str | None = None
     is_async: bool = False  # Whether to use the async version or sync version of the model
+    override_chat_template: bool = None
 
 
+@requires("vllm")
 class VLLMModel(LightevalModel):
     def __init__(
         self,
         config: VLLMModelConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
-        self._config = config
-        self.use_chat_template = uses_chat_template(model_name=config.model_name)
+        self.config = config
+        self.use_chat_template = uses_chat_template(
+            model_name=config.model_name, override_chat_template=config.override_chat_template
+        )
         self.data_parallel_size = config.data_parallel_size
         self.tensor_parallel_size = config.tensor_parallel_size
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
@@ -192,10 +211,12 @@ class VLLMModel(LightevalModel):
         self.model_sha = ""
         self.precision = config.dtype
 
-        self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
         self.pairwise_tokenization = config.pairwise_tokenization
 
         self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer, config.system_prompt)
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
 
     @property
     def tokenizer(self):
@@ -219,26 +240,18 @@ class VLLMModel(LightevalModel):
         return self._max_length
 
     def _create_auto_model(self, config: VLLMModelConfig) -> Optional[LLM]:
-        """
-        Creates an instance of the pretrained HF model.
+        """Creates an instance of the pretrained HF model.
 
         Args:
-            pretrained (str): The name or path of the pretrained model.
-            revision (str): The revision of the model.
-            subfolder (Optional[str], optional): The subfolder within the model. Defaults to None.
-            max_memory (Optional[dict], optional): The maximum memory to allocate for the model per GPU. Defaults to None.
-            device_map (Optional[dict], optional): The device mapping for the model. Defaults to None.
-            torch_dtype (Optional[Union[str, torch.dtype]], optional): The torch data type for the model. Defaults to None.
-            quantization_config (Optional[Union[BitsAndBytesConfig, GPTQConfig]], optional): The quantization configuration for the model. Defaults to None.
-            trust_remote_code (bool, optional): Whether to trust remote code. Defaults to False.
-            cache_dir (str, optional): The cache directory for the model. Defaults to "/scratch".
+            config (VLLMModelConfig): The VLLM model configuration.
 
         Returns:
-            transformers.PreTrainedModel: The created auto model instance.
+            Optional[LLM]: The created auto model instance.
         """
         self.model_args = {
             "model": config.model_name,
             "gpu_memory_utilization": config.gpu_memory_utilization,
+            "enable_prefix_caching": config.enable_prefix_caching,
             "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
             "dtype": config.dtype,
             "trust_remote_code": config.trust_remote_code,
@@ -249,6 +262,7 @@ class VLLMModel(LightevalModel):
             "seed": int(config.seed),
             "max_num_seqs": int(config.max_num_seqs),
             "max_num_batched_tokens": int(config.max_num_batched_tokens),
+            "enforce_eager": True,
         }
 
         if config.quantization is not None:
@@ -282,7 +296,7 @@ class VLLMModel(LightevalModel):
 
     def _create_auto_tokenizer(self, config: VLLMModelConfig):
         tokenizer = get_tokenizer(
-            config.model_name,
+            config.tokenizer or config.model_name,  # use HF tokenizer for non-HF models, like GGUF model.
             tokenizer_mode="auto",
             trust_remote_code=config.trust_remote_code,
             revision=config.revision,
@@ -290,20 +304,25 @@ class VLLMModel(LightevalModel):
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
 
+    @cached(SamplingMethod.GENERATIVE)
     def greedy_until(
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
-            list[GenerateReturn]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
+        return self._greedy_until(docs)
+
+    def _greedy_until(
+        self,
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
@@ -323,7 +342,7 @@ class VLLMModel(LightevalModel):
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = split[0].stop_sequences or []
 
-            max_new_tokens = self._config.generation_parameters.max_new_tokens or split[0].generation_size
+            max_new_tokens = self.config.generation_parameters.max_new_tokens or split[0].generation_size
             num_samples = split[0].num_samples
 
             context = [self.prompt_manager.prepare_prompt(doc) for doc in split]
@@ -395,7 +414,7 @@ class VLLMModel(LightevalModel):
         generate: bool = True,
     ) -> list:
         """Contains the actual logic of the generation."""
-        sampling_params = SamplingParams(**self._config.generation_parameters.to_vllm_dict())
+        sampling_params = SamplingParams(**self.config.generation_parameters.to_vllm_dict())
 
         if generate:
             sampling_params.n = num_samples
@@ -442,6 +461,7 @@ class VLLMModel(LightevalModel):
 
         return outputs
 
+    @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         return self._loglikelihood_tokens(docs)
 
@@ -469,7 +489,8 @@ class VLLMModel(LightevalModel):
                     tokenized_contexts_batch.append(tokenized_context)
 
             # Left truncate the inputs to the maximum length
-            inputs = [input[-self.max_length :] for input in inputs]
+            if self.max_length:  # can be None if the model is initialized with ray
+                inputs = [input[-self.max_length :] for input in inputs]
             outputs = self._generate(inputs, generate=False)
 
             flat_index = 0
@@ -509,10 +530,12 @@ class VLLMModel(LightevalModel):
 
         return dataset.get_original_order(res)
 
+    @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         raise NotImplementedError()
 
 
+@requires("vllm")
 class AsyncVLLMModel(VLLMModel):
     """VLLM models which deploy async natively (no ray). Supports DP and PP/TP but not batch size > 1"""
 
@@ -525,8 +548,7 @@ class AsyncVLLMModel(VLLMModel):
         torch.cuda.empty_cache()
 
     def _create_auto_model(self, config: VLLMModelConfig):
-        """
-        Creates an instance of the async vllm model loaded from HF. Requires using the v1 of VLLM.
+        """Creates an instance of the async vllm model loaded from HF. Requires using the v1 of VLLM.
 
         Returns:
             AsyncLLM: The created async VLLM instance
@@ -566,7 +588,7 @@ class AsyncVLLMModel(VLLMModel):
         generative: bool,
     ) -> Coroutine[None, list, str]:
         """Contains the actual logic of the generation."""
-        sampling_params = SamplingParams(**self._config.generation_parameters.to_vllm_dict())
+        sampling_params = SamplingParams(**self.config.generation_parameters.to_vllm_dict())
 
         if not generative:
             sampling_params.temperature = 0
@@ -582,7 +604,7 @@ class AsyncVLLMModel(VLLMModel):
                 logger.warning(
                     "Careful, there can be unexpected behavior when using sampling evals with the async vllm model"
                 )
-            sampling_params.max_tokens = self._config.generation_parameters.max_new_tokens or doc.generation_size
+            sampling_params.max_tokens = self.config.generation_parameters.max_new_tokens or doc.generation_size
             sampling_params.stop = [] if self.use_chat_template else doc.stop_sequences
             sampling_params.logprobs = int(doc.use_logits)
             prompt = self.prompt_manager.prepare_prompt(doc)
@@ -604,18 +626,18 @@ class AsyncVLLMModel(VLLMModel):
         results = await asyncio.gather(*processed_requests)
         return results
 
+    @cached(SamplingMethod.GENERATIVE)
     async def greedy_until(
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
-            list[GenerateReturn]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         results = []
 
@@ -638,19 +660,19 @@ class AsyncVLLMModel(VLLMModel):
 
         return results
 
+    @cached(SamplingMethod.LOGPROBS)
     async def loglikelihood(
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
-        """
-        Generates responses using a greedy decoding strategy until certain ending conditions are met and
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met and
         stores the logprobs.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
+            docs (list[Doc]): List of documents containing the context and choices.
 
         Returns:
-            list[LoglikelihoodResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         results = []
 

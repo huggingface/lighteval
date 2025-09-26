@@ -38,5 +38,8 @@ jobs:
         run: uv sync --extra dev
 
 
+      - name: run nvidia-smi
+        run: nvidia-smi
+
       - name: Run tests
-        run: uv run pytest --disable-pytest-warnings -o log_cli=true -o log_cli_level=INFO --runslow tests/slow_tests/
+        run: uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/

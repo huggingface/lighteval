@@ -29,5 +29,3 @@ model_parameters:
     stop_tokens: null
     max_new_tokens: 2048
     min_new_tokens: 0
-metrics_options:
-  yo: null

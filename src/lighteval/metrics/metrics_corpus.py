@@ -27,6 +27,7 @@ A number of these aggregations come from the EleutherAIHarness
 
 import logging
 import math
+from abc import ABC, abstractmethod
 from typing import Literal
 
 import numpy as np
@@ -44,22 +45,40 @@ from lighteval.utils.utils import as_list
 logger = logging.getLogger(__name__)
 
 
+class CorpusLevelComputation(ABC):
+    @abstractmethod
+    def compute_corpus(self):
+        raise NotImplementedError
+
+    def __str__(self):
+        attrs = vars(self)
+        attr_strs = []
+        for k, v in attrs.items():
+            if callable(v):
+                val_str = v.__name__
+            else:
+                val_str = str(v)
+            attr_strs.append(f"{k}={val_str}")
+        return f"{self.__class__.__name__}({', '.join(attr_strs)})"
+
+
 # General aggregations
-def matthews_corrcoef(items: list[GenerativeCorpusMetricInput]) -> float:
-    """Computes the Matthews Correlation Coefficient, using scikit learn ([doc](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.matthews_corrcoef.html)).
+class MatthewsCorrCoef(CorpusLevelComputation):
+    def compute_corpus(self, items: list[GenerativeCorpusMetricInput]) -> float:
+        """Computes the Matthews Correlation Coefficient, using scikit learn ([doc](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.matthews_corrcoef.html)).
 
-    Args:
-        items (list[dict]): List of GenerativeCorpusMetricInput
+        Args:
+            items (list[dict]): List of GenerativeCorpusMetricInput
 
-    Returns:
-        float: Score
-    """
-    golds = [i.golds for i in items]
-    preds = [i.preds for i in items]
-    return sklearn.metrics.matthews_corrcoef(golds, preds)
+        Returns:
+            float: Score
+        """
+        golds = [i.golds for i in items]
+        preds = [i.preds for i in items]
+        return sklearn.metrics.matthews_corrcoef(golds, preds)
 
 
-class CorpusLevelF1Score:
+class CorpusLevelF1Score(CorpusLevelComputation):
     def __init__(self, average: str, num_classes: int = 2):
         """Stores the relevant parameters for the task's corpus level f1 score.
 
@@ -74,7 +93,7 @@ class CorpusLevelF1Score:
         self.average = average
         self.num_classes = num_classes
 
-    def compute(self, items: list[LogprobCorpusMetricInput]):
+    def compute_corpus(self, items: list[LogprobCorpusMetricInput]):
         """Computes the metric score over all the corpus generated items, by using the scikit learn implementation."""
         golds = [i.golds for i in items]
         preds = [i.preds for i in items]
@@ -86,22 +105,30 @@ class CorpusLevelF1Score:
         # Multi f1
         f1s = []
         for i in range(self.num_classes):
-            f1s.append(sklearn.metrics.f1_score(y_true=golds == i, y_pred=preds == i))
+            f1s.append(
+                sklearn.metrics.f1_score(
+                    y_true=[g == i for g in golds], y_pred=[p == i for p in preds], average=self.average
+                )
+            )
         return float(np.mean(f1s))
 
 
-class CorpusLevelTranslationMetric:
+class CorpusLevelTranslationMetric(CorpusLevelComputation):
     def __init__(self, metric_type: str, lang: Literal["zh", "ja", "ko", ""] = ""):
         """Stores the relevant parameters for a corpus level translation metric.
 
         Args:
             metric_type (str): Can be any of bleu, chrf, or ter depending on the metric to use.
+            lang (str): Language code for the translation metric.
         """
         self.metric_type = metric_type
         self.lang = lang
 
     def get_metric(self):
         if self.metric_type == "bleu":
+            import nltk
+
+            nltk.download("punkt_tab")
             return sacrebleu.BLEU(trg_lang=self.lang)
         elif self.metric_type == "chrf":
             return sacrebleu.CHRF()
@@ -112,7 +139,7 @@ class CorpusLevelTranslationMetric:
         else:
             raise ValueError(f"Unknown corpus level translation metric type : {self.metric_type}")
 
-    def compute(self, items: list[GenerativeCorpusMetricInput]) -> float:
+    def compute_corpus(self, items: list[GenerativeCorpusMetricInput]) -> float:
         """Computes the metric score over all the corpus generated items, by using the sacrebleu implementation."""
         metric = self.get_metric()
         golds = [i.golds for i in items]
@@ -124,10 +151,17 @@ class CorpusLevelTranslationMetric:
                     f"Multiple predictions present, keeping only the first prediction (when computing sacrebleu.{metric.__name__})."
                 )
             preds.append(pred[0])
-        return float(metric.corpus_score(hypotheses=preds, references=golds).score)
+
+        if self.metric_type == "bleu":
+            golds = [[gold[0] for gold in golds]]
+
+        corpus_score = metric.corpus_score(hypotheses=preds, references=golds)
+        score = corpus_score.score
+        results = float(score)
+        return results
 
 
-class CorpusLevelPerplexityMetric:
+class CorpusLevelPerplexityMetric(CorpusLevelComputation):
     def __init__(self, metric_type: str):
         """Stores the relevant parameter for a corpus level perplexity metric.
         Perplexity metrics compute more or less the same thing, which is a variation on the
@@ -145,7 +179,7 @@ class CorpusLevelPerplexityMetric:
 
         self.metric_type = metric_type
 
-    def compute(self, items: list[PerplexityCorpusMetricInput]):
+    def compute_corpus(self, items: list[PerplexityCorpusMetricInput]):
         """Computes the metric score over all the corpus generated items."""
         logprobs = [i.logprobs for i in items]
         weights = [i.weights for i in items]

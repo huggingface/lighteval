@@ -27,15 +27,20 @@
 import logging
 from collections import Counter
 from multiprocessing import Pool
+from typing import Literal
 
 from lighteval.metrics.imports.data_stats_utils import Fragments
-from lighteval.utils.imports import NO_SPACY_ERROR_MSG, is_spacy_available
+from lighteval.utils.imports import Extra, requires
 
 
 logger = logging.getLogger(__name__)
 
-
-_en = None
+LANGUAGE_TO_SPACY_MODEL_MAP = {
+    "en": "en_core_web_sm",
+    "de": "de_core_news_sm",
+    "fr": "fr_core_news_sm",
+    "it": "it_core_news_sm",
+}
 
 
 class Metric:
@@ -50,8 +55,16 @@ def find_ngrams(input_list, n):
     return zip(*[input_list[i:] for i in range(n)])
 
 
+@requires(Extra.MULTILINGUAL)
 class DataStatsMetric(Metric):
-    def __init__(self, n_gram=3, n_workers=24, case=False, tokenize=True):
+    def __init__(
+        self,
+        n_gram: int = 3,
+        n_workers: int = 24,
+        case: bool = False,
+        tokenize: bool = True,
+        language: Literal["en", "de", "fr", "it"] = "en",
+    ):
         """
         Data Statistics metric
         Makes use of Newsroom code: \
@@ -65,36 +78,39 @@ class DataStatsMetric(Metric):
             (e.g. news article) as opposed to the reference.
 
         Args:
-                :param n_gram: compute statistics for n-grams up to and including this length
-                :param n_workers: number of processes to use if using multiprocessing
-                :param case: whether to lowercase input before calculating statistics
-                :param tokenize: whether to tokenize the input; otherwise assumes that the input
-                    is a string of space-separated tokens
+            n_gram (int): compute statistics for n-grams up to and including this length.
+            n_workers (int): number of processes to use if using multiprocessing.
+            case (bool): whether to lowercase input before calculating statistics.
+            tokenize (bool): whether to tokenize the input; otherwise assumes that the input
+                is a string of space-separated tokens.
+            language (Literal["en", "de", "fr", "it"]): the language of the input text. This
+                determines the spaCy model used for tokenization. Currently supports English,
+                German, French, and Italian.
         """
-        if not is_spacy_available():
-            raise ImportError(NO_SPACY_ERROR_MSG)
         import spacy
 
         self.n_gram = n_gram
         self.n_workers = n_workers
         self.case = case
         self.tokenize = tokenize
+        self.language = language
+        self.nlp = None
 
-        global _en
+        spacy_model = LANGUAGE_TO_SPACY_MODEL_MAP.get(self.language, "en_core_web_sm")
         try:
-            _en = spacy.load("en_core_web_sm")
+            self.nlp = spacy.load(spacy_model)
         except OSError:
-            logger.info("Downloading the spacy en_core_web_sm model\n(don't worry, this will only happen once)")
+            logger.info(f"Downloading the spacy {spacy_model} model\n(don't worry, this will only happen once)")
             from spacy.cli import download
 
-            download("en_core_web_sm")
-            _en = spacy.load("en_core_web_sm")
+            download(spacy_model)
+            self.nlp = spacy.load(spacy_model)
 
     def evaluate_example(self, summary, input_text):
         if self.tokenize:
-            input_text = _en(input_text, disable=["tagger", "parser", "ner", "textcat"])
+            input_text = self.nlp(input_text, disable=["tagger", "parser", "ner", "textcat"])
             input_text = [tok.text for tok in input_text]
-            summary = _en(summary, disable=["tagger", "parser", "ner", "textcat"])
+            summary = self.nlp(summary, disable=["tagger", "parser", "ner", "textcat"])
             summary = [tok.text for tok in summary]
         fragments = Fragments(summary, input_text, case=self.case)
         coverage = fragments.coverage()

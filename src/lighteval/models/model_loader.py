@@ -23,7 +23,7 @@
 import logging
 from typing import Union
 
-from lighteval.models.abstract_model import LightevalModel
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.custom.custom_model import CustomModelConfig
 from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
 from lighteval.models.endpoints.endpoint_model import (
@@ -35,25 +35,14 @@ from lighteval.models.endpoints.inference_providers_model import (
     InferenceProvidersClient,
     InferenceProvidersModelConfig,
 )
+from lighteval.models.endpoints.litellm_model import LiteLLMClient, LiteLLMModelConfig
 from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
-from lighteval.models.litellm_model import LiteLLMClient, LiteLLMModelConfig
 from lighteval.models.sglang.sglang_model import SGLangModel, SGLangModelConfig
 from lighteval.models.transformers.adapter_model import AdapterModel, AdapterModelConfig
 from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConfig
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModel, VLMTransformersModelConfig
-from lighteval.models.utils import ModelConfig
 from lighteval.models.vllm.vllm_model import AsyncVLLMModel, VLLMModel, VLLMModelConfig
-from lighteval.utils.imports import (
-    NO_LITELLM_ERROR_MSG,
-    NO_SGLANG_ERROR_MSG,
-    NO_TGI_ERROR_MSG,
-    NO_VLLM_ERROR_MSG,
-    is_litellm_available,
-    is_sglang_available,
-    is_tgi_available,
-    is_vllm_available,
-)
 
 
 logger = logging.getLogger(__name__)
@@ -62,14 +51,11 @@ logger = logging.getLogger(__name__)
 def load_model(  # noqa: C901
     config: ModelConfig,
 ) -> LightevalModel:
-    """
-    Load a model from a checkpoint, depending on the config type.
+    """Load a model from a checkpoint, depending on the config type.
 
     Args:
         config (ModelConfig): configuration of the model to load
 
-    Raises:
-        ValueError: If you try to have both the multichoice continuations start with a space and not to start with a space
     Returns:
         LightevalModel: The model that will be evaluated
     """
@@ -106,20 +92,12 @@ def load_model(  # noqa: C901
 
 
 def load_model_with_tgi(config: TGIModelConfig):
-    if not is_tgi_available():
-        raise ImportError(NO_TGI_ERROR_MSG)
-
     logger.info(f"Load model from inference server: {config.inference_server_address}")
-    model = ModelClient(
-        address=config.inference_server_address, auth_token=config.inference_server_auth, model_id=config.model_id
-    )
+    model = ModelClient(config=config)
     return model
 
 
 def load_litellm_model(config: LiteLLMModelConfig):
-    if not is_litellm_available():
-        raise ImportError(NO_LITELLM_ERROR_MSG)
-
     model = LiteLLMClient(config)
     return model
 
@@ -169,8 +147,6 @@ def load_model_with_accelerate_or_default(
     elif isinstance(config, DeltaModelConfig):
         model = DeltaModel(config=config)
     elif isinstance(config, VLLMModelConfig):
-        if not is_vllm_available():
-            raise ImportError(NO_VLLM_ERROR_MSG)
         if config.is_async:
             model = AsyncVLLMModel(config=config)
         else:
@@ -192,7 +168,4 @@ def load_inference_providers_model(config: InferenceProvidersModelConfig):
 
 
 def load_sglang_model(config: SGLangModelConfig):
-    if not is_sglang_available():
-        raise ImportError(NO_SGLANG_ERROR_MSG)
-
     return SGLangModel(config=config)

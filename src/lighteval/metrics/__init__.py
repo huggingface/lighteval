@@ -21,37 +21,42 @@
 # SOFTWARE.
 
 
-from lighteval.metrics.metrics import Metric
+from lighteval.metrics.utils.metric_utils import Metric
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
 
 
 def apply_metric(responses: list[ModelResponse], docs: list[Doc], metrics: list[Metric]):
+    # Separate batched and non-batched metrics
+    batched_metrics = [m for m in metrics if m.batched_compute]
+    non_batched_metrics = [m for m in metrics if not m.batched_compute]
+
     outputs = []
-    for metric in metrics:
-        if metric.batched_compute:
-            outputs_per_metrics: list = []
 
-            outputs_per_metrics.append(metric.compute(responses=responses, docs=docs))
+    # Handle batched metrics first
+    batched_outputs = []
+    if batched_metrics:
+        for metric in batched_metrics:
+            metric_outputs = metric.compute_sample(responses=responses, docs=docs)
+            batched_outputs.append(metric_outputs)
 
-            # We merge the outputs per metric in a list of dict for each sample
-            # example: [{metric1_sample1, metric2_sample1}, {metric1_sample2, metric2_sample2}]
-            for i in range(len(docs)):
-                output = {}
-                for metric_outputs in outputs_per_metrics:
-                    output.update(metric_outputs[i])
-                outputs.append(output)
+    # Initialize outputs with the correct structure
+    for i in range(len(docs)):
+        output = {}
 
-        else:
-            for model_response, doc in zip(responses, docs):
-                output = {}
-                for metric in metrics:
-                    output.update(
-                        metric.compute(
-                            model_response=model_response,
-                            doc=doc,
-                        )
-                    )
-                outputs.append(output)
+        # Add batched metric results for this sample
+        for metric_outputs in batched_outputs:
+            output.update(metric_outputs[i])
+
+        # Add non-batched metric results for this sample
+        for metric in non_batched_metrics:
+            output.update(
+                metric.compute_sample(
+                    model_response=responses[i],
+                    doc=docs[i],
+                )
+            )
+
+        outputs.append(output)
 
     return outputs

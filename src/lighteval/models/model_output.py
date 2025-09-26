@@ -27,8 +27,7 @@ import torch
 
 @dataclass
 class ModelResponse:
-    """
-    A class to represent the response from a model during evaluation.
+    """A class to represent the response from a model during evaluation.
 
     This dataclass contains all the information returned by a model during inference,
     including generated text, log probabilities, token information, and metadata.
@@ -127,6 +126,7 @@ class ModelResponse:
     text: list[str] = field(default_factory=list)  # The text of the response
     output_tokens: list[list[int]] = field(default_factory=list)  # Model generations
     text_post_processed: list[str] | None = None  # The text of the response postprocessed
+    reasonings: list[str | None] = field(default_factory=list)  # The reasoning content of the response
 
     # Model logprob outputs
     logprobs: list[float] = field(default_factory=list)  # Log probabilities of the response
@@ -149,7 +149,7 @@ class ModelResponse:
             input=self.input,
             input_tokens=self.input_tokens,
             text=[self.text[index]],
-            output_tokens=[self.output_tokens[index]],
+            output_tokens=[self.output_tokens[index]] if self.output_tokens else [],
             logprobs=[self.logprobs[index]] if self.logprobs else [],
             argmax_logits_eq_gold=[self.argmax_logits_eq_gold[index]] if self.argmax_logits_eq_gold else [],
             logits=[self.logits[index]] if self.logits else None,
