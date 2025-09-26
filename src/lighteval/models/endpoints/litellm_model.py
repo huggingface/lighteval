@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 import logging
-import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from json import JSONDecodeError
@@ -232,12 +231,6 @@ class LiteLLMClient(LightevalModel):
                     kwargs["caching"] = False
                     response = litellm.completion(**kwargs)
                     content = response.choices[0].message.content
-
-                if content and "<think>" in content:
-                    logger.debug(f"Removing <think> tags from response: {content}")
-                    response.choices[0].message.content = re.sub(
-                        r"<think>.*?</think>", "", content, flags=re.DOTALL
-                    ).strip()
 
                 return response
             except litellm.BadRequestError as e:
