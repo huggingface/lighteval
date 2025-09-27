@@ -443,10 +443,9 @@ class BERTScorer:
         if self._model is None:
             logger.info(f"Loading BERTScorer model `{self._model_type}`")
             self._tokenizer = AutoTokenizer.from_pretrained(self._model_type)
-            self._tokenizer.max_model_length = validate_tokenizer_length(
+            self._tokenizer.model_max_length = validate_tokenizer_length(
                 tokenizer=self._tokenizer, override_length=self._tokenizer_len
             )
-
             self._model = AutoModel.from_pretrained(self._model_type)
             self._model.eval()
             self._model.to(self.device)
