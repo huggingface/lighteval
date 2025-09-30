@@ -249,7 +249,7 @@
         ]
       },
       "expected_output": {
-        "extractive_match": 0.0
+        "extractive_match": 1.0
       },
       "tolerance": 0.01,
       "description": "Answer with quotes but still extractable"
