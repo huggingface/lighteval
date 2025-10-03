@@ -30,7 +30,6 @@ from pathlib import Path
 from typing import Callable, List, Set, Tuple, Union
 
 import pandas as pd
-import tqdm
 from datasets import Dataset, load_dataset
 
 from lighteval.models.abstract_model import ModelConfig
@@ -246,7 +245,7 @@ class SampleCache:
         docs_not_cached = []
         tasks_with_cached_samples = set()
 
-        for doc in tqdm.tqdm(docs):
+        for doc in docs:
             task_id = self.get_task_id(doc.task_name, sampling_method)
             try:
                 if doc.id in cached_indices[task_id]:
