@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Callable, List, Set, Tuple, Union
 
 import pandas as pd
+import tqdm
 from datasets import Dataset, load_dataset
 
 from lighteval.models.abstract_model import ModelConfig
@@ -164,7 +165,9 @@ class SampleCache:
             )
             return "NO_HASH"
         task_suite, task_name, few_shot = full_task_name.split("|")
-        task_configs: list[LightevalTaskConfig] = sorted(self.registry.task_to_configs[f"{task_suite}|{task_name}|{few_shot}"])
+        task_configs: list[LightevalTaskConfig] = sorted(
+            self.registry.task_to_configs[f"{task_suite}|{task_name}|{few_shot}"]
+        )
         config_str = "|".join([task_config.__str__(lite=True) for task_config in task_configs])
         return hashlib.sha256(config_str.encode()).hexdigest()[:16]
 
@@ -243,7 +246,7 @@ class SampleCache:
         docs_not_cached = []
         tasks_with_cached_samples = set()
 
-        for doc in docs:
+        for doc in tqdm.tqdm(docs):
             task_id = self.get_task_id(doc.task_name, sampling_method)
             try:
                 if doc.id in cached_indices[task_id]:
