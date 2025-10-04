@@ -1003,7 +1003,7 @@ class JudgeLLM(SampleLevelComputation):
             backend_options=backend_options,
         )
 
-    def compute(self, responses: list[ModelResponse], docs: list[Doc], **kwargs) -> list:
+    def compute(self, response: list[ModelResponse], doc: list[Doc], **kwargs) -> list:
         raise NotImplementedError("This method should be implemented in the subclass.")
 
 
@@ -1017,12 +1017,14 @@ class JudgeLLMSimpleQA(JudgeLLM):
             short_judge_name="gpt4o",
         )
 
-    def compute(self, responses: list[ModelResponse], docs: list[Doc], **kwargs) -> list:
+    def compute(self, response: list[ModelResponse], doc: list[Doc], **kwargs) -> list:
         """Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
         return scores for turn 1 and 2. Also returns user_prompt and judgement
         which are ignored later by the aggregator.
         """
+        docs = as_list(doc)
+        responses = as_list(response)
         questions = [formatted_doc.query for formatted_doc in docs]
         options = [formatted_doc.choices for formatted_doc in docs]
         golds = [formatted_doc.get_golds()[0] for formatted_doc in docs]
@@ -1044,13 +1046,15 @@ class JudgeLLMSimpleQA(JudgeLLM):
 
 
 class JudgeLLMMTBench(JudgeLLM):
-    def compute(self, model_response: list[ModelResponse], docs: list[Doc], **kwargs):
+    def compute(self, model_response: list[ModelResponse], doc: list[Doc], **kwargs):
         """Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
         return scores for turn 1 and 2. Also returns user_prompt and judgement
         which are ignored later by the aggregator.
         """
         import json
+
+        docs = as_list(doc)
 
         # If we are evaluating a multiturn task, we need to have specific field in the formatted doc
         questions = [doc.specific["multi_turn_queries"] for doc in docs]
@@ -1076,12 +1080,15 @@ class JudgeLLMMTBench(JudgeLLM):
 
 
 class JudgeLLMMixEval(JudgeLLM):
-    def compute(self, model_responses: list[ModelResponse], docs: list[Doc], **kwargs):
+    def compute(self, model_response: list[ModelResponse], doc: list[Doc], **kwargs):
         """Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
         return scores for turn 1 and 2. Also returns user_prompt and judgement
         which are ignored later by the aggregator.
         """
+        docs = as_list(doc)
+        model_responses = as_list(model_response)
+
         questions = [doc.specific["question"] for doc in docs]
         options = [doc.choices for doc in docs]
         golds = [doc.get_golds()[0] for doc in docs]
