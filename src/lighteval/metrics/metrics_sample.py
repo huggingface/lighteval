@@ -1027,7 +1027,7 @@ class JudgeLLMSimpleQA(JudgeLLM):
         questions = [formatted_doc.query for formatted_doc in docs]
         options = [formatted_doc.choices for formatted_doc in docs]
         golds = [formatted_doc.get_golds()[0] for formatted_doc in docs]
-        predictions = [response.text[0] for response in responses]
+        predictions = [response.final_text[0] for response in responses]
 
         scores, messages, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
 
@@ -1059,7 +1059,7 @@ class JudgeLLMMTBench(JudgeLLM):
         # If we are evaluating a multiturn task, we need to have specific field in the formatted doc
         questions = [doc.specific["multi_turn_queries"] for doc in docs]
         golds = [doc.specific.get("reference", None) for doc in docs]
-        predictions = [response.text[0] for response in model_responses]
+        predictions = [response.final_text[0] for response in model_responses]
 
         query_context_1 = {"query": questions[0], "context": ""}
         query_context_2 = {"query": questions[1], "context": predictions[0]}
@@ -1089,7 +1089,7 @@ class JudgeLLMMixEval(JudgeLLM):
         questions = [doc.specific["question"] for doc in docs]
         options = [doc.choices for doc in docs]
         golds = [doc.get_golds()[0] for doc in docs]
-        predictions = [response.text[0] for response in responses]
+        predictions = [response.final_text[0] for response in responses]
 
         scores, messages, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
 
@@ -1098,8 +1098,8 @@ class JudgeLLMMixEval(JudgeLLM):
             metrics.append(
                 {
                     f"judge_score_{self.short_judge_name}": scores[i],
-                    f"user_prompt_{self.short_judge_name}": messages[i],
-                    f"judgement_{self.short_judge_name}": judgements[i],
+                    # f"user_prompt_{self.short_judge_name}": messages[i],
+                    # f"judgement_{self.short_judge_name}": judgements[i],
                 }
             )
 
