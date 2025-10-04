@@ -172,7 +172,7 @@ class JudgeLM:
 
                     self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=self.max_tokens)
                     self.tokenizer = get_tokenizer(self.model, tokenizer_mode="auto")
-                    self.pipe = LLM(model=self.model, gpu_memory_utilization=0.5, dtype="float16")
+                    self.pipe = LLM(model=self.model, gpu_memory_utilization=0.8, dtype="float16")
                 return self.__call_vllm
 
             case "transformers":
