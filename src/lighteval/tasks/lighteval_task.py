@@ -295,6 +295,8 @@ class LightevalTask:
                 # Some tasks require to know which is the current item index in order to apply a different prompt template
                 item["__index"] = ix
                 doc = self.formatter(item, self.name)
+                if doc is None or doc == []:
+                    continue
                 doc.id = str(ix)
 
                 # Transfer task-level generation parameters to the document
