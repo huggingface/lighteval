@@ -217,7 +217,7 @@ class MultilingualExtractiveMatchMetric(SampleLevelComputation):
         ]
         formatted_doc.specific["extracted_golds"] = [str(gold) for golds in extracted_golds for gold in golds]
 
-    def compute(self, doc: Doc, model_response: ModelResponse) -> float:
+    def compute(self, doc: str, model_response: str) -> float:
         golds = doc.get_golds()
         predictions = model_response.final_text
 

@@ -30,6 +30,7 @@ from typing import Optional
 
 import numpy as np
 import pycountry
+from inspect_ai.dataset import Sample
 
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list
@@ -130,21 +131,14 @@ def simpleqa(line, task_name: str = None):
     )
 
 
-def aime_prompt_fn(line, task_name: str = None):
+def aime_prompt_fn(record):
     # Prompt template adapted from
     # - simple-evals: https://github.com/openai/simple-evals/blob/6e84f4e2aed6b60f6a0c7b8f06bbbf4bfde72e58/math_eval.py#L17
     # - Llama 3: https://huggingface.co/datasets/meta-llama/Llama-3.2-1B-Instruct-evals/viewer/Llama-3.2-1B-Instruct-evals__math__details?views%5B%5D=llama_32_1b_instruct_evals__math__details
     # Note that it is important to have the final answer in a box for math-verify to work correctly
-    MATH_QUERY_TEMPLATE = """
-Solve the following math problem efficiently and clearly.  The last line of your response should be of the following format: 'Therefore, the final answer is: $\\boxed{{ANSWER}}$. I hope it is correct' (without quotes) where ANSWER is just the final number or expression that solves the problem. Think step by step before answering.
-
-{Question}
-""".strip()
-    return Doc(
-        task_name=task_name,
-        query=MATH_QUERY_TEMPLATE.format(Question=line["problem"]),
-        choices=[line["answer"]],
-        gold_index=0,
+    return Sample(
+        input=record["problem"],
+        target=record["answer"],
     )
 
 
@@ -936,13 +930,11 @@ def gsm_plus(line, task_name: str = None):
     )
 
 
-def gsm8k(line, task_name: str = None):
-    # Has special analysis in metric for number decomposition
-    return Doc(
-        task_name=task_name,
-        query=f"Question: {line['question']}\nAnswer:",
-        choices=[f" {line['answer']}"],
-        gold_index=0,
+
+def gsm8k(record):
+    return Sample(
+        input=record['question'],
+        target=record['answer'],
     )
 
 
