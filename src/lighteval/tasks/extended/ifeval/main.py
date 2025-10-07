@@ -22,12 +22,13 @@
 
 
 import numpy as np
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import Score, Target, accuracy, scorer, stderr
+from inspect_ai.solver import TaskState
 
 import lighteval.tasks.extended.ifeval.instructions_registry as instructions_registry
 from lighteval.metrics.metrics_sample import SampleLevelComputation
-from lighteval.metrics.utils.metric_utils import (
-    SampleLevelMetricGrouping,
-)
+from lighteval.metrics.utils.metric_utils import SampleLevelMetricGrouping
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc, SamplingMethod
@@ -36,37 +37,33 @@ from lighteval.utils.imports import requires
 
 # Very specific task where there are no precise outputs but instead we test if the format obeys rules
 @requires("langdetect")
-def ifeval_prompt(line, task_name: str = ""):
-    return Doc(
-        task_name=task_name,
-        query=line["prompt"],
-        choices=[""],
-        gold_index=0,
-        instruction="",
-        specific={"instructions_id_list": line["instruction_id_list"], "kwargs": line["kwargs"]},
+def ifeval_prompt(record):
+    metadata = {"instruction_id_list": record["instruction_id_list"], "kwargs": record["kwargs"]}
+
+    return Sample(
+        input=record["prompt"],
+        metadata=metadata,
     )
 
 
 submetric_names = [
     "prompt_level_strict_acc",
-    "inst_level_strict_acc",
     "prompt_level_loose_acc",
-    "inst_level_loose_acc",
-]
-
-REASONING_TAG_PAIRS = [
-    ("<think>", "</think>"),
 ]
 
 
-class IFEvalMetrics(SampleLevelComputation):
-    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict:
-        response = model_response.final_text[0]
+@scorer(metrics={
+    "prompt_level_strict_acc": [accuracy(), stderr()],
+    "prompt_level_loose_acc": [accuracy(), stderr()],
+})
+def ifeval_scorer():
+    async def score(state: TaskState, target: Target):
+        response = state.output.completion
 
         # Strict instructions
-        instruction_list = doc.specific["instructions_id_list"]
-        all_kwargs = doc.specific["kwargs"]
-        prompt = doc.query
+        instruction_list = state.metadata["instruction_id_list"]
+        all_kwargs = state.metadata["kwargs"]
+        prompt = state.input
 
         # Loose instructions
         r = response.split("\n")
@@ -117,12 +114,16 @@ class IFEvalMetrics(SampleLevelComputation):
 
             is_following_list_loose.append(is_following)
 
-        return {
+        return Score(value={
             "prompt_level_strict_acc": int(all(is_following_list_strict)),
-            "inst_level_strict_acc": is_following_list_strict,
             "prompt_level_loose_acc": int(all(is_following_list_loose)),
-            "inst_level_loose_acc": is_following_list_loose,
-        }
+        })
+    return score
+
+
+class IFEvalMetrics(SampleLevelComputation):
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict:
+        pass
 
 
 @requires("langdetect")

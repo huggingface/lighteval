@@ -930,7 +930,6 @@ def gsm_plus(line, task_name: str = None):
     )
 
 
-
 def gsm8k(record):
     return Sample(
         input=record['question'],

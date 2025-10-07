@@ -31,7 +31,6 @@ from sympy import Basic, FiniteSet, MatrixBase, Number
 from sympy.parsing import parse_expr
 
 from lighteval.metrics.utils.math_comparison import should_treat_as_complex
-from lighteval.tasks.requests import Doc
 from lighteval.tasks.templates.utils.formulation import ChoicePrefix, get_prefix
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
 from lighteval.utils.imports import requires
