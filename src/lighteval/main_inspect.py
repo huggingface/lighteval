@@ -121,8 +121,9 @@ ifeval_task_config = TaskConfig(
 
 def main():
     MODEL = "openai/gpt-4o"
+    all_tasks = [gsm8k_task_config, aime25_task_config, ifeval_task_config]
 
-    eval(get_task(gsm8k_task_config), model=MODEL, display="rich", limit=10)
+    eval([get_task(task) for task in all_tasks], model=MODEL, display="rich", limit=10, max_tasks=3)
 
 
 if __name__ == "__main__":
