@@ -52,10 +52,12 @@ submetric_names = [
 ]
 
 
-@scorer(metrics={
-    "prompt_level_strict_acc": [accuracy(), stderr()],
-    "prompt_level_loose_acc": [accuracy(), stderr()],
-})
+@scorer(
+    metrics={
+        "prompt_level_strict_acc": [accuracy(), stderr()],
+        "prompt_level_loose_acc": [accuracy(), stderr()],
+    }
+)
 def ifeval_scorer():
     async def score(state: TaskState, target: Target):
         response = state.output.completion
@@ -114,10 +116,13 @@ def ifeval_scorer():
 
             is_following_list_loose.append(is_following)
 
-        return Score(value={
-            "prompt_level_strict_acc": int(all(is_following_list_strict)),
-            "prompt_level_loose_acc": int(all(is_following_list_loose)),
-        })
+        return Score(
+            value={
+                "prompt_level_strict_acc": int(all(is_following_list_strict)),
+                "prompt_level_loose_acc": int(all(is_following_list_loose)),
+            }
+        )
+
     return score
 
 
@@ -150,17 +155,12 @@ ifeval_metrics = SampleLevelMetricGrouping(
 ifeval = LightevalTaskConfig(
     name="ifeval",
     prompt_function=ifeval_prompt,
-    suite=["extended"],
-    hf_repo="google/IFEval",
-    hf_subset="default",
-    metrics=[ifeval_metrics],
-    hf_avail_splits=["train"],
-    evaluation_splits=["train"],
-    few_shots_split="train",
-    few_shots_select="random_sampling",
-    generation_size=1280,
-    stop_sequence=[],  # no stop sequence, will use eot token
-    version="0.1",
+    dataset_repo="google/IFEval",
+    dataset_subset="default",
+    dataset_split="train",
+    dataset_revision="main",
+    metrics=[],
+    system_prompt="FOLLOW THE INSTRUCTIONS STRICTLY.",
 )
 
 

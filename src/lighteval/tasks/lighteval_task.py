@@ -27,6 +27,7 @@ from typing import Callable
 
 from datasets import DatasetDict, load_dataset
 from huggingface_hub import TextGenerationInputGrammarType
+from inspect_ai.dataset import Sample
 from multiprocess import Pool
 from pytablewriter import MarkdownTableWriter
 
@@ -41,6 +42,27 @@ from lighteval.utils.utils import ListLike, as_list
 
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class LightevalTaskConfig_inspect:
+    """Configuration dataclass for a LightevalTask.
+
+    This class stores all the configuration parameters needed to define and run
+    an evaluation task, including dataset information, prompt formatting,
+    evaluation metrics, and generation parameters.
+    """
+
+    name: str
+    prompt_function: Callable[[dict], Sample]
+    dataset_repo: str
+    dataset_subset: str
+    dataset_split: str
+    metrics: list
+    system_prompt: str | None = None
+    dataset_revision: str | None = None
+    epochs: int = 1
+    epochs_reducer: str | None = None
 
 
 @dataclass

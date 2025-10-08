@@ -1,82 +1,47 @@
-from dataclasses import dataclass
-from typing import Callable
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 
 from inspect_ai import Epochs, Task, eval, task
-from inspect_ai.dataset import Sample, hf_dataset
-from inspect_ai.scorer import Score, Target, accuracy, scorer, stderr
-from inspect_ai.solver import TaskState, generate, system_message
+from inspect_ai.dataset import hf_dataset
+from inspect_ai.solver import generate, system_message
 
-from lighteval.metrics.utils.extractive_match_utils import (
-    ExprExtractionConfig,
-    LatexExtractionConfig,
-    extract_target_from_pred,
-    get_extraction_regexes,
-)
-from lighteval.tasks.default_prompts import aime_prompt_fn, gsm8k
-from lighteval.tasks.extended.ifeval.main import ifeval_prompt, ifeval_scorer
-from lighteval.utils.language import Language
-
-
-@dataclass
-class TaskConfig:
-    name: str
-    prompt_function: Callable[[dict], Sample]
-    hf_repo: str
-    hf_subset: str
-    split: str
-    metrics: list
-    system_prompt: str 
-    epochs: int = 1
-    generation_size: int | None = None
-    num_samples: list[int] | None = None
-    epochs_reducer: str | None = None
-
-
-MATH_SYSTEM_PROMPT = """Solve the following math problem efficiently and clearly.  The last line of your response should be of the following format: 'Therefore, the final answer is: $\\boxed{{ANSWER}}$. I hope it is correct' (without quotes) where ANSWER is just the final number or expression that solves the problem. Think step by step before answering."""
-IFEVAL_SYSTEM_PROMPT = """FOLLOW THE INSTRUCTIONS STRICTLY."""
-
-
-@scorer(metrics=[accuracy(), stderr()])
-def extractive_math_scorer():
-    gold_extraction_target = (ExprExtractionConfig(),)
-    pred_extraction_target = (ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0))
-    language = Language.ENGLISH
-    fallback_mode = "first_match"
-    extraction_mode = "first_match"
-    timeout_seconds = 5
-
-    gold_extraction_regexes = get_extraction_regexes(gold_extraction_target, language)
-    pred_extraction_regexes = get_extraction_regexes(pred_extraction_target, language)
-
-    async def score(state: TaskState, target: Target):
-        extracted_predictions = extract_target_from_pred(
-            state.output.completion, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
-        )
-        extracted_gold = extract_target_from_pred(
-            target.text, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
-        )
-        return Score(
-            value="C" if extracted_predictions == extracted_gold else "I",
-            explanation=state.output.completion,
-            answer=str(extracted_predictions),
-        )
-
-    return score
+from lighteval.tasks import default_tasks
+from lighteval.tasks.lighteval_task import LightevalTaskConfig_inspect as LightevalTaskConfig
 
 
 @task
-def get_task(lighteval_task_config: TaskConfig):
+def get_task(lighteval_task_config: LightevalTaskConfig):
     name = lighteval_task_config.name
     sample_fields = lighteval_task_config.prompt_function
-    split = lighteval_task_config.split
+
+    dataset_repo = lighteval_task_config.dataset_repo
+    dataset_subset = lighteval_task_config.dataset_subset
+    dataset_split = lighteval_task_config.dataset_split
+
     system_prompt = lighteval_task_config.system_prompt
     metrics = lighteval_task_config.metrics
-    hf_repo = lighteval_task_config.hf_repo
-    hf_subset = lighteval_task_config.hf_subset
 
-    dataset = hf_dataset(
-        hf_repo, name=hf_subset, split=split, sample_fields=sample_fields
-    )
+    dataset = hf_dataset(dataset_repo, name=dataset_subset, split=dataset_split, sample_fields=sample_fields)
     solver = [
         system_message(system_prompt),
         generate(cache=True),
@@ -88,42 +53,18 @@ def get_task(lighteval_task_config: TaskConfig):
     return Task(dataset=dataset, solver=solver, scorer=scorer, name=name, epochs=Epochs(epochs, epochs_reducer))
 
 
-gsm8k_task_config = TaskConfig(
-    name="gsm8k",
-    prompt_function=gsm8k,
-    hf_repo="openai/gsm8k",
-    hf_subset="main",
-    split="train",
-    metrics=[extractive_math_scorer()],
-    system_prompt=MATH_SYSTEM_PROMPT,
-    epochs=4,
-)
-aime25_task_config = TaskConfig(
-    name="aime25",
-    prompt_function=aime_prompt_fn,
-    hf_repo="yentinglin/aime_2025",
-    hf_subset="default",
-    split="train",
-    metrics=[extractive_math_scorer()],
-    system_prompt=MATH_SYSTEM_PROMPT,
-    epochs=4,
-)
-ifeval_task_config = TaskConfig(
-    name="ifeval",
-    prompt_function=ifeval_prompt,
-    hf_repo="google/IFEval",
-    split="train",
-    hf_subset="default",
-    metrics=[ifeval_scorer()],
-    system_prompt=IFEVAL_SYSTEM_PROMPT,
-)
-
-
 def main():
-    MODEL = "openai/gpt-4o"
-    all_tasks = [gsm8k_task_config, aime25_task_config, ifeval_task_config]
+    MODEL = ["openai/gpt-4o"]
+    all_tasks = [
+        default_tasks.gsm8k_lighteval,
+        default_tasks.aime25,
+        default_tasks.gpqa_diamond,
+    ]  # default_tasksifeval]
+    all_tasks = [get_task(task) for task in all_tasks]
 
-    eval([get_task(task) for task in all_tasks], model=MODEL, display="rich", limit=10, max_tasks=3)
+    # eval_set(all_tasks, model=MODEL, display="rich", limit=10, max_tasks=3, bundle_dir="./log_static", log_dir="./log_dynamic-1")
+
+    eval(all_tasks[-1], model=MODEL, display="rich", limit=10, max_tasks=3)
 
 
 if __name__ == "__main__":

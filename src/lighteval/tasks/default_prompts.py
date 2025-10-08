@@ -888,29 +888,16 @@ D) {D}
     )
 
 
-def gpqa_instruct(line, task_name: str = None):
+def gpqa_instruct(record):
     """Prompt template adapted from simple-evals: https://github.com/openai/simple-evals/blob/83ed7640a7d9cd26849bcb3340125002ef14abbe/common.py#L14"""
     gold_index = random.randint(0, 3)
-    choices = [line["Incorrect Answer 1"], line["Incorrect Answer 2"], line["Incorrect Answer 3"]]
-    choices.insert(gold_index, line["Correct Answer"])
-    instruction = "Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering."
-    query_template = "{Instruction}\n\n{Question}\n\nA) {A}\nB) {B}\nC) {C}\nD) {D}"
-    query = query_template.format(
-        # Stripping to avoid accidental extra whitespaces, present in GPQA
-        A=choices[0].strip(),
-        B=choices[1].strip(),
-        C=choices[2].strip(),
-        D=choices[3].strip(),
-        Question=line["Question"].strip(),
-        Instruction=instruction,
-    )
+    choices = [record["Incorrect Answer 1"], record["Incorrect Answer 2"], record["Incorrect Answer 3"]]
+    choices.insert(gold_index, record["Correct Answer"])
 
-    return Doc(
-        task_name=task_name,
-        query=query,
-        choices=LETTER_INDICES[: len(choices)],
-        gold_index=gold_index,
-        instruction=instruction,
+    return Sample(
+        input=record["Question"].strip(),
+        choices=choices,
+        target=LETTER_INDICES[gold_index],
     )
 
 
@@ -932,8 +919,8 @@ def gsm_plus(line, task_name: str = None):
 
 def gsm8k(record):
     return Sample(
-        input=record['question'],
-        target=record['answer'],
+        input=record["question"],
+        target=record["answer"],
     )
 
 
