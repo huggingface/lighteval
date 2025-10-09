@@ -19,16 +19,17 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from inspect_ai.scorer import choice
+
 import lighteval.tasks.default_prompts as prompt
-from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.metrics import Metrics, extractive_math_scorer, multichoice_scorer
 from lighteval.metrics.normalizations import (
     LogProbCharNorm,
-    gsm8k_normalizer,
     harness_triviaqa_normalizer,
     helm_normalizer,
     math_normalizer,
 )
-from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.lighteval_task import LightevalTaskConfig, LightevalTaskConfig_inspect
 from lighteval.tasks.templates.qa import get_qa_prompt_function
 from lighteval.utils.language import Language
 
@@ -441,19 +442,17 @@ aime24_gpassk = LightevalTaskConfig(
     metrics=[Metrics.g_pass_at_k_math(sample_params={"k": 16, "n": 48})],
     version=1,
 )
-aime25 = LightevalTaskConfig(
+aime25 = LightevalTaskConfig_inspect(
     name="aime25",
-    suite=["lighteval"],
     prompt_function=prompt.aime_prompt_fn,
-    hf_repo="yentinglin/aime_2025",
-    hf_subset="default",
-    hf_avail_splits=["train"],
-    evaluation_splits=["train"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=10000,
-    metrics=[Metrics.pass_at_k_math(sample_params={"k": 1, "n": 1})],
-    version=2,
+    dataset_repo="yentinglin/aime_2025",
+    dataset_subset="default",
+    dataset_split="train",
+    dataset_revision="main",
+    metrics=[extractive_math_scorer()],
+    system_prompt="ASNWER USING THE FORMAT $ANSWER$",
+    epochs=4,
+    epochs_reducer="pass_at_4",
 )
 aime25_gpassk = LightevalTaskConfig(
     name="aime25_gpassk",
@@ -8494,20 +8493,14 @@ gpqa_lighteval = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
-gpqa_diamond_instruct_lighteval = LightevalTaskConfig(
+gpqa_diamond = LightevalTaskConfig_inspect(
     name="gpqa:diamond",
-    suite=["lighteval"],
     prompt_function=prompt.gpqa_instruct,
-    hf_repo="Idavidrein/gpqa",
-    hf_subset="gpqa_diamond",
-    hf_avail_splits=["train"],
-    evaluation_splits=["train"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=32768,  # needed for reasoning models like R1
-    metrics=[Metrics.gpqa_instruct_pass_at_k(sample_params={"k": 1})],
-    stop_sequence=[],  # no stop sequence, will use eos token
-    version=1,
+    dataset_repo="Idavidrein/gpqa",
+    dataset_subset="gpqa_diamond",
+    dataset_split="train",
+    metrics=[multichoice_scorer(), choice()],
+    system_prompt="Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.",
 )
 gpqa_extended_instruct_lighteval = LightevalTaskConfig(
     name="gpqa:extended",
@@ -8569,39 +8562,15 @@ gsm_plus = LightevalTaskConfig(
     stop_sequence=None,
     version=0,
 )
-gsm8k_leaderboard = LightevalTaskConfig(
+gsm8k_lighteval = LightevalTaskConfig_inspect(
     name="gsm8k",
-    suite=["leaderboard"],
     prompt_function=prompt.gsm8k,
-    hf_repo="gsm8k",
-    hf_subset="main",
-    hf_avail_splits=["train", "test"],
-    evaluation_splits=["test"],
-    few_shots_split=None,
-    few_shots_select="random_sampling_from_train",
-    generation_size=256,
-    metrics=[
-        Metrics.exact_match(sample_params={"normalize_gold": gsm8k_normalizer, "normalize_pred": gsm8k_normalizer})
-    ],
-    stop_sequence=[],
-    version=0,
-)
-gsm8k_lighteval = LightevalTaskConfig(
-    name="gsm8k",
-    suite=["lighteval"],
-    prompt_function=prompt.gsm8k,
-    hf_repo="openai/gsm8k",
-    hf_subset="main",
-    hf_avail_splits=["train", "test"],
-    evaluation_splits=["test"],
-    few_shots_split=None,
-    few_shots_select="random_sampling_from_train",
-    generation_size=256,
-    metrics=[
-        Metrics.expr_gold_metric,
-    ],
-    stop_sequence=["Question:"],
-    version=0,
+    dataset_repo="openai/gsm8k",
+    dataset_subset="main",
+    dataset_split="train",
+    dataset_revision="main",
+    metrics=[extractive_math_scorer()],
+    system_prompt="ANSWER USING THE FORMAT $ANSWER$",
 )
 headqa_en_lighteval = LightevalTaskConfig(
     name="headqa:en",
