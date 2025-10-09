@@ -46,7 +46,9 @@ def inspect(
 
     from lighteval.tasks.registry import Registry
 
-    registry = Registry(custom_tasks=custom_tasks, load_community=True, load_extended=True, load_multilingual=True)
+    registry = Registry(
+        tasks=tasks, custom_tasks=custom_tasks, load_community=True, load_extended=True, load_multilingual=True
+    )
 
     # Loading task
     task_dict = registry.load_tasks()
@@ -54,7 +56,7 @@ def inspect(
         print("-" * 10, name, "-" * 10)
         if show_config:
             print("-" * 10, "CONFIG")
-            task.cfg.print()
+            task.config.print()
         for ix, sample in enumerate(task.eval_docs()[: int(num_samples)]):
             if ix == 0:
                 print("-" * 10, "SAMPLES")

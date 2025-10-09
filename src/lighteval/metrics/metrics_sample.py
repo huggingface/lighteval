@@ -63,7 +63,7 @@ logger = logging.getLogger(__name__)
 
 class SampleLevelComputation(ABC):
     @abstractmethod
-    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs):
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs):
         raise NotImplementedError
 
     def __str__(self):
