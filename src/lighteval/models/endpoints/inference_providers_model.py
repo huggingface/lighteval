@@ -116,7 +116,7 @@ class InferenceProvidersClient(LightevalModel):
         self.API_RETRY_SLEEP = 3
         self.API_RETRY_MULTIPLIER = 2
         self.pairwise_tokenization = False
-        self.semaphore = asyncio.Semaphore(config.parallel_calls_count)  # Limit concurrent API calls
+        self.parallel_calls_count = config.parallel_calls_count
 
         self.client = AsyncInferenceClient(
             provider=self.provider,
@@ -179,13 +179,16 @@ class InferenceProvidersClient(LightevalModel):
     ):
         results = []
 
+        # Initialize semaphore for the current event loop
+        semaphore = asyncio.Semaphore(self.parallel_calls_count)
+
         num_sampless = [num_samples for _ in prompts] if not isinstance(num_samples, list) else num_samples
         assert len(prompts) == len(num_sampless), (
             f"Length of prompts and max_new_tokenss should be the same but are {len(prompts)}, {len(num_sampless)}"
         )
 
         async def bounded_api_call(prompt, num_samples):
-            async with self.semaphore:
+            async with semaphore:
                 return await self.__call_api(prompt, num_samples)
 
         tasks = [bounded_api_call(prompt, num_samples) for prompt, num_samples in zip(prompts, num_sampless)]
