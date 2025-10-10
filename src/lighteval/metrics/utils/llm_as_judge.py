@@ -97,7 +97,7 @@ class JudgeLM:
         judge_backend: Literal["litellm", "openai", "transformers", "tgi", "vllm", "inference-providers"],
         url: str | None = None,
         api_key: str | None = None,
-        max_tokens: int = 512,
+        max_tokens: int | None = None,
         response_format: BaseModel = None,
         hf_provider: Optional[
             Literal[
@@ -172,7 +172,7 @@ class JudgeLM:
 
                     self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=self.max_tokens)
                     self.tokenizer = get_tokenizer(self.model, tokenizer_mode="auto")
-                    self.pipe = LLM(model=self.model, max_model_len=2048, gpu_memory_utilization=0.5, dtype="float16")
+                    self.pipe = LLM(model=self.model, gpu_memory_utilization=0.8, dtype="float16")
                 return self.__call_vllm
 
             case "transformers":
@@ -300,7 +300,7 @@ class JudgeLM:
         outputs = [output.outputs[0].text for output in output]
         return outputs
 
-    def __call_litellm(self, prompts):
+    def __call_litellm(self, prompts):  # noqa: C901
         import litellm
 
         if self.backend_options.caching:
@@ -324,10 +324,11 @@ class JudgeLM:
                     kwargs = {
                         "model": self.model,
                         "messages": prompt,
-                        "max_tokens": max_new_tokens,
                         "n": 1,
                         "caching": True,
                     }
+                    if max_new_tokens is not None:
+                        kwargs["max_tokens"] = (max_new_tokens,)
 
                     response = litellm.completion(**kwargs)
                     text = response.choices[0].message.content
@@ -412,7 +413,7 @@ class JudgeLM:
                     model=self.model,
                     messages=as_list(prompt),
                     response_format=self.response_format,
-                    max_tokens=4096,
+                    max_tokens=self.max_tokens,
                     temperature=0.0,
                     n=1,
                 )
@@ -425,7 +426,7 @@ class JudgeLM:
                         model=self.model,
                         messages=as_list(prompt),
                         response_format=self.response_format,
-                        max_tokens=512,
+                        max_tokens=self.max_tokens,
                         n=1,
                     )
                     text = response.choices[0].message.content
@@ -438,3 +439,6 @@ class JudgeLM:
                 time.sleep(self.API_RETRY_SLEEP)
 
         raise Exception("Failed to get response from the API")
+
+    def __str__(self) -> str:
+        return f"Model: {self.model}, Judge Backend: {self.backend}, URL: {self.url}"

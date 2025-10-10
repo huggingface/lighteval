@@ -63,12 +63,15 @@ class EnhancedJSONEncoder(json.JSONEncoder):
     Notably manages the json encoding of dataclasses.
     """
 
-    def default(self, o):
+    def default(self, o):  # noqa : C901
         if is_dataclass(o):
             try:
                 return asdict(o)  # type: ignore
             except Exception:
-                return str(o)
+                try:
+                    return o.__dict__
+                except Exception:
+                    return str(o)
         if callable(o):
             if hasattr(o, "__name__"):
                 return o.__name__

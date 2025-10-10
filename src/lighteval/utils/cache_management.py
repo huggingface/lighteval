@@ -92,6 +92,8 @@ class SampleCache:
         self.registry = None
 
         self.existing_indices = self._load_cached_indices()
+        # Caching the task_hashes to avoid grabbing the registry all the time
+        self._task_hashes = {}
 
     def _init_registry(self, registry: Registry):
         self.registry = registry
@@ -163,10 +165,15 @@ class SampleCache:
                 "The task registry was not provided to the cache config. We can't test if the current task has the same hash as the saved tasks."
             )
             return "NO_HASH"
-        task_suite, task_name, _ = full_task_name.split("|")
-        task_configs: list[LightevalTaskConfig] = sorted(self.registry.task_to_configs[f"{task_suite}|{task_name}"])
-        config_str = "|".join([task_config.__str__(lite=True) for task_config in task_configs])
-        return hashlib.sha256(config_str.encode()).hexdigest()[:16]
+        if full_task_name not in self._task_hashes:
+            task_suite, task_name, _ = full_task_name.split("|")
+            task_configs: list[LightevalTaskConfig] = sorted(
+                self.registry.task_to_configs[f"{task_suite}|{task_name}"]
+            )
+            config_str = "|".join([task_config.__str__(lite=True) for task_config in task_configs])
+            task_hash = hashlib.sha256(config_str.encode()).hexdigest()[:16]
+            self._task_hashes[full_task_name] = task_hash
+        return self._task_hashes[full_task_name]
 
     def get_cache_path(self, task_id: TaskID) -> Path:
         """Get the file path for a specific task's cache file.
