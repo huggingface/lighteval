@@ -58,7 +58,8 @@ class LightevalTaskConfig_inspect:
     dataset_repo: str
     dataset_subset: str
     dataset_split: str
-    metrics: list
+    scorers: list
+    solvers: list | None = None
     system_prompt: str | None = None
     dataset_revision: str | None = None
     epochs: int = 1

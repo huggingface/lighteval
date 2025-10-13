@@ -20,15 +20,23 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
-import lighteval.tasks.extended.hle.main as hle
-import lighteval.tasks.extended.ifbench.main as ifbench
-import lighteval.tasks.extended.ifeval.main as ifeval
-import lighteval.tasks.extended.lcb.main as lcb
-import lighteval.tasks.extended.mix_eval.main as mix_eval
-import lighteval.tasks.extended.mt_bench.main as mt_bench
-import lighteval.tasks.extended.olympiade_bench.main as olympiad_bench
-import lighteval.tasks.extended.tiny_benchmarks.main as tiny_benchmarks
+import lighteval.tasks.default_prompts as prompt
+from lighteval.metrics.metrics import Metrics
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-AVAILABLE_EXTENDED_TASKS_MODULES = [ifeval, ifbench, tiny_benchmarks, mt_bench, mix_eval, olympiad_bench, hle, lcb]
+webqs = LightevalTaskConfig(
+    name="webqs",
+    suite=["lighteval"],
+    prompt_function=prompt.webqs,
+    hf_repo="web_questions",
+    hf_subset="default",
+    hf_avail_splits=["train", "test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=-1,
+    metrics=[Metrics.exact_match],
+    stop_sequence=["\n"],
+    version=0,
+)

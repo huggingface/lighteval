@@ -1,0 +1,116 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+from functools import partial
+from itertools import permutations
+
+from langcodes import Language as LangCodeLanguage
+from langcodes import standardize_tag
+
+from lighteval.metrics.dynamic_metrics import (
+    LogLikelihoodAccMetric,
+    MultilingualQuasiExactMatchMetric,
+    MultilingualQuasiF1ScoreMetric,
+)
+from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm
+from lighteval.tasks.default_prompts import LETTER_INDICES
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.multilingual.adapters import (
+    agieval_adapter,
+    alghafa_adapter,
+    ceval_adapter,
+    enem_adapter,
+    get_m3exam_adapter,
+    get_mkqa_adapter,
+    sciqa_adapter,
+    thai_exams_adapter,
+    winogrand_adapter,
+    xcodah_adapter,
+)
+from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation, normalize_subset
+from lighteval.tasks.templates.boolq import get_boolq_prompt_function
+from lighteval.tasks.templates.continuation import get_continuation_prompt_function
+from lighteval.tasks.templates.copa import get_copa_prompt_function
+from lighteval.tasks.templates.hellaswag import get_hellaswag_prompt_function
+from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
+from lighteval.tasks.templates.nli import get_nli_prompt_function
+from lighteval.tasks.templates.qa import get_qa_prompt_function
+from lighteval.tasks.templates.translation import get_translation_prompt_function
+from lighteval.tasks.templates.utils.formulation import (
+    CFFormulation,
+    HybridFormulation,
+    MCFFormulation,
+)
+from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
+from lighteval.utils.language import Language, iso_639_3_ind_to_iso_639_3_macro, manage_duplicate_language_codes
+
+
+# ------------------------------- RC Tasks ------------------------------- #
+# Reading Comprehension (RC) tasks evaluate a model's ability to understand and extract information from text passages.
+# These tasks typically involve answering questions based on given contexts, spanning multiple languages and formats.
+# Add RC tasks supporting about 130 unique languages/scripts.
+# SQuAD - like
+# XQuAD: Cross-lingual Question Answering Dataset, extending SQuAD to 11 languages.
+# https://arxiv.org/abs/1910.11856
+
+TASKS_TABLE = []
+
+
+xquad_tasks = [
+    LightevalTaskConfig(
+        name=f"xquad_{language.value}",
+        prompt_function=get_qa_prompt_function(
+            language,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="google/xquad",
+        hf_subset=f"xquad.{standardize_tag(language.value)}",
+        evaluation_splits=("validation",),
+        few_shots_split="validation",
+        generation_size=400,
+        stop_sequence=("\n",),
+        metrics=(
+            MultilingualQuasiExactMatchMetric(language, "prefix"),
+            MultilingualQuasiF1ScoreMetric(language),
+        ),
+    )
+    for language in [
+        Language.ARABIC,
+        Language.GERMAN,
+        Language.GREEK,
+        Language.ENGLISH,
+        Language.SPANISH,
+        Language.HINDI,
+        Language.ROMANIAN,
+        Language.RUSSIAN,
+        Language.THAI,
+        Language.TURKISH,
+        Language.VIETNAMESE,
+        Language.CHINESE,
+    ]
+]

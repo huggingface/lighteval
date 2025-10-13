@@ -25,7 +25,7 @@ from copy import deepcopy
 
 import numpy as np
 from aenum import Enum
-from inspect_ai.scorer import Score, Target, accuracy, scorer, stderr
+from inspect_ai.scorer import Score, Target, accuracy, exact, scorer, stderr
 from inspect_ai.solver import TaskState
 
 from lighteval.metrics.dynamic_metrics import MultilingualExtractiveMatchMetric
@@ -83,7 +83,7 @@ from lighteval.utils.language import Language
 
 @scorer(metrics=[accuracy(), stderr()])
 def extractive_math_scorer():
-    gold_extraction_target = (ExprExtractionConfig(),)
+    gold_extraction_target = (ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0))
     pred_extraction_target = (ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0))
     language = Language.ENGLISH
     fallback_mode = "first_match"
@@ -122,8 +122,8 @@ def multichoice_scorer():
     extraction_mode = "first_match"
     timeout_seconds = 5
 
-    gold_extraction_regexes = get_extraction_regexes(gold_extraction_target, language)
-    pred_extraction_regexes = get_extraction_regexes(pred_extraction_target, language)
+    gold_extraction_regexes = get_extraction_regexes(gold_extraction_target, language, len_choices=4)
+    pred_extraction_regexes = get_extraction_regexes(pred_extraction_target, language, len_choices=4)
 
     async def score(state: TaskState, target: Target):
         extracted_predictions = extract_target_from_pred(
