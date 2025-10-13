@@ -14,7 +14,7 @@
 
 """Registry of all instructions."""
 
-import lighteval.tasks.extended.ifbench.instructions as instructions
+import lighteval.tasks.tasks.ifbench.instructions as instructions
 
 
 INSTRUCTION_DICT = {

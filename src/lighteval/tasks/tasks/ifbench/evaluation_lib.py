@@ -20,7 +20,7 @@ import dataclasses
 import json
 from typing import Dict, Optional, Union
 
-import lighteval.tasks.extended.ifbench.instructions_registry as instructions_registry
+import lighteval.tasks.tasks.ifbench.instructions_registry as instructions_registry
 
 
 @dataclasses.dataclass

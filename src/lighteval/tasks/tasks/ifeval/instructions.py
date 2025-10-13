@@ -27,7 +27,7 @@ from lighteval.utils.imports import is_package_available
 if is_package_available("langdetect"):
     import langdetect
 
-import lighteval.tasks.extended.ifeval.instructions_utils as instructions_util
+import lighteval.tasks.tasks.ifeval.instructions_utils as instructions_util
 
 
 logger = logging.getLogger(__name__)

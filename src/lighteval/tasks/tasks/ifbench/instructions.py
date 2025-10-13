@@ -35,7 +35,7 @@ if is_package_available("syllapy"):
 if is_package_available("spacy"):
     import spacy
 
-import lighteval.tasks.extended.ifeval.instructions_utils as instructions_util
+import lighteval.tasks.tasks.ifeval.instructions_utils as instructions_util
 
 
 logger = logging.getLogger(__name__)

@@ -14,7 +14,7 @@
 
 """Registry of all instructions."""
 
-import lighteval.tasks.extended.ifeval.instructions as instructions
+import lighteval.tasks.tasks.ifeval.instructions as instructions
 
 
 _KEYWORD = "keywords:"

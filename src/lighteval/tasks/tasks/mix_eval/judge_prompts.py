@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from lighteval.tasks.extended.mix_eval.prompts import parse_options
+from lighteval.tasks.tasks.mix_eval.prompts import parse_options
 
 
 def flow_judge_for_freeform_template(question, options, answer, gold):

@@ -43,13 +43,28 @@ def _load_all_task_configs():
     """Load all LightevalTaskConfig objects from all Python files in the tasks/ directory."""
     loaded_configs = {}
 
-    # Get all Python files in the tasks directory (excluding __init__.py and subdirectories)
+    # Get all Python files in the tasks directory (excluding __init__.py)
     task_files = [f for f in TASKS_DIR.glob("*.py") if f.name != "__init__.py"]
+
+    # Also get all subdirectories with main.py files
+    task_subdirs = [d for d in TASKS_DIR.iterdir() if d.is_dir() and (d / "main.py").exists()]
 
     for task_file in task_files:
         module_name = task_file.stem
         # Import the module
         module = importlib.import_module(f"lighteval.tasks.tasks.{module_name}")
+
+        # Find all LightevalTaskConfig objects in the module
+        for attr_name in dir(module):
+            attr = getattr(module, attr_name)
+            if isinstance(attr, LightevalTaskConfig):
+                loaded_configs[attr_name] = attr
+
+    # Load from subdirectories' main.py files
+    for task_dir in task_subdirs:
+        module_name = task_dir.name
+        # Import the main.py from the subdirectory
+        module = importlib.import_module(f"lighteval.tasks.tasks.{module_name}.main")
 
         # Find all LightevalTaskConfig objects in the module
         for attr_name in dir(module):
