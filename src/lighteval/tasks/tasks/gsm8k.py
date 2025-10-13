@@ -25,6 +25,16 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+GSM8K is a dataset of 8,000+ high-quality, single-step arithmetic word problems.
+
+https://huggingface.co/datasets/openai/gsm8k
+
+languages: en
+fields: math, reasoning
+"""
+
+
 # gsm8k = LightevalTaskConfig_inspect(
 #     name="gsm8k",
 #     prompt_function=prompt.gsm8k,

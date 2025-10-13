@@ -224,7 +224,7 @@ for subset in olympiad_bench_subsets:
         LightevalTaskConfig(
             name="olympiad_bench:" + subset,
             prompt_function=olympiad_bench_prompt,
-            suite=["extended"],
+            suite=["lighteval"],
             hf_repo="Hothan/OlympiadBench",
             hf_subset=subset,
             metrics=[metric],

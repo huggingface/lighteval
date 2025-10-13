@@ -154,7 +154,7 @@ for subset in configs:
     name = "lcb:codegeneration" if subset == "v4_v5" else f"lcb:codegeneration_{subset}"
     task = LightevalTaskConfig(
         name=name,
-        suite=["extended"],
+        suite=["lighteval"],
         prompt_function=lcb_codegeneration_prompt_fn,
         hf_repo="lighteval/code_generation_lite",
         hf_subset=subset,  # https://github.com/LiveCodeBench/LiveCodeBench/tree/main?tab=readme-ov-file#dataset-versions

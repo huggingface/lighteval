@@ -249,7 +249,7 @@ for task in task_params:
     task = LightevalTaskConfig(
         name=f"tiny:{name}",
         prompt_function=task["prompt"],
-        suite=["extended"],
+        suite=["lighteval"],
         hf_repo=task["dataset"],
         hf_subset=task["subset"],
         hf_avail_splits=task["splits"],
