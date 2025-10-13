@@ -23,6 +23,8 @@
 import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.templates.qa import get_qa_prompt_function
+from lighteval.utils.language import Language
 
 
 drop_qa = LightevalTaskConfig(
@@ -39,3 +41,24 @@ drop_qa = LightevalTaskConfig(
                     + line["answer"]["spans"]
                     + [prompt.get_drop_date(line["answer"].get("date"))],
                 )
+            ),
+        },
+    ),
+    suite=("lighteval",),
+    hf_repo="lighteval/drop_harness",
+    hf_subset="default",
+    hf_filter=lambda line: list(
+        filter(
+            lambda x: x,
+            [line["answer"].get("number")]
+            + line["answer"]["spans"]
+            + [prompt.get_drop_date(line["answer"].get("date"))],
+        )
+    ),
+    evaluation_splits=("validation",),
+    few_shots_split="train",
+    generation_size=250,
+    stop_sequence=["Question:", "question:", "\n"],
+    metrics=[Metrics.exact_match],
+    version=1,
+)

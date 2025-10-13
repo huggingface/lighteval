@@ -21,18 +21,34 @@
 # SOFTWARE.
 
 import lighteval.tasks.default_prompts as prompt
-from lighteval.metrics.metrics import Metrics, extractive_math_scorer
-from lighteval.tasks.lighteval_task import LightevalTaskConfig, LightevalTaskConfig_inspect
+from lighteval.metrics.metrics import Metrics
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-gsm_plus = LightevalTaskConfig_inspect(
+# gsm_plus = LightevalTaskConfig_inspect(
+#     name="gsm_plus",
+#     prompt_function=prompt.gsm_plus,
+#     dataset_repo="qintongli/GSM-Plus",
+#     dataset_subset="default",
+#     dataset_split="test",
+#     system_prompt="ANSWER USING THE FORMAT $ANSWER$",
+#     epochs=48,
+#     epochs_reducer="pass_at_16",
+#     scorers=[extractive_math_scorer(), model_graded_fact()]
+# )
+
+gsm_plus = LightevalTaskConfig(
     name="gsm_plus",
+    suite=["lighteval"],
     prompt_function=prompt.gsm_plus,
-    dataset_repo="qintongli/GSM-Plus",
-    dataset_subset="default",
-    dataset_split="test",
-    system_prompt="ANSWER USING THE FORMAT $ANSWER$",
-    epochs=48,
-    epochs_reducer="pass_at_16",
-    scorers=[extractive_math_scorer(), model_graded_fact()]
+    hf_repo="qintongli/GSM-Plus",
+    hf_subset="default",
+    hf_avail_splits=["test", "testmini"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=None,
+    metrics=[Metrics.expr_gold_metric],
+    stop_sequence=None,
+    version=0,
 )

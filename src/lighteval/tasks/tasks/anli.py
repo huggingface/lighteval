@@ -21,8 +21,8 @@
 # SOFTWARE.
 
 import lighteval.tasks.default_prompts as prompt
-from lighteval.metrics.metrics import Metrics, extractive_math_scorer
-from lighteval.tasks.lighteval_task import LightevalTaskConfig, LightevalTaskConfig_inspect
+from lighteval.metrics.metrics import Metrics
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 anli_r1 = LightevalTaskConfig(

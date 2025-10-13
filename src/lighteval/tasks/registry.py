@@ -33,8 +33,7 @@ from itertools import groupby
 from pathlib import Path
 from types import ModuleType
 
-import lighteval.tasks.default_tasks as default_tasks
-from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
+import lighteval.tasks as default_tasks
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 
 
@@ -227,51 +226,18 @@ class Registry:
 
         Example:
             {
-                "lighteval|arc_easy": LightevalTaskConfig(name="arc_easy", suite="lighteval", ...),
+                "arc_easy": LightevalTaskConfig(name="arc_easy", suite="lighteval", ...),
             }
         """
-        custom_tasks_registry = {}
-        custom_tasks_module = []
-        custom_task_configs = []
 
-        if self._custom_tasks is not None:
-            custom_tasks_module.append(Registry.create_custom_tasks_module(custom_tasks=self._custom_tasks))
-
-        # Need to load extended tasks
-        if self._load_extended:
-            for extended_task_module in AVAILABLE_EXTENDED_TASKS_MODULES:
-                custom_tasks_module.append(extended_task_module)
-
-        # Need to load community tasks
-        if self._load_community:
-            community_modules = load_community_tasks()
-            for community_task_module in community_modules:
-                custom_tasks_module.append(community_task_module)
+        return Registry.create_task_config_dict()
 
         # Need to load multilingual tasks
         if self._load_multilingual:
-            import lighteval.tasks.multilingual.tasks as multilingual_tasks
+            pass
+        tasks_registry = {}
 
-            custom_tasks_module.append(multilingual_tasks)
-
-        # We load all
-        for module in custom_tasks_module:
-            custom_task_configs.extend(module.TASKS_TABLE)
-            logger.info(f"Found {len(module.TASKS_TABLE)} custom tasks in {module.__file__}")
-
-        if len(custom_task_configs) > 0:
-            custom_tasks_registry = Registry.create_task_config_dict(meta_table=custom_task_configs)
-
-        default_tasks_registry = Registry.create_task_config_dict()
-
-        # Check the overlap between default_tasks_registry and custom_tasks_registry
-        intersection = set(default_tasks_registry.keys()).intersection(set(custom_tasks_registry.keys()))
-        if len(intersection) > 0:
-            logger.warning(
-                f"Following tasks ({intersection}) exists both in the default and custom tasks. Will use the custom ones on conflict."
-            )
-
-        return {**default_tasks_registry, **custom_tasks_registry}
+        return tasks_registry
 
     def _update_task_configs(self) -> dict[str, LightevalTaskConfig]:  # noqa: C901
         """

@@ -20,45 +20,103 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from inspect_ai.scorer import choice
-from inspect_ai.solver import multiple_choice
-
 import lighteval.tasks.default_prompts as prompt
-from lighteval.metrics.metrics import multichoice_scorer
-from lighteval.tasks.lighteval_task import LightevalTaskConfig_inspect
+from lighteval.metrics.metrics import Metrics
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-gpqa_diamond = LightevalTaskConfig_inspect(
+# gpqa_diamond = LightevalTaskConfig_inspect(
+#     name="gpqa:diamond",
+#     prompt_function=prompt.gpqa_instruct,
+#     dataset_repo="Idavidrein/gpqa",
+#     dataset_subset="gpqa_diamond",
+#     dataset_split="train",
+#     scorers=[multichoice_scorer(), choice()],
+#     solvers=[multiple_choice()],
+#     system_prompt="Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.",
+# )
+
+
+# gpqa_extended = LightevalTaskConfig_inspect(
+#     name="gpqa:extended",
+#     prompt_function=prompt.gpqa_instruct,
+#     dataset_repo="Idavidrein/gpqa",
+#     dataset_subset="gpqa_extended",
+#     dataset_split="train",
+#     scorers=[multichoice_scorer(), choice()],
+#     solvers=[multiple_choice()],
+#     system_prompt="Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.",
+# )
+
+
+# gpqa_main = LightevalTaskConfig_inspect(
+#     name="gpqa:main",
+#     prompt_function=prompt.gpqa_instruct,
+#     dataset_repo="Idavidrein/gpqa",
+#     dataset_subset="gpqa_main",
+#     dataset_split="train",
+#     scorers=[multichoice_scorer(), choice()],
+#     solvers=[multiple_choice()],
+#     system_prompt="Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.",
+# )
+
+gpqa_lighteval = LightevalTaskConfig(
+    name="gpqa:mc",
+    suite=["lighteval"],
+    prompt_function=prompt.gpqa,
+    hf_repo="Idavidrein/gpqa",
+    hf_subset="gpqa_main",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select="random_sampling",
+    generation_size=1,
+    metrics=[Metrics.loglikelihood_acc],
+    stop_sequence=["\n"],
+    version=0,
+)
+gpqa_diamond_instruct_lighteval = LightevalTaskConfig(
     name="gpqa:diamond",
+    suite=["lighteval"],
     prompt_function=prompt.gpqa_instruct,
-    dataset_repo="Idavidrein/gpqa",
-    dataset_subset="gpqa_diamond",
-    dataset_split="train",
-    scorers=[multichoice_scorer(), choice()],
-    solvers=[multiple_choice()],
-    system_prompt="Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.",
+    hf_repo="Idavidrein/gpqa",
+    hf_subset="gpqa_diamond",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=32768,  # needed for reasoning models like R1
+    metrics=[Metrics.gpqa_instruct_pass_at_k(sample_params={"k": 1})],
+    stop_sequence=[],  # no stop sequence, will use eos token
+    version=1,
 )
-
-
-gpqa_extended = LightevalTaskConfig_inspect(
+gpqa_extended_instruct_lighteval = LightevalTaskConfig(
     name="gpqa:extended",
+    suite=["lighteval"],
     prompt_function=prompt.gpqa_instruct,
-    dataset_repo="Idavidrein/gpqa",
-    dataset_subset="gpqa_extended",
-    dataset_split="train",
-    scorers=[multichoice_scorer(), choice()],
-    solvers=[multiple_choice()],
-    system_prompt="Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.",
+    hf_repo="Idavidrein/gpqa",
+    hf_subset="gpqa_extended",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=32768,  # needed for reasoning models like R1
+    metrics=[Metrics.gpqa_instruct_metric],
+    stop_sequence=[],  # no stop sequence, will use eos token
+    version=0,
 )
-
-
-gpqa_main = LightevalTaskConfig_inspect(
+gpqa_main_instruct_lighteval = LightevalTaskConfig(
     name="gpqa:main",
+    suite=["lighteval"],
     prompt_function=prompt.gpqa_instruct,
-    dataset_repo="Idavidrein/gpqa",
-    dataset_subset="gpqa_main",
-    dataset_split="train",
-    scorers=[multichoice_scorer(), choice()],
-    solvers=[multiple_choice()],
-    system_prompt="Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.",
+    hf_repo="Idavidrein/gpqa",
+    hf_subset="gpqa_main",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=32768,  # needed for reasoning models like R1
+    metrics=[Metrics.gpqa_instruct_metric],
+    stop_sequence=[],  # no stop sequence, will use eos token
+    version=0,
 )

@@ -81,64 +81,64 @@ from lighteval.metrics.utils.metric_utils import (
 from lighteval.utils.language import Language
 
 
-@scorer(metrics=[accuracy(), stderr()])
-def extractive_math_scorer():
-    gold_extraction_target = (ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0))
-    pred_extraction_target = (ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0))
-    language = Language.ENGLISH
-    fallback_mode = "first_match"
-    extraction_mode = "first_match"
-    timeout_seconds = 5
+# @scorer(metrics=[accuracy(), stderr()])
+# def extractive_math_scorer():
+#     gold_extraction_target = (ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0))
+#     pred_extraction_target = (ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0))
+#     language = Language.ENGLISH
+#     fallback_mode = "first_match"
+#     extraction_mode = "first_match"
+#     timeout_seconds = 5
 
-    gold_extraction_regexes = get_extraction_regexes(gold_extraction_target, language)
-    pred_extraction_regexes = get_extraction_regexes(pred_extraction_target, language)
+#     gold_extraction_regexes = get_extraction_regexes(gold_extraction_target, language)
+#     pred_extraction_regexes = get_extraction_regexes(pred_extraction_target, language)
 
-    async def score(state: TaskState, target: Target):
-        extracted_predictions = extract_target_from_pred(
-            state.output.completion, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
-        )
-        extracted_gold = extract_target_from_pred(
-            target.text, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
-        )
-        return Score(
-            value="C" if extracted_predictions == extracted_gold else "I",
-            explanation=state.output.completion,
-            answer=str(extracted_predictions),
-        )
+#     async def score(state: TaskState, target: Target):
+#         extracted_predictions = extract_target_from_pred(
+#             state.output.completion, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
+#         )
+#         extracted_gold = extract_target_from_pred(
+#             target.text, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
+#         )
+#         return Score(
+#             value="C" if extracted_predictions == extracted_gold else "I",
+#             explanation=state.output.completion,
+#             answer=str(extracted_predictions),
+#         )
 
-    return score
+#     return score
 
 
-@scorer(metrics=[accuracy(), stderr()])
-def multichoice_scorer():
-    language = Language.ENGLISH
-    gold_extraction_target = (
-        IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=True),
-    )
-    pred_extraction_target = (
-        IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=True),
-    )
-    fallback_mode = "first_match"
-    extraction_mode = "first_match"
-    timeout_seconds = 5
+# @scorer(metrics=[accuracy(), stderr()])
+# def multichoice_scorer():
+#     language = Language.ENGLISH
+#     gold_extraction_target = (
+#         IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=True),
+#     )
+#     pred_extraction_target = (
+#         IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=True),
+#     )
+#     fallback_mode = "first_match"
+#     extraction_mode = "first_match"
+#     timeout_seconds = 5
 
-    gold_extraction_regexes = get_extraction_regexes(gold_extraction_target, language, len_choices=4)
-    pred_extraction_regexes = get_extraction_regexes(pred_extraction_target, language, len_choices=4)
+#     gold_extraction_regexes = get_extraction_regexes(gold_extraction_target, language, len_choices=4)
+#     pred_extraction_regexes = get_extraction_regexes(pred_extraction_target, language, len_choices=4)
 
-    async def score(state: TaskState, target: Target):
-        extracted_predictions = extract_target_from_pred(
-            state.output.completion, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
-        )
-        extracted_gold = extract_target_from_pred(
-            target.text, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
-        )
-        return Score(
-            value="C" if extracted_predictions == extracted_gold else "I",
-            explanation=state.output.completion,
-            answer=str(extracted_predictions),
-        )
+#     async def score(state: TaskState, target: Target):
+#         extracted_predictions = extract_target_from_pred(
+#             state.output.completion, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
+#         )
+#         extracted_gold = extract_target_from_pred(
+#             target.text, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
+#         )
+#         return Score(
+#             value="C" if extracted_predictions == extracted_gold else "I",
+#             explanation=state.output.completion,
+#             answer=str(extracted_predictions),
+#         )
 
-    return score
+#     return score
 
 
 class Metrics(Enum):

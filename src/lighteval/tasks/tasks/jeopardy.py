@@ -23,6 +23,8 @@
 import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.templates.qa import get_qa_prompt_function
+from lighteval.utils.language import Language
 
 
 jeopardy = LightevalTaskConfig(
@@ -41,14 +43,6 @@ jeopardy = LightevalTaskConfig(
     few_shots_split="train",
     generation_size=250,
     stop_sequence=["\n", "Question:", "question:"],
-    metrics=(
-        Metrics.exact_match(
-            sample_params={
-                "normalize_gold": helm_normalizer,
-                "normalize_pred": helm_normalizer,
-                "type_exact_match": "prefix",
-            }
-        ),
-        Metrics.f1_score(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer}),
-    ),
+    metrics=[Metrics.exact_match],
+    version=1,
 )

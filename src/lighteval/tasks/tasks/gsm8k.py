@@ -25,13 +25,31 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-gsm8k = LightevalTaskConfig_inspect(
+# gsm8k = LightevalTaskConfig_inspect(
+#     name="gsm8k",
+#     prompt_function=prompt.gsm8k,
+#     dataset_repo="openai/gsm8k",
+#     dataset_subset="main",
+#     dataset_split="train",
+#     dataset_revision="main",
+#     scorers=[extractive_math_scorer()],
+#     system_prompt="ANSWER USING THE FORMAT $ANSWER$",
+# )
+
+gsm8k_lighteval = LightevalTaskConfig(
     name="gsm8k",
+    suite=["lighteval"],
     prompt_function=prompt.gsm8k,
-    dataset_repo="openai/gsm8k",
-    dataset_subset="main",
-    dataset_split="train",
-    dataset_revision="main",
-    scorers=[extractive_math_scorer()],
-    system_prompt="ANSWER USING THE FORMAT $ANSWER$",
+    hf_repo="openai/gsm8k",
+    hf_subset="main",
+    hf_avail_splits=["train", "test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select="random_sampling_from_train",
+    generation_size=256,
+    metrics=[
+        Metrics.expr_gold_metric,
+    ],
+    stop_sequence=["Question:"],
+    version=0,
 )
