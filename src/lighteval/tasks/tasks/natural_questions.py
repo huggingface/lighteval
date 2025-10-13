@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.templates.qa import get_qa_prompt_function
@@ -40,8 +39,6 @@ natural_questions = LightevalTaskConfig(
     few_shots_split="few_shot",
     generation_size=250,
     stop_sequence=["\n", "Question:", "question:"],
-    metrics=[
-        Metrics.exact_match
-    ],
+    metrics=[Metrics.exact_match],
     version=1,
 )

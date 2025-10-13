@@ -20,49 +20,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from functools import partial
-from itertools import permutations
-
-from langcodes import Language as LangCodeLanguage
-from langcodes import standardize_tag
 
 from lighteval.metrics.dynamic_metrics import (
     LogLikelihoodAccMetric,
-    MultilingualQuasiExactMatchMetric,
-    MultilingualQuasiF1ScoreMetric,
 )
-from lighteval.metrics.metrics import Metrics
-from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm
-from lighteval.tasks.default_prompts import LETTER_INDICES
+from lighteval.metrics.normalizations import LogProbCharNorm, LogProbTokenNorm
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.multilingual.adapters import (
-    agieval_adapter,
-    alghafa_adapter,
-    ceval_adapter,
-    enem_adapter,
-    get_m3exam_adapter,
-    get_mkqa_adapter,
-    sciqa_adapter,
-    thai_exams_adapter,
-    winogrand_adapter,
-    xcodah_adapter,
-)
-from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation, normalize_subset
-from lighteval.tasks.templates.boolq import get_boolq_prompt_function
-from lighteval.tasks.templates.continuation import get_continuation_prompt_function
-from lighteval.tasks.templates.copa import get_copa_prompt_function
-from lighteval.tasks.templates.hellaswag import get_hellaswag_prompt_function
-from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
+from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation
 from lighteval.tasks.templates.nli import get_nli_prompt_function
-from lighteval.tasks.templates.qa import get_qa_prompt_function
-from lighteval.tasks.templates.translation import get_translation_prompt_function
 from lighteval.tasks.templates.utils.formulation import (
     CFFormulation,
     HybridFormulation,
     MCFFormulation,
 )
-from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
-from lighteval.utils.language import Language, iso_639_3_ind_to_iso_639_3_macro, manage_duplicate_language_codes
+from lighteval.utils.language import Language
+
 
 # African XNLI: African XNLI
 # From https://arxiv.org/abs/2406.03368. Human translated MMLU.

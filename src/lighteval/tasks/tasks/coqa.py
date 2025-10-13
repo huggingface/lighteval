@@ -36,5 +36,5 @@ coqa_first_question = LightevalTaskConfig(
     stop_sequence=["\n", "Question:", "question:"],
     generation_size=100,
     version=1,
-    metrics=[Metrics.exact_match]
+    metrics=[Metrics.exact_match],
 )

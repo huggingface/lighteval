@@ -53,24 +53,44 @@ def get_task(lighteval_task_config: LightevalTaskConfig):
 
 
 model_args = {
-    "max-tokens", "system-message", "temperature", "top-p", "top-k", "frequence-penalty", 
-    "presence-penalty", "logit-bias", "seed", "stop-seqs", "num-choices", "best-of", "log-probs", "top-logprobs",
-    "cache-prompt", "reasoning-effort", "reasoning-tokens", "reasoning-history", "response-format", "parallel-tool-calls", "max-tool-output",
-    "internal-tools", "max-retries", "timeout"
+    "max-tokens",
+    "system-message",
+    "temperature",
+    "top-p",
+    "top-k",
+    "frequence-penalty",
+    "presence-penalty",
+    "logit-bias",
+    "seed",
+    "stop-seqs",
+    "num-choices",
+    "best-of",
+    "log-probs",
+    "top-logprobs",
+    "cache-prompt",
+    "reasoning-effort",
+    "reasoning-tokens",
+    "reasoning-history",
+    "response-format",
+    "parallel-tool-calls",
+    "max-tool-output",
+    "internal-tools",
+    "max-retries",
+    "timeout",
 }
 
 
 def main():
     MODEL = ["openai/gpt-4o"]
     all_tasks = [
-        #default_tasks.gsm8k_lighteval,
-        #default_tasks.aime25,
-        #default_tasks.aime24,
-        #default_tasks.math_500,
+        # default_tasks.gsm8k_lighteval,
+        # default_tasks.aime25,
+        # default_tasks.aime24,
+        # default_tasks.math_500,
         default_tasks.gsm_plus,
-        #default_tasks.gpqa_diamond,
-        #default_tasks.gpqa_extended,
-        #default_tasks.gpqa_main,
+        # default_tasks.gpqa_diamond,
+        # default_tasks.gpqa_extended,
+        # default_tasks.gpqa_main,
     ]  # default_tasksifeval]
     all_tasks = [get_task(task) for task in all_tasks]
 

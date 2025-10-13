@@ -24,6 +24,7 @@ import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
+
 """
 QA4MRE 2011-2013: Overview of Question Answering for Machine Reading Evaluation
 

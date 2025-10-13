@@ -34,7 +34,7 @@ problem-solving. This benchmark is derived from 20 official, public, and
 high-standard admission and qualification exams intended for general human
 test-takers, such as general college admission tests (e.g., Chinese College
 Entrance Exam (Gaokao) and American SAT), law school admission tests, math
-competitions, lawyer qualification tests, and national civil service exams. 
+competitions, lawyer qualification tests, and national civil service exams.
 
 https://arxiv.org/abs/2304.06364
 """

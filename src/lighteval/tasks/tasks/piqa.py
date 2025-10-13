@@ -24,6 +24,7 @@ import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
+
 """
 To apply eyeshadow without a brush, should I use a cotton swab or a toothpick?
 Questions requiring this kind of physical commonsense pose a challenge to

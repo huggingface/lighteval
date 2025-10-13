@@ -21,51 +21,137 @@
 # SOFTWARE.
 
 from functools import partial
-from itertools import permutations
 
 from langcodes import Language as LangCodeLanguage
 from langcodes import standardize_tag
 
 from lighteval.metrics.dynamic_metrics import (
     LogLikelihoodAccMetric,
-    MultilingualQuasiExactMatchMetric,
-    MultilingualQuasiF1ScoreMetric,
 )
-from lighteval.metrics.metrics import Metrics
-from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm
-from lighteval.tasks.default_prompts import LETTER_INDICES
+from lighteval.metrics.normalizations import LogProbCharNorm, LogProbTokenNorm
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.multilingual.adapters import (
-    agieval_adapter,
-    alghafa_adapter,
-    ceval_adapter,
-    enem_adapter,
-    get_m3exam_adapter,
-    get_mkqa_adapter,
-    sciqa_adapter,
-    thai_exams_adapter,
-    winogrand_adapter,
-    xcodah_adapter,
-)
 from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation, normalize_subset
-from lighteval.tasks.templates.boolq import get_boolq_prompt_function
-from lighteval.tasks.templates.continuation import get_continuation_prompt_function
-from lighteval.tasks.templates.copa import get_copa_prompt_function
-from lighteval.tasks.templates.hellaswag import get_hellaswag_prompt_function
 from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
-from lighteval.tasks.templates.nli import get_nli_prompt_function
-from lighteval.tasks.templates.qa import get_qa_prompt_function
-from lighteval.tasks.templates.translation import get_translation_prompt_function
 from lighteval.tasks.templates.utils.formulation import (
     CFFormulation,
     HybridFormulation,
     MCFFormulation,
 )
-from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
-from lighteval.utils.language import Language, iso_639_3_ind_to_iso_639_3_macro, manage_duplicate_language_codes
+from lighteval.utils.language import Language
 
 
 TASKS_TABLE = []
+
+exams_subjects_by_lang: dict[Language, set[str]] = {
+    Language.ARABIC: {"Biology", "Islamic Studies", "Physics", "Science", "Social"},
+    Language.BULGARIAN: {"Biology", "Chemistry", "Geography", "History", "Philosophy", "Physics"},
+    Language.CROATIAN: {
+        "Biology",
+        "Chemistry",
+        "Ethics",
+        "Fine Arts",
+        "Geography",
+        "Geology",
+        "History",
+        "Informatics",
+        "Philosophy",
+        "Physics",
+        "Politics",
+        "Psychology",
+        "Religion",
+        "Sociology",
+    },
+    Language.HUNGARIAN: {
+        "Agriculture",
+        "Agriculture (Mechanical knowledge)",
+        "Biology",
+        "Chemistry",
+        "Economics",
+        "Economics & Marketing",
+        "Economics Basics (Business)",
+        "Economics Basics (Theoretical)",
+        "Forestry",
+        "Geography",
+        "Landscaping",
+        "Physics",
+        "Politics",
+        "Tourism",
+    },
+    Language.ITALIAN: {
+        "Biology",
+        "Chemistry",
+        "Ethics",
+        "Geography",
+        "Geology",
+        "History",
+        "Informatics",
+        "Philosophy",
+        "Physics",
+        "Politics",
+        "Psychology",
+        "Sociology",
+    },
+    Language.SERBIAN: {
+        "Biology",
+        "Chemistry",
+        "Ethics",
+        "Geography",
+        "Geology",
+        "History",
+        "Informatics",
+        "Philosophy",
+        "Physics",
+        "Politics",
+        "Psychology",
+        "Religion",
+        "Sociology",
+    },
+    Language.FRENCH: {"Economics", "Economics & Marketing", "Economics Basics (Theoretical)", "Geography", "Physics"},
+    Language.GERMAN: {
+        "Chemistry",
+        "Economics",
+        "Economics & Marketing",
+        "Economics Basics (Theoretical)",
+        "Geography",
+        "Physics",
+        "Tourism",
+    },
+    Language.SPANISH: {"Geography", "Physics"},
+    Language.LITHUANIAN: {"Geology", "History"},
+    Language.ALBANIAN: {
+        "Biology",
+        "Business",
+        "Chemistry",
+        "Fine Arts",
+        "History",
+        "Philosophy",
+        "Physics",
+        "Sociology",
+    },
+    Language.MACEDONIAN: {
+        "Biology",
+        "Business",
+        "Chemistry",
+        "Fine Arts",
+        "History",
+        "Philosophy",
+        "Physics",
+        "Sociology",
+    },
+    Language.TURKISH: {
+        "Biology",
+        "Business",
+        "Chemistry",
+        "Geography",
+        "History",
+        "Philosophy",
+        "Physics",
+        "Sociology",
+    },
+    Language.POLISH: {"Professional"},
+    Language.PORTUGUESE: {"Biology", "Economics", "Geology", "Philosophy"},
+    Language.VIETNAMESE: {"Biology", "Chemistry", "Citizenship", "Geography", "History", "Physics"},
+}
 
 
 exams_tasks = [

@@ -24,6 +24,7 @@ import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
+
 """
 The IMDB benchmark for sentiment analysis in movie review, from:
 Learning Word Vectors for Sentiment Analysis

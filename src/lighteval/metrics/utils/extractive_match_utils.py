@@ -346,7 +346,9 @@ def lazy_indices_regex(
 
 def get_extraction_regexes(
     # target_types: Sequence[ExtractionTarget], language: Language, len_choices: int = 1
-    formatted_doc: Doc, target_types: Sequence[ExtractionTarget], language: Language
+    formatted_doc: Doc,
+    target_types: Sequence[ExtractionTarget],
+    language: Language,
 ) -> list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]]:
     extraction_regexes: list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]] = [
         (lazy_latex_regex(target_type, language), target_type)

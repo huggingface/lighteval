@@ -25,8 +25,6 @@ from copy import deepcopy
 
 import numpy as np
 from aenum import Enum
-from inspect_ai.scorer import Score, Target, accuracy, exact, scorer, stderr
-from inspect_ai.solver import TaskState
 
 from lighteval.metrics.dynamic_metrics import MultilingualExtractiveMatchMetric
 from lighteval.metrics.harness_compatibility.drop import DropMetrics
@@ -68,8 +66,6 @@ from lighteval.metrics.utils.extractive_match_utils import (
     ExprExtractionConfig,
     IndicesExtractionConfig,
     LatexExtractionConfig,
-    extract_target_from_pred,
-    get_extraction_regexes,
 )
 from lighteval.metrics.utils.metric_utils import (
     CorpusLevelMetric,

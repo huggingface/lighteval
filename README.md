@@ -62,7 +62,7 @@ Lighteval supports **7,000+ evaluation tasks** across multiple domains and langu
 
 ### 🌍 **Multilingual Evaluation**
 - **Cross-lingual**: XTREME, Flores200 (200 languages), XCOPA, XQuAD
-- **Language-specific**: 
+- **Language-specific**:
   - **Arabic**: ArabicMMLU
   - **Filipino**: FilBench
   - **French**: IFEval-fr, GPQA-fr, BAC-fr
