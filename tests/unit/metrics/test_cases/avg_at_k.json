@@ -16,7 +16,7 @@
         "text": ["Paris", "London", "Berlin"]
       },
       "expected_output": {
-        "avg@k_with_k": 0.5
+        "avg@k:k=2": 0.5
       },
       "tolerance": 0.01,
       "description": "Test avg at k with correct answer in top k"
@@ -35,7 +35,7 @@
         "text": ["London", "Berlin", "Paris"]
       },
       "expected_output": {
-        "avg@k_with_k": 0.0
+        "avg@k:k=1": 0.0
       },
       "tolerance": 0.01,
       "description": "Test avg at k with correct answer not in top k"
@@ -54,7 +54,7 @@
         "text": ["Paris", "London", "Berlin", "Tokyo"]
       },
       "expected_output": {
-        "avg@k_with_k": 0.33
+        "avg@k:k=3": 0.33
       },
       "tolerance": 0.01,
       "description": "Test avg at k with multiple correct answers"
