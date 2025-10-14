@@ -25,9 +25,13 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+helm task
+"""
+
 quac = LightevalTaskConfig(
     name="quac",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.quac,
     hf_repo="lighteval/quac_helm",
     hf_subset="default",

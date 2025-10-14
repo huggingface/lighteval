@@ -60,7 +60,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 #     system_prompt="Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.",
 # )
 
-gpqa_lighteval = LightevalTaskConfig(
+gpqa = LightevalTaskConfig(
     name="gpqa:mc",
     suite=["lighteval"],
     prompt_function=prompt.gpqa,
@@ -75,7 +75,7 @@ gpqa_lighteval = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
-gpqa_diamond_instruct_lighteval = LightevalTaskConfig(
+gpqa_diamond_instruct = LightevalTaskConfig(
     name="gpqa:diamond",
     suite=["lighteval"],
     prompt_function=prompt.gpqa_instruct,
@@ -90,7 +90,7 @@ gpqa_diamond_instruct_lighteval = LightevalTaskConfig(
     stop_sequence=[],  # no stop sequence, will use eos token
     version=1,
 )
-gpqa_extended_instruct_lighteval = LightevalTaskConfig(
+gpqa_extended_instruct = LightevalTaskConfig(
     name="gpqa:extended",
     suite=["lighteval"],
     prompt_function=prompt.gpqa_instruct,
@@ -105,7 +105,7 @@ gpqa_extended_instruct_lighteval = LightevalTaskConfig(
     stop_sequence=[],  # no stop sequence, will use eos token
     version=0,
 )
-gpqa_main_instruct_lighteval = LightevalTaskConfig(
+gpqa_main_instruct = LightevalTaskConfig(
     name="gpqa:main",
     suite=["lighteval"],
     prompt_function=prompt.gpqa_instruct,

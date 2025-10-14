@@ -25,9 +25,12 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+helm task
+"""
 narrativeqa = LightevalTaskConfig(
     name="narrativeqa",
-    suite=["helm", "helm_general"],
+    suite=["lighteval"],
     prompt_function=prompt.narrativeqa,
     hf_repo="lighteval/narrative_qa_helm",
     hf_subset="default",

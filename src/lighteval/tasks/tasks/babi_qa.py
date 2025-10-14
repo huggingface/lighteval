@@ -25,9 +25,13 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+helm task
+"""
+
 babi_qa = LightevalTaskConfig(
     name="babi_qa",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.babi_qa,
     hf_repo="facebook/babi_qa",
     hf_subset="en-valid-qa1",

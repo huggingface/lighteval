@@ -25,9 +25,12 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+helm task
+"""
 covid_dialogue = LightevalTaskConfig(
     name="covid_dialogue",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.covid_dialogue,
     hf_repo="lighteval/covid_dialogue",
     hf_subset="default",

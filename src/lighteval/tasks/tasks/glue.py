@@ -25,7 +25,7 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-glue_cola_lighteval = LightevalTaskConfig(
+glue_cola = LightevalTaskConfig(
     name="glue:cola",
     suite=["lighteval"],
     prompt_function=prompt.cola,
@@ -41,7 +41,7 @@ glue_cola_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-glue_mnli_lighteval = LightevalTaskConfig(
+glue_mnli = LightevalTaskConfig(
     name="glue:mnli",
     suite=["lighteval"],
     prompt_function=prompt.mnli,
@@ -57,7 +57,7 @@ glue_mnli_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-glue_mnli_mismatched_lighteval = LightevalTaskConfig(
+glue_mnli_mismatched = LightevalTaskConfig(
     name="glue:mnli_mismatched",
     suite=["lighteval"],
     prompt_function=prompt.mnli,
@@ -73,7 +73,7 @@ glue_mnli_mismatched_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-glue_mrpc_lighteval = LightevalTaskConfig(
+glue_mrpc = LightevalTaskConfig(
     name="glue:mrpc",
     suite=["lighteval"],
     prompt_function=prompt.mrpc,
@@ -89,7 +89,7 @@ glue_mrpc_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-glue_qnli_lighteval = LightevalTaskConfig(
+glue_qnli = LightevalTaskConfig(
     name="glue:qnli",
     suite=["lighteval"],
     prompt_function=prompt.qnli,
@@ -105,7 +105,7 @@ glue_qnli_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-glue_qqp_lighteval = LightevalTaskConfig(
+glue_qqp = LightevalTaskConfig(
     name="glue:qqp",
     suite=["lighteval"],
     prompt_function=prompt.qqp,
@@ -121,7 +121,7 @@ glue_qqp_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-glue_rte_lighteval = LightevalTaskConfig(
+glue_rte = LightevalTaskConfig(
     name="glue:rte",
     suite=["lighteval"],
     prompt_function=prompt.rte,
@@ -137,7 +137,7 @@ glue_rte_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-glue_sst2_lighteval = LightevalTaskConfig(
+glue_sst2 = LightevalTaskConfig(
     name="glue:sst2",
     suite=["lighteval"],
     prompt_function=prompt.sst,
@@ -153,7 +153,7 @@ glue_sst2_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-glue_stsb_lighteval = LightevalTaskConfig(
+glue_stsb = LightevalTaskConfig(
     name="glue:stsb",
     suite=["lighteval"],
     prompt_function=prompt.stsb,
@@ -169,7 +169,7 @@ glue_stsb_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-glue_wnli_lighteval = LightevalTaskConfig(
+glue_wnli = LightevalTaskConfig(
     name="glue:wnli",
     suite=["lighteval"],
     prompt_function=prompt.wnli,
@@ -185,7 +185,7 @@ glue_wnli_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-super_glue_boolq_lighteval = LightevalTaskConfig(
+super_glue_boolq = LightevalTaskConfig(
     name="super_glue:boolq",
     suite=["lighteval"],
     prompt_function=prompt.boolq_harness,
@@ -201,7 +201,7 @@ super_glue_boolq_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-super_glue_cb_lighteval = LightevalTaskConfig(
+super_glue_cb = LightevalTaskConfig(
     name="super_glue:cb",
     suite=["lighteval"],
     prompt_function=prompt.cb,
@@ -217,7 +217,7 @@ super_glue_cb_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-super_glue_copa_lighteval = LightevalTaskConfig(
+super_glue_copa = LightevalTaskConfig(
     name="super_glue:copa",
     suite=["lighteval"],
     prompt_function=prompt.copa,
@@ -233,7 +233,7 @@ super_glue_copa_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-super_glue_rte_lighteval = LightevalTaskConfig(
+super_glue_rte = LightevalTaskConfig(
     name="super_glue:rte",
     suite=["lighteval"],
     prompt_function=prompt.rte,
@@ -249,7 +249,7 @@ super_glue_rte_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-super_glue_multirc_lighteval = LightevalTaskConfig(
+super_glue_multirc = LightevalTaskConfig(
     name="super_glue:multirc",
     suite=["lighteval"],
     prompt_function=prompt.multirc,
@@ -265,7 +265,7 @@ super_glue_multirc_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-super_glue_wic_lighteval = LightevalTaskConfig(
+super_glue_wic = LightevalTaskConfig(
     name="super_glue:wic",
     suite=["lighteval"],
     prompt_function=prompt.wic,
@@ -281,7 +281,7 @@ super_glue_wic_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-super_glue_wsc_lighteval = LightevalTaskConfig(
+super_glue_wsc = LightevalTaskConfig(
     name="super_glue:wsc",
     suite=["lighteval"],
     prompt_function=prompt.wsc,

@@ -330,7 +330,7 @@ def bbh_harness(line, task_name: str = None):
     )
 
 
-def bbh_lighteval(line, task_name: str = None):
+def bbh(line, task_name: str = None):
     line = {k: v for k, v in line.items() if v is not None}
 
     query = line.get("task_prefix", "")
@@ -346,16 +346,6 @@ def bbh_lighteval(line, task_name: str = None):
         choices=LETTER_INDICES[: len(line["choices"])],
         gold_index=line["target_idx"],
         instruction=line.get("task_prefix", None),
-    )
-
-
-def bbh(line, instruction, choices, task_name: str = None):
-    return Doc(
-        task_name=task_name,
-        query=f"{instruction}Q: {line['input']}\nA:",
-        choices=choices,
-        gold_index=choices.index(line["target"]),
-        instruction=instruction,
     )
 
 

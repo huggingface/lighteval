@@ -25,9 +25,12 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+helm task
+"""
 the_pile_arxiv_helm = LightevalTaskConfig(
     name="the_pile:arxiv",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="arxiv",
@@ -43,7 +46,7 @@ the_pile_arxiv_helm = LightevalTaskConfig(
 
 the_pile_bibliotik_helm = LightevalTaskConfig(
     name="the_pile:bibliotik",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="bibliotik",
@@ -59,7 +62,7 @@ the_pile_bibliotik_helm = LightevalTaskConfig(
 
 the_pile_commoncrawl_helm = LightevalTaskConfig(
     name="the_pile:commoncrawl",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="commoncrawl",
@@ -75,7 +78,7 @@ the_pile_commoncrawl_helm = LightevalTaskConfig(
 
 the_pile_dm_mathematics_helm = LightevalTaskConfig(
     name="the_pile:dm-mathematics",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="dm-mathematics",
@@ -91,7 +94,7 @@ the_pile_dm_mathematics_helm = LightevalTaskConfig(
 
 the_pile_enron_helm = LightevalTaskConfig(
     name="the_pile:enron",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="enron",
@@ -107,7 +110,7 @@ the_pile_enron_helm = LightevalTaskConfig(
 
 the_pile_europarl_helm = LightevalTaskConfig(
     name="the_pile:europarl",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="europarl",
@@ -123,7 +126,7 @@ the_pile_europarl_helm = LightevalTaskConfig(
 
 the_pile_freelaw_helm = LightevalTaskConfig(
     name="the_pile:freelaw",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="freelaw",
@@ -139,7 +142,7 @@ the_pile_freelaw_helm = LightevalTaskConfig(
 
 the_pile_github_helm = LightevalTaskConfig(
     name="the_pile:github",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="github",
@@ -155,7 +158,7 @@ the_pile_github_helm = LightevalTaskConfig(
 
 the_pile_gutenberg_helm = LightevalTaskConfig(
     name="the_pile:gutenberg",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="gutenberg",
@@ -171,7 +174,7 @@ the_pile_gutenberg_helm = LightevalTaskConfig(
 
 the_pile_hackernews_helm = LightevalTaskConfig(
     name="the_pile:hackernews",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="hackernews",
@@ -187,7 +190,7 @@ the_pile_hackernews_helm = LightevalTaskConfig(
 
 the_pile_nih_exporter_helm = LightevalTaskConfig(
     name="the_pile:nih-exporter",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="nih-exporter",
@@ -203,7 +206,7 @@ the_pile_nih_exporter_helm = LightevalTaskConfig(
 
 the_pile_opensubtitles_helm = LightevalTaskConfig(
     name="the_pile:opensubtitles",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="opensubtitles",
@@ -219,7 +222,7 @@ the_pile_opensubtitles_helm = LightevalTaskConfig(
 
 the_pile_openwebtext2_helm = LightevalTaskConfig(
     name="the_pile:openwebtext2",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="openwebtext2",
@@ -236,7 +239,7 @@ the_pile_openwebtext2_helm = LightevalTaskConfig(
 
 the_pile_pubmed_abstracts_helm = LightevalTaskConfig(
     name="the_pile:pubmed-abstracts",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="pubmed-abstracts",
@@ -252,7 +255,7 @@ the_pile_pubmed_abstracts_helm = LightevalTaskConfig(
 
 the_pile_pubmed_central_helm = LightevalTaskConfig(
     name="the_pile:pubmed-central",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="pubmed-central",
@@ -268,7 +271,7 @@ the_pile_pubmed_central_helm = LightevalTaskConfig(
 
 the_pile_stackexchange_helm = LightevalTaskConfig(
     name="the_pile:stackexchange",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="stackexchange",
@@ -284,7 +287,7 @@ the_pile_stackexchange_helm = LightevalTaskConfig(
 
 the_pile_upsto_helm = LightevalTaskConfig(
     name="the_pile:upsto",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="uspto",
@@ -300,7 +303,7 @@ the_pile_upsto_helm = LightevalTaskConfig(
 
 the_pile_wikipedia_helm = LightevalTaskConfig(
     name="the_pile:wikipedia",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="wikipedia",
@@ -316,7 +319,7 @@ the_pile_wikipedia_helm = LightevalTaskConfig(
 
 the_pile_youtubesubtitles_helm = LightevalTaskConfig(
     name="the_pile:youtubesubtitles",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.the_pile,
     hf_repo="lighteval/pile_helm",
     hf_subset="youtubesubtitles",

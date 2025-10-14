@@ -25,9 +25,12 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+helm task
+"""
 siqa = LightevalTaskConfig(
     name="siqa",
-    suite=["helm", "commonsense_scenario"],
+    suite=["lighteval"],
     prompt_function=prompt.siqa,
     hf_repo="allenai/social_i_qa",
     hf_subset="default",

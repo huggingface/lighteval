@@ -25,9 +25,13 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+helm task
+"""
+
 me_q_sum = LightevalTaskConfig(
     name="me_q_sum",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.me_q_sum,
     hf_repo="lighteval/me_q_sum",
     hf_subset="default",

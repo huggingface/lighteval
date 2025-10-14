@@ -25,9 +25,12 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+helm task
+"""
 commonsenseqa = LightevalTaskConfig(
     name="commonsenseqa",
-    suite=["helm", "commonsense_scenario"],
+    suite=["lighteval"],
     prompt_function=prompt.commonsense_qa,
     hf_repo="commonsense_qa",
     hf_subset="default",

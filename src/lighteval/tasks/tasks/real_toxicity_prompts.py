@@ -25,9 +25,12 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""helm task
+"""
+
 real_toxicity_prompts = LightevalTaskConfig(
     name="real_toxicity_prompts",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.real_toxicity_prompts,
     hf_repo="allenai/real-toxicity-prompts",
     hf_subset="default",

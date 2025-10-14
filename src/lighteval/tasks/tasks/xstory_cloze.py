@@ -31,7 +31,7 @@ StoryCloze dataset (Spring 2016 version) to 10 non-English languages. This
 dataset is released by Meta AI.
 """
 
-xstory_cloze_en_lighteval = LightevalTaskConfig(
+xstory_cloze_en = LightevalTaskConfig(
     name="xstory_cloze:en",
     suite=["lighteval"],
     prompt_function=prompt.storycloze,
@@ -47,7 +47,7 @@ xstory_cloze_en_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xstory_cloze_ru_lighteval = LightevalTaskConfig(
+xstory_cloze_ru = LightevalTaskConfig(
     name="xstory_cloze:ru",
     suite=["lighteval"],
     prompt_function=prompt.storycloze,
@@ -63,7 +63,7 @@ xstory_cloze_ru_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xstory_cloze_zh_lighteval = LightevalTaskConfig(
+xstory_cloze_zh = LightevalTaskConfig(
     name="xstory_cloze:zh",
     suite=["lighteval"],
     prompt_function=prompt.storycloze,
@@ -79,7 +79,7 @@ xstory_cloze_zh_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xstory_cloze_es_lighteval = LightevalTaskConfig(
+xstory_cloze_es = LightevalTaskConfig(
     name="xstory_cloze:es",
     suite=["lighteval"],
     prompt_function=prompt.storycloze,
@@ -95,7 +95,7 @@ xstory_cloze_es_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xstory_cloze_ar_lighteval = LightevalTaskConfig(
+xstory_cloze_ar = LightevalTaskConfig(
     name="xstory_cloze:ar",
     suite=["lighteval"],
     prompt_function=prompt.storycloze,
@@ -111,7 +111,7 @@ xstory_cloze_ar_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xstory_cloze_hi_lighteval = LightevalTaskConfig(
+xstory_cloze_hi = LightevalTaskConfig(
     name="xstory_cloze:hi",
     suite=["lighteval"],
     prompt_function=prompt.storycloze,
@@ -127,7 +127,7 @@ xstory_cloze_hi_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xstory_cloze_id_lighteval = LightevalTaskConfig(
+xstory_cloze_id = LightevalTaskConfig(
     name="xstory_cloze:id",
     suite=["lighteval"],
     prompt_function=prompt.storycloze,
@@ -143,7 +143,7 @@ xstory_cloze_id_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xstory_cloze_te_lighteval = LightevalTaskConfig(
+xstory_cloze_te = LightevalTaskConfig(
     name="xstory_cloze:te",
     suite=["lighteval"],
     prompt_function=prompt.storycloze,
@@ -159,7 +159,7 @@ xstory_cloze_te_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xstory_cloze_sw_lighteval = LightevalTaskConfig(
+xstory_cloze_sw = LightevalTaskConfig(
     name="xstory_cloze:sw",
     suite=["lighteval"],
     prompt_function=prompt.storycloze,
@@ -175,7 +175,7 @@ xstory_cloze_sw_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xstory_cloze_eu_lighteval = LightevalTaskConfig(
+xstory_cloze_eu = LightevalTaskConfig(
     name="xstory_cloze:eu",
     suite=["lighteval"],
     prompt_function=prompt.storycloze,
@@ -191,7 +191,7 @@ xstory_cloze_eu_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xstory_cloze_my_lighteval = LightevalTaskConfig(
+xstory_cloze_my = LightevalTaskConfig(
     name="xstory_cloze:my",
     suite=["lighteval"],
     prompt_function=prompt.storycloze,

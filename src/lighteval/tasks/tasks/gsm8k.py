@@ -46,7 +46,7 @@ fields: math, reasoning
 #     system_prompt="ANSWER USING THE FORMAT $ANSWER$",
 # )
 
-gsm8k_lighteval = LightevalTaskConfig(
+gsm8k = LightevalTaskConfig(
     name="gsm8k",
     suite=["lighteval"],
     prompt_function=prompt.gsm8k,

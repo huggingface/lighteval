@@ -25,7 +25,7 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-xwinograd_en_lighteval = LightevalTaskConfig(
+xwinograd_en = LightevalTaskConfig(
     name="xwinograd:en",
     suite=["lighteval"],
     prompt_function=prompt.winogrande,
@@ -41,7 +41,7 @@ xwinograd_en_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xwinograd_fr_lighteval = LightevalTaskConfig(
+xwinograd_fr = LightevalTaskConfig(
     name="xwinograd:fr",
     suite=["lighteval"],
     prompt_function=prompt.winogrande,
@@ -57,7 +57,7 @@ xwinograd_fr_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xwinograd_jp_lighteval = LightevalTaskConfig(
+xwinograd_jp = LightevalTaskConfig(
     name="xwinograd:jp",
     suite=["lighteval"],
     prompt_function=prompt.winogrande,
@@ -73,7 +73,7 @@ xwinograd_jp_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xwinograd_pt_lighteval = LightevalTaskConfig(
+xwinograd_pt = LightevalTaskConfig(
     name="xwinograd:pt",
     suite=["lighteval"],
     prompt_function=prompt.winogrande,
@@ -89,7 +89,7 @@ xwinograd_pt_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xwinograd_ru_lighteval = LightevalTaskConfig(
+xwinograd_ru = LightevalTaskConfig(
     name="xwinograd:ru",
     suite=["lighteval"],
     prompt_function=prompt.winogrande,
@@ -105,7 +105,7 @@ xwinograd_ru_lighteval = LightevalTaskConfig(
     version=0,
 )
 
-xwinograd_zh_lighteval = LightevalTaskConfig(
+xwinograd_zh = LightevalTaskConfig(
     name="xwinograd:zh",
     suite=["lighteval"],
     prompt_function=prompt.winogrande,
