@@ -6,7 +6,7 @@ languages:
 en
 
 tags:
-legal, language-understanding
+classification, legal
 
 paper:
 https://arxiv.org/abs/2110.00976

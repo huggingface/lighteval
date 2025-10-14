@@ -10,6 +10,9 @@ en
 
 paper:
 https://arxiv.org/abs/1808.07042
+
+tags:
+dialog, qa
 """
 
 import lighteval.tasks.default_prompts as prompt

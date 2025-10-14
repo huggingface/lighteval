@@ -6,7 +6,7 @@ languages:
 en
 
 tags:
-legal, reasoning
+legal
 
 paper:
 

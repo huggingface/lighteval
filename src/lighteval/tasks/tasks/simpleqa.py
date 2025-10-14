@@ -7,7 +7,7 @@ languages:
 en
 
 tags:
-qa, factuality, general-knowledge
+factuality, general-knowledge, qa
 
 paper:
 https://openai.com/index/introducing-simpleqa/

@@ -8,10 +8,7 @@ languages:
 en
 
 tags:
-
-
-paper:
-https://arxiv.org/abs/1804.07461
+classification
 """
 
 import lighteval.tasks.default_prompts as prompt

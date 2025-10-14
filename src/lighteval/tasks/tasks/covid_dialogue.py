@@ -8,6 +8,9 @@ en
 
 paper:
 https://arxiv.org/abs/2004.06561
+
+tags:
+dialog, medical
 """
 
 import lighteval.tasks.default_prompts as prompt

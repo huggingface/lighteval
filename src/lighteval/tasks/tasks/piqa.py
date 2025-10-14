@@ -7,7 +7,7 @@ languages:
 en
 
 tags:
-reasoning, physical-commonsense, qa
+commonsense, multiple-choice, qa
 
 paper:
 https://arxiv.org/abs/1911.11641

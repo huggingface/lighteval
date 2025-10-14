@@ -6,7 +6,7 @@ languages:
 en
 
 tags:
-health, dialog
+dialog, health, medical
 
 paper:
 

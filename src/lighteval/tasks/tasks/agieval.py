@@ -12,7 +12,7 @@ languages:
 en, zh
 
 tags:
-math, reasoning, law, language, history, chemistry, biology, geography, physics
+biology, chemistry, geography, history, knowledge, language, multiple-choice, physics, reasoning
 
 paper:
 https://arxiv.org/abs/2304.06364

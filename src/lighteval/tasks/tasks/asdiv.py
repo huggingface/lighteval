@@ -8,6 +8,9 @@ en
 
 paper:
 https://arxiv.org/abs/2410.12853
+
+tags:
+math, reasoning
 """
 
 import lighteval.tasks.default_prompts as prompt

@@ -13,6 +13,9 @@ en
 
 paper:
 https://maa.org/aime-thresholds-are-available/
+
+tags:
+math, reasoning
 """
 
 import lighteval.tasks.default_prompts as prompt

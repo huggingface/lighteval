@@ -9,7 +9,7 @@ languages:
 en
 
 tags:
-reading-comprehension
+language-modeling
 
 paper:
 https://arxiv.org/abs/1606.06031

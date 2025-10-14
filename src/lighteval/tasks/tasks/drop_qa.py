@@ -9,6 +9,9 @@ en
 
 paper:
 https://arxiv.org/abs/1810.00505
+
+tags:
+math, qa, reasoning
 """
 
 import lighteval.tasks.default_prompts as prompt

@@ -17,6 +17,9 @@ en
 
 paper:
 https://arcprize.org/guide
+
+tags:
+multiple-choice
 """
 
 import lighteval.tasks.default_prompts as prompt

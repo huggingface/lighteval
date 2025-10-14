@@ -10,7 +10,7 @@ languages:
 en
 
 tags:
-reading-comprehension, qa, health, biomedical
+biomedical, health, qa
 
 paper:
 https://link.springer.com/chapter/10.1007/978-3-642-40802-1_29

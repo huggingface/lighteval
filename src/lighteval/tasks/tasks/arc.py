@@ -11,6 +11,9 @@ en
 
 paper:
 https://arxiv.org/abs/1803.05457
+
+tags:
+multiple-choice
 """
 
 import lighteval.tasks.default_prompts as prompt

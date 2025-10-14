@@ -8,7 +8,7 @@ languages:
 en
 
 tags:
-reading-comprehension
+qa, reading-comprehension
 
 paper:
 https://aclanthology.org/Q18-1023/

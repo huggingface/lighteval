@@ -10,7 +10,7 @@ languages:
 en
 
 tags:
-reading-comprehension
+multiple-choice, reading-comprehension
 
 paper:
 https://aclanthology.org/D17-1082/

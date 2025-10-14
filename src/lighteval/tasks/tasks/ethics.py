@@ -7,7 +7,7 @@ languages:
 en
 
 tags:
-ethics, morality, commonsense, justice, utilitarianism, virtue
+classification, ethics, justice, morality, utilitarianism, virtue
 
 paper:
 https://arxiv.org/abs/2008.02275

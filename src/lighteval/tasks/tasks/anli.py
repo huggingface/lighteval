@@ -11,6 +11,9 @@ en
 
 paper:
 https://arxiv.org/abs/1910.14599
+
+tags:
+nli, reasoning
 """
 
 import lighteval.tasks.default_prompts as prompt

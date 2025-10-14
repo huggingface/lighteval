@@ -8,7 +8,7 @@ languages:
 en
 
 tags:
-commonsense, commonsense-reasoning
+commonsense, multilingual, multiple-choice, reasoning
 
 paper:
 https://arxiv.org/abs/2005.00333

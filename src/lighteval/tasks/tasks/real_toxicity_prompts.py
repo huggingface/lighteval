@@ -6,7 +6,7 @@ languages:
 en
 
 tags:
-toxicity
+generation, safety
 
 paper:
 https://aclanthology.org/2020.findings-emnlp.301/

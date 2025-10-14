@@ -13,7 +13,7 @@ languages:
 en
 
 tags:
-commonsense, grounded-commonsense, nli
+narrative, reasoning
 
 paper:
 https://arxiv.org/abs/1808.05326

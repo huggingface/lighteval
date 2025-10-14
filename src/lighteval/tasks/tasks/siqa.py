@@ -17,7 +17,7 @@ languages:
 en
 
 tags:
-qa, social-intelligence, commonsense
+commonsense, multiple-choice, qa
 
 paper:
 

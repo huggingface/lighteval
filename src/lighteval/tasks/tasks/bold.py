@@ -8,6 +8,9 @@ en
 
 paper:
 https://dl.acm.org/doi/10.1145/3442188.3445924
+
+tags:
+bias, generation
 """
 
 import lighteval.tasks.default_prompts as prompt

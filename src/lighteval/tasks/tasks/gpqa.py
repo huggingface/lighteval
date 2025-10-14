@@ -11,7 +11,7 @@ languages:
 en
 
 tags:
-biology, physics, chemistry, reasoning, graduate-level
+biology, chemistry, graduate-level, multiple-choice, physics, qa, reasoning, science
 
 paper:
 https://arxiv.org/abs/2311.12022

@@ -7,7 +7,7 @@ languages:
 en
 
 tags:
-sentiment-analysis
+classification
 
 paper:
 https://aclanthology.org/P11-1015/

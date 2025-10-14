@@ -6,7 +6,7 @@ languages:
 en
 
 tags:
-qa, health, biomedical
+biomedical, health, medical, qa
 
 paper:
 https://pubmedqa.github.io/

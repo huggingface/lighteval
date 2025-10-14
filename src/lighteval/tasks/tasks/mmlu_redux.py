@@ -6,7 +6,7 @@ languages:
 en
 
 tags:
-general-knowledge, qa
+general-knowledge, knowledge, multiple-choice
 
 paper:
 https://arxiv.org/abs/2406.04127

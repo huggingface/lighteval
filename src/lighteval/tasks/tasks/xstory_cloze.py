@@ -8,7 +8,7 @@ languages:
 en, ru, zh, es, ar, hi, id, te, sw, eu, my
 
 tags:
-commonsense, commonsense-reasoning, multilingual
+multilingual, narrative, reasoning
 
 paper:
 

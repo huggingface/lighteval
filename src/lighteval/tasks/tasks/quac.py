@@ -6,7 +6,7 @@ languages:
 en
 
 tags:
-qa, dialogue
+dialog, qa
 
 paper:
 https://aclanthology.org/D18-1241/

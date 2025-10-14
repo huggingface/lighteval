@@ -10,7 +10,7 @@ languages:
 en
 
 tags:
-commonsense, commonsense-reasoning
+commonsense, multiple-choice
 
 paper:
 https://arxiv.org/abs/1907.10641

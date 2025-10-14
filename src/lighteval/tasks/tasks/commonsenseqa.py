@@ -12,6 +12,9 @@ en
 
 paper:
 https://arxiv.org/abs/1811.00937
+
+tags:
+commonsense, multiple-choice, qa
 """
 
 import lighteval.tasks.default_prompts as prompt

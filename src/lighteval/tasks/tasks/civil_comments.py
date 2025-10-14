@@ -6,7 +6,7 @@ languages:
 en
 
 tags:
-toxicity, bias
+bias, classification
 
 paper:
 https://arxiv.org/abs/1903.04561

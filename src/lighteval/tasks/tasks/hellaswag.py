@@ -7,7 +7,7 @@ languages:
 en
 
 tags:
-commonsense
+multiple-choice, narrative, reasoning
 
 paper:
 https://arxiv.org/abs/1905.07830

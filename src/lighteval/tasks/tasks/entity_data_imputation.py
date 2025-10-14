@@ -7,6 +7,9 @@ en
 
 paper:
 https://ieeexplore.ieee.org/document/9458712
+
+tags:
+reasoning
 """
 
 import lighteval.tasks.default_prompts as prompt

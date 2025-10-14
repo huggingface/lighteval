@@ -6,7 +6,7 @@ languages:
 en
 
 tags:
-math
+math, reasoning
 
 paper:
 

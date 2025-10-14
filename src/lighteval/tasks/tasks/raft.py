@@ -7,7 +7,7 @@ languages:
 en
 
 tags:
-text-classification
+classification, reasoning
 
 paper:
 https://datasets-benchmarks-proceedings.neurips.cc/paper/2021/hash/ca46c1b9512a7a8315fa3c5a946e8265-Abstract-round2.html

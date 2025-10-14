@@ -10,6 +10,9 @@ en
 
 paper:
 https://arxiv.org/abs/1912.00582
+
+tags:
+language-modeling
 """
 
 import lighteval.tasks.default_prompts as prompt

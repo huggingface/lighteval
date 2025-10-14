@@ -6,7 +6,7 @@ languages:
 en, fr, jp, pt, ru, zh
 
 tags:
-commonsense, commonsense-reasoning, multilingual
+commonsense, multilingual, reasoning
 
 paper:
 https://arxiv.org/abs/2211.01786

@@ -8,7 +8,7 @@ languages:
 en
 
 tags:
-reasoning, long-context
+long-context, multiple-choice, reasoning
 
 paper:
 https://arxiv.org/abs/2310.16049

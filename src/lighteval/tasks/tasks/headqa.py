@@ -10,7 +10,7 @@ languages:
 en, es
 
 tags:
-health, reasoning
+health, medical, multiple-choice, qa
 
 paper:
 https://arxiv.org/abs/1906.04701

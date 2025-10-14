@@ -7,7 +7,7 @@ languages:
 en
 
 tags:
-unscrambling, anagram, random insertion, reversed words
+language-modeling, reasoning
 
 paper:
 https://huggingface.co/datasets/lighteval/GPT3_unscramble

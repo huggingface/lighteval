@@ -6,7 +6,7 @@ languages:
 en
 
 tags:
-truthfulness
+factuality, qa
 
 paper:
 https://arxiv.org/abs/2109.07958

@@ -6,7 +6,7 @@ languages:
 en
 
 tags:
-reasoning, math
+reasoning
 
 paper:
 https://arxiv.org/abs/2206.03855

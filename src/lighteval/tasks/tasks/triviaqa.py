@@ -10,7 +10,7 @@ languages:
 en
 
 tags:
-reading-comprehension
+qa
 
 paper:
 https://arxiv.org/abs/1705.03551

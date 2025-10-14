@@ -7,7 +7,7 @@ languages:
 en
 
 tags:
-commonsense, reading-comprehension
+narrative, reasoning
 
 paper:
 https://arxiv.org/abs/1604.01696

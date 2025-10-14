@@ -7,7 +7,7 @@ languages:
 en
 
 tags:
-multimodal, qa, general-knowledge
+general-knowledge, knowledge, multimodal, multiple-choice
 
 paper:
 https://arxiv.org/abs/2409.02813

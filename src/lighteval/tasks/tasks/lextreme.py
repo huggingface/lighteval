@@ -6,7 +6,7 @@ languages:
 bg, cs, da, de, el, en, es, et, fi, fr, ga, hr, hu, it, lt, lv, mt, nl, pl, pt, ro, sk, sl, sv
 
 tags:
-legal
+classification, legal
 
 paper:
 https://arxiv.org/abs/2301.13126

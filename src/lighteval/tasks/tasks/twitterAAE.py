@@ -6,7 +6,7 @@ languages:
 en
 
 tags:
-dialectal, social-media
+language-modeling
 
 paper:
 https://aclanthology.org/D16-1120/

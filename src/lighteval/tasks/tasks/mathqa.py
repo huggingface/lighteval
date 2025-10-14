@@ -9,7 +9,7 @@ languages:
 en
 
 tags:
-math
+math, qa, reasoning
 
 paper:
 https://arxiv.org/abs/1905.13319

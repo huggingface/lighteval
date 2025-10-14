@@ -9,7 +9,7 @@ languages:
 en, es, fr, de, ru, zh, ja, th, sw, bn, te
 
 tags:
-math
+math, multilingual, reasoning
 
 paper:
 https://arxiv.org/abs/2210.03057

@@ -7,7 +7,7 @@ languages:
 en
 
 tags:
-toxicity
+generation, safety
 
 paper:
 https://arxiv.org/abs/2203.09509

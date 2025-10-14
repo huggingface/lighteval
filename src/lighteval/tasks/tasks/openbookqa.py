@@ -10,7 +10,7 @@ languages:
 en
 
 tags:
-reading-comprehension, qa
+multiple-choice, qa
 
 paper:
 https://arxiv.org/abs/1809.02789

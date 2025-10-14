@@ -1,5 +1,8 @@
 """
 hardest subset of bigbench benchmark.
+
+tags:
+reasoning
 """
 
 import lighteval.tasks.default_prompts as prompt

@@ -6,6 +6,9 @@ languages:
 en
 
 paper:
+
+tags:
+knowledge, qa
 """
 
 from lighteval.metrics.metrics import Metrics

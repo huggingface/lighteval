@@ -7,6 +7,9 @@ en
 
 paper:
 https://aclanthology.org/W19-3905/
+
+tags:
+reasoning
 """
 
 import lighteval.tasks.default_prompts as prompt

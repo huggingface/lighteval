@@ -6,7 +6,7 @@ languages:
 en
 
 tags:
-health, qa
+health, medical
 
 paper:
 https://medmcqa.github.io/

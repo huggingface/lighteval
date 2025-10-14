@@ -7,6 +7,9 @@ en
 
 paper:
 https://dl.acm.org/doi/10.14778/3007263.3007314
+
+tags:
+classification, reasoning
 """
 
 import lighteval.tasks.default_prompts as prompt

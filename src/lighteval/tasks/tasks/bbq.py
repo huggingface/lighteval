@@ -8,6 +8,9 @@ en
 
 paper:
 https://arxiv.org/abs/2110.08193
+
+tags:
+bias, multiple-choice, qa
 """
 
 import lighteval.tasks.default_prompts as prompt
