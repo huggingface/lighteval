@@ -21,9 +21,19 @@
 # SOFTWARE.
 
 # ruff: noqa: F405, F403, F401
-"""See https://github.com/felipemaiapolo/tinyBenchmarks/ for the original code.
+"""
+abstract:
+TinyBenchmarks is a benchmark for evaluating the performance of language models
+on tiny benchmarks.
 
-Test with `python run_evals_accelerate.py --model_args "pretrained=EleutherAI/pythia-70m" --tasks "extended|tiny:winogrande|0,extended|tiny:gsm8k|0,extended|tiny:hellaswag|0,extended|tiny:arc|0,extended|tiny:truthfulqa|0" --extended_tasks extended_tasks --output_dir "./evals"`
+languages:
+en
+
+tags:
+general-knowledge, reasoning, qa
+
+paper:
+https://arxiv.org/abs/2402.14992
 """
 
 import os

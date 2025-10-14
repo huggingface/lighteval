@@ -38,6 +38,25 @@ from lighteval.tasks.tasks.mix_eval.judge_prompts import (
 from lighteval.tasks.tasks.mix_eval.prompts import construct_prompt_freeform, construct_prompt_multichoice
 
 
+"""
+abstract:
+Ground-truth-based dynamic benchmark derived from off-the-shelf benchmark
+mixtures, which evaluates LLMs with a highly capable model ranking (i.e., 0.96
+correlation with Chatbot Arena) while running locally and quickly (6% the time
+and cost of running MMLU), with its queries being stably and effortlessly
+updated every month to avoid contamination.
+
+languages:
+en
+
+tags:
+general-knowledge, reasoning, qa
+
+paper:
+https://mixeval.github.io/
+"""
+
+
 logger = logging.getLogger(__name__)
 
 

@@ -35,6 +35,21 @@ from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.tasks.tasks.ifbench import evaluation_lib
 
 
+"""
+abstract:
+Challenging benchmark for precise instruction following.
+
+languages:
+en
+
+tags:
+instruction-following
+
+paper:
+https://arxiv.org/abs/2507.02833
+"""
+
+
 def ifbench_prompt(line, task_name: str = ""):
     return Doc(
         task_name=task_name,

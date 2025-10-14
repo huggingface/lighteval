@@ -34,6 +34,21 @@ from lighteval.tasks.requests import Doc
 from lighteval.utils.language import Language
 
 
+"""
+abstract:
+OlympiadBench is a benchmark for evaluating the performance of language models
+on olympiad problems.
+
+languages:
+en, zh
+
+tags:
+math, reasoning, language
+
+paper:
+https://arxiv.org/abs/2402.14008
+"""
+
 chinese_answer_type_dict = {"Numerical": "数值", "Expression": "表达式", "Equation": "方程", "Interval": "区间"}
 english_answer_type_dict = {
     "Numerical": "a numerical value",

@@ -34,6 +34,22 @@ from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.imports import requires
 
 
+"""
+abstract:
+Very specific task where there are no precise outputs but instead we test if the
+format obeys rules.
+
+languages:
+en
+
+tags:
+instruction-following
+
+paper:
+https://arxiv.org/abs/2311.07911
+"""
+
+
 # Very specific task where there are no precise outputs but instead we test if the format obeys rules
 @requires("langdetect")
 def ifeval_prompt(line, task_name: str = ""):

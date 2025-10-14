@@ -36,6 +36,24 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc, SamplingMethod
 
 
+"""
+abstract:
+Humanity's Last Exam (HLE) is a global collaborative effort, with questions from
+nearly 1,000 subject expert contributors affiliated with over 500 institutions
+across 50 countries - comprised mostly of professors, researchers, and graduate
+degree holders.
+
+languages:
+en
+
+tags:
+qa, reasoning, general-knowledge
+
+paper:
+https://arxiv.org/abs/2501.14249
+"""
+
+
 logger = logging.getLogger(__name__)
 
 
