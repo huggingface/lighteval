@@ -39,7 +39,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "recall:k=2": 0
+        "recall:k=1": 0
       },
       "tolerance": 0.01,
       "description": "Test recall at k with correct choice not in top k"
