@@ -1,4 +1,3 @@
-# ruff: noqa: F405, F403, F401
 """
 abstract:
 TinyBenchmarks is a benchmark for evaluating the performance of language models

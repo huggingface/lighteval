@@ -1,17 +1,3 @@
-import numpy as np
-from aenum import extend_enum
-
-from lighteval.metrics.metrics import Metrics
-from lighteval.metrics.metrics_sample import SampleLevelComputation
-from lighteval.metrics.utils.metric_utils import (
-    SampleLevelMetricGrouping,
-)
-from lighteval.models.model_output import ModelResponse
-from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.tasks.tasks.ifbench import evaluation_lib
-
-
 """
 abstract:
 Challenging benchmark for precise instruction following.
@@ -25,6 +11,19 @@ instruction-following
 paper:
 https://arxiv.org/abs/2507.02833
 """
+
+import numpy as np
+from aenum import extend_enum
+
+from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.metrics_sample import SampleLevelComputation
+from lighteval.metrics.utils.metric_utils import (
+    SampleLevelMetricGrouping,
+)
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.tasks.tasks.ifbench import evaluation_lib
 
 
 def ifbench_prompt(line, task_name: str = ""):

@@ -1,21 +1,3 @@
-import logging
-import re
-
-import numpy as np
-
-from lighteval.metrics.metrics_sample import JudgeLLMMixEval
-from lighteval.metrics.utils.metric_utils import SampleLevelMetricGrouping
-from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.tasks.tasks.mix_eval.judge_prompts import (
-    flow_judge_for_freeform_template,
-    flow_judge_for_multichoice_template,
-    gpt_judge_for_closeended_freeform,
-    gpt_judge_for_closeended_multiplechoice,
-)
-from lighteval.tasks.tasks.mix_eval.prompts import construct_prompt_freeform, construct_prompt_multichoice
-
-
 """
 abstract:
 Ground-truth-based dynamic benchmark derived from off-the-shelf benchmark
@@ -33,6 +15,23 @@ general-knowledge, reasoning, qa
 paper:
 https://mixeval.github.io/
 """
+
+import logging
+import re
+
+import numpy as np
+
+from lighteval.metrics.metrics_sample import JudgeLLMMixEval
+from lighteval.metrics.utils.metric_utils import SampleLevelMetricGrouping
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.tasks.tasks.mix_eval.judge_prompts import (
+    flow_judge_for_freeform_template,
+    flow_judge_for_multichoice_template,
+    gpt_judge_for_closeended_freeform,
+    gpt_judge_for_closeended_multiplechoice,
+)
+from lighteval.tasks.tasks.mix_eval.prompts import construct_prompt_freeform, construct_prompt_multichoice
 
 
 logger = logging.getLogger(__name__)

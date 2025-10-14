@@ -1,16 +1,3 @@
-import numpy as np
-
-import lighteval.tasks.tasks.ifeval.instructions_registry as instructions_registry
-from lighteval.metrics.metrics_sample import SampleLevelComputation
-from lighteval.metrics.utils.metric_utils import (
-    SampleLevelMetricGrouping,
-)
-from lighteval.models.model_output import ModelResponse
-from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.imports import requires
-
-
 """
 abstract:
 Very specific task where there are no precise outputs but instead we test if the
@@ -25,6 +12,18 @@ instruction-following
 paper:
 https://arxiv.org/abs/2311.07911
 """
+
+import numpy as np
+
+import lighteval.tasks.tasks.ifeval.instructions_registry as instructions_registry
+from lighteval.metrics.metrics_sample import SampleLevelComputation
+from lighteval.metrics.utils.metric_utils import (
+    SampleLevelMetricGrouping,
+)
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.utils.imports import requires
 
 
 # Very specific task where there are no precise outputs but instead we test if the format obeys rules

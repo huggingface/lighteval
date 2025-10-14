@@ -1,18 +1,3 @@
-import logging
-import math
-from typing import List, Literal
-
-import numpy as np
-from aenum import extend_enum
-from pydantic import BaseModel
-
-from lighteval.metrics.metrics import Metrics
-from lighteval.metrics.metrics_sample import JudgeLLM
-from lighteval.metrics.utils.metric_utils import CorpusLevelMetricGrouping
-from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc, SamplingMethod
-
-
 """
 abstract:
 Humanity's Last Exam (HLE) is a global collaborative effort, with questions from
@@ -30,6 +15,20 @@ paper:
 https://arxiv.org/abs/2501.14249
 """
 
+import logging
+import math
+from typing import List, Literal
+
+import numpy as np
+from aenum import extend_enum
+from pydantic import BaseModel
+
+from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.metrics_sample import JudgeLLM
+from lighteval.metrics.utils.metric_utils import CorpusLevelMetricGrouping
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc, SamplingMethod
+
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +41,7 @@ class ExtractedAnswer(BaseModel):
     strict: Literal[True]  # 100% reliability
 
 
-"""Adaptation from https://github.com/centerforaisafety/hle/blob/main/hle_eval/run_judge_results.py
-"""
+# Adaptation from https://github.com/centerforaisafety/hle/blob/main/hle_eval/run_judge_results.py
 
 
 def get_judge_prompt(question: str, answer: str, gold: str, **kwargs):

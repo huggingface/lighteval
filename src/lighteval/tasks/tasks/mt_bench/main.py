@@ -1,14 +1,32 @@
-# ruff: noqa: F405, F403, F401, I001
-from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc, SamplingMethod
+"""
+abstract:
+MT-Bench is a multi-turn conversational benchmark for evaluating language
+models. It consists of 80 high-quality multi-turn questions across 8 common
+categories (writing, roleplay, reasoning, math, coding, extraction, STEM,
+humanities). Model responses are evaluated by a judge LLM.
+
+languages:
+en
+
+tags:
+conversational, generation, multi-turn
+
+paper:
+https://arxiv.org/abs/2402.14762
+"""
+
+import re
+
+import numpy as np
+
 from lighteval.metrics.metrics_sample import JudgeLLMMTBench
 from lighteval.metrics.utils.metric_utils import SampleLevelMetricGrouping
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.tasks.tasks.mt_bench.judge_prompt_templates import (
     flow_judge_prompt_mt_bench_with_ref,
     flow_judge_prompt_mt_bench_without_ref,
 )
-import re
-import numpy as np
 
 
 def mt_bench_prompt(line, task_name: str = ""):

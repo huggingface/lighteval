@@ -1,16 +1,3 @@
-import numpy as np
-
-from lighteval.metrics.dynamic_metrics import (
-    ExprExtractionConfig,
-    LatexExtractionConfig,
-    MultilingualExtractiveMatchMetric,
-)
-from lighteval.metrics.metrics import SampleLevelMetric, SamplingMethod
-from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
-from lighteval.utils.language import Language
-
-
 """
 abstract:
 OlympiadBench is a benchmark for evaluating the performance of language models
@@ -25,6 +12,19 @@ math, reasoning, language
 paper:
 https://arxiv.org/abs/2402.14008
 """
+
+import numpy as np
+
+from lighteval.metrics.dynamic_metrics import (
+    ExprExtractionConfig,
+    LatexExtractionConfig,
+    MultilingualExtractiveMatchMetric,
+)
+from lighteval.metrics.metrics import SampleLevelMetric, SamplingMethod
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+from lighteval.utils.language import Language
+
 
 chinese_answer_type_dict = {"Numerical": "数值", "Expression": "表达式", "Equation": "方程", "Interval": "区间"}
 english_answer_type_dict = {
