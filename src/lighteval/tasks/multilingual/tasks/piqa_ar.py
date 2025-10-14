@@ -1,25 +1,19 @@
-# MIT License
+"""
+abstract:
+PIQA: Physical Interaction Question Answering PIQA is a benchmark for testing
+physical commonsense reasoning. This Arabic version is a translation of the
+original PIQA dataset, adapted for Arabic language evaluation. It tests the
+ability to reason about physical interactions in everyday situations.
 
-# Copyright (c) 2024 The HuggingFace Team
+languages:
+arabic
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+tags:
+multilingual, multiple-choice, qa, reasoning
 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
+paper:
+https://arxiv.org/abs/1911.11641
+"""
 
 from lighteval.metrics.dynamic_metrics import (
     LogLikelihoodAccMetric,
@@ -38,14 +32,6 @@ from lighteval.tasks.templates.utils.formulation import (
 )
 from lighteval.utils.language import Language
 
-
-# ------------------------------- PIQA ------------------------------- #
-# PIQA: Physical Interaction Question Answering
-# PIQA is a benchmark for testing physical commonsense reasoning.
-# This Arabic version is a translation of the original PIQA dataset, adapted for Arabic language evaluation.
-# It tests the ability to reason about physical interactions in everyday situations.
-# Paper: https://arxiv.org/abs/1911.11641
-# Arabic version: https://aclanthology.org/2023.arabicnlp-1.21/
 
 TASKS_TABLE = []
 

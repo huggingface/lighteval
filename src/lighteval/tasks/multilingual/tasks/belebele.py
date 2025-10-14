@@ -1,25 +1,19 @@
-# MIT License
+"""
+abstract:
+Belebele: A large-scale reading comprehension dataset covering 122 languages.
 
-# Copyright (c) 2024 The HuggingFace Team
+languages:
+arabic, armenian, bengali, cyrillic, devanagari, ethiopic, georgian, greek,
+gujarati, gurmukhi, chinese (simplified), chinese (traditional), hangul, hebrew,
+japanese, khmer, kannada, lao, latin, malayalam, myanmar, odia, sinhala, tamil,
+telugu, thai, tibetan
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+tags:
+multilingual, multiple-choice, reading-comprehension
 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
+paper:
+https://arxiv.org/abs/2308.16884
+"""
 
 from langcodes import Language as LangCodeLanguage
 
@@ -37,9 +31,6 @@ from lighteval.tasks.templates.utils.formulation import (
 )
 from lighteval.utils.language import iso_639_3_ind_to_iso_639_3_macro
 
-
-# Belebele: A large-scale reading comprehension dataset covering 122 languages.
-# https://arxiv.org/abs/2308.16884
 
 TASKS_TABLE = []
 

@@ -1,25 +1,19 @@
-# MIT License
+"""
+abstract:
+PAWS-X: A Cross-lingual Adversarial Dataset for Paraphrase Identification This
+dataset contains paraphrase identification pairs in multiple languages. It's
+derived from PAWS (Paraphrase Adversaries from Word Scrambling) and We treat
+paraphrase as entailment and non-paraphrase as contradiction
 
-# Copyright (c) 2024 The HuggingFace Team
+languages:
+chinese, english, french, german, japanese, korean, spanish
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+tags:
+classification, multilingual, nli
 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
+paper:
+https://arxiv.org/abs/1908.11828
+"""
 
 from langcodes import standardize_tag
 
@@ -37,12 +31,6 @@ from lighteval.tasks.templates.utils.formulation import (
 )
 from lighteval.utils.language import Language
 
-
-# PAWS-X: A Cross-lingual Adversarial Dataset for Paraphrase Identification
-# This dataset contains paraphrase identification pairs in multiple languages.
-# It's derived from PAWS (Paraphrase Adversaries from Word Scrambling) and
-# We treat paraphrase as entailment and non-paraphrase as contradiction
-# https://arxiv.org/abs/1908.11828
 
 TASKS_TABLE = []
 

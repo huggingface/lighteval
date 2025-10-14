@@ -1,25 +1,21 @@
-# MIT License
+"""
+abstract:
+OpenBookQA: A Question-Answering Dataset for Open-Book Exams OpenBookQA is a
+question-answering dataset modeled after open-book exams for assessing human
+understanding of a subject. It consists of multiple-choice questions that
+require combining facts from a given open book with broad common knowledge. The
+task tests language models' ability to leverage provided information and apply
+common sense reasoning.
 
-# Copyright (c) 2024 The HuggingFace Team
+languages:
+arabic
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+tags:
+multilingual, multiple-choice, reasoning
 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
+paper:
+https://arxiv.org/abs/1809.02789
+"""
 
 from lighteval.metrics.dynamic_metrics import (
     LogLikelihoodAccMetric,
@@ -38,14 +34,6 @@ from lighteval.tasks.templates.utils.formulation import (
 )
 from lighteval.utils.language import Language
 
-
-# ------------------------------- OpenBookQA ------------------------------- #
-# OpenBookQA: A Question-Answering Dataset for Open-Book Exams
-# OpenBookQA is a question-answering dataset modeled after open-book exams for assessing human understanding of a subject.
-# It consists of multiple-choice questions that require combining facts from a given open book with broad common knowledge.
-# The task tests language models' ability to leverage provided information and apply common sense reasoning.
-# Original paper: https://arxiv.org/abs/1809.02789
-# Arabic version: https://aclanthology.org/2023.arabicnlp-1.21/
 
 TASKS_TABLE = []
 

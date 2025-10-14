@@ -1,24 +1,20 @@
-# MIT License
+"""
+abstract:
+Translated MMLU using both professional and non-professional translators.
+Contains tags for cultural sensitivity.
 
-# Copyright (c) 2024 The HuggingFace Team
+languages:
+amharic, arabic, bengali, chinese, czech, dutch, english, french, german,
+hebrew, hindi, indonesian, italian, japanese, korean, malay, norwegian, polish,
+portuguese, romanian, russian, serbian, spanish, swahili, swedish, tamil,
+telugu, thai, turkish, ukrainian, urdu, vietnamese, yoruba, zulu
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+tags:
+knowledge, multilingual, multiple-choice
 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+paper:
+https://huggingface.co/papers/2412.03304
+"""
 
 from functools import partial
 
@@ -39,13 +35,6 @@ from lighteval.tasks.templates.utils.formulation import (
 )
 from lighteval.utils.language import Language
 
-
-# Translated MMLU using both professional and non-professional translators. Contains tags for cultural sensitivity.
-# CA: Cultural Agnostic
-# CS: Cultural Specific
-# UNK: Not annotated
-# ALL: All of the above
-# https://huggingface.co/papers/2412.03304
 
 TASKS_TABLE = []
 

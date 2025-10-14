@@ -1,24 +1,19 @@
-# MIT License
+"""
+abstract:
+TruthfulQA: Measuring How Models Mimic Human Falsehoods
 
-# Copyright (c) 2024 The HuggingFace Team
+languages:
+arabic, armenian, basque, bengali, catalan, chinese, croatian, danish, dutch,
+french, german, gujarati, hindi, hungarian, icelandic, indonesian, italian,
+kannada, malayalam, marathi, nepali, norwegian, portuguese, romanian, russian,
+serbian, slovak, spanish, swedish, tamil, telugu, ukrainian, vietnamese
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+tags:
+factuality, multilingual, qa
 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+paper:
+https://arxiv.org/abs/2109.07958
+"""
 
 from functools import partial
 
@@ -38,14 +33,6 @@ from lighteval.tasks.templates.utils.formulation import (
 )
 from lighteval.utils.language import Language
 
-
-# ---------------------------- TruthfulQA ---------------------------- #
-# TruthfulQA: Measuring How Models Mimic Human Falsehoods
-# Paper: https://arxiv.org/abs/2109.07958
-# TruthfulQA is a benchmark dataset designed to measure the truthfulness of language models.
-# It consists of questions that humans might answer incorrectly due to false beliefs or misconceptions.
-# The task evaluates a model's ability to provide truthful answers and avoid common human biases.
-# github: https://github.com/nlp-uoregon/mlmm-evaluation
 
 TASKS_TABLE = []
 

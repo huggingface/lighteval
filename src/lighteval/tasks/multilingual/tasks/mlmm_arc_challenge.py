@@ -1,25 +1,25 @@
-# MIT License
+"""
+abstract:
+ARC (AI2 Reasoning Challenge) is a dataset for question answering that requires
+reasoning. It consists of multiple-choice science questions from 3rd to 9th
+grade exams. The dataset is split into two parts: ARC-Easy and ARC-Challenge.
+ARC-Easy contains questions that can be answered correctly by both humans and
+simple baseline models. ARC-Challenge contains questions that are difficult for
+both humans and current AI systems. Similar to MMLU, ARC tasks uses PMI
+normalization by default but only for the challenge set.
 
-# Copyright (c) 2024 The HuggingFace Team
+languages:
+arabic, bengali, catalan, chinese, croatian, danish, dutch, french, german,
+hindi, hungarian, indonesian, italian, kannada, malayalam, marathi, nepali,
+romanian, russian, serbian, slovak, spanish, tamil, telugu, ukrainian,
+vietnamese
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+tags:
+multilingual, multiple-choice, reasoning
 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
+paper:
+https://github.com/nlp-uoregon/mlmm-evaluation
+"""
 
 from langcodes import standardize_tag
 
@@ -38,15 +38,6 @@ from lighteval.tasks.templates.utils.formulation import (
 )
 from lighteval.utils.language import Language
 
-
-# ---------------------------- ARC ---------------------------- #
-# ARC (AI2 Reasoning Challenge) is a dataset for question answering that requires reasoning.
-# It consists of multiple-choice science questions from 3rd to 9th grade exams.
-# The dataset is split into two parts: ARC-Easy and ARC-Challenge.
-# ARC-Easy contains questions that can be answered correctly by both humans and simple baseline models.
-# ARC-Challenge contains questions that are difficult for both humans and current AI systems.
-# Similar to MMLU, ARC tasks uses PMI normalization by default but only for the challenge set.
-# github: https://github.com/nlp-uoregon/mlmm-evaluation
 
 TASKS_TABLE = []
 
