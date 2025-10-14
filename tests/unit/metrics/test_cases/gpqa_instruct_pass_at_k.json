@@ -22,7 +22,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "gpqa_pass@k_with_k&n&strip_strings": 1.0
+        "gpqa_pass@k:k=1&n=1&strip_strings=True": 1.0
       },
       "tolerance": 0.01,
       "description": "Basic test case with single correct sample"
@@ -47,7 +47,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "gpqa_pass@k_with_k&n&strip_strings": 1.0
+        "gpqa_pass@k:k=2&n=3&strip_strings=True": 1.0
       },
       "tolerance": 0.01,
       "description": "Test case with multiple samples all correct"
@@ -72,7 +72,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "gpqa_pass@k_with_k&n&strip_strings": 0.8333333333333333
+        "gpqa_pass@k:k=2&n=4&strip_strings=True": 0.8333333333333333
       },
       "tolerance": 0.01,
       "description": "Test case with mixed correct and incorrect samples"
@@ -97,7 +97,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "gpqa_pass@k_with_k&n&strip_strings": 0.5
+        "gpqa_pass@k:k=1&n=2&strip_strings=True": 0.5
       },
       "tolerance": 0.01,
       "description": "Test case with case sensitivity (strip_strings should handle this)"
@@ -122,7 +122,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "gpqa_pass@k_with_k&n&strip_strings": 0.0
+        "gpqa_pass@k:k=1&n=3&strip_strings=True": 0.0
       },
       "tolerance": 0.01,
       "description": "Test case with all incorrect samples"
@@ -147,7 +147,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "gpqa_pass@k_with_k&n&strip_strings": 1.0
+        "gpqa_pass@k:k=5&n=8&strip_strings=True": 1.0
       },
       "tolerance": 0.01,
       "description": "Test case with high k value and multiple correct samples"
@@ -172,7 +172,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "gpqa_pass@k_with_k&n&strip_strings": 1.0
+        "gpqa_pass@k:k=1&n=2&strip_strings=True": 1.0
       },
       "tolerance": 0.01,
       "description": "Test case with parentheses format"
@@ -197,7 +197,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "gpqa_pass@k_with_k&n&strip_strings": 1.0
+        "gpqa_pass@k:k=1&n=2&strip_strings=True": 1.0
       },
       "tolerance": 0.01,
       "description": "Test case with reasoning and answer extraction"
@@ -222,7 +222,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "gpqa_pass@k_with_k&n&strip_strings": 1.0
+        "gpqa_pass@k:k=1&n=2&strip_strings=True": 1.0
       },
       "tolerance": 0.01,
       "description": "Test case with 'final answer' format"
@@ -247,7 +247,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "gpqa_pass@k_with_k&n&strip_strings": 1.0
+        "gpqa_pass@k:k=1&n=1&strip_strings=True": 1.0
       },
       "tolerance": 0.01,
       "description": "Edge case with single choice"
@@ -272,7 +272,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "gpqa_pass@k_with_k&n&strip_strings": 0.8333333333333333
+        "gpqa_pass@k:k=2&n=4&strip_strings=True": 0.8333333333333333
       },
       "tolerance": 0.01,
       "description": "Test case with multiple correct answers (first correct answer)"

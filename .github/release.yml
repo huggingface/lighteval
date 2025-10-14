@@ -5,7 +5,10 @@ changelog:
   categories:
     - title: New Features 🎉
       labels:
-        - feature/enhancement
+        - feature
+    - title: Enhancement ⚙️
+      labels:
+        - enhancement
     - title: Documentation 📚
       labels:
         - documentation
