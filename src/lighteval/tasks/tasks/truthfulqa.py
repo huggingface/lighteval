@@ -26,8 +26,16 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
+abstract:
 TruthfulQA: Measuring How Models Mimic Human Falsehoods
 
+languages:
+en
+
+tags:
+truthfulness
+
+paper:
 https://arxiv.org/abs/2109.07958
 """
 

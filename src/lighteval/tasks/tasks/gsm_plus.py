@@ -25,17 +25,21 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-# gsm_plus = LightevalTaskConfig_inspect(
-#     name="gsm_plus",
-#     prompt_function=prompt.gsm_plus,
-#     dataset_repo="qintongli/GSM-Plus",
-#     dataset_subset="default",
-#     dataset_split="test",
-#     system_prompt="ANSWER USING THE FORMAT $ANSWER$",
-#     epochs=48,
-#     epochs_reducer="pass_at_16",
-#     scorers=[extractive_math_scorer(), model_graded_fact()]
-# )
+"""
+abstract:
+GSM-Plus is an adversarial extension of GSM8K that tests the robustness of LLMs'
+mathematical reasoning by introducing varied perturbations to grade-school math
+problems.
+
+languages:
+en
+
+tags:
+math, reasoning
+
+paper:
+https://arxiv.org/abs/2402.19255
+"""
 
 gsm_plus = LightevalTaskConfig(
     name="gsm_plus",

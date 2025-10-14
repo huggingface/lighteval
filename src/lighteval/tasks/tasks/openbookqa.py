@@ -26,16 +26,20 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-OpenBookQA aims to promote research in advanced question-answering, probing a
-deeper understanding of both the topic (with salient facts summarized as an open
-book, also provided with the dataset) and the language it is expressed in. In
-particular, it contains questions that require multi-step reasoning, use of
-additional common and commonsense knowledge, and rich text comprehension.
-OpenBookQA is a new kind of question-answering dataset modeled after open book
-exams for assessing human understanding of a subject.
+abstract:
+OpenBookQA is a question-answering dataset modeled after open-book exams for
+assessing human understanding of a subject. It contains multiple-choice
+questions that require combining facts from a given open book with broad common
+knowledge. The task tests language models' ability to leverage provided
+information and apply common sense reasoning.
 
+languages:
+en
 
-from: Can a Suit of Armor Conduct Electricity? A New Dataset for Open Book Question Answering
+tags:
+reading-comprehension, qa
+
+paper:
 https://arxiv.org/abs/1809.02789
 """
 

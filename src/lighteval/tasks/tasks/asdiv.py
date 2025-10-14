@@ -25,6 +25,18 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+ASDiv is a dataset for arithmetic reasoning that contains 2,000+ questions
+covering addition, subtraction, multiplication, and division.
+
+languages:
+en
+
+paper:
+https://arxiv.org/abs/2410.12853
+"""
+
 asdiv = LightevalTaskConfig(
     name="asdiv",
     suite=["lighteval"],

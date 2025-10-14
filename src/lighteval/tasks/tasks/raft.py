@@ -26,7 +26,18 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-helm task
+abstract:
+The Real-world annotated few-shot (RAFT) meta-benchmark of 11 real-world text
+classification tasks.
+
+languages:
+en
+
+tags:
+text-classification
+
+paper:
+https://datasets-benchmarks-proceedings.neurips.cc/paper/2021/hash/ca46c1b9512a7a8315fa3c5a946e8265-Abstract-round2.html
 """
 
 raft_ade_corpus_v2 = LightevalTaskConfig(

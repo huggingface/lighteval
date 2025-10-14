@@ -25,10 +25,18 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-"""benchmark where we ask the model to unscramble a word, either anagram or
+"""
+abstract:
+Benchmark where we ask the model to unscramble a word, either anagram or
 random insertion.
-Don't remember where it's from.
 
+languages:
+en
+
+tags:
+unscrambling, anagram, random insertion, reversed words
+
+paper:
 https://huggingface.co/datasets/lighteval/GPT3_unscramble
 """
 

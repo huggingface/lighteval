@@ -25,32 +25,22 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-# aime24 = LightevalTaskConfig_inspect(
-#     name="aime24",
-#     prompt_function=prompt.aime_prompt_fn,
-#     dataset_repo="HuggingFaceH4/aime_2024",
-#     dataset_subset="default",
-#     dataset_split="train",
-#     scorers=[extractive_math_scorer()],
-#     system_prompt="ASNWER USING THE FORMAT $ANSWER$",
-#     epochs=16,
-#     epochs_reducer="pass_at_4",
-# )
+"""
+abstract:
+The American Invitational Mathematics Examination (AIME) is a prestigious,
+invite-only mathematics competition for high-school students who perform in the
+top 5% of the AMC 12 mathematics exam. It involves 15 questions of increasing
+difficulty, with the answer to every question being a single integer from 0 to
+999. The median score is historically between 4 and 6 questions correct (out of
+the 15 possible). Two versions of the test are given every year (thirty
+questions total).
 
+languages:
+en
 
-# aime25 = LightevalTaskConfig_inspect(
-#     name="aime25",
-#     prompt_function=prompt.aime_prompt_fn,
-#     dataset_repo="yentinglin/aime_2025",
-#     dataset_subset="default",
-#     dataset_split="train",
-#     dataset_revision="main",
-#     scorers=[extractive_math_scorer()],
-#     system_prompt="ASNWER USING THE FORMAT $ANSWER$",
-#     epochs=16,
-#     epochs_reducer="pass_at_4",
-# )
-
+paper:
+https://maa.org/aime-thresholds-are-available/
+"""
 
 aime24 = LightevalTaskConfig(
     name="aime24",

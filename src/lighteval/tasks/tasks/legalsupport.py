@@ -25,9 +25,23 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+Measures fine-grained legal reasoning through reverse entailment.
+
+languages:
+en
+
+tags:
+legal, reasoning
+
+paper:
+
+"""
+
 legalsupport = LightevalTaskConfig(
     name="legalsupport",
-    suite=["helm"],
+    suite=["lighteval"],
     prompt_function=prompt.legal_support,
     hf_repo="lighteval/LegalSupport",
     hf_subset="default",

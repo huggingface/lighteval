@@ -25,9 +25,18 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-"""A Corpus and Cloze Evaluation for Deeper Understanding of
+"""
+abstract:
+A Corpus and Cloze Evaluation for Deeper Understanding of
 Commonsense Stories
 
+languages:
+en
+
+tags:
+commonsense, reading-comprehension
+
+paper:
 https://arxiv.org/abs/1604.01696
 """
 

@@ -26,7 +26,17 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
+abstract:
 tasks from sacrebleu
+
+languages:
+en, de, fr, ja, ko, zh, ar
+
+tags:
+translation
+
+paper:
+https://github.com/mjpost/sacrebleu
 """
 
 iwslt17_ar_en = LightevalTaskConfig(

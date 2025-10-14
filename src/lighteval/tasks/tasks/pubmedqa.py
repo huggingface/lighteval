@@ -26,8 +26,16 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-PubMedQA: A Dataset for Biomedical Research Question Answering
+abstract:
+PubMedQA is a dataset for biomedical research question answering.
 
+languages:
+en
+
+tags:
+qa, health, biomedical
+
+paper:
 https://pubmedqa.github.io/
 """
 

@@ -26,8 +26,17 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-helm task
+abstract:
+The COVID-19 Dialogue dataset is a collection of 500+ dialogues between
+doctors and patients during the COVID-19 pandemic.
+
+languages:
+en
+
+paper:
+https://arxiv.org/abs/2004.06561
 """
+
 covid_dialogue = LightevalTaskConfig(
     name="covid_dialogue",
     suite=["lighteval"],

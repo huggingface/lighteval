@@ -26,8 +26,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-AGIEval: A Human-Centric Benchmark for Evaluating Foundation Models
-
+abstract:
 AGIEval is a human-centric benchmark specifically designed to evaluate the
 general abilities of foundation models in tasks pertinent to human cognition and
 problem-solving. This benchmark is derived from 20 official, public, and
@@ -36,6 +35,13 @@ test-takers, such as general college admission tests (e.g., Chinese College
 Entrance Exam (Gaokao) and American SAT), law school admission tests, math
 competitions, lawyer qualification tests, and national civil service exams.
 
+languages:
+en, zh
+
+tags:
+math, reasoning, law, language, history, chemistry, biology, geography, physics
+
+paper:
 https://arxiv.org/abs/2304.06364
 """
 

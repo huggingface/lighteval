@@ -26,8 +26,16 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-MedMCQA: A Large-scale Multi-Subject Multi-Choice Dataset for Medical domain Question Answering
+abstract:
+A Large-scale Multi-Subject Multi-Choice Dataset for Medical domain Question Answering
 
+languages:
+en
+
+tags:
+health, qa
+
+paper:
 https://medmcqa.github.io/
 """
 

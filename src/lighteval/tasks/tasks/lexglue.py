@@ -26,8 +26,16 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
+abstract:
 LexGLUE: A Benchmark Dataset for Legal Language Understanding in English
 
+languages:
+en
+
+tags:
+legal, language-understanding
+
+paper:
 https://arxiv.org/abs/2110.00976
 """
 

@@ -25,11 +25,29 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+This dataset consists of 6,642 question/answer pairs. The questions are supposed
+to be answerable by Freebase, a large knowledge graph. The questions are mostly
+centered around a single named entity. The questions are popular ones asked on
+the web.
+
+languages:
+en
+
+tags:
+qa
+
+paper:
+https://aclanthology.org/D13-1160.pdf
+"""
+
+
 webqs = LightevalTaskConfig(
     name="webqs",
     suite=["lighteval"],
     prompt_function=prompt.webqs,
-    hf_repo="web_questions",
+    hf_repo="stanfordnlp/web_questions",
     hf_subset="default",
     hf_avail_splits=["train", "test"],
     evaluation_splits=["test"],

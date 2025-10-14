@@ -26,6 +26,22 @@ from lighteval.tasks.templates.qa import get_qa_prompt_function
 from lighteval.utils.language import Language
 
 
+"""
+abstract:
+This dataset is a collection of question-answer pairs from the Natural Questions
+dataset. See Natural Questions for additional information. This dataset can be
+used directly with Sentence Transformers to train embedding models.
+
+languages:
+en
+
+tags:
+general-knowledge, qa
+
+paper:
+https://ai.google.com/research/NaturalQuestions
+"""
+
 natural_questions = LightevalTaskConfig(
     name="natural_questions",
     prompt_function=get_qa_prompt_function(

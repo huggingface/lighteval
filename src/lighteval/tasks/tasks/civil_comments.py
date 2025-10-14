@@ -26,8 +26,16 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-Nuanced Metrics for Measuring Unintended Bias with Real Data for Text Classification.
+abstract:
+The CivilComments benchmark for toxicity detection.
 
+languages:
+en
+
+tags:
+toxicity, bias
+
+paper:
 https://arxiv.org/abs/1903.04561
 """
 

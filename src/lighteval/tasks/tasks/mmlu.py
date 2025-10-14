@@ -25,6 +25,20 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+MMMLU is a benchmark of general-knowledge and English language understanding.
+
+languages:
+en
+
+tags:
+general-knowledge, qa
+
+paper:
+https://arxiv.org/abs/2009.03300
+"""
+
 mmlu_abstract_algebra = LightevalTaskConfig(
     name="mmlu:abstract_algebra",
     suite=["lighteval"],

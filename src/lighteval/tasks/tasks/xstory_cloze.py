@@ -26,9 +26,19 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
+abstract:
 XStoryCloze consists of the professionally translated version of the English
 StoryCloze dataset (Spring 2016 version) to 10 non-English languages. This
 dataset is released by Meta AI.
+
+languages:
+en, ru, zh, es, ar, hi, id, te, sw, eu, my
+
+tags:
+commonsense, commonsense-reasoning, multilingual
+
+paper:
+
 """
 
 xstory_cloze_en = LightevalTaskConfig(

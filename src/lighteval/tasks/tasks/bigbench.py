@@ -25,9 +25,15 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-"""Beyond the Imitation Game: Quantifying and extrapolating the capabilities of language models
+"""
+abstract:
+Beyond the Imitation Game: Quantifying and extrapolating the capabilities of language models
 166 tasks from bigbench benchmark.
 
+languages:
+en
+
+paper:
 https://arxiv.org/abs/2206.04615
 """
 

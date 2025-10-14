@@ -26,8 +26,18 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-MuSR: Testing the Limits of Chain-of-thought with Multistep Soft Reasoning
+abstract:
+MuSR is a benchmark for evaluating multistep reasoning in natural language
+narratives. Built using a neurosymbolic synthetic-to-natural generation process,
+it features complex, realistic tasks—such as long-form murder mysteries.
 
+languages:
+en
+
+tags:
+reasoning, long-context
+
+paper:
 https://arxiv.org/abs/2310.16049
 """
 

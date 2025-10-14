@@ -26,8 +26,17 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-HellaSwag: Can a Machine Really Finish Your Sentence?
+abstract:
+HellaSwag is a commonsense inference benchmark designed to challenge language
+models with adversarially filtered multiple-choice questions.
 
+languages:
+en
+
+tags:
+commonsense
+
+paper:
 https://arxiv.org/abs/1905.07830
 """
 

@@ -26,12 +26,19 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
+abstract:
 Multilingual Grade School Math Benchmark (MGSM) is a benchmark of grade-school
 math problems.
 The same 250 problems from GSM8K are each translated via human annotators in 10
 languages.
-language list: en, es, fr, de, ru, zh, ja, th, sw, bn, te
 
+languages:
+en, es, fr, de, ru, zh, ja, th, sw, bn, te
+
+tags:
+math
+
+paper:
 https://arxiv.org/abs/2210.03057
 """
 
@@ -47,7 +54,7 @@ mgsm_en = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=None,
     metrics=[Metrics.exact_match],
-    stop_sequence=["\n", "=", "Question="],
+    stop_sequence=None,
     version=0,
 )
 
@@ -63,7 +70,7 @@ mgsm_es = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=None,
     metrics=[Metrics.exact_match],
-    stop_sequence=["\n", "=", "Pregunta="],
+    stop_sequence=None,
     version=0,
 )
 
@@ -79,7 +86,7 @@ mgsm_fr = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=None,
     metrics=[Metrics.exact_match],
-    stop_sequence=["\n", "=", "Question="],
+    stop_sequence=None,
     version=0,
 )
 
@@ -95,7 +102,7 @@ mgsm_de = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=None,
     metrics=[Metrics.exact_match],
-    stop_sequence=["\n", "=", "Frage="],
+    stop_sequence=None,
     version=0,
 )
 
@@ -111,7 +118,7 @@ mgsm_ru = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=None,
     metrics=[Metrics.exact_match],
-    stop_sequence=["\n", "=", "\u0417\u0430\u0434\u0430\u0447\u0430="],
+    stop_sequence=None,
     version=0,
 )
 
@@ -127,7 +134,7 @@ mgsm_zh = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=None,
     metrics=[Metrics.exact_match],
-    stop_sequence=["\n", "=", "\u95ee\u9898="],
+    stop_sequence=None,
     version=0,
 )
 
@@ -143,7 +150,7 @@ mgsm_ja = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=None,
     metrics=[Metrics.exact_match],
-    stop_sequence=["\n", "=", "\u554f\u984c="],
+    stop_sequence=None,
     version=0,
 )
 
@@ -159,7 +166,7 @@ mgsm_th = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=None,
     metrics=[Metrics.exact_match],
-    stop_sequence=["\n", "=", "\u0e42\u0e08\u0e17\u0e22\u0e4c="],
+    stop_sequence=None,
     version=0,
 )
 
@@ -175,7 +182,7 @@ mgsm_sw = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=None,
     metrics=[Metrics.exact_match],
-    stop_sequence=["\n", "=", "Swali="],
+    stop_sequence=None,
     version=0,
 )
 
@@ -191,7 +198,7 @@ mgsm_bn = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=None,
     metrics=[Metrics.exact_match],
-    stop_sequence=["\n", "=", "\u09aa\u09cd\u09b0\u09b6\u09cd\u09a8="],
+    stop_sequence=None,
     version=0,
 )
 
@@ -207,6 +214,6 @@ mgsm_te = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=None,
     metrics=[Metrics.exact_match],
-    stop_sequence=["\n", "=", "\u0c2a\u0c4d\u0c30\u0c36\u0c4d\u0c28="],
+    stop_sequence=None,
     version=0,
 )

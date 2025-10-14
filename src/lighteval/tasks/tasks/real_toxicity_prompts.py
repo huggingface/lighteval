@@ -25,7 +25,18 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-"""helm task
+"""
+abstract:
+The RealToxicityPrompts dataset for measuring toxicity in prompted model generations
+
+languages:
+en
+
+tags:
+toxicity
+
+paper:
+https://aclanthology.org/2020.findings-emnlp.301/
 """
 
 real_toxicity_prompts = LightevalTaskConfig(

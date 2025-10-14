@@ -26,8 +26,21 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-helm task
+abstract:
+NarrativeQA is a reading comprehension benchmark that tests deep understanding
+of full narratives—books and movie scripts—rather than shallow text matching. To
+answer its questions, models must integrate information across entire stories.
+
+languages:
+en
+
+tags:
+reading-comprehension
+
+paper:
+https://aclanthology.org/Q18-1023/
 """
+
 narrativeqa = LightevalTaskConfig(
     name="narrativeqa",
     suite=["lighteval"],

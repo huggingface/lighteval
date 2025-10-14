@@ -26,14 +26,17 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
+abstract:
 7,787 genuine grade-school level, multiple-choice science questions, assembled
 to encourage research in advanced question-answering. The dataset is partitioned
 into a Challenge Set and an Easy Set, where the former contains only questions
 answered incorrectly by both a retrieval-based algorithm and a word
 co-occurrence algorithm
 
-from: Think you have Solved Question Answering? Try ARC, the AI2 Reasoning Challenge
+languages:
+en
 
+paper:
 https://arxiv.org/abs/1803.05457
 """
 

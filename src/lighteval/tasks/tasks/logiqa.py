@@ -25,6 +25,24 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+LogiQA is a machine reading comprehension dataset focused on testing logical
+reasoning abilities. It contains 8,678 expert-written multiple-choice questions
+covering various types of deductive reasoning. While humans perform strongly,
+state-of-the-art models lag far behind, making LogiQA a benchmark for advancing
+logical reasoning in NLP systems.
+
+languages:
+en
+
+tags:
+reading-comprehension
+
+paper:
+https://arxiv.org/abs/2007.08124
+"""
+
 logiqa = LightevalTaskConfig(
     name="logiqa",
     suite=["lighteval"],

@@ -25,6 +25,19 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+Questions from law school admission tests.
+
+languages:
+en
+
+tags:
+legal, qa
+
+paper:
+"""
+
 lsat_qa = LightevalTaskConfig(
     name="lsat_qa",
     suite=["lighteval"],

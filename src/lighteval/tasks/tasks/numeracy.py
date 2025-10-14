@@ -25,6 +25,20 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+Numeracy is a benchmark for evaluating the ability of language models to reason about mathematics.
+
+languages:
+en
+
+tags:
+math
+
+paper:
+
+"""
+
 numeracy_linear_example = LightevalTaskConfig(
     name="numeracy:linear_example",
     suite=["lighteval"],

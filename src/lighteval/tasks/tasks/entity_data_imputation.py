@@ -26,8 +26,13 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-Capturing Semantics for Imputation with Pre-trained Language Models
+abstract:
+Scenario that tests the ability to impute missing entities in a data table.
 
+languages:
+en
+
+paper:
 https://ieeexplore.ieee.org/document/9458712
 """
 

@@ -25,6 +25,20 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+A collection of medical dialogue datasets.
+
+languages:
+en
+
+tags:
+health, dialog
+
+paper:
+
+"""
+
 med_dialog_healthcaremagic = LightevalTaskConfig(
     name="med_dialog:healthcaremagic",
     suite=["lighteval"],

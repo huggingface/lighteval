@@ -25,6 +25,20 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+Multilingual winograd schema challenge as used in Crosslingual Generalization through Multitask Finetuning.
+
+languages:
+en, fr, jp, pt, ru, zh
+
+tags:
+commonsense, commonsense-reasoning, multilingual
+
+paper:
+https://arxiv.org/abs/2211.01786
+"""
+
 xwinograd_en = LightevalTaskConfig(
     name="xwinograd:en",
     suite=["lighteval"],

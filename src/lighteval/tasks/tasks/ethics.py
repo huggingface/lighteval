@@ -26,8 +26,17 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-from: Aligning AI With Shared Human Values
+abstract:
+The Ethics benchmark for evaluating the ability of language models to reason about
+ethical issues.
 
+languages:
+en
+
+tags:
+ethics, morality, commonsense, justice, utilitarianism, virtue
+
+paper:
 https://arxiv.org/abs/2008.02275
 """
 

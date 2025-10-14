@@ -26,7 +26,17 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-helm task
+abstract:
+The QuAC benchmark for question answering in the context of dialogues.
+
+languages:
+en
+
+tags:
+qa, dialogue
+
+paper:
+https://aclanthology.org/D18-1241/
 """
 
 quac = LightevalTaskConfig(

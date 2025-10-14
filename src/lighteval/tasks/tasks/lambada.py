@@ -26,8 +26,19 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-The LAMBADA dataset: Word prediction requiring a broad discourse context
+abstract:
+LAMBADA is a benchmark for testing language models’ ability to understand broad
+narrative context. Each passage requires predicting its final word—easy for
+humans given the full passage but impossible from just the last sentence.
+Success demands long-range discourse comprehension.
 
+languages:
+en
+
+tags:
+reading-comprehension
+
+paper:
 https://arxiv.org/abs/1606.06031
 """
 
@@ -35,7 +46,7 @@ lambada_standard = LightevalTaskConfig(
     name="lambada:standard",
     suite=["lighteval"],
     prompt_function=prompt.lambada,
-    hf_repo="lambada",
+    hf_repo="cimec/lambada",
     hf_subset="plain_text",
     hf_avail_splits=["train", "test", "validation"],
     evaluation_splits=["test"],
@@ -52,7 +63,7 @@ lambada_standard_cloze = LightevalTaskConfig(
     name="lambada:standard_cloze",
     suite=["lighteval"],
     prompt_function=prompt.lambada_cloze,
-    hf_repo="lambada",
+    hf_repo="cimec/lambada",
     hf_subset="plain_text",
     hf_avail_splits=["train", "test", "validation"],
     evaluation_splits=["test"],

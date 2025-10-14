@@ -26,6 +26,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
+abstract:
 QASPER is a dataset for question answering on scientific research papers. It
 consists of 5,049 questions over 1,585 Natural Language Processing papers. Each
 question is written by an NLP practitioner who read only the title and abstract
@@ -33,7 +34,13 @@ of the corresponding paper, and the question seeks information present in the
 full text. The questions are then answered by a separate set of NLP
 practitioners who also provide supporting evidence to answers.
 
-from: A Dataset of Information-Seeking Questions and Answers Anchored in Research Papers
+languages:
+en
+
+tags:
+qa, scientific
+
+paper:
 https://arxiv.org/abs/2105.03011
 """
 

@@ -26,8 +26,16 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-from: LIME: Learning Inductive Bias for Primitives of Mathematical Reasoning
+abstract:
+LIME: Learning Inductive Bias for Primitives of Mathematical Reasoning
 
+languages:
+en
+
+tags:
+reasoning, math
+
+paper:
 https://arxiv.org/abs/2206.03855
 """
 

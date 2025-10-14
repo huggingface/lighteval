@@ -25,6 +25,23 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+large-scale dataset of math word problems.  Our dataset is gathered by using a
+new representation language to annotate over the AQuA-RAT dataset with
+fully-specified operational programs.  AQuA-RAT has provided the questions,
+options, rationale, and the correct options.
+
+languages:
+en
+
+tags:
+math
+
+paper:
+https://arxiv.org/abs/1905.13319
+"""
+
 mathqa = LightevalTaskConfig(
     name="mathqa",
     suite=["lighteval"],

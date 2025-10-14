@@ -30,6 +30,13 @@ MMMU-Pro is an enhanced multimodal benchmark designed to rigorously assess the
 true understanding capabilities of advanced AI models across multiple
 modalities.
 
+languages:
+en
+
+tags:
+multimodal, qa, general-knowledge
+
+paper:
 https://arxiv.org/abs/2409.02813
 """
 

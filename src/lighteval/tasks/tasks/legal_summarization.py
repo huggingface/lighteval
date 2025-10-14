@@ -26,8 +26,19 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-Cant find this one in HELM, just a paper.
+abstract:
+LegalSummarization is a dataset for legal summarization.
 
+languages:
+en
+
+paper:
+https://arxiv.org/abs/2210.13448
+
+tags:
+legal, summarization
+
+paper:
 https://arxiv.org/abs/2210.13448
 """
 

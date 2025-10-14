@@ -25,6 +25,21 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+A factuality benchmark called SimpleQA that measures the ability for language
+models to answer short, fact-seeking questions.
+
+languages:
+en
+
+tags:
+qa, factuality, general-knowledge
+
+paper:
+https://openai.com/index/introducing-simpleqa/
+"""
+
 simpleqa = LightevalTaskConfig(
     name="simpleqa",
     suite=["lighteval"],

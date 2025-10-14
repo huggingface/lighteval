@@ -25,17 +25,20 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-# math_500 = LightevalTaskConfig_inspect(
-#     name="math_500",
-#     prompt_function=prompt.math_500,
-#     dataset_repo="HuggingFaceH4/MATH-500",
-#     dataset_subset="default",
-#     dataset_split="test",
-#     scorers=[extractive_math_scorer()],
-#     system_prompt="Solve the following math problem efficiently and clearly.  The last line of your response should be of the following format: 'Therefore, the final answer is: $\\boxed{{ANSWER}}$. I hope it is correct' (without quotes) where ANSWER is just the final number or expression that solves the problem. Think step by step before answering.",
-#     epochs=48,
-#     epochs_reducer="pass_at_16",
-# )
+"""
+abstract:
+This dataset contains a subset of 500 problems from the MATH benchmark that
+OpenAI created in their Let's Verify Step by Step paper.
+
+languages:
+en
+
+tags:
+math
+
+paper:
+https://arxiv.org/abs/2305.20050
+"""
 
 math_500 = LightevalTaskConfig(
     name="math_500",

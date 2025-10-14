@@ -26,7 +26,15 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-helm task
+abstract:
+The bAbI benchmark for measuring understanding and reasoning, evaluates reading
+comprehension via question answering.
+
+languages:
+en
+
+paper:
+https://arxiv.org/abs/1502.05698
 """
 
 babi_qa = LightevalTaskConfig(

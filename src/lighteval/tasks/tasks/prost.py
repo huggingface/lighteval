@@ -25,6 +25,24 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+PROST is a benchmark for testing physical reasoning about objects through space
+and time. It includes 18,736 multiple-choice questions covering 10 core physics
+concepts, designed to probe models in zero-shot settings. Results show that even
+large pretrained models struggle with physical reasoning and are sensitive to
+question phrasing, underscoring their limited real-world understanding.
+
+languages:
+en
+
+tags:
+reasoning, qa, physical-commonsense
+
+paper:
+https://arxiv.org/abs/2106.03634
+"""
+
 prost = LightevalTaskConfig(
     name="prost",
     suite=["lighteval"],

@@ -27,6 +27,19 @@ from lighteval.tasks.templates.qa import get_qa_prompt_function
 from lighteval.utils.language import Language
 
 
+"""
+abstract:
+The DROP dataset is a new question-answering dataset designed to evaluate the
+ability of language models to answer complex questions that require reasoning
+over multiple sentences.
+
+languages:
+en
+
+paper:
+https://arxiv.org/abs/1810.00505
+"""
+
 drop_qa = LightevalTaskConfig(
     name="drop",
     prompt_function=get_qa_prompt_function(

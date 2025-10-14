@@ -25,6 +25,21 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+This dataset is for implicit hate speech detection. All instances were generated
+using GPT-3 and the methods described in our paper.
+
+languages:
+en
+
+tags:
+toxicity
+
+paper:
+https://arxiv.org/abs/2203.09509
+"""
+
 toxigen = LightevalTaskConfig(
     name="toxigen",
     suite=["lighteval"],

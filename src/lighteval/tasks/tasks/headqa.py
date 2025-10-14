@@ -26,12 +26,20 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
+abstract:
 HEAD-QA is a multi-choice HEAlthcare Dataset. The questions come from exams to
 access a specialized position in the Spanish healthcare system, and are
 challenging even for highly specialized humans. They are designed by the
 Ministerio de Sanidad, Consumo y Bienestar Social, who also provides direct
 access to the exams of the last 5 years.
 
+languages:
+en, es
+
+tags:
+health, reasoning
+
+paper:
 https://arxiv.org/abs/1906.04701
 """
 

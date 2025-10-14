@@ -25,12 +25,17 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-"""BLiMP is a challenge set for evaluating what language models (LMs) know
+"""abstract:
+BLiMP is a challenge set for evaluating what language models (LMs) know
 about major grammatical phenomena in English. BLiMP consists of 67
 sub-datasets, each containing 1000 minimal pairs isolating specific
 contrasts in syntax, morphology, or semantics. The data is automatically
 generated according to expert-crafted grammars.
 
+languages:
+en
+
+paper:
 https://arxiv.org/abs/1912.00582
 """
 

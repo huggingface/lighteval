@@ -26,8 +26,21 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-helm task
+abstract:
+CommonsenseQA is a new multiple-choice question answering dataset that requires
+different types of commonsense knowledge to predict the correct answers . It
+contains 12,102 questions with one correct answer and four distractor answers.
+The dataset is provided in two major training/validation/testing set splits:
+"Random split" which is the main evaluation split, and "Question token split",
+see paper for details.
+
+languages:
+en
+
+paper:
+https://arxiv.org/abs/1811.00937
 """
+
 commonsenseqa = LightevalTaskConfig(
     name="commonsenseqa",
     suite=["lighteval"],

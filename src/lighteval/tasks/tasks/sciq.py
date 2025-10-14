@@ -25,6 +25,24 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+The SciQ dataset contains 13,679 crowdsourced science exam questions about
+Physics, Chemistry and Biology, among others. The questions are in
+multiple-choice format with 4 answer options each. For the majority of the
+questions, an additional paragraph with supporting evidence for the correct
+answer is provided.
+
+languages:
+en
+
+tags:
+physics, chemistry, biology, reasoning, multiple-choice, qa
+
+paper:
+https://arxiv.org/abs/1707.06209
+"""
+
 sciq = LightevalTaskConfig(
     name="sciq",
     suite=["lighteval"],

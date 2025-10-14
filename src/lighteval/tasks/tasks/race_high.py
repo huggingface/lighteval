@@ -25,6 +25,24 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+RACE is a large-scale reading comprehension dataset with more than 28,000
+passages and nearly 100,000 questions. The dataset is collected from English
+examinations in China, which are designed for middle school and high school
+students. The dataset can be served as the training and test sets for machine
+comprehension.
+
+languages:
+en
+
+tags:
+reading-comprehension
+
+paper:
+https://aclanthology.org/D17-1082/
+"""
+
 race_high = LightevalTaskConfig(
     name="race:high",
     suite=["lighteval"],

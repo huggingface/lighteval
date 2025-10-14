@@ -25,6 +25,22 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+The General Language Understanding Evaluation (GLUE) benchmark is a collection
+of resources for training, evaluating, and analyzing natural language
+understanding systems.
+
+languages:
+en
+
+tags:
+
+
+paper:
+https://arxiv.org/abs/1804.07461
+"""
+
 glue_cola = LightevalTaskConfig(
     name="glue:cola",
     suite=["lighteval"],

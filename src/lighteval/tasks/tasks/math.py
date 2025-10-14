@@ -31,7 +31,14 @@ from mathematics competitions, including the AMC 10, AMC 12, AIME, and more.
 Each problem in MATH has a full step-by-step solution, which can be used to
 teach models to generate answer derivations and explanations.
 
-https://arxiv.org/abs/2103.03874
+languages:
+en
+
+tags:
+math
+
+paper:
+https://arxiv.org/abs/2305.20050
 """
 
 math_algebra = LightevalTaskConfig(

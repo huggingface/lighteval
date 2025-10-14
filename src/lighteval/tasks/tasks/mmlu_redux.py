@@ -25,6 +25,20 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+MMLU-Redux is a subset of 5,700 manually re-annotated questions across 57 MMLU subjects.
+
+languages:
+en
+
+tags:
+general-knowledge, qa
+
+paper:
+https://arxiv.org/abs/2406.04127
+"""
+
 _MMLU_REDUX_2_SUBSETS = [
     "abstract_algebra",
     "anatomy",

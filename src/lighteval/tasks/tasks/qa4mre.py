@@ -26,8 +26,20 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-QA4MRE 2011-2013: Overview of Question Answering for Machine Reading Evaluation
+abstract:
+QA4MRE is a machine reading comprehension benchmark from the CLEF 2011-2013
+challenges. It evaluates systems' ability to answer questions requiring deep
+understanding of short texts, supported by external background knowledge.
+Covering tasks like modality, negation, biomedical reading, and entrance exams,
+QA4MRE tests reasoning beyond surface-level text matching.
 
+languages:
+en
+
+tags:
+reading-comprehension, qa, health, biomedical
+
+paper:
 https://link.springer.com/chapter/10.1007/978-3-642-40802-1_29
 """
 

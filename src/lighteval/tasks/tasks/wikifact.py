@@ -26,7 +26,17 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-helm task
+abstract:
+Extensively test factual knowledge.
+
+languages:
+en
+
+tags:
+factuality, knowledge
+
+paper:
+https://aclanthology.org/D19-1250/
 """
 
 wikifact_applies_to_jurisdiction = LightevalTaskConfig(

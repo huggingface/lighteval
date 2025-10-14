@@ -26,8 +26,19 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-helm task
+abstract:
+The Pile corpus for measuring lanugage model performance across various domains.
+
+languages:
+en
+
+tags:
+language-modeling
+
+paper:
+https://arxiv.org/abs/2101.00027
 """
+
 the_pile_arxiv_helm = LightevalTaskConfig(
     name="the_pile:arxiv",
     suite=["lighteval"],

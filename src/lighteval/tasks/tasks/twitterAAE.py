@@ -26,8 +26,16 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
+abstract:
 Demographic Dialectal Variation in Social Media: A Case Study of African-American English
 
+languages:
+en
+
+tags:
+dialectal, social-media
+
+paper:
 https://aclanthology.org/D16-1120/
 """
 

@@ -25,6 +25,20 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+The BoolQ benchmark for binary (yes/no) question answering.
+
+languages:
+en
+
+tags:
+Question-Answering,
+
+paper:
+https://arxiv.org/abs/1905.11946
+"""
+
 boolq = LightevalTaskConfig(
     name="boolq",
     suite=["lighteval"],

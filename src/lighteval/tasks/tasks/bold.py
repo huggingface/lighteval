@@ -26,8 +26,14 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-BOLD: Dataset and Metrics for Measuring Biases in Open-Ended Language Generation
+abstract:
+The Bias in Open-Ended Language Generation Dataset (BOLD) for measuring biases
+and toxicity in open-ended language generation.
 
+languages:
+en
+
+paper:
 https://dl.acm.org/doi/10.1145/3442188.3445924
 """
 

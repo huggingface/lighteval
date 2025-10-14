@@ -26,14 +26,17 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-To apply eyeshadow without a brush, should I use a cotton swab or a toothpick?
-Questions requiring this kind of physical commonsense pose a challenge to
-state-of-the-art natural language understanding systems. The PIQA dataset
-introduces the task of physical commonsense reasoning and a corresponding
-benchmark dataset Physical Interaction: Question Answering or PIQA.
+abstract:
+PIQA is a benchmark for testing physical commonsense reasoning. It contains
+questions requiring this kind of physical commonsense reasoning.
 
+languages:
+en
 
-from: PIQA: Reasoning about Physical Commonsense in Natural Language
+tags:
+reasoning, physical-commonsense, qa
+
+paper:
 https://arxiv.org/abs/1911.11641
 """
 

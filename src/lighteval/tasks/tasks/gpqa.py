@@ -25,40 +25,25 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-# gpqa_diamond = LightevalTaskConfig_inspect(
-#     name="gpqa:diamond",
-#     prompt_function=prompt.gpqa_instruct,
-#     dataset_repo="Idavidrein/gpqa",
-#     dataset_subset="gpqa_diamond",
-#     dataset_split="train",
-#     scorers=[multichoice_scorer(), choice()],
-#     solvers=[multiple_choice()],
-#     system_prompt="Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.",
-# )
+"""
+abstract:
+GPQA is a dataset of 448 expert-written multiple-choice questions in biology,
+physics, and chemistry, designed to test graduate-level reasoning. The questions
+are extremely difficult—PhD-level experts score about 65%, skilled non-experts
+34% (even with web access), and GPT-4 around 39%. GPQA aims to support research
+on scalable oversight, helping humans evaluate and trust AI systems that may
+exceed human expertise.
 
+languages:
+en
 
-# gpqa_extended = LightevalTaskConfig_inspect(
-#     name="gpqa:extended",
-#     prompt_function=prompt.gpqa_instruct,
-#     dataset_repo="Idavidrein/gpqa",
-#     dataset_subset="gpqa_extended",
-#     dataset_split="train",
-#     scorers=[multichoice_scorer(), choice()],
-#     solvers=[multiple_choice()],
-#     system_prompt="Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.",
-# )
+tags:
+biology, physics, chemistry, reasoning, graduate-level
 
+paper:
+https://arxiv.org/abs/2311.12022
+"""
 
-# gpqa_main = LightevalTaskConfig_inspect(
-#     name="gpqa:main",
-#     prompt_function=prompt.gpqa_instruct,
-#     dataset_repo="Idavidrein/gpqa",
-#     dataset_subset="gpqa_main",
-#     dataset_split="train",
-#     scorers=[multichoice_scorer(), choice()],
-#     solvers=[multiple_choice()],
-#     system_prompt="Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.",
-# )
 
 gpqa = LightevalTaskConfig(
     name="gpqa:mc",
@@ -75,6 +60,7 @@ gpqa = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
 gpqa_diamond_instruct = LightevalTaskConfig(
     name="gpqa:diamond",
     suite=["lighteval"],
@@ -90,6 +76,7 @@ gpqa_diamond_instruct = LightevalTaskConfig(
     stop_sequence=[],  # no stop sequence, will use eos token
     version=1,
 )
+
 gpqa_extended_instruct = LightevalTaskConfig(
     name="gpqa:extended",
     suite=["lighteval"],
@@ -105,6 +92,7 @@ gpqa_extended_instruct = LightevalTaskConfig(
     stop_sequence=[],  # no stop sequence, will use eos token
     version=0,
 )
+
 gpqa_main_instruct = LightevalTaskConfig(
     name="gpqa:main",
     suite=["lighteval"],

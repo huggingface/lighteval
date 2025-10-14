@@ -25,6 +25,27 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+ARC-AGI tasks are a series of three to five input and output tasks followed by a
+final task with only the input listed. Each task tests the utilization of a
+specific learned skill based on a minimal number of cognitive priors.
+In their native form, tasks are a JSON lists of integers. These JSON can also be
+represented visually as a grid of colors using an ARC-AGI task viewer. You can
+view an example of a task here.
+A successful submission is a pixel-perfect description (color and position) of
+the final task's output.
+100% of tasks in the ARC-AGI-2 dataset were solved by a minimim of 2 people in
+less than or equal to 2 attempts (many were solved more). ARC-AGI-2 is more
+difficult for AI.
+
+languages:
+en
+
+paper:
+https://arcprize.org/guide
+"""
+
 arc_agi_2 = LightevalTaskConfig(
     name="arc_agi_2",
     suite=["lighteval"],

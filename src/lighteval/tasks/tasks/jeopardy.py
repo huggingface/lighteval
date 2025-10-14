@@ -26,6 +26,16 @@ from lighteval.tasks.templates.qa import get_qa_prompt_function
 from lighteval.utils.language import Language
 
 
+"""
+abstract:
+Jeopardy is a dataset of questions and answers from the Jeopardy game show.
+
+languages:
+en
+
+paper:
+"""
+
 jeopardy = LightevalTaskConfig(
     name="jeopardy",
     prompt_function=get_qa_prompt_function(

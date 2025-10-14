@@ -26,9 +26,17 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
+abstract:
 The IMDB benchmark for sentiment analysis in movie review, from:
 Learning Word Vectors for Sentiment Analysis
 
+languages:
+en
+
+tags:
+sentiment-analysis
+
+paper:
 https://aclanthology.org/P11-1015/
 """
 

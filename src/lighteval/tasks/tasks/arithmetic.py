@@ -26,8 +26,15 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
+abstract:
 A small battery of 10 tests that involve asking language models a simple
 arithmetic problem in natural language.
+
+languages:
+en
+
+paper:
+https://arxiv.org/abs/2005.14165
 """
 
 arithmetic_1dc = LightevalTaskConfig(

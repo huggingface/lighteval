@@ -25,8 +25,17 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-"""LEXTREME: A Multi-Lingual and Multi-Task Benchmark for the Legal Domain
+"""
+abstract:
+LEXTREME: A Multi-Lingual and Multi-Task Benchmark for the Legal Domain
 
+languages:
+bg, cs, da, de, el, en, es, et, fi, fr, ga, hr, hu, it, lt, lv, mt, nl, pl, pt, ro, sk, sl, sv
+
+tags:
+legal
+
+paper:
 https://arxiv.org/abs/2301.13126
 """
 

@@ -25,6 +25,17 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+Scenario testing hierarchical reasoning through the Dyck formal languages.
+
+languages:
+en
+
+paper:
+https://aclanthology.org/W19-3905/
+"""
+
 dyck_language_2 = LightevalTaskConfig(
     name="dyck_language:2",
     suite=["lighteval"],

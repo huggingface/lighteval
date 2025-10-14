@@ -26,10 +26,18 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-Don't Give Me the Details, Just the Summary! Topic-Aware Convolutional Neural Networks for Extreme Summarization
-and: Abstractive Text Summarization using Sequence-to-sequence RNNs and Beyond
+abstract:
+Don't Give Me the Details, Just the Summary! Topic-Aware Convolutional Neural
+Networks for Extreme Summarization and: Abstractive Text Summarization using
+Sequence-to-sequence RNNs and Beyond
 
+languages:
+en
 
+tags:
+summarization
+
+paper:
 https://aclanthology.org/D18-1206/
 https://aclanthology.org/K16-1028/
 """

@@ -26,9 +26,19 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 """
-The WikiText language modeling dataset is a collection of over 100 million tokens extracted from the set of verified Good and Featured articles on Wikipedia. The dataset is available under the Creative Commons Attribution-ShareAlike License.
+abstract:
+The WikiText language modeling dataset is a collection of over 100 million
+tokens extracted from the set of verified Good and Featured articles on
+Wikipedia. The dataset is available under the Creative Commons
+Attribution-ShareAlike License.
 
-from: Pointer Sentinel Mixture Models
+languages:
+en
+
+tags:
+language-modeling
+
+paper:
 https://arxiv.org/abs/1609.07843
 """
 

@@ -25,6 +25,24 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+"""
+abstract:
+TriviaqQA is a reading comprehension dataset containing over 650K
+question-answer-evidence triples. TriviaqQA includes 95K question-answer pairs
+authored by trivia enthusiasts and independently gathered evidence documents,
+six per question on average, that provide high quality distant supervision for
+answering the questions.
+
+languages:
+en
+
+tags:
+reading-comprehension
+
+paper:
+https://arxiv.org/abs/1705.03551
+"""
+
 triviaqa = LightevalTaskConfig(
     name="triviaqa",
     suite=["lighteval"],
