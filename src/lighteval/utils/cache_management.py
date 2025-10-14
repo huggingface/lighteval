@@ -163,8 +163,10 @@ class SampleCache:
                 "The task registry was not provided to the cache config. We can't test if the current task has the same hash as the saved tasks."
             )
             return "NO_HASH"
-        task_suite, task_name, _ = full_task_name.split("|")
-        task_configs: list[LightevalTaskConfig] = sorted(self.registry.task_to_configs[f"{task_suite}|{task_name}"])
+        task_suite, task_name, few_shot = full_task_name.split("|")
+        task_configs: list[LightevalTaskConfig] = sorted(
+            self.registry.task_to_configs[f"{task_suite}|{task_name}|{few_shot}"]
+        )
         config_str = "|".join([task_config.__str__(lite=True) for task_config in task_configs])
         return hashlib.sha256(config_str.encode()).hexdigest()[:16]
 
