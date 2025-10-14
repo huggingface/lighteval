@@ -83,6 +83,9 @@ class Metric:
 
         # Once the parameters are updated, we need to adjust the
         # metric name to what will be returned
+        # CAREFUL: do not change the following logic!
+        # It must always provide the values of all parameters, so that people can evaluate using a range of metrics
+        # For example, pass@k=1&n=16, pass@k=10&n=16, etc
         sample_params_name = "&".join(f"{k}={v}" for k, v in sample_params.items())
         if isinstance(self, MetricGrouping):
             if hasattr(self.sample_level_fn, "metric_names"):
