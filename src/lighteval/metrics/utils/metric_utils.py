@@ -89,7 +89,7 @@ class Metric:
         sample_params_name = "&".join(f"{k}={v}" for k, v in sample_params.items())
         if isinstance(self, MetricGrouping):
             if hasattr(self.sample_level_fn, "metric_names"):
-                # this is mostly for the gpass@k metrics
+                # this is mostly for the gpass@k metrics which redefine submetric names
                 self.metric_name = self.sample_level_fn.metric_names
             else:
                 self.metric_name = [f"{metric}:{sample_params_name}" for metric in self.metric_name]

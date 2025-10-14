@@ -56,7 +56,7 @@ from tqdm import tqdm
 try:
     sys.set_int_max_str_digits(50000)
 except AttributeError:
-    pass
+    print("You likely won't be able to run codegen metrics on your system.")
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

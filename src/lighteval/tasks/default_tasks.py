@@ -410,7 +410,7 @@ aime24 = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[Metrics.pass_at_k_math(sample_params={"k": 1})],
+    metrics=[Metrics.pass_at_k_math(sample_params={"k": 1}), Metrics.avg_at_n_math(sample_params={"n": 1})],
     version=2,
 )
 aime24_avg = LightevalTaskConfig(
@@ -424,7 +424,7 @@ aime24_avg = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[Metrics.avg_at_k_math(sample_params={"k": 64})],
+    metrics=[Metrics.avg_at_n_math(sample_params={"n": 64})],
     version=2,
 )
 aime24_gpassk = LightevalTaskConfig(
@@ -10464,9 +10464,9 @@ math_algebra_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metrics=[
         Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
-        Metrics.maj_at_k(
+        Metrics.maj_at_n(
             sample_params={
-                "k": 4,
+                "n": 4,
                 "strip_strings": True,
                 "normalize_pred": math_normalizer,
                 "normalize_gold": math_normalizer,
@@ -10489,9 +10489,9 @@ math_counting_and_probability_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metrics=[
         Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
-        Metrics.maj_at_k(
+        Metrics.maj_at_n(
             sample_params={
-                "k": 4,
+                "n": 4,
                 "strip_strings": True,
                 "normalize_pred": math_normalizer,
                 "normalize_gold": math_normalizer,
@@ -10514,9 +10514,9 @@ math_geometry_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metrics=[
         Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
-        Metrics.maj_at_k(
+        Metrics.maj_at_n(
             sample_params={
-                "k": 4,
+                "n": 4,
                 "strip_strings": True,
                 "normalize_pred": math_normalizer,
                 "normalize_gold": math_normalizer,
@@ -10539,9 +10539,9 @@ math_intermediate_algebra_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metrics=[
         Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
-        Metrics.maj_at_k(
+        Metrics.maj_at_n(
             sample_params={
-                "k": 4,
+                "n": 4,
                 "strip_strings": True,
                 "normalize_pred": math_normalizer,
                 "normalize_gold": math_normalizer,
@@ -10564,9 +10564,9 @@ math_number_theory_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metrics=[
         Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
-        Metrics.maj_at_k(
+        Metrics.maj_at_n(
             sample_params={
-                "k": 4,
+                "n": 4,
                 "strip_strings": True,
                 "normalize_pred": math_normalizer,
                 "normalize_gold": math_normalizer,
@@ -10589,9 +10589,9 @@ math_prealgebra_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metrics=[
         Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
-        Metrics.maj_at_k(
+        Metrics.maj_at_n(
             sample_params={
-                "k": 4,
+                "n": 4,
                 "strip_strings": True,
                 "normalize_pred": math_normalizer,
                 "normalize_gold": math_normalizer,
@@ -10614,9 +10614,9 @@ math_precalculus_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metrics=[
         Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
-        Metrics.maj_at_k(
+        Metrics.maj_at_n(
             sample_params={
-                "k": 4,
+                "n": 4,
                 "strip_strings": True,
                 "normalize_pred": math_normalizer,
                 "normalize_gold": math_normalizer,
@@ -10639,9 +10639,9 @@ math_cot_algebra_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metrics=[
         Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
-        Metrics.maj_at_k(
+        Metrics.maj_at_n(
             sample_params={
-                "k": 4,
+                "n": 4,
                 "strip_strings": True,
                 "normalize_pred": math_normalizer,
                 "normalize_gold": math_normalizer,
@@ -10664,9 +10664,9 @@ math_cot_counting_and_probability_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metrics=[
         Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
-        Metrics.maj_at_k(
+        Metrics.maj_at_n(
             sample_params={
-                "k": 4,
+                "n": 4,
                 "strip_strings": True,
                 "normalize_pred": math_normalizer,
                 "normalize_gold": math_normalizer,
@@ -10689,9 +10689,9 @@ math_cot_geometry_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metrics=[
         Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
-        Metrics.maj_at_k(
+        Metrics.maj_at_n(
             sample_params={
-                "k": 4,
+                "n": 4,
                 "strip_strings": True,
                 "normalize_pred": math_normalizer,
                 "normalize_gold": math_normalizer,
@@ -10714,9 +10714,9 @@ math_cot_intermediate_algebra_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metrics=[
         Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
-        Metrics.maj_at_k(
+        Metrics.maj_at_n(
             sample_params={
-                "k": 4,
+                "n": 4,
                 "strip_strings": True,
                 "normalize_pred": math_normalizer,
                 "normalize_gold": math_normalizer,
@@ -10739,9 +10739,9 @@ math_cot_number_theory_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metrics=[
         Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
-        Metrics.maj_at_k(
+        Metrics.maj_at_n(
             sample_params={
-                "k": 4,
+                "n": 4,
                 "strip_strings": True,
                 "normalize_pred": math_normalizer,
                 "normalize_gold": math_normalizer,
@@ -10764,9 +10764,9 @@ math_cot_prealgebra_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metrics=[
         Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
-        Metrics.maj_at_k(
+        Metrics.maj_at_n(
             sample_params={
-                "k": 4,
+                "n": 4,
                 "strip_strings": True,
                 "normalize_pred": math_normalizer,
                 "normalize_gold": math_normalizer,
@@ -10789,9 +10789,9 @@ math_cot_precalculus_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metrics=[
         Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
-        Metrics.maj_at_k(
+        Metrics.maj_at_n(
             sample_params={
-                "k": 4,
+                "n": 4,
                 "strip_strings": True,
                 "normalize_pred": math_normalizer,
                 "normalize_gold": math_normalizer,
