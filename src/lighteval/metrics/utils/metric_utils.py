@@ -83,15 +83,15 @@ class Metric:
 
         # Once the parameters are updated, we need to adjust the
         # metric name to what will be returned
-        sample_params_name = "&".join(sample_params.keys())
+        sample_params_name = "&".join(f"{k}={v}" for k, v in sample_params.items())
         if isinstance(self, MetricGrouping):
             if hasattr(self.sample_level_fn, "metric_names"):
                 # this is mostly for the gpass@k metrics
                 self.metric_name = self.sample_level_fn.metric_names
             else:
-                self.metric_name = [f"{metric}_with_{sample_params_name}" for metric in self.metric_name]
+                self.metric_name = [f"{metric}:{sample_params_name}" for metric in self.metric_name]
         else:
-            self.metric_name = f"{self.metric_name}_with_{sample_params_name}"
+            self.metric_name = f"{self.metric_name}:{sample_params_name}"
         return self
 
     @staticmethod
