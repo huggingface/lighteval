@@ -18,7 +18,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "pass@k_with_k&n": 0.5
+        "pass@k:k=1&n=2": 0.5
       },
       "tolerance": 0.01,
       "description": "Test pass at k with correct answer in k"
@@ -39,7 +39,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "pass@k_with_k&n": 0.0
+        "pass@k:k=1&n=2": 0.0
       },
       "tolerance": 0.01,
       "description": "Test pass at k with correct answer not in k"
@@ -60,7 +60,7 @@
         "output_tokens": []
       },
       "expected_output": {
-        "pass@k_with_k&n": 0.66
+        "pass@k:k=2&n=3": 0.66
       },
       "tolerance": 0.01,
       "description": "Test pass at k with multiple attempts"
