@@ -79,7 +79,7 @@ class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
     # - helm_lite (not avail on datasets)
     # - alpaca (needs to be added to lighteval first)
 
-    def __init__(self, task: str):
+    def __init__(self, task: str, generative: bool = None):
         self.number_of_examples = 100
         if task not in self.LEADEBRBOARD_SCENARIOS + self.BENCHS:
             raise ValueError(f"Bench name must be one of {','.join(self.LEADEBRBOARD_SCENARIOS + self.BENCHS)}.")
@@ -88,6 +88,7 @@ class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
         self.download()
         self.estimates = None
         self.num_samples = 0
+        self.generative = generative if generative is not None else task == "gsm8k"
 
     def download(self):
         # Likely to crash in // processes if we don't include the pkl
@@ -102,11 +103,16 @@ class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
                     file.write(response.content)
 
     def compute(self, **args):
-        if self.task == "gsm8k":
-            res = ExactMatches(
-                strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
-            ).compute(**args)
-            return dict.fromkeys(self.METRICS, res)
+        if self.generative:
+            if self.task == "gsm8k":
+                res = ExactMatches(
+                    strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
+                ).compute(**args)
+                return dict.fromkeys(self.METRICS, res)
+            else:
+                res = Metrics.gpqa_instruct_pass_at_k(sample_params={"k": 1}).compute(**args)
+                return dict.fromkeys(self.METRICS, res)
+
         else:
             res = LoglikelihoodAcc().compute(**args)
             return dict.fromkeys(self.METRICS, res)
@@ -262,6 +268,21 @@ for task in task_params:
     )
     TASKS_TABLE.append(task)
 
+    task_gen = LightevalTaskConfig(
+        name=f"gen_tiny:{name}",
+        prompt_function=task["prompt"],
+        suite=["extended"],
+        hf_repo=task["dataset"],
+        hf_subset=task["subset"],
+        hf_avail_splits=task["splits"],
+        evaluation_splits=task["evaluation_split"],
+        few_shots_split=None,
+        few_shots_select="random_sampling",
+        generation_size=32768,  # needed for reasoning models like R1
+        metrics=[f"gen_tinybench_metric_{name}"],
+    )
+    TASKS_TABLE.append(task_gen)
+
 # CUSTOM METRIC
 for task_param in task_params:
     name = task_param["name"]
@@ -279,5 +300,17 @@ for task_param in task_params:
             sample_level_fn=TinyCorpusAggregator(name),
             category=category,
             corpus_level_fn=TinyCorpusAggregator(name),
+        ),
+    )
+
+    extend_enum(
+        Metrics,
+        f"gen_tinybench_metric_{name}",
+        CorpusLevelMetricGrouping(
+            metric_name=TinyCorpusAggregator.METRICS,
+            higher_is_better=dict.fromkeys(TinyCorpusAggregator.METRICS, True),
+            sample_level_fn=TinyCorpusAggregator(name, generative=True),
+            category=SamplingMethod.GENERATIVE,
+            corpus_level_fn=TinyCorpusAggregator(name, generative=True),
         ),
     )
