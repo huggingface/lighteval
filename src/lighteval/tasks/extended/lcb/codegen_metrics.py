@@ -53,7 +53,10 @@ import numpy as np
 from tqdm import tqdm
 
 
-sys.set_int_max_str_digits(50000)
+try:
+    sys.set_int_max_str_digits(50000)
+except AttributeError:
+    pass
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

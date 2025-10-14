@@ -99,6 +99,8 @@ class VLLMModelConfig(ModelConfig):
             Number of GPUs to use for pipeline parallelism. Defaults to 1.
         gpu_memory_utilization (NonNegativeFloat):
             Fraction of GPU memory to use. Lower this if running out of memory. Defaults to 0.9.
+        enable_prefix_caching (bool):
+            Whether to enable prefix caching to speed up generation. May use more memory. Should be disabled for LFM2. Defaults to True.
         max_model_length (PositiveInt | None):
             Maximum sequence length for the model. If None, automatically inferred.
             Reduce this if encountering OOM issues (4096 is usually sufficient).
@@ -159,6 +161,7 @@ class VLLMModelConfig(ModelConfig):
     data_parallel_size: PositiveInt = 1  # how many GPUs to use for data parallelism
     pipeline_parallel_size: PositiveInt = 1  # how many GPUs to use for pipeline parallelism
     gpu_memory_utilization: NonNegativeFloat = 0.9  # lower this if you are running out of memory
+    enable_prefix_caching: bool = None  # whether to enable prefix caching to speed up generation. May use more memory. Should be disabled for LFM2
     max_model_length: PositiveInt | None = (
         None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
     )
@@ -249,6 +252,7 @@ class VLLMModel(LightevalModel):
         self.model_args = {
             "model": config.model_name,
             "gpu_memory_utilization": config.gpu_memory_utilization,
+            "enable_prefix_caching": config.enable_prefix_caching,
             "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
             "dtype": config.dtype,
             "trust_remote_code": config.trust_remote_code,

@@ -16,7 +16,7 @@
         "text": ["Paris", "Paris", "London"]
       },
       "expected_output": {
-        "maj@k_with_k": 1
+        "maj@k:k=3": 1
       },
       "tolerance": 0.01,
       "description": "Test maj at k with majority correct"
@@ -35,7 +35,7 @@
         "text": ["Paris", "London", "Berlin"]
       },
       "expected_output": {
-        "maj@k_with_k": 1
+        "maj@k:k=3": 1
       },
       "tolerance": 0.01,
       "description": "Test maj at k with no majority"
@@ -54,7 +54,7 @@
         "text": ["Paris", "Paris", "Paris"]
       },
       "expected_output": {
-        "maj@k_with_k": 1
+        "maj@k:k=3": 1
       },
       "tolerance": 0.01,
       "description": "Test maj at k with all correct"
@@ -73,7 +73,7 @@
         "text": ["London", "London", "London"]
       },
       "expected_output": {
-        "maj@k_with_k": 0
+        "maj@k:k=3": 0
       },
       "tolerance": 0.01,
       "description": "Test maj at k with wrong answer"
