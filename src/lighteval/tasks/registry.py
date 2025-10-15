@@ -115,7 +115,6 @@ class Registry:
         tasks: str | Path | None = None,
         custom_tasks: str | Path | ModuleType | None = None,
         load_community: bool = False,
-        load_extended: bool = False,
         load_multilingual: bool = False,
     ):
         """
@@ -130,7 +129,6 @@ class Registry:
                 - A module object containing custom task configurations
                 - None for default behavior (no custom tasks)
             load_community: Whether to load community-contributed tasks.
-            load_extended: Whether to load extended tasks with custom logic.
             load_multilingual: Whether to load multilingual tasks.
 
                 Each custom task module should contain a TASKS_TABLE exposing
@@ -157,7 +155,6 @@ class Registry:
         # These parameters are dynamically set by the task names provided, thanks to `activate_suites_to_load`,
         # except in the `tasks` CLI command to display the full list
         self._load_community = load_community
-        self._load_extended = load_extended
         self._load_multilingual = load_multilingual
         self._activate_loading_of_optional_suite()  # we dynamically set the loading parameters
 

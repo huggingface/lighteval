@@ -26,52 +26,61 @@ This module dynamically loads all Python files in tasks/ and exposes their Light
 """
 
 import importlib
-import logging
+import time
 from pathlib import Path
-
-from lighteval.tasks.lighteval_task import LightevalTaskConfig
-
-
-logger = logging.getLogger(__name__)
 
 
 # Get the tasks directory
 TASKS_DIR = Path(__file__).parent / "tasks"
+TASKS_DIR_MULTILINGUAL = Path(__file__).parent / "multilingual" / "tasks"
+
+
+def _extract_configs(module):
+    configs = {}
+    if hasattr(module, "TASKS_TABLE"):
+        for config in getattr(module, "TASKS_TABLE"):
+            configs[config.name] = config
+    return configs
+
+
+def _load_from_files(files, module_prefix: str):
+    configs = {}
+    for task_file in files:
+        module_name = task_file.stem
+        module = importlib.import_module(f"{module_prefix}.{module_name}")
+        configs.update(_extract_configs(module))
+    return configs
+
+
+def _load_from_subdirs(subdirs):
+    configs = {}
+    for task_dir in subdirs:
+        module_name = task_dir.name
+        module = importlib.import_module(f"lighteval.tasks.tasks.{module_name}.main")
+        configs.update(_extract_configs(module))
+    return configs
 
 
 def _load_all_task_configs():
     """Load all LightevalTaskConfig objects from all Python files in the tasks/ directory."""
+    start_time = time.perf_counter()
     loaded_configs = {}
 
     # Get all Python files in the tasks directory (excluding __init__.py)
     task_files = [f for f in TASKS_DIR.glob("*.py") if f.name != "__init__.py"]
+    # task_files_multilingual = [f for f in TASKS_DIR_MULTILINGUAL.glob("*.py") if f.name != "__init__.py"]
 
     # Also get all subdirectories with main.py files
     task_subdirs = [d for d in TASKS_DIR.iterdir() if d.is_dir() and (d / "main.py").exists()]
 
-    for task_file in task_files:
-        module_name = task_file.stem
-        # Import the module
-        module = importlib.import_module(f"lighteval.tasks.tasks.{module_name}")
+    loaded_configs.update(_load_from_files(task_files, "lighteval.tasks.tasks"))
+    # loaded_configs.update(
+    #     _load_from_files(task_files_multilingual, "lighteval.tasks.multilingual.tasks")
+    # )
+    loaded_configs.update(_load_from_subdirs(task_subdirs))
 
-        # Find all LightevalTaskConfig objects in the module
-        for attr_name in dir(module):
-            attr = getattr(module, attr_name)
-            if isinstance(attr, LightevalTaskConfig):
-                loaded_configs[attr_name] = attr
-
-    # Load from subdirectories' main.py files
-    for task_dir in task_subdirs:
-        module_name = task_dir.name
-        # Import the main.py from the subdirectory
-        module = importlib.import_module(f"lighteval.tasks.tasks.{module_name}.main")
-
-        # Find all LightevalTaskConfig objects in the module
-        for attr_name in dir(module):
-            attr = getattr(module, attr_name)
-            if isinstance(attr, LightevalTaskConfig):
-                loaded_configs[attr_name] = attr
-
+    duration_s = time.perf_counter() - start_time
+    print(f"[lighteval.tasks] Loaded {len(loaded_configs)} task configs in {duration_s * 1000:.1f} ms")
     return loaded_configs
 
 
