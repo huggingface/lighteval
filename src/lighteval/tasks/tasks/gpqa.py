@@ -91,3 +91,10 @@ gpqa_main_instruct = LightevalTaskConfig(
     stop_sequence=[],  # no stop sequence, will use eos token
     version=0,
 )
+
+TASKS_TABLE = [
+    gpqa,
+    gpqa_diamond_instruct,
+    gpqa_extended_instruct,
+    gpqa_main_instruct,
+]

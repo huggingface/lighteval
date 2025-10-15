@@ -56,3 +56,8 @@ storycloze_2018 = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    storycloze_2016,
+    storycloze_2018,
+]

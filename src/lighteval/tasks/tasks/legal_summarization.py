@@ -94,3 +94,9 @@ legal_summarization_multilexsum = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    legal_summarization_billsum,
+    legal_summarization_eurlexsum,
+    legal_summarization_multilexsum,
+]

@@ -119,3 +119,12 @@ bold_religious_ideology = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    bold,
+    bold_gender,
+    bold_political_ideology,
+    bold_profession,
+    bold_race,
+    bold_religious_ideology,
+]

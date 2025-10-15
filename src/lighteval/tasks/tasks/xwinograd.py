@@ -118,3 +118,12 @@ xwinograd_zh = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    xwinograd_en,
+    xwinograd_fr,
+    xwinograd_jp,
+    xwinograd_pt,
+    xwinograd_ru,
+    xwinograd_zh,
+]

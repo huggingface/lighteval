@@ -40,3 +40,7 @@ gsm8k = LightevalTaskConfig(
     stop_sequence=["Question:"],
     version=0,
 )
+
+TASKS_TABLE = [
+    gsm8k,
+]

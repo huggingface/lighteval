@@ -38,3 +38,7 @@ real_toxicity_prompts = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    real_toxicity_prompts,
+]

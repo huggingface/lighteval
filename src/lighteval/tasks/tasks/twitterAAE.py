@@ -55,3 +55,8 @@ twitterAAE_white = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    twitterAAE_aa,
+    twitterAAE_white,
+]

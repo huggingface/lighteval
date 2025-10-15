@@ -215,3 +215,18 @@ bbq_Sexual_orientation = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    bbq,
+    bbq_Age,
+    bbq_Disability_status,
+    bbq_Gender_identity,
+    bbq_Nationality,
+    bbq_Physical_appearance,
+    bbq_Race_ethnicity,
+    bbq_Race_x_SES,
+    bbq_Race_x_gender,
+    bbq_Religion,
+    bbq_SES,
+    bbq_Sexual_orientation,
+]

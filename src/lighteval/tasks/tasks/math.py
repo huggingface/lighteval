@@ -133,3 +133,13 @@ math_precalculus = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=1,
 )
+
+TASKS_TABLE = [
+    math_algebra,
+    math_counting_and_probability,
+    math_geometry,
+    math_intermediate_algebra,
+    math_number_theory,
+    math_prealgebra,
+    math_precalculus,
+]

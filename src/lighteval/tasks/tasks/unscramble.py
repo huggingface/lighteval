@@ -103,3 +103,11 @@ unscramble_reversed_words = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    unscramble_anagrams1,
+    unscramble_anagrams2,
+    unscramble_cycle_letters,
+    unscramble_random_insertion,
+    unscramble_reversed_words,
+]

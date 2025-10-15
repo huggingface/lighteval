@@ -74,3 +74,9 @@ musr_team_allocation = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    musr_murder_mysteries,
+    musr_object_placements,
+    musr_team_allocation,
+]

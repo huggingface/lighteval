@@ -42,3 +42,7 @@ race_high = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    race_high,
+]

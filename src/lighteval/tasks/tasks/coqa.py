@@ -39,3 +39,7 @@ coqa_first_question = LightevalTaskConfig(
     version=1,
     metrics=[Metrics.exact_match],
 )
+
+TASKS_TABLE = [
+    coqa_first_question,
+]

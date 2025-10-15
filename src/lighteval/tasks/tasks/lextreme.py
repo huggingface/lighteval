@@ -310,3 +310,24 @@ lextreme_swiss_judgment_prediction = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    lextreme_brazilian_court_decisions_judgment,
+    lextreme_brazilian_court_decisions_unanimity,
+    lextreme_covid19_emergency_event,
+    lextreme_german_argument_mining,
+    lextreme_greek_legal_code_chapter,
+    lextreme_greek_legal_code_subject,
+    lextreme_greek_legal_code_volume,
+    lextreme_greek_legal_ner,
+    lextreme_legalnero,
+    lextreme_lener_br,
+    lextreme_mapa_coarse,
+    lextreme_mapa_fine,
+    lextreme_multi_eurlex_level_1,
+    lextreme_multi_eurlex_level_2,
+    lextreme_multi_eurlex_level_3,
+    lextreme_online_terms_of_service_clause_topics,
+    lextreme_online_terms_of_service_unfairness_levels,
+    lextreme_swiss_judgment_prediction,
+]

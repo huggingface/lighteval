@@ -88,3 +88,10 @@ aime25_gpassk = LightevalTaskConfig(
     metrics=[Metrics.g_pass_at_k_math(sample_params={"k": 16, "n": 48})],
     version=1,
 )
+
+TASKS_TABLE = [
+    aime24,
+    aime24_gpassk,
+    aime25,
+    aime25_gpassk,
+]

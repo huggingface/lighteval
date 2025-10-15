@@ -103,3 +103,11 @@ ethics_virtue = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    ethics_commonsense,
+    ethics_deontology,
+    ethics_justice,
+    ethics_utilitarianism,
+    ethics_virtue,
+]

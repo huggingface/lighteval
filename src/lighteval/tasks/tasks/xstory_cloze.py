@@ -199,3 +199,17 @@ xstory_cloze_my = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    xstory_cloze_en,
+    xstory_cloze_ru,
+    xstory_cloze_zh,
+    xstory_cloze_es,
+    xstory_cloze_ar,
+    xstory_cloze_hi,
+    xstory_cloze_id,
+    xstory_cloze_te,
+    xstory_cloze_sw,
+    xstory_cloze_eu,
+    xstory_cloze_my,
+]

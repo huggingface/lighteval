@@ -334,3 +334,23 @@ agieval_sat_math = LightevalTaskConfig(
     stop_sequence=None,
     version=0,
 )
+
+TASKS_TABLE = [
+    agieval_aqua_rat,
+    agieval_gaokao_biology,
+    agieval_gaokao_chemistry,
+    agieval_gaokao_chinese,
+    agieval_gaokao_english,
+    agieval_gaokao_geography,
+    agieval_gaokao_history,
+    agieval_gaokao_mathqa,
+    agieval_gaokao_physics,
+    agieval_logiqa_en,
+    agieval_logiqa_zh,
+    agieval_lsat_ar,
+    agieval_lsat_lr,
+    agieval_lsat_rc,
+    agieval_sat_en,
+    agieval_sat_en_without_passage,
+    agieval_sat_math,
+]

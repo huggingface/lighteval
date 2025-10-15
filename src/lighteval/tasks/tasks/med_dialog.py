@@ -58,3 +58,8 @@ med_dialog_icliniq = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    med_dialog_healthcaremagic,
+    med_dialog_icliniq,
+]

@@ -42,3 +42,7 @@ jeopardy = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     version=1,
 )
+
+TASKS_TABLE = [
+    jeopardy,
+]

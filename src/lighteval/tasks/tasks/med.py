@@ -78,3 +78,9 @@ med_qa = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    med_mcqa,
+    med_paragraph_simplification,
+    med_qa,
+]

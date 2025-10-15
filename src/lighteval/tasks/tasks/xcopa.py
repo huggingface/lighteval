@@ -216,3 +216,18 @@ xcopa_vi = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    xcopa_en,
+    xcopa_et,
+    xcopa_ht,
+    xcopa_it,
+    xcopa_id,
+    xcopa_qu,
+    xcopa_sw,
+    xcopa_zh,
+    xcopa_ta,
+    xcopa_th,
+    xcopa_tr,
+    xcopa_vi,
+]

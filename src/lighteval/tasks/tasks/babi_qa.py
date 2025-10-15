@@ -39,3 +39,5 @@ babi_qa = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [babi_qa]

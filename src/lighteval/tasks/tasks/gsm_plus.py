@@ -40,3 +40,7 @@ gsm_plus = LightevalTaskConfig(
     stop_sequence=None,
     version=0,
 )
+
+TASKS_TABLE = [
+    gsm_plus,
+]

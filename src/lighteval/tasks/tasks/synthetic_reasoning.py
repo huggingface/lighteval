@@ -112,3 +112,11 @@ synthetic_reasoning_variable_substitution = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    synthetic_reasoning_induction,
+    synthetic_reasoning_natural_easy,
+    synthetic_reasoning_natural_hard,
+    synthetic_reasoning_pattern_match,
+    synthetic_reasoning_variable_substitution,
+]

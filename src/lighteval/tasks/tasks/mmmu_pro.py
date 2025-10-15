@@ -71,3 +71,10 @@ mmmu_pro_vision = LightevalTaskConfig(
     stop_sequence=None,
     version=0,
 )
+
+
+TASKS_TABLE = [
+    mmmu_pro_standard_4_options,
+    mmmu_pro_standard_10_options,
+    mmmu_pro_vision,
+]

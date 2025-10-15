@@ -62,3 +62,7 @@ drop_qa = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     version=1,
 )
+
+TASKS_TABLE = [
+    drop_qa,
+]

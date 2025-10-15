@@ -134,3 +134,13 @@ lexglue_unfair_tos = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    lexglue_case_hold,
+    lexglue_ecthr_a,
+    lexglue_ecthr_b,
+    lexglue_eurlex,
+    lexglue_ledgar,
+    lexglue_scotus,
+    lexglue_unfair_tos,
+]

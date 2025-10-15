@@ -327,3 +327,25 @@ the_pile_youtubesubtitles_helm = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    the_pile_arxiv_helm,
+    the_pile_bibliotik_helm,
+    the_pile_commoncrawl_helm,
+    the_pile_dm_mathematics_helm,
+    the_pile_enron_helm,
+    the_pile_europarl_helm,
+    the_pile_freelaw_helm,
+    the_pile_github_helm,
+    the_pile_gutenberg_helm,
+    the_pile_hackernews_helm,
+    the_pile_nih_exporter_helm,
+    the_pile_opensubtitles_helm,
+    the_pile_openwebtext2_helm,
+    the_pile_pubmed_abstracts_helm,
+    the_pile_pubmed_central_helm,
+    the_pile_stackexchange_helm,
+    the_pile_upsto_helm,
+    the_pile_wikipedia_helm,
+    the_pile_youtubesubtitles_helm,
+]

@@ -82,3 +82,9 @@ qa4mre_2013 = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    qa4mre_2011,
+    qa4mre_2012,
+    qa4mre_2013,
+]

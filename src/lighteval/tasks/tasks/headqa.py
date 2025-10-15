@@ -63,3 +63,8 @@ headqa_es = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    headqa_en,
+    headqa_es,
+]

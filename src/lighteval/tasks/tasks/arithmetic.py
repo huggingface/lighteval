@@ -183,3 +183,16 @@ arithmetic_5ds = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    arithmetic_1dc,
+    arithmetic_2da,
+    arithmetic_2dm,
+    arithmetic_2ds,
+    arithmetic_3da,
+    arithmetic_3ds,
+    arithmetic_4da,
+    arithmetic_4ds,
+    arithmetic_5da,
+    arithmetic_5ds,
+]

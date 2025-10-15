@@ -41,3 +41,7 @@ wikitext_103_document_level = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    wikitext_103_document_level,
+]

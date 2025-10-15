@@ -166,3 +166,15 @@ civil_comments_white = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    civil_comments,
+    civil_comments_LGBTQ,
+    civil_comments_black,
+    civil_comments_christian,
+    civil_comments_female,
+    civil_comments_male,
+    civil_comments_muslim,
+    civil_comments_other_religions,
+    civil_comments_white,
+]

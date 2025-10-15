@@ -101,3 +101,11 @@ lsat_qa_ordering = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    lsat_qa,
+    lsat_qa_assignment,
+    lsat_qa_grouping,
+    lsat_qa_miscellaneous,
+    lsat_qa_ordering,
+]

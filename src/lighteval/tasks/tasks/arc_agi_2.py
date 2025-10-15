@@ -48,3 +48,5 @@ arc_agi_2 = LightevalTaskConfig(
     stop_sequence=None,
     version=0,
 )
+
+TASKS_TABLE = [arc_agi_2]

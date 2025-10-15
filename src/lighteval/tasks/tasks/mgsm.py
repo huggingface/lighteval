@@ -201,3 +201,17 @@ mgsm_te = LightevalTaskConfig(
     stop_sequence=None,
     version=0,
 )
+
+TASKS_TABLE = [
+    mgsm_en,
+    mgsm_es,
+    mgsm_fr,
+    mgsm_de,
+    mgsm_ru,
+    mgsm_zh,
+    mgsm_ja,
+    mgsm_th,
+    mgsm_sw,
+    mgsm_bn,
+    mgsm_te,
+]

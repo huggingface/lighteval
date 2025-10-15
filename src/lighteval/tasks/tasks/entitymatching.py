@@ -230,3 +230,19 @@ entity_matching_iTunes_Amazon = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    entity_matching_Abt_Buy,
+    entity_matching_Amazon_Google,
+    entity_matching_Beer,
+    entity_matching_Company,
+    entity_matching_DBLP_ACM,
+    entity_matching_DBLP_GoogleScholar,
+    entity_matching_Dirty_DBLP_ACM,
+    entity_matching_Dirty_DBLP_GoogleScholar,
+    entity_matching_Dirty_Walmart_Amazon,
+    entity_matching_Dirty_iTunes_Amazon,
+    entity_matching_Fodors_Zagats,
+    entity_matching_Walmart_Amazon,
+    entity_matching_iTunes_Amazon,
+]

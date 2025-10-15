@@ -307,3 +307,24 @@ tracking_shuffled_objects_three_objects = LightevalTaskConfig(
     stop_sequence=["</s>", "Q=", "\n\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    causal_judgment,
+    date_understanding,
+    disambiguation_qa,
+    geometric_shapes,
+    logical_deduction_five_objects,
+    logical_deduction_seven_objects,
+    logical_deduction_three_objects,
+    movie_recommendation,
+    navigate,
+    reasoning_about_colored_objects,
+    ruin_names,
+    salient_translation_error_detection,
+    snarks,
+    sports_understanding,
+    temporal_sequences,
+    tracking_shuffled_objects_five_objects,
+    tracking_shuffled_objects_seven_objects,
+    tracking_shuffled_objects_three_objects,
+]

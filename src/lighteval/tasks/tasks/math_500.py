@@ -40,3 +40,7 @@ math_500 = LightevalTaskConfig(
     ],
     version=2,
 )
+
+TASKS_TABLE = [
+    math_500,
+]

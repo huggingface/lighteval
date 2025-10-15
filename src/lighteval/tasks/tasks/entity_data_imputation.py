@@ -59,3 +59,8 @@ entity_data_imputation_Restaurant = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    entity_data_imputation_Buy,
+    entity_data_imputation_Restaurant,
+]

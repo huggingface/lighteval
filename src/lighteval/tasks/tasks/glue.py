@@ -295,3 +295,23 @@ super_glue_wsc = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    glue_cola,
+    glue_mnli,
+    glue_mnli_mismatched,
+    glue_mrpc,
+    glue_qnli,
+    glue_qqp,
+    glue_rte,
+    glue_sst2,
+    glue_stsb,
+    glue_wnli,
+    super_glue_boolq,
+    super_glue_cb,
+    super_glue_copa,
+    super_glue_rte,
+    super_glue_multirc,
+    super_glue_wic,
+    super_glue_wsc,
+]

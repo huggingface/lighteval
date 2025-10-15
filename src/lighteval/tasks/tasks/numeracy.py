@@ -149,3 +149,14 @@ numeracy_plane_standard = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    numeracy_linear_example,
+    numeracy_linear_standard,
+    numeracy_parabola_example,
+    numeracy_parabola_standard,
+    numeracy_paraboloid_example,
+    numeracy_paraboloid_standard,
+    numeracy_plane_example,
+    numeracy_plane_standard,
+]

@@ -96,3 +96,9 @@ summarization_xsum_sampled = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    summarization_cnn_dm,
+    summarization_xsum,
+    summarization_xsum_sampled,
+]

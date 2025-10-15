@@ -221,3 +221,17 @@ raft_twitter_complaints = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    raft_ade_corpus_v2,
+    raft_banking_77,
+    raft_neurips_impact_statement_risks,
+    raft_one_stop_english,
+    raft_overruling,
+    raft_semiconductor_org_types,
+    raft_systematic_review_inclusion,
+    raft_tai_safety_research,
+    raft_terms_of_service,
+    raft_tweet_eval_hate,
+    raft_twitter_complaints,
+]

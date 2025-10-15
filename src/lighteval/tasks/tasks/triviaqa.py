@@ -42,3 +42,7 @@ triviaqa = LightevalTaskConfig(
     stop_sequence=["\n", ".", ","],
     version=0,
 )
+
+TASKS_TABLE = [
+    triviaqa,
+]

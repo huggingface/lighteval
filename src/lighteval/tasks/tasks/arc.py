@@ -62,3 +62,5 @@ arc_easy = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [arc_challenge, arc_easy]

@@ -60,3 +60,8 @@ imdb_contrastset = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    imdb,
+    imdb_contrastset,
+]

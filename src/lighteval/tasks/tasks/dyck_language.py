@@ -72,3 +72,9 @@ dyck_language_4 = LightevalTaskConfig(
     stop_sequence=["\n"],
     version=0,
 )
+
+TASKS_TABLE = [
+    dyck_language_2,
+    dyck_language_3,
+    dyck_language_4,
+]
