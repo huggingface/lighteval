@@ -1,4 +1,10 @@
 """
+name:
+Xquad
+
+dataset:
+google/xquad
+
 abstract:
 Reading Comprehension (RC) tasks evaluate a model's ability to understand and
 extract information from text passages. These tasks typically involve answering

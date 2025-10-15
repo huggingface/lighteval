@@ -1,4 +1,10 @@
 """
+name:
+Openbook Ara
+
+dataset:
+OALL/AlGhafa-Arabic-LLM-Benchmark-Translated
+
 abstract:
 OpenBookQA: A Question-Answering Dataset for Open-Book Exams OpenBookQA is a
 question-answering dataset modeled after open-book exams for assessing human

@@ -1,9 +1,15 @@
 """
+name:
+Boolq
+
+dataset:
+lighteval/boolq_helm
+
 abstract:
 The BoolQ benchmark for binary (yes/no) question answering.
 
 languages:
-en
+english
 
 tags:
 qa

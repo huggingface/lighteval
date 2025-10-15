@@ -1,10 +1,16 @@
 """
+name:
+Piqa
+
+dataset:
+ybisk/piqa
+
 abstract:
 PIQA is a benchmark for testing physical commonsense reasoning. It contains
 questions requiring this kind of physical commonsense reasoning.
 
 languages:
-en
+english
 
 tags:
 commonsense, multiple-choice, qa

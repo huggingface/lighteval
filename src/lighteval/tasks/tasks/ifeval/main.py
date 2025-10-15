@@ -1,10 +1,16 @@
 """
+name:
+IFEval
+
+dataset:
+google/IFEval
+
 abstract:
 Very specific task where there are no precise outputs but instead we test if the
 format obeys rules.
 
 languages:
-en
+english
 
 tags:
 instruction-following

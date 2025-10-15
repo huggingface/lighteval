@@ -1,4 +1,10 @@
 """
+name:
+French Boolq
+
+dataset:
+manu/french_boolq
+
 abstract:
 French Boolq multilingual benchmark.
 
@@ -7,6 +13,8 @@ french
 
 tags:
 classification, multilingual, qa
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

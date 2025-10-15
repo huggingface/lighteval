@@ -1,14 +1,20 @@
 """
+name:
+Jeopardy
+
+dataset:
+openaccess-ai-collective/jeopardy
+
 abstract:
 Jeopardy is a dataset of questions and answers from the Jeopardy game show.
 
 languages:
-en
-
-paper:
+english
 
 tags:
 knowledge, qa
+
+paper:
 """
 
 from lighteval.metrics.metrics import Metrics

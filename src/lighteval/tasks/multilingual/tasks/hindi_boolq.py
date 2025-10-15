@@ -1,4 +1,10 @@
 """
+name:
+Hindi Boolq
+
+dataset:
+ai4bharat/boolq-hi
+
 abstract:
 Hindi Boolq multilingual benchmark.
 
@@ -7,6 +13,8 @@ gujarati, hindi, malayalam, marathi, tamil
 
 tags:
 classification, multilingual, qa
+
+paper:
 """
 
 from langcodes import standardize_tag

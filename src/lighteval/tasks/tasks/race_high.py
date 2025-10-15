@@ -1,4 +1,10 @@
 """
+name:
+Race High
+
+dataset:
+EleutherAI/race
+
 abstract:
 RACE is a large-scale reading comprehension dataset with more than 28,000
 passages and nearly 100,000 questions. The dataset is collected from English
@@ -7,7 +13,7 @@ students. The dataset can be served as the training and test sets for machine
 comprehension.
 
 languages:
-en
+english
 
 tags:
 multiple-choice, reading-comprehension

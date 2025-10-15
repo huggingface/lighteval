@@ -1,10 +1,16 @@
 """
+name:
+Unscramble
+
+dataset:
+lighteval/GPT3_unscramble
+
 abstract:
 Benchmark where we ask the model to unscramble a word, either anagram or
 random insertion.
 
 languages:
-en
+english
 
 tags:
 language-modeling, reasoning

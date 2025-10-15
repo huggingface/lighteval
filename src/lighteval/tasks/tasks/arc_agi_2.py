@@ -1,4 +1,10 @@
 """
+name:
+ArcAgi 2
+
+dataset:
+arc-agi-community/arc-agi-2
+
 abstract:
 ARC-AGI tasks are a series of three to five input and output tasks followed by a
 final task with only the input listed. Each task tests the utilization of a
@@ -13,13 +19,13 @@ less than or equal to 2 attempts (many were solved more). ARC-AGI-2 is more
 difficult for AI.
 
 languages:
-en
-
-paper:
-https://arcprize.org/guide
+english
 
 tags:
 multiple-choice
+
+paper:
+https://arcprize.org/guide
 """
 
 import lighteval.tasks.default_prompts as prompt

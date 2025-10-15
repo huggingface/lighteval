@@ -1,4 +1,10 @@
 """
+name:
+Fquad V2
+
+dataset:
+manu/fquad2_test
+
 abstract:
 FQuAD v2: French Question Answering Dataset version 2.
 

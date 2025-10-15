@@ -1,9 +1,15 @@
 """
+name:
+Synthetic Reasoning
+
+dataset:
+lighteval/synthetic_reasoning, lighteval/synthetic_reasoning_natural
+
 abstract:
 LIME: Learning Inductive Bias for Primitives of Mathematical Reasoning
 
 languages:
-en
+english
 
 tags:
 reasoning

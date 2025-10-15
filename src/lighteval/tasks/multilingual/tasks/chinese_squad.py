@@ -1,4 +1,10 @@
 """
+name:
+Chinese Squad
+
+dataset:
+lighteval/ChineseSquad
+
 abstract:
 ChineseSquad is a reading comprehension dataset for Chinese.
 

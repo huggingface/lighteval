@@ -1,4 +1,10 @@
 """
+name:
+Afri Mmlu
+
+dataset:
+masakhane/afrimmlu
+
 abstract:
 African MMLU: African Massive Multitask Language Understanding
 

@@ -1,17 +1,21 @@
 """
+name:
+Legal Summarization
+
+dataset:
+lighteval/legal_summarization
+
 abstract:
 LegalSummarization is a dataset for legal summarization.
 
 languages:
-en
-
-paper:
-https://arxiv.org/abs/2210.13448
+english
 
 tags:
 legal, summarization
 
 paper:
+https://arxiv.org/abs/2210.13448
 https://arxiv.org/abs/2210.13448
 """
 

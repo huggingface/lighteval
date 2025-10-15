@@ -1,4 +1,10 @@
 """
+name:
+Turkish Arc
+
+dataset:
+malhajar/arc-tr
+
 abstract:
 Turkish ARC Comes from the Turkish leaderboard
 
@@ -7,6 +13,8 @@ turkish
 
 tags:
 multilingual, multiple-choice, reasoning
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

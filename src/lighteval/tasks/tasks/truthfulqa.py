@@ -1,9 +1,15 @@
 """
+name:
+Truthfulqa
+
+dataset:
+EleutherAI/truthful_qa_mc
+
 abstract:
 TruthfulQA: Measuring How Models Mimic Human Falsehoods
 
 languages:
-en
+english
 
 tags:
 factuality, qa
@@ -21,7 +27,7 @@ truthfulqa_gen = LightevalTaskConfig(
     name="truthfulqa:gen",
     suite=["lighteval"],
     prompt_function=prompt.truthful_qa_generative,
-    hf_repo="truthful_qa",
+    hf_repo="EleutherAI/truthful_qa_mc",
     hf_subset="generation",
     hf_avail_splits=["validation"],
     evaluation_splits=["validation"],

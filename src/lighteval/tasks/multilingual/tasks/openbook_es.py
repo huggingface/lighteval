@@ -1,4 +1,10 @@
 """
+name:
+Openbook Es
+
+dataset:
+BSC-LT/openbookqa-es
+
 abstract:
 Spanish version of OpenBookQA from BSC Language Technology group
 

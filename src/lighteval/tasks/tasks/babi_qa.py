@@ -1,16 +1,22 @@
 """
+name:
+Babi Qa
+
+dataset:
+facebook/babi_qa
+
 abstract:
 The bAbI benchmark for measuring understanding and reasoning, evaluates reading
 comprehension via question answering.
 
 languages:
-en
-
-paper:
-https://arxiv.org/abs/1502.05698
+english
 
 tags:
 qa, reasoning
+
+paper:
+https://arxiv.org/abs/1502.05698
 """
 
 import lighteval.tasks.default_prompts as prompt

@@ -1,4 +1,10 @@
 """
+name:
+Global Mmlu
+
+dataset:
+CohereForAI/Global-MMLU
+
 abstract:
 Translated MMLU using both professional and non-professional translators.
 Contains tags for cultural sensitivity.

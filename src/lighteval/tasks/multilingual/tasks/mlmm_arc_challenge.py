@@ -1,4 +1,10 @@
 """
+name:
+Mlmm Arc Challenge
+
+dataset:
+jon-tow/okapi_arc_challenge
+
 abstract:
 ARC (AI2 Reasoning Challenge) is a dataset for question answering that requires
 reasoning. It consists of multiple-choice science questions from 3rd to 9th

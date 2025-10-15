@@ -1,4 +1,10 @@
 """
+name:
+Xwinograd
+
+dataset:
+Muennighoff/xwinograd
+
 abstract:
 Xwinograd multilingual benchmark.
 
@@ -7,6 +13,8 @@ chinese, english, french, japanese, portuguese, russian
 
 tags:
 multilingual, multiple-choice, reasoning
+
+paper:
 """
 
 from functools import partial

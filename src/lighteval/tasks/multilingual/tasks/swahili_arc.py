@@ -1,4 +1,9 @@
 """
+name:
+Swahili Arc
+
+dataset:
+
 abstract:
 Swahili Arc multilingual benchmark.
 
@@ -7,6 +12,8 @@ swahili
 
 tags:
 multilingual, multiple-choice, reasoning
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

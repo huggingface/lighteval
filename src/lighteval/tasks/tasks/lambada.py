@@ -1,4 +1,10 @@
 """
+name:
+Lambada
+
+dataset:
+cimec/lambada
+
 abstract:
 LAMBADA is a benchmark for testing language models’ ability to understand broad
 narrative context. Each passage requires predicting its final word—easy for
@@ -6,7 +12,7 @@ humans given the full passage but impossible from just the last sentence.
 Success demands long-range discourse comprehension.
 
 languages:
-en
+english
 
 tags:
 language-modeling

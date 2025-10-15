@@ -1,11 +1,17 @@
 """
+name:
+Natural Questions
+
+dataset:
+lighteval/small_natural_questions
+
 abstract:
 This dataset is a collection of question-answer pairs from the Natural Questions
 dataset. See Natural Questions for additional information. This dataset can be
 used directly with Sentence Transformers to train embedding models.
 
 languages:
-en
+english
 
 tags:
 general-knowledge, qa

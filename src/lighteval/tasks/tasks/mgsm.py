@@ -1,4 +1,10 @@
 """
+name:
+Mgsm
+
+dataset:
+juletxara/mgsm
+
 abstract:
 Multilingual Grade School Math Benchmark (MGSM) is a benchmark of grade-school
 math problems.
@@ -6,7 +12,7 @@ The same 250 problems from GSM8K are each translated via human annotators in 10
 languages.
 
 languages:
-en, es, fr, de, ru, zh, ja, th, sw, bn, te
+english, spanish, french, german, russian, chinese, japanese, thai, swahili, bengali, telugu
 
 tags:
 math, multilingual, reasoning

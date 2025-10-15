@@ -1,15 +1,20 @@
 """
+name:
+Legalsupport
+
+dataset:
+lighteval/LegalSupport
+
 abstract:
 Measures fine-grained legal reasoning through reverse entailment.
 
 languages:
-en
+english
 
 tags:
 legal
 
 paper:
-
 """
 
 import lighteval.tasks.default_prompts as prompt

@@ -1,4 +1,10 @@
 """
+name:
+Rcb
+
+dataset:
+ai-forever/MERA
+
 abstract:
 Russian Commitment Bank (RCB) is a large-scale NLI dataset with Russian
 sentences, collected from the web and crowdsourcing.

@@ -1,4 +1,10 @@
 """
+name:
+Copa Indic
+
+dataset:
+ai4bharat/IndicCOPA
+
 abstract:
 IndicCOPA: COPA for Indic Languages Paper: https://arxiv.org/pdf/2212.05409
 IndicCOPA extends COPA to 15 Indic languages, providing a valuable resource for

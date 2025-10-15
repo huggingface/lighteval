@@ -1,4 +1,10 @@
 """
+name:
+Cmrc2018
+
+dataset:
+clue/clue
+
 abstract:
 CMRC 2018: A span-extraction machine reading comprehension dataset for Chinese.
 

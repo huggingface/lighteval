@@ -1,11 +1,17 @@
 """
+name:
+Gsm Plus
+
+dataset:
+qintongli/GSM-Plus
+
 abstract:
 GSM-Plus is an adversarial extension of GSM8K that tests the robustness of LLMs'
 mathematical reasoning by introducing varied perturbations to grade-school math
 problems.
 
 languages:
-en
+english
 
 tags:
 math, reasoning

@@ -1,4 +1,10 @@
 """
+name:
+Germanquad
+
+dataset:
+deepset/germanquad
+
 abstract:
 GermanQuAD: High-quality German QA dataset with 13,722 questions.
 

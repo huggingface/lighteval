@@ -1,4 +1,10 @@
 """
+name:
+Sber Squad
+
+dataset:
+kuznetsoffandrey/sberquad
+
 abstract:
 SberQuAD: A large-scale Russian reading comprehension dataset.
 

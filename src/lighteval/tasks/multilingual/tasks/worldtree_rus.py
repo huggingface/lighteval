@@ -1,4 +1,10 @@
 """
+name:
+Worldtree Rus
+
+dataset:
+ai-forever/MERA
+
 abstract:
 WorldTree is a dataset for multi-hop inference in science question answering. It
 provides explanations for elementary science questions by combining facts from a

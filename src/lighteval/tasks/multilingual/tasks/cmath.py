@@ -1,4 +1,10 @@
 """
+name:
+Cmath
+
+dataset:
+weitianwen/cmath
+
 abstract:
 Cmath multilingual benchmark.
 
@@ -7,6 +13,8 @@ chinese
 
 tags:
 math, multilingual, reasoning
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

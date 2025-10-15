@@ -1,4 +1,10 @@
 """
+name:
+Tquad V2
+
+dataset:
+erdometo/tquad2
+
 abstract:
 TQuAD v2: Turkish Question Answering Dataset version 2.
 
@@ -7,6 +13,8 @@ turkish
 
 tags:
 multilingual, qa
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

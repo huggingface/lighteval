@@ -1,10 +1,16 @@
 """
+name:
+Toxigen
+
+dataset:
+skg/toxigen-data
+
 abstract:
 This dataset is for implicit hate speech detection. All instances were generated
 using GPT-3 and the methods described in our paper.
 
 languages:
-en
+english
 
 tags:
 generation, safety

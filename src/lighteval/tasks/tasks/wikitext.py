@@ -1,4 +1,10 @@
 """
+name:
+Wikitext
+
+dataset:
+EleutherAI/wikitext_document_level
+
 abstract:
 The WikiText language modeling dataset is a collection of over 100 million
 tokens extracted from the set of verified Good and Featured articles on
@@ -6,7 +12,7 @@ Wikipedia. The dataset is available under the Creative Commons
 Attribution-ShareAlike License.
 
 languages:
-en
+english
 
 tags:
 language-modeling

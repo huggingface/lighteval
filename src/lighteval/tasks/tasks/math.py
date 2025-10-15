@@ -1,11 +1,14 @@
 """
-The Mathematics Aptitude Test of Heuristics (MATH) dataset consists of problems
-from mathematics competitions, including the AMC 10, AMC 12, AIME, and more.
-Each problem in MATH has a full step-by-step solution, which can be used to
-teach models to generate answer derivations and explanations.
+name:
+Math
+
+dataset:
+DigitalLearningGmbH/MATH-lighteval
+
+abstract:
 
 languages:
-en
+english
 
 tags:
 math, reasoning

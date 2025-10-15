@@ -1,4 +1,10 @@
 """
+name:
+Exams
+
+dataset:
+mhardalov/exams
+
 abstract:
 Exams multilingual benchmark.
 
@@ -9,6 +15,8 @@ vietnamese
 
 tags:
 knowledge, multilingual, multiple-choice
+
+paper:
 """
 
 from functools import partial

@@ -1,11 +1,17 @@
 """
+name:
+Summarization
+
+dataset:
+lighteval/summarization
+
 abstract:
 Don't Give Me the Details, Just the Summary! Topic-Aware Convolutional Neural
 Networks for Extreme Summarization and: Abstractive Text Summarization using
 Sequence-to-sequence RNNs and Beyond
 
 languages:
-en
+english
 
 tags:
 summarization

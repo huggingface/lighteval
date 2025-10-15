@@ -1,4 +1,10 @@
 """
+name:
+Mlmm Mmlu
+
+dataset:
+jon-tow/okapi_mmlu
+
 abstract:
 MLMM MMLU: Another multilingual version of MMLU
 

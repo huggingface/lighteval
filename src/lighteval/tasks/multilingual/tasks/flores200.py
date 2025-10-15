@@ -1,7 +1,12 @@
 """
+name:
+Flores200
+
+dataset:
+facebook/flores
+
 abstract:
 Flores200 multilingual benchmark.
-
 
 languages:
 arabic, armenian, bengali, cyrillic, devanagari, ethiopic, georgian, greek,
@@ -9,9 +14,10 @@ gujarati, gurmukhi, chinese (simplified), chinese (traditional), hangul, hebrew,
 japanese, khmer, kannada, lao, latin, malayalam, myanmar, odia, sinhala, tamil,
 telugu, thai, tibetan
 
-
 tags:
 multilingual, translation
+
+paper:
 """
 
 from itertools import permutations

@@ -1,4 +1,9 @@
 """
+name:
+Xcopa
+
+dataset:
+
 abstract:
 COPA (Choice of Plausible Alternatives) tasks involve determining the most
 plausible cause or effect for a given premise. These tasks test common sense

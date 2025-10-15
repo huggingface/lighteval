@@ -1,4 +1,10 @@
 """
+name:
+Cmnli
+
+dataset:
+fenffef/cmnli
+
 abstract:
 Native Chinese NLI dataset based on MNLI approach (Machine Translated)
 

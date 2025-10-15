@@ -1,4 +1,10 @@
 """
+name:
+Chegeka
+
+dataset:
+ai-forever/MERA
+
 abstract:
 Chegeka multilingual benchmark.
 
@@ -7,6 +13,8 @@ russian
 
 tags:
 knowledge, multilingual, qa
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

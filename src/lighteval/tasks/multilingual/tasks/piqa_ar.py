@@ -1,4 +1,10 @@
 """
+name:
+Piqa Ar
+
+dataset:
+OALL/AlGhafa-Arabic-LLM-Benchmark-Translated
+
 abstract:
 PIQA: Physical Interaction Question Answering PIQA is a benchmark for testing
 physical commonsense reasoning. This Arabic version is a translation of the

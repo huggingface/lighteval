@@ -1,17 +1,23 @@
 """
+name:
+Drop Qa
+
+dataset:
+lighteval/drop_harness
+
 abstract:
 The DROP dataset is a new question-answering dataset designed to evaluate the
 ability of language models to answer complex questions that require reasoning
 over multiple sentences.
 
 languages:
-en
-
-paper:
-https://arxiv.org/abs/1810.00505
+english
 
 tags:
 math, qa, reasoning
+
+paper:
+https://arxiv.org/abs/1810.00505
 """
 
 import lighteval.tasks.default_prompts as prompt

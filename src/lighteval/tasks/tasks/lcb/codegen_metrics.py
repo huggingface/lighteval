@@ -1,7 +1,16 @@
-"""This module contains helper functions copied and modified from
-https://github.com/LiveCodeBench/LiveCodeBench
-and
-https://github.com/QwenLM/Qwen2.5-Coder/tree/main/qwencoder-eval/instruct/livecode_bench
+"""
+name:
+Codegen Metrics
+
+dataset:
+
+abstract:
+
+languages:
+
+tags:
+
+paper:
 """
 
 import ast

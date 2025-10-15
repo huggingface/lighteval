@@ -1,4 +1,10 @@
 """
+name:
+Indicqa
+
+dataset:
+ai4bharat/IndicQA
+
 abstract:
 IndicQA: A reading comprehension dataset for 11 Indian languages.
 

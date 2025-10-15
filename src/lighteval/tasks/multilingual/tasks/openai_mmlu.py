@@ -1,4 +1,10 @@
 """
+name:
+Openai Mmlu
+
+dataset:
+openai/MMMLU
+
 abstract:
 Openai Mmlu multilingual benchmark.
 
@@ -8,6 +14,8 @@ korean, portuguese, spanish, swahili, yoruba
 
 tags:
 knowledge, multilingual, multiple-choice
+
+paper:
 """
 
 from functools import partial

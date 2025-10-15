@@ -1,4 +1,10 @@
 """
+name:
+Xnli
+
+dataset:
+facebook/xnli
+
 abstract:
 NLI (Natural Language Inference) tasks involve determining the logical
 relationship between two given sentences: a premise and a hypothesis. The goal

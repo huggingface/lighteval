@@ -1,4 +1,10 @@
 """
+name:
+Belebele
+
+dataset:
+facebook/belebele
+
 abstract:
 Belebele: A large-scale reading comprehension dataset covering 122 languages.
 

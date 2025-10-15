@@ -1,4 +1,10 @@
 """
+name:
+Squad It
+
+dataset:
+crux82/squad_it
+
 abstract:
 SQuAD-it: Italian translation of the SQuAD dataset.
 

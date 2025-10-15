@@ -1,9 +1,15 @@
 """
+name:
+Mmlu
+
+dataset:
+lighteval/mmlu
+
 abstract:
 MMMLU is a benchmark of general-knowledge and English language understanding.
 
 languages:
-en
+english
 
 tags:
 general-knowledge, knowledge, multiple-choice

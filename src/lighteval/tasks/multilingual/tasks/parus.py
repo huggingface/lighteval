@@ -1,4 +1,10 @@
 """
+name:
+Parus
+
+dataset:
+ai-forever/MERA
+
 abstract:
 PARus: Plausible Alternatives for Russian PARus is the Russian adaptation of the
 COPA task, part of the Russian SuperGLUE benchmark. It evaluates common sense

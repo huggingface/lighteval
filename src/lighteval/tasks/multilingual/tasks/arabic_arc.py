@@ -1,4 +1,10 @@
 """
+name:
+Arabic Arc
+
+dataset:
+OALL/AlGhafa-Arabic-LLM-Benchmark-Translated
+
 abstract:
 Arabic Arc multilingual benchmark.
 
@@ -7,6 +13,8 @@ arabic
 
 tags:
 multilingual, multiple-choice, reasoning
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

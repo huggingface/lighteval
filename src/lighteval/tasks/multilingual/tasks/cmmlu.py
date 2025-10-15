@@ -1,4 +1,10 @@
 """
+name:
+Cmmlu
+
+dataset:
+haonan-li/cmmlu
+
 abstract:
 Cmmlu multilingual benchmark.
 
@@ -7,6 +13,8 @@ chinese
 
 tags:
 knowledge, multilingual, multiple-choice
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

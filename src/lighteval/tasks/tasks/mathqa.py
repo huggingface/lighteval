@@ -1,4 +1,10 @@
 """
+name:
+Mathqa
+
+dataset:
+allenai/math_qa
+
 abstract:
 large-scale dataset of math word problems.  Our dataset is gathered by using a
 new representation language to annotate over the AQuA-RAT dataset with
@@ -6,7 +12,7 @@ fully-specified operational programs.  AQuA-RAT has provided the questions,
 options, rationale, and the correct options.
 
 languages:
-en
+english
 
 tags:
 math, qa, reasoning

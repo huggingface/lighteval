@@ -1,4 +1,10 @@
 """
+name:
+Hellaswag Tur
+
+dataset:
+malhajar/hellaswag_tr-v0.2
+
 abstract:
 Hellaswag Turkish This is a Turkish adaptation of the Hellaswag task. While
 there's no specific paper for this version, it has been found to work well for
@@ -11,6 +17,8 @@ turkish
 
 tags:
 multilingual, multiple-choice, reasoning
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

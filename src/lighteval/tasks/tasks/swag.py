@@ -1,4 +1,10 @@
 """
+name:
+Swag
+
+dataset:
+allenai/swag
+
 abstract:
 The dataset consists of 113k multiple choice questions about grounded situations
 (73k training, 20k validation, 20k test). Each question is a video caption from
@@ -10,7 +16,7 @@ benchmark for evaluating grounded commonsense NLI and for learning
 representations.
 
 languages:
-en
+english
 
 tags:
 narrative, reasoning
@@ -28,7 +34,7 @@ swag = LightevalTaskConfig(
     name="swag",
     suite=["lighteval"],
     prompt_function=prompt.swag,
-    hf_repo="swag",
+    hf_repo="allenai/swag",
     hf_subset="regular",
     hf_avail_splits=["train", "validation"],
     evaluation_splits=["validation"],

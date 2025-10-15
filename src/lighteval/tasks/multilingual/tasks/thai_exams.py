@@ -1,4 +1,10 @@
 """
+name:
+Thai Exams
+
+dataset:
+scb10x/thai_exam
+
 abstract:
 Thai Exams multilingual benchmark.
 
@@ -7,6 +13,8 @@ thai
 
 tags:
 knowledge, multilingual, multiple-choice
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

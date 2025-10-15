@@ -1,4 +1,10 @@
 """
+name:
+Tydiqa
+
+dataset:
+google-research-datasets/tydiqa
+
 abstract:
 Other QA tasks for RC TyDi QA: A benchmark for information-seeking question answering in typologically diverse languages. https://arxiv.org/abs/2003.05002
 

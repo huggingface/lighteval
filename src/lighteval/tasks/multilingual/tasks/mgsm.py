@@ -1,4 +1,10 @@
 """
+name:
+Mgsm
+
+dataset:
+juletxara/mgsm
+
 abstract:
 Mgsm multilingual benchmark.
 
@@ -8,6 +14,8 @@ telugu, thai
 
 tags:
 math, multilingual, reasoning
+
+paper:
 """
 
 from langcodes import standardize_tag

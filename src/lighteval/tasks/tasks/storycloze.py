@@ -1,10 +1,16 @@
 """
+name:
+Storycloze
+
+dataset:
+MoE-UNC/story_cloze
+
 abstract:
 A Corpus and Cloze Evaluation for Deeper Understanding of
 Commonsense Stories
 
 languages:
-en
+english
 
 tags:
 narrative, reasoning

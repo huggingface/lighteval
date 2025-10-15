@@ -1,4 +1,10 @@
 """
+name:
+Turkish Mmlu
+
+dataset:
+AYueksel/TurkishMMLU
+
 abstract:
 Turkish Mmlu multilingual benchmark.
 
@@ -7,6 +13,8 @@ turkish
 
 tags:
 knowledge, multilingual, multiple-choice
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

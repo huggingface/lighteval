@@ -1,9 +1,15 @@
 """
+name:
+Civil Comments
+
+dataset:
+lighteval/civil_comments_helm
+
 abstract:
 The CivilComments benchmark for toxicity detection.
 
 languages:
-en
+english
 
 tags:
 bias, classification

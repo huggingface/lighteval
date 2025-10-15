@@ -1,9 +1,15 @@
 """
+name:
+Gsm8K
+
+dataset:
+openai/gsm8k
+
 abstract:
 GSM8K is a dataset of 8,000+ high-quality, single-step arithmetic word problems.
 
 languages:
-en
+english
 
 tags:
 math, reasoning

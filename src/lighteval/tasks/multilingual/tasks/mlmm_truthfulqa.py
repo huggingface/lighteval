@@ -1,4 +1,10 @@
 """
+name:
+Mlmm Truthfulqa
+
+dataset:
+jon-tow/okapi_truthfulqa
+
 abstract:
 TruthfulQA: Measuring How Models Mimic Human Falsehoods
 

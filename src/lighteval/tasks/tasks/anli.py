@@ -1,4 +1,10 @@
 """
+name:
+Anli
+
+dataset:
+facebook/anli
+
 abstract:
 The Adversarial Natural Language Inference (ANLI) is a new large-scale NLI
 benchmark dataset, The dataset is collected via an iterative, adversarial
@@ -7,13 +13,13 @@ predecessors including SNLI and MNLI. It contains three rounds. Each round has
 train/dev/test splits.
 
 languages:
-en
-
-paper:
-https://arxiv.org/abs/1910.14599
+english
 
 tags:
 nli, reasoning
+
+paper:
+https://arxiv.org/abs/1910.14599
 """
 
 import lighteval.tasks.default_prompts as prompt

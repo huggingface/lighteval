@@ -1,4 +1,10 @@
 """
+name:
+Coqa
+
+dataset:
+stanfordnlp/coqa
+
 abstract:
 CoQA is a large-scale dataset for building Conversational Question Answering
 systems. The goal of the CoQA challenge is to measure the ability of machines to
@@ -6,13 +12,13 @@ understand a text passage and answer a series of interconnected questions that
 appear in a conversation.
 
 languages:
-en
-
-paper:
-https://arxiv.org/abs/1808.07042
+english
 
 tags:
 dialog, qa
+
+paper:
+https://arxiv.org/abs/1808.07042
 """
 
 import lighteval.tasks.default_prompts as prompt

@@ -1,16 +1,22 @@
 """
+name:
+Covid Dialogue
+
+dataset:
+lighteval/covid_dialogue
+
 abstract:
 The COVID-19 Dialogue dataset is a collection of 500+ dialogues between
 doctors and patients during the COVID-19 pandemic.
 
 languages:
-en
-
-paper:
-https://arxiv.org/abs/2004.06561
+english
 
 tags:
 dialog, medical
+
+paper:
+https://arxiv.org/abs/2004.06561
 """
 
 import lighteval.tasks.default_prompts as prompt

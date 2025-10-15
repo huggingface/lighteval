@@ -1,9 +1,15 @@
 """
+name:
+Xwinograd
+
+dataset:
+Muennighoff/xwinograd
+
 abstract:
 Multilingual winograd schema challenge as used in Crosslingual Generalization through Multitask Finetuning.
 
 languages:
-en, fr, jp, pt, ru, zh
+english, french, japanese, portuguese, russian, chinese
 
 tags:
 commonsense, multilingual, reasoning

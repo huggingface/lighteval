@@ -1,4 +1,10 @@
 """
+name:
+Afri Xnli
+
+dataset:
+masakhane/afrixnli
+
 abstract:
 African XNLI: African XNLI
 

@@ -1,4 +1,10 @@
 """
+name:
+Arc
+
+dataset:
+allenai/ai2_arc
+
 abstract:
 7,787 genuine grade-school level, multiple-choice science questions, assembled
 to encourage research in advanced question-answering. The dataset is partitioned
@@ -7,13 +13,13 @@ answered incorrectly by both a retrieval-based algorithm and a word
 co-occurrence algorithm
 
 languages:
-en
-
-paper:
-https://arxiv.org/abs/1803.05457
+english
 
 tags:
 multiple-choice
+
+paper:
+https://arxiv.org/abs/1803.05457
 """
 
 import lighteval.tasks.default_prompts as prompt
@@ -25,7 +31,7 @@ arc_challenge = LightevalTaskConfig(
     name="arc:challenge",
     suite=["lighteval"],
     prompt_function=prompt.arc,
-    hf_repo="ai2_arc",
+    hf_repo="allenai/ai2_arc",
     hf_subset="ARC-Challenge",
     hf_avail_splits=["train", "test"],
     evaluation_splits=["test"],
@@ -43,7 +49,7 @@ arc_easy = LightevalTaskConfig(
     name="arc:easy",
     suite=["lighteval"],
     prompt_function=prompt.arc,
-    hf_repo="ai2_arc",
+    hf_repo="allenai/ai2_arc",
     hf_subset="ARC-Easy",
     hf_avail_splits=["train", "validation", "test"],
     evaluation_splits=["test"],

@@ -1,9 +1,15 @@
 """
+name:
+The Pile
+
+dataset:
+lighteval/pile_helm
+
 abstract:
 The Pile corpus for measuring lanugage model performance across various domains.
 
 languages:
-en
+english
 
 tags:
 language-modeling

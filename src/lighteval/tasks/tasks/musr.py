@@ -1,11 +1,17 @@
 """
+name:
+Musr
+
+dataset:
+TAUR-Lab/MuSR
+
 abstract:
 MuSR is a benchmark for evaluating multistep reasoning in natural language
 narratives. Built using a neurosymbolic synthetic-to-natural generation process,
 it features complex, realistic tasks—such as long-form murder mysteries.
 
 languages:
-en
+english
 
 tags:
 long-context, multiple-choice, reasoning

@@ -1,4 +1,10 @@
 """
+name:
+French Triviqa
+
+dataset:
+manu/french-trivia
+
 abstract:
 French Triviqa multilingual benchmark.
 
@@ -7,6 +13,8 @@ french
 
 tags:
 multilingual, qa
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

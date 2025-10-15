@@ -1,9 +1,15 @@
 """
+name:
+Twitteraae
+
+dataset:
+lighteval/twitterAAE
+
 abstract:
 Demographic Dialectal Variation in Social Media: A Case Study of African-American English
 
 languages:
-en
+english
 
 tags:
 language-modeling

@@ -1,4 +1,10 @@
 """
+name:
+Commonsenseqa
+
+dataset:
+tau/commonsense_qa
+
 abstract:
 CommonsenseQA is a new multiple-choice question answering dataset that requires
 different types of commonsense knowledge to predict the correct answers . It
@@ -8,13 +14,13 @@ The dataset is provided in two major training/validation/testing set splits:
 see paper for details.
 
 languages:
-en
-
-paper:
-https://arxiv.org/abs/1811.00937
+english
 
 tags:
 commonsense, multiple-choice, qa
+
+paper:
+https://arxiv.org/abs/1811.00937
 """
 
 import lighteval.tasks.default_prompts as prompt
@@ -26,7 +32,7 @@ commonsenseqa = LightevalTaskConfig(
     name="commonsenseqa",
     suite=["lighteval"],
     prompt_function=prompt.commonsense_qa,
-    hf_repo="commonsense_qa",
+    hf_repo="tau/commonsense_qa",
     hf_subset="default",
     hf_avail_splits=["train", "test", "validation"],
     evaluation_splits=["validation"],

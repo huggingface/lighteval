@@ -1,10 +1,16 @@
 """
+name:
+Ethics
+
+dataset:
+lighteval/hendrycks_ethics
+
 abstract:
 The Ethics benchmark for evaluating the ability of language models to reason about
 ethical issues.
 
 languages:
-en
+english
 
 tags:
 classification, ethics, justice, morality, utilitarianism, virtue

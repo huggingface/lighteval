@@ -1,4 +1,10 @@
 """
+name:
+Hellaswag Tha
+
+dataset:
+lighteval/hellaswag_thai
+
 abstract:
 Hellaswag Thai This is a Thai adaptation of the Hellaswag task. Similar to the
 Turkish version, there's no specific paper, but it has been found to be
@@ -9,6 +15,8 @@ thai
 
 tags:
 multilingual, multiple-choice, reasoning
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

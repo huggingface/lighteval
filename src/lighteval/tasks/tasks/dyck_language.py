@@ -1,15 +1,21 @@
 """
+name:
+Dyck Language
+
+dataset:
+lighteval/DyckLanguage
+
 abstract:
 Scenario testing hierarchical reasoning through the Dyck formal languages.
 
 languages:
-en
-
-paper:
-https://aclanthology.org/W19-3905/
+english
 
 tags:
 reasoning
+
+paper:
+https://aclanthology.org/W19-3905/
 """
 
 import lighteval.tasks.default_prompts as prompt

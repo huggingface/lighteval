@@ -1,16 +1,22 @@
 """
+name:
+Bbq
+
+dataset:
+lighteval/bbq_helm
+
 abstract:
 The Bias Benchmark for Question Answering (BBQ) for measuring social bias in
 question answering in ambiguous and unambigous context .
 
 languages:
-en
-
-paper:
-https://arxiv.org/abs/2110.08193
+english
 
 tags:
 bias, multiple-choice, qa
+
+paper:
+https://arxiv.org/abs/2110.08193
 """
 
 import lighteval.tasks.default_prompts as prompt

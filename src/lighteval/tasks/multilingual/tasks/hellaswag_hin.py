@@ -1,4 +1,10 @@
 """
+name:
+Hellaswag Hin
+
+dataset:
+ai4bharat/hellaswag-hi
+
 abstract:
 Hellaswag Hin multilingual benchmark.
 
@@ -7,6 +13,8 @@ hindi
 
 tags:
 multilingual, multiple-choice, reasoning
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

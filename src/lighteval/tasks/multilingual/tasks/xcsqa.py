@@ -1,4 +1,10 @@
 """
+name:
+Xcsqa
+
+dataset:
+INK-USC/xcsr
+
 abstract:
 XCSQA (Cross-lingual Commonsense QA) is part of the XCSR (Cross-lingual
 Commonsense Reasoning) benchmark It is a multilingual extension of the

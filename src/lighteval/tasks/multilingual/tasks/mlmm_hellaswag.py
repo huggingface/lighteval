@@ -1,4 +1,10 @@
 """
+name:
+Mlmm Hellaswag
+
+dataset:
+jon-tow/okapi_hellaswag
+
 abstract:
 Hellaswag is a commonsense reasoning task that requires models to complete a
 given scenario with the most plausible ending. It tests the model's ability to

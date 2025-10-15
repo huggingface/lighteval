@@ -1,4 +1,10 @@
 """
+name:
+Sciq
+
+dataset:
+allenai/sciq
+
 abstract:
 The SciQ dataset contains 13,679 crowdsourced science exam questions about
 Physics, Chemistry and Biology, among others. The questions are in
@@ -7,7 +13,7 @@ questions, an additional paragraph with supporting evidence for the correct
 answer is provided.
 
 languages:
-en
+english
 
 tags:
 physics, chemistry, biology, reasoning, multiple-choice, qa
@@ -25,7 +31,7 @@ sciq = LightevalTaskConfig(
     name="sciq",
     suite=["lighteval"],
     prompt_function=prompt.sciq,
-    hf_repo="sciq",
+    hf_repo="allenai/sciq",
     hf_subset="default",
     hf_avail_splits=["train", "validation", "test"],
     evaluation_splits=["test"],

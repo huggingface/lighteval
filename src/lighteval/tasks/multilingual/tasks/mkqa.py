@@ -1,4 +1,10 @@
 """
+name:
+Mkqa
+
+dataset:
+apple/mkqa
+
 abstract:
 Mkqa multilingual benchmark.
 
@@ -10,6 +16,8 @@ vietnamese
 
 tags:
 multilingual, qa
+
+paper:
 """
 
 from functools import partial

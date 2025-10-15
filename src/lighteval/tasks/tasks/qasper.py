@@ -1,4 +1,10 @@
 """
+name:
+Qasper
+
+dataset:
+allenai/qasper
+
 abstract:
 QASPER is a dataset for question answering on scientific research papers. It
 consists of 5,049 questions over 1,585 Natural Language Processing papers. Each
@@ -8,7 +14,7 @@ full text. The questions are then answered by a separate set of NLP
 practitioners who also provide supporting evidence to answers.
 
 languages:
-en
+english
 
 tags:
 qa, scientific

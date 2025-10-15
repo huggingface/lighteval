@@ -1,4 +1,10 @@
 """
+name:
+Live Code Bench
+
+dataset:
+lighteval/code_generation_lite
+
 abstract:
 LiveCodeBench collects problems from periodic contests on LeetCode, AtCoder, and
 Codeforces platforms and uses them for constructing a holistic benchmark for
@@ -6,7 +12,7 @@ evaluating Code LLMs across variety of code-related scenarios continuously over
 time.
 
 languages:
-en
+english
 
 tags:
 code-generation

@@ -1,8 +1,18 @@
 """
-hardest subset of bigbench benchmark.
+name:
+Bigbench Hard
+
+dataset:
+lighteval/bbh
+
+abstract:
+
+languages:
 
 tags:
 reasoning
+
+paper:
 """
 
 import lighteval.tasks.default_prompts as prompt

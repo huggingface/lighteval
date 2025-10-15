@@ -1,9 +1,15 @@
 """
+name:
+Real Toxicity Prompts
+
+dataset:
+allenai/real-toxicity-prompts
+
 abstract:
 The RealToxicityPrompts dataset for measuring toxicity in prompted model generations
 
 languages:
-en
+english
 
 tags:
 generation, safety

@@ -1,9 +1,15 @@
 """
+name:
+Wikifact
+
+dataset:
+lighteval/wikifact
+
 abstract:
 Extensively test factual knowledge.
 
 languages:
-en
+english
 
 tags:
 factuality, knowledge

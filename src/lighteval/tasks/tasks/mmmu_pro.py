@@ -1,10 +1,14 @@
 """
-MMMU-Pro is an enhanced multimodal benchmark designed to rigorously assess the
-true understanding capabilities of advanced AI models across multiple
-modalities.
+name:
+Mmmu Pro
+
+dataset:
+MMMU/MMMU_pro
+
+abstract:
 
 languages:
-en
+english
 
 tags:
 general-knowledge, knowledge, multimodal, multiple-choice

@@ -1,4 +1,10 @@
 """
+name:
+Prost
+
+dataset:
+lighteval/prost
+
 abstract:
 PROST is a benchmark for testing physical reasoning about objects through space
 and time. It includes 18,736 multiple-choice questions covering 10 core physics
@@ -7,7 +13,7 @@ large pretrained models struggle with physical reasoning and are sensitive to
 question phrasing, underscoring their limited real-world understanding.
 
 languages:
-en
+english
 
 tags:
 reasoning, qa, physical-commonsense

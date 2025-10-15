@@ -1,4 +1,10 @@
 """
+name:
+Mintaka
+
+dataset:
+AmazonScience/mintaka
+
 abstract:
 Mintaka multilingual benchmark.
 
@@ -7,6 +13,8 @@ arabic, english, french, german, hindi, italian, japanese, portuguese, spanish
 
 tags:
 knowledge, multilingual, qa
+
+paper:
 """
 
 from langcodes import standardize_tag

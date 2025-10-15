@@ -1,15 +1,20 @@
 """
+name:
+Med Dialog
+
+dataset:
+lighteval/med_dialog
+
 abstract:
 A collection of medical dialogue datasets.
 
 languages:
-en
+english
 
 tags:
 dialog, health, medical
 
 paper:
-
 """
 
 import lighteval.tasks.default_prompts as prompt

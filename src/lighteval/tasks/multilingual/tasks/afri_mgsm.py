@@ -1,4 +1,10 @@
 """
+name:
+Afri Mgsm
+
+dataset:
+masakhane/afrimgsm
+
 abstract:
 African MGSM: MGSM for African Languages
 

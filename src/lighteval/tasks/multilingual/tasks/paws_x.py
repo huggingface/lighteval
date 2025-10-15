@@ -1,4 +1,10 @@
 """
+name:
+Paws X
+
+dataset:
+google-research-datasets/paws-x
+
 abstract:
 PAWS-X: A Cross-lingual Adversarial Dataset for Paraphrase Identification This
 dataset contains paraphrase identification pairs in multiple languages. It's

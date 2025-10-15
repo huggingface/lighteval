@@ -1,4 +1,10 @@
 """
+name:
+Mathlogicqa Rus
+
+dataset:
+ai-forever/MERA
+
 abstract:
 MathLogicQA is a dataset for evaluating mathematical reasoning in language
 models. It consists of multiple-choice questions that require logical reasoning

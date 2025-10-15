@@ -1,9 +1,15 @@
 """
+name:
+Lsat Qa
+
+dataset:
+lighteval/lsat_qa
+
 abstract:
 Questions from law school admission tests.
 
 languages:
-en
+english
 
 tags:
 legal, qa

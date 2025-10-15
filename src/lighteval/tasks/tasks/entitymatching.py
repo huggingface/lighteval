@@ -1,15 +1,21 @@
 """
+name:
+Entitymatching
+
+dataset:
+lighteval/EntityMatching
+
 abstract:
 Simple entity matching benchmark.
 
 languages:
-en
-
-paper:
-https://dl.acm.org/doi/10.14778/3007263.3007314
+english
 
 tags:
 classification, reasoning
+
+paper:
+https://dl.acm.org/doi/10.14778/3007263.3007314
 """
 
 import lighteval.tasks.default_prompts as prompt

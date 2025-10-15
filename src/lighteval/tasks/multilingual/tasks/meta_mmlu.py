@@ -1,4 +1,10 @@
 """
+name:
+Meta Mmlu
+
+dataset:
+meta-llama/Meta-Llama-3.1-8B-Instruct-evals
+
 abstract:
 Meta MMLU: A multilingual version of MMLU (using google translation)
 

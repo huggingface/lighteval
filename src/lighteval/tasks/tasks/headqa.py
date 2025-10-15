@@ -1,4 +1,10 @@
 """
+name:
+Headqa
+
+dataset:
+lighteval/headqa_harness
+
 abstract:
 HEAD-QA is a multi-choice HEAlthcare Dataset. The questions come from exams to
 access a specialized position in the Spanish healthcare system, and are
@@ -7,7 +13,7 @@ Ministerio de Sanidad, Consumo y Bienestar Social, who also provides direct
 access to the exams of the last 5 years.
 
 languages:
-en, es
+english, spanish
 
 tags:
 health, medical, multiple-choice, qa

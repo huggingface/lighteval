@@ -1,9 +1,15 @@
 """
+name:
+Med
+
+dataset:
+lighteval/med_mcqa, lighteval/med_paragraph_simplification, bigbio/med_qa
+
 abstract:
 A Large-scale Multi-Subject Multi-Choice Dataset for Medical domain Question Answering
 
 languages:
-en
+english
 
 tags:
 health, medical

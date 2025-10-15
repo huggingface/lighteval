@@ -1,10 +1,16 @@
 """
+name:
+Hellaswag
+
+dataset:
+Rowan/hellaswag
+
 abstract:
 HellaSwag is a commonsense inference benchmark designed to challenge language
 models with adversarially filtered multiple-choice questions.
 
 languages:
-en
+english
 
 tags:
 multiple-choice, narrative, reasoning
@@ -22,7 +28,7 @@ hellaswag = LightevalTaskConfig(
     name="hellaswag",
     suite=["lighteval"],
     prompt_function=prompt.hellaswag_generative,
-    hf_repo="hellaswag",
+    hf_repo="Rowan/hellaswag",
     hf_subset="default",
     hf_avail_splits=["train", "test", "validation"],
     evaluation_splits=["validation"],

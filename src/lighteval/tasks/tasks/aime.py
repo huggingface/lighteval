@@ -1,4 +1,10 @@
 """
+name:
+Aime
+
+dataset:
+HuggingFaceH4/aime_2024, yentinglin/aime_2025
+
 abstract:
 The American Invitational Mathematics Examination (AIME) is a prestigious,
 invite-only mathematics competition for high-school students who perform in the
@@ -9,13 +15,13 @@ the 15 possible). Two versions of the test are given every year (thirty
 questions total).
 
 languages:
-en
-
-paper:
-https://maa.org/aime-thresholds-are-available/
+english
 
 tags:
 math, reasoning
+
+paper:
+https://maa.org/aime-thresholds-are-available/
 """
 
 import lighteval.tasks.default_prompts as prompt

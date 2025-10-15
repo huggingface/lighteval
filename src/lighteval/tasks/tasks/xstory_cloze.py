@@ -1,17 +1,22 @@
 """
+name:
+Xstory Cloze
+
+dataset:
+juletxara/xstory_cloze
+
 abstract:
 XStoryCloze consists of the professionally translated version of the English
 StoryCloze dataset (Spring 2016 version) to 10 non-English languages. This
 dataset is released by Meta AI.
 
 languages:
-en, ru, zh, es, ar, hi, id, te, sw, eu, my
+english, russian, chinese, spanish, arabic, hindi, indonesian, telugu, swahili, basque, burmese
 
 tags:
 multilingual, narrative, reasoning
 
 paper:
-
 """
 
 import lighteval.tasks.default_prompts as prompt

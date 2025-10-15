@@ -1,15 +1,20 @@
 """
+name:
+Numeracy
+
+dataset:
+lighteval/numeracy
+
 abstract:
 Numeracy is a benchmark for evaluating the ability of language models to reason about mathematics.
 
 languages:
-en
+english
 
 tags:
 math, reasoning
 
 paper:
-
 """
 
 import lighteval.tasks.default_prompts as prompt

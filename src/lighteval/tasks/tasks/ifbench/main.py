@@ -1,9 +1,15 @@
 """
+name:
+IFBench
+
+dataset:
+allenai/IFBench_test, allenai/IFBench_multi-turn
+
 abstract:
 Challenging benchmark for precise instruction following.
 
 languages:
-en
+english
 
 tags:
 instruction-following

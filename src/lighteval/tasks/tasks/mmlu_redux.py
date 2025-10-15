@@ -1,9 +1,15 @@
 """
+name:
+Mmlu Redux
+
+dataset:
+edinburgh-dawg/mmlu-redux-2.0
+
 abstract:
 MMLU-Redux is a subset of 5,700 manually re-annotated questions across 57 MMLU subjects.
 
 languages:
-en
+english
 
 tags:
 general-knowledge, knowledge, multiple-choice

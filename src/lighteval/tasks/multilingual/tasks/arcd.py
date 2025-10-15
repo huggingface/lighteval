@@ -1,4 +1,10 @@
 """
+name:
+Arcd
+
+dataset:
+hsseinmz/arcd
+
 abstract:
 ARCD: Arabic Reading Comprehension Dataset.
 

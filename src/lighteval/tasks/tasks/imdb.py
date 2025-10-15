@@ -1,10 +1,16 @@
 """
+name:
+Imdb
+
+dataset:
+lighteval/IMDB_helm
+
 abstract:
 The IMDB benchmark for sentiment analysis in movie review, from:
 Learning Word Vectors for Sentiment Analysis
 
 languages:
-en
+english
 
 tags:
 classification

@@ -1,4 +1,10 @@
 """
+name:
+Winogrande
+
+dataset:
+allenai/winogrande
+
 abstract:
 WinoGrande is a new collection of 44k problems, inspired by Winograd Schema
 Challenge (Levesque, Davis, and Morgenstern 2011), but adjusted to improve the
@@ -7,7 +13,7 @@ fill-in-a-blank task with binary options, the goal is to choose the right option
 for a given sentence which requires commonsense reasoning.
 
 languages:
-en
+english
 
 tags:
 commonsense, multiple-choice

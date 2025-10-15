@@ -1,9 +1,15 @@
 """
+name:
+Pubmedqa
+
+dataset:
+pubmed_qa
+
 abstract:
 PubMedQA is a dataset for biomedical research question answering.
 
 languages:
-en
+english
 
 tags:
 biomedical, health, medical, qa

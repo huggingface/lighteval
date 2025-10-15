@@ -1,4 +1,10 @@
 """
+name:
+M3Exams
+
+dataset:
+chiayewken/m3exam
+
 abstract:
 M3Exam: Multitask Multilingual Multimodal Evaluation Benchmark It also contains
 a multimodal version but we don't support that Paper:

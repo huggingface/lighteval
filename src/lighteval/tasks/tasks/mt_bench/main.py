@@ -1,4 +1,10 @@
 """
+name:
+Mt Bench
+
+dataset:
+lighteval/mt-bench
+
 abstract:
 MT-Bench is a multi-turn conversational benchmark for evaluating language
 models. It consists of 80 high-quality multi-turn questions across 8 common
@@ -6,7 +12,7 @@ categories (writing, roleplay, reasoning, math, coding, extraction, STEM,
 humanities). Model responses are evaluated by a judge LLM.
 
 languages:
-en
+english
 
 tags:
 conversational, generation, multi-turn

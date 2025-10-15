@@ -1,4 +1,10 @@
 """
+name:
+Humanity's Last Exam
+
+dataset:
+cais/hle
+
 abstract:
 Humanity's Last Exam (HLE) is a global collaborative effort, with questions from
 nearly 1,000 subject expert contributors affiliated with over 500 institutions
@@ -6,7 +12,7 @@ across 50 countries - comprised mostly of professors, researchers, and graduate
 degree holders.
 
 languages:
-en
+english
 
 tags:
 qa, reasoning, general-knowledge

@@ -1,4 +1,10 @@
 """
+name:
+Xcodah
+
+dataset:
+INK-USC/xcsr
+
 abstract:
 Xcodah multilingual benchmark.
 
@@ -8,6 +14,8 @@ polish, portuguese, russian, spanish, swahili, urdu, vietnamese
 
 tags:
 multilingual, multiple-choice, reasoning
+
+paper:
 """
 
 from functools import partial

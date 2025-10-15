@@ -1,4 +1,10 @@
 """
+name:
+Ceval
+
+dataset:
+ceval/ceval-exam
+
 abstract:
 Ceval multilingual benchmark.
 
@@ -7,6 +13,8 @@ chinese
 
 tags:
 knowledge, multilingual, multiple-choice
+
+paper:
 """
 
 from functools import partial

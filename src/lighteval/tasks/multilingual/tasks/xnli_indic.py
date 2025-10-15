@@ -1,4 +1,10 @@
 """
+name:
+Xnli Indic
+
+dataset:
+Divyanshu/indicxnli
+
 abstract:
 Another variant of XNLI, with emphasis on Indic languages.
 

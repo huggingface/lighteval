@@ -1,4 +1,10 @@
 """
+name:
+Arabic Mmlu
+
+dataset:
+MBZUAI/ArabicMMLU
+
 abstract:
 Arabic Mmlu multilingual benchmark.
 
@@ -7,6 +13,8 @@ arabic
 
 tags:
 knowledge, multilingual, multiple-choice
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

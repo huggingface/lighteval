@@ -1,4 +1,10 @@
 """
+name:
+Faquad
+
+dataset:
+eraldoluis/faquad
+
 abstract:
 FaQuAD: A Portuguese Reading Comprehension Dataset
 

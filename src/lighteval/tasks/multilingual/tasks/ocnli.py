@@ -1,4 +1,10 @@
 """
+name:
+Ocnli
+
+dataset:
+clue/clue
+
 abstract:
 Native Chinese NLI dataset based.
 

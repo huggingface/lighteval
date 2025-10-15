@@ -1,10 +1,16 @@
 """
+name:
+Math 500
+
+dataset:
+HuggingFaceH4/MATH-500
+
 abstract:
 This dataset contains a subset of 500 problems from the MATH benchmark that
 OpenAI created in their Let's Verify Step by Step paper.
 
 languages:
-en
+english
 
 tags:
 math, reasoning

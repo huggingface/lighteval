@@ -1,11 +1,17 @@
 """
+name:
+Xcopa
+
+dataset:
+cambridgeltl/xcopa
+
 abstract:
 XCOPA: A Multilingual Dataset for Causal Commonsense Reasoning The Cross-lingual
 Choice of Plausible Alternatives dataset is a benchmark to evaluate the ability
 of machine learning models to transfer commonsense reasoning across languages.
 
 languages:
-en
+english
 
 tags:
 commonsense, multilingual, multiple-choice, reasoning

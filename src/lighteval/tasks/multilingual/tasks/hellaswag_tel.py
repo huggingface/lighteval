@@ -1,4 +1,10 @@
 """
+name:
+Hellaswag Tel
+
+dataset:
+LightFury9/hellaswag-telugu
+
 abstract:
 Hellaswag Tel multilingual benchmark.
 
@@ -7,6 +13,8 @@ telugu
 
 tags:
 multilingual, multiple-choice, reasoning
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

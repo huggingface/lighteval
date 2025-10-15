@@ -1,4 +1,10 @@
 """
+name:
+Acva
+
+dataset:
+OALL/ACVA
+
 abstract:
 Acva multilingual benchmark.
 
@@ -7,6 +13,8 @@ arabic
 
 tags:
 knowledge, multilingual, multiple-choice
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

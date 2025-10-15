@@ -1,4 +1,10 @@
 """
+name:
+C3
+
+dataset:
+clue/clue
+
 abstract:
 C3: A Chinese Challenge Corpus for Cross-lingual and Cross-modal Tasks Reading
 comprehension task part of clue.

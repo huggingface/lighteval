@@ -1,9 +1,15 @@
 """
+name:
+Quac
+
+dataset:
+lighteval/quac_helm
+
 abstract:
 The QuAC benchmark for question answering in the context of dialogues.
 
 languages:
-en
+english
 
 tags:
 dialog, qa

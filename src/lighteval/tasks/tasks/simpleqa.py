@@ -1,10 +1,16 @@
 """
+name:
+Simpleqa
+
+dataset:
+lighteval/SimpleQA
+
 abstract:
 A factuality benchmark called SimpleQA that measures the ability for language
 models to answer short, fact-seeking questions.
 
 languages:
-en
+english
 
 tags:
 factuality, general-knowledge, qa

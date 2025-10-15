@@ -1,4 +1,10 @@
 """
+name:
+Hindi Arc
+
+dataset:
+ai4bharat/ai2_arc-hi
+
 abstract:
 Hindi Arc multilingual benchmark.
 
@@ -7,6 +13,8 @@ hindi
 
 tags:
 multilingual, multiple-choice, reasoning
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

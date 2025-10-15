@@ -1,9 +1,15 @@
 """
+name:
+Lexglue
+
+dataset:
+lighteval/lexglue
+
 abstract:
 LexGLUE: A Benchmark Dataset for Legal Language Understanding in English
 
 languages:
-en
+english
 
 tags:
 classification, legal

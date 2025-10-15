@@ -1,16 +1,22 @@
 """
+name:
+Bigbench
+
+dataset:
+tasksource/bigbench
+
 abstract:
 Beyond the Imitation Game: Quantifying and extrapolating the capabilities of language models
 166 tasks from bigbench benchmark.
 
 languages:
-en
-
-paper:
-https://arxiv.org/abs/2206.04615
+english
 
 tags:
 reasoning
+
+paper:
+https://arxiv.org/abs/2206.04615
 """
 
 import lighteval.tasks.default_prompts as prompt

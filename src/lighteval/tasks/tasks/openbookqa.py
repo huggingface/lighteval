@@ -1,4 +1,10 @@
 """
+name:
+Openbookqa
+
+dataset:
+allenai/openbookqa
+
 abstract:
 OpenBookQA is a question-answering dataset modeled after open-book exams for
 assessing human understanding of a subject. It contains multiple-choice
@@ -7,7 +13,7 @@ knowledge. The task tests language models' ability to leverage provided
 information and apply common sense reasoning.
 
 languages:
-en
+english
 
 tags:
 multiple-choice, qa
@@ -25,7 +31,7 @@ openbookqa = LightevalTaskConfig(
     name="openbookqa",
     suite=["lighteval"],
     prompt_function=prompt.openbookqa_helm,
-    hf_repo="openbookqa",
+    hf_repo="allenai/openbookqa",
     hf_subset="main",
     hf_avail_splits=["train", "test", "validation"],
     evaluation_splits=["validation", "test"],

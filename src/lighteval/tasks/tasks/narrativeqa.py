@@ -1,11 +1,17 @@
 """
+name:
+Narrativeqa
+
+dataset:
+lighteval/narrative_qa_helm
+
 abstract:
 NarrativeQA is a reading comprehension benchmark that tests deep understanding
 of full narratives—books and movie scripts—rather than shallow text matching. To
 answer its questions, models must integrate information across entire stories.
 
 languages:
-en
+english
 
 tags:
 qa, reading-comprehension

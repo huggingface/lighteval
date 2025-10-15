@@ -1,4 +1,10 @@
 """
+name:
+Thaiqa
+
+dataset:
+lighteval/thaiqa_squad_fixed
+
 abstract:
 ThaiQA: A question answering dataset for the Thai language.
 
@@ -7,6 +13,8 @@ thai
 
 tags:
 multilingual, qa
+
+paper:
 """
 
 from lighteval.metrics.dynamic_metrics import (

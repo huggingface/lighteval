@@ -1,4 +1,10 @@
 """
+name:
+Agieval
+
+dataset:
+dmayhem93/agieval-aqua-rat, dmayhem93/agieval-gaokao-biology, dmayhem93/agieval-gaokao-chemistry, dmayhem93/agieval-gaokao-chinese, dmayhem93/agieval-gaokao-english, dmayhem93/agieval-gaokao-geography, dmayhem93/agieval-gaokao-history, dmayhem93/agieval-gaokao-mathqa, dmayhem93/agieval-gaokao-physics, dmayhem93/agieval-logiqa-en, dmayhem93/agieval-logiqa-zh, dmayhem93/agieval-lsat-ar, dmayhem93/agieval-lsat-lr, dmayhem93/agieval-lsat-rc, dmayhem93/agieval-sat-en, dmayhem93/agieval-sat-en-without-passage, dmayhem93/agieval-sat-math
+
 abstract:
 AGIEval is a human-centric benchmark specifically designed to evaluate the
 general abilities of foundation models in tasks pertinent to human cognition and
@@ -9,7 +15,7 @@ Entrance Exam (Gaokao) and American SAT), law school admission tests, math
 competitions, lawyer qualification tests, and national civil service exams.
 
 languages:
-en, zh
+english, chinese
 
 tags:
 biology, chemistry, geography, history, knowledge, language, multiple-choice, physics, reasoning

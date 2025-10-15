@@ -1,9 +1,15 @@
 """
+name:
+Sacrebleu
+
+dataset:
+lighteval/sacrebleu_manual, wmt14, wmt16
+
 abstract:
 tasks from sacrebleu
 
 languages:
-en, de, fr, ja, ko, zh, ar
+english, german, french, japanese, korean, chinese, arabic
 
 tags:
 translation

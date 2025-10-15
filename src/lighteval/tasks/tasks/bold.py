@@ -1,16 +1,22 @@
 """
+name:
+Bold
+
+dataset:
+lighteval/bold_helm
+
 abstract:
 The Bias in Open-Ended Language Generation Dataset (BOLD) for measuring biases
 and toxicity in open-ended language generation.
 
 languages:
-en
-
-paper:
-https://dl.acm.org/doi/10.1145/3442188.3445924
+english
 
 tags:
 bias, generation
+
+paper:
+https://dl.acm.org/doi/10.1145/3442188.3445924
 """
 
 import lighteval.tasks.default_prompts as prompt

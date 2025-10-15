@@ -1,9 +1,15 @@
 """
+name:
+Lextreme
+
+dataset:
+lighteval/lextreme
+
 abstract:
 LEXTREME: A Multi-Lingual and Multi-Task Benchmark for the Legal Domain
 
 languages:
-bg, cs, da, de, el, en, es, et, fi, fr, ga, hr, hu, it, lt, lv, mt, nl, pl, pt, ro, sk, sl, sv
+bulgarian, czech, danish, german, greek, english, spanish, estonian, finnish, french, ga, croatian, hungarian, italian, lithuanian, latvian, mt, dutch, polish, portuguese, romanian, slovak, slovenian, swedish
 
 tags:
 classification, legal

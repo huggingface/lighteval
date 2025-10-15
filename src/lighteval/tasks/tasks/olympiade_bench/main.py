@@ -1,10 +1,16 @@
 """
+name:
+Olympiade Bench
+
+dataset:
+Hothan/OlympiadBench
+
 abstract:
 OlympiadBench is a benchmark for evaluating the performance of language models
 on olympiad problems.
 
 languages:
-en, zh
+english, chinese
 
 tags:
 math, reasoning, language

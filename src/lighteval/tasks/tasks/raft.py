@@ -1,10 +1,16 @@
 """
+name:
+Raft
+
+dataset:
+ought/raft
+
 abstract:
 The Real-world annotated few-shot (RAFT) meta-benchmark of 11 real-world text
 classification tasks.
 
 languages:
-en
+english
 
 tags:
 classification, reasoning

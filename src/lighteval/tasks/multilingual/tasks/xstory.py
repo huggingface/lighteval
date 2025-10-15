@@ -1,4 +1,10 @@
 """
+name:
+Xstory
+
+dataset:
+juletxara/xstory_cloze
+
 abstract:
 Xstory multilingual benchmark.
 
@@ -8,6 +14,8 @@ telugu
 
 tags:
 multilingual, narrative
+
+paper:
 """
 
 from functools import partial

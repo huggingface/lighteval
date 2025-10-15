@@ -1,16 +1,22 @@
 """
+name:
+Asdiv
+
+dataset:
+EleutherAI/asdiv
+
 abstract:
 ASDiv is a dataset for arithmetic reasoning that contains 2,000+ questions
 covering addition, subtraction, multiplication, and division.
 
 languages:
-en
-
-paper:
-https://arxiv.org/abs/2410.12853
+english
 
 tags:
 math, reasoning
+
+paper:
+https://arxiv.org/abs/2410.12853
 """
 
 import lighteval.tasks.default_prompts as prompt

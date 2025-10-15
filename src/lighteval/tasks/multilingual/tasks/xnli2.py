@@ -1,4 +1,9 @@
 """
+name:
+Xnli2
+
+dataset:
+
 abstract:
 Improvement on XNLI with better translation, from our experience models tend to
 perform better on XNLI2.0 than XNLI.

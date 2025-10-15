@@ -1,4 +1,10 @@
 """
+name:
+Squad Es
+
+dataset:
+ccasimiro/squad_es
+
 abstract:
 SQuAD-es: Spanish translation of the Stanford Question Answering Dataset
 

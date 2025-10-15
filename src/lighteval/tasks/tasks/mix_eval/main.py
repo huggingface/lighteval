@@ -1,4 +1,10 @@
 """
+name:
+Mix Eval
+
+dataset:
+MixEval/MixEval
+
 abstract:
 Ground-truth-based dynamic benchmark derived from off-the-shelf benchmark
 mixtures, which evaluates LLMs with a highly capable model ranking (i.e., 0.96
@@ -7,7 +13,7 @@ and cost of running MMLU), with its queries being stably and effortlessly
 updated every month to avoid contamination.
 
 languages:
-en
+english
 
 tags:
 general-knowledge, reasoning, qa

@@ -1,4 +1,10 @@
 """
+name:
+Soqal
+
+dataset:
+OALL/AlGhafa-Arabic-LLM-Benchmark-Native
+
 abstract:
 SOQAL: A large-scale Arabic reading comprehension dataset.
 

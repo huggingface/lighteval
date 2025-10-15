@@ -1,15 +1,21 @@
 """
+name:
+Entity Data Imputation
+
+dataset:
+lighteval/Buy, lighteval/Restaurant
+
 abstract:
 Scenario that tests the ability to impute missing entities in a data table.
 
 languages:
-en
-
-paper:
-https://ieeexplore.ieee.org/document/9458712
+english
 
 tags:
 reasoning
+
+paper:
+https://ieeexplore.ieee.org/document/9458712
 """
 
 import lighteval.tasks.default_prompts as prompt

@@ -1,4 +1,10 @@
 """
+name:
+Siqa
+
+dataset:
+allenai/social_i_qa
+
 abstract:
 We introduce Social IQa: Social Interaction QA, a new question-answering
 benchmark for testing social commonsense intelligence. Contrary to many prior
@@ -14,13 +20,12 @@ adversarially-filtered machine-generated candidates. Social IQa contains over
 implications of everyday events and situations.
 
 languages:
-en
+english
 
 tags:
 commonsense, multiple-choice, qa
 
 paper:
-
 """
 
 import lighteval.tasks.default_prompts as prompt

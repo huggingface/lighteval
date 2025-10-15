@@ -1,4 +1,10 @@
 """
+name:
+Kenswquad
+
+dataset:
+lighteval/KenSwQuAD
+
 abstract:
 KenSwQuAD: A question answering dataset for Kenyan Swahili.
 

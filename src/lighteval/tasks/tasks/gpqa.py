@@ -1,4 +1,10 @@
 """
+name:
+Gpqa
+
+dataset:
+Idavidrein/gpqa
+
 abstract:
 GPQA is a dataset of 448 expert-written multiple-choice questions in biology,
 physics, and chemistry, designed to test graduate-level reasoning. The questions
@@ -8,7 +14,7 @@ on scalable oversight, helping humans evaluate and trust AI systems that may
 exceed human expertise.
 
 languages:
-en
+english
 
 tags:
 biology, chemistry, graduate-level, multiple-choice, physics, qa, reasoning, science

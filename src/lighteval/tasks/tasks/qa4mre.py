@@ -1,4 +1,10 @@
 """
+name:
+Qa4Mre
+
+dataset:
+qa4mre
+
 abstract:
 QA4MRE is a machine reading comprehension benchmark from the CLEF 2011-2013
 challenges. It evaluates systems' ability to answer questions requiring deep
@@ -7,7 +13,7 @@ Covering tasks like modality, negation, biomedical reading, and entrance exams,
 QA4MRE tests reasoning beyond surface-level text matching.
 
 languages:
-en
+english
 
 tags:
 biomedical, health, qa

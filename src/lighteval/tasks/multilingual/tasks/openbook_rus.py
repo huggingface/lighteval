@@ -1,4 +1,10 @@
 """
+name:
+Openbook Rus
+
+dataset:
+ai-forever/MERA
+
 abstract:
 The Russian version is part of the MERA (Multilingual Enhanced Russian NLP
 Architectures) project.

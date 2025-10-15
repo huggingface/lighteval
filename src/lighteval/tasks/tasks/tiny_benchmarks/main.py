@@ -1,10 +1,18 @@
 """
+name:
+Tiny Benchmarks
+
+dataset:
+tinyBenchmarks/tinyWinogrande, tinyBenchmarks/tinyAI2_arc,
+tinyBenchmarks/tinyHellaswag, tinyBenchmarks/tinyMMLU,
+tinyBenchmarks/tinyTruthfulQA, tinyBenchmarks/tinyGSM8k
+
 abstract:
 TinyBenchmarks is a benchmark for evaluating the performance of language models
 on tiny benchmarks.
 
 languages:
-en
+english
 
 tags:
 general-knowledge, reasoning, qa

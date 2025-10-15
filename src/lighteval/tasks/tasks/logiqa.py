@@ -1,4 +1,10 @@
 """
+name:
+Logiqa
+
+dataset:
+lighteval/logiqa_harness
+
 abstract:
 LogiQA is a machine reading comprehension dataset focused on testing logical
 reasoning abilities. It contains 8,678 expert-written multiple-choice questions
@@ -7,7 +13,7 @@ state-of-the-art models lag far behind, making LogiQA a benchmark for advancing
 logical reasoning in NLP systems.
 
 languages:
-en
+english
 
 tags:
 qa
