@@ -28,10 +28,7 @@ from lighteval.tasks.templates.qa import get_qa_prompt_function
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-mgsm_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"mgsm_{language.value}",
         prompt_function=get_qa_prompt_function(

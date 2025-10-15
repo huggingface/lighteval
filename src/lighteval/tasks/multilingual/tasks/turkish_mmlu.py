@@ -33,9 +33,6 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
 TURKISH_MMLU_SUBSET = [
     "Biology",
     "Chemistry",
@@ -49,7 +46,7 @@ TURKISH_MMLU_SUBSET = [
 ]
 
 
-turkish_mmlu_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"mmlu_{Language.TURKISH.value}_{formulation.name.lower()}:{normalize_subset(subset)}",
         prompt_function=get_mcq_prompt_function(

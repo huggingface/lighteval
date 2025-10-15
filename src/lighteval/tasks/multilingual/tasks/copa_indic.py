@@ -43,10 +43,8 @@ from lighteval.utils.language import Language
 # IndicCOPA extends COPA to 15 Indic languages, providing a valuable resource for
 # evaluating common sense reasoning in these languages.
 
-TASKS_TABLE = []
 
-
-copa_indic_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"indicxcopa_{language.value}_{formulation.name.lower()}",
         suite=["lighteval"],

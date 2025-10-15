@@ -45,10 +45,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-mlmm_arc_challenge_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"mlmm_arc_{language.value}_{formulation.name.lower()}:challenge",
         prompt_function=get_mcq_prompt_function(

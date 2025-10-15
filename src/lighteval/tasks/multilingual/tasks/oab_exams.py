@@ -35,10 +35,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-oab_exams_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"oab_exams_{Language.PORTUGUESE.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(

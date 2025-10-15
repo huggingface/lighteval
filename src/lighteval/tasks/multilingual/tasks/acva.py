@@ -29,9 +29,6 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
 ACVA_SUBSET = [
     "Algeria",
     "Ancient_Egypt",
@@ -94,7 +91,7 @@ ACVA_SUBSET = [
 ]
 
 
-acva_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"acva_{Language.ARABIC.value}:{subset}",
         prompt_function=get_boolq_prompt_function(

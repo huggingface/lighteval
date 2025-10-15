@@ -40,10 +40,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-xcsqa_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"xcsqa_{language.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(

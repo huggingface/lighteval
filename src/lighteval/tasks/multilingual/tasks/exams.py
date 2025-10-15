@@ -39,8 +39,6 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
 exams_subjects_by_lang: dict[Language, set[str]] = {
     Language.ARABIC: {"Biology", "Islamic Studies", "Physics", "Science", "Social"},
     Language.BULGARIAN: {"Biology", "Chemistry", "Geography", "History", "Philosophy", "Physics"},
@@ -153,7 +151,7 @@ exams_subjects_by_lang: dict[Language, set[str]] = {
 }
 
 
-exams_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"exams_{language.value}_{formulation.name.lower()}:{normalize_subset(subject)}",
         prompt_function=get_mcq_prompt_function(

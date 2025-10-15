@@ -33,10 +33,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-cmnli_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"cmnli_{Language.CHINESE.value}_{formulation.name.lower()}",
         prompt_function=get_nli_prompt_function(

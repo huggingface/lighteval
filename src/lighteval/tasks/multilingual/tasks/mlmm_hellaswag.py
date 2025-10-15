@@ -41,10 +41,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-mlmm_hellaswag_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"mlmm_hellaswag_{lang.value}_{formulation.name.lower()}",
         suite=["lighteval"],

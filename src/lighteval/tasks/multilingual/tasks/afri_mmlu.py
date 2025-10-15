@@ -37,9 +37,6 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
 AFRI_MMLU_SUBSETS = [
     "elementary_mathematics",
     "high_school_mathematics",

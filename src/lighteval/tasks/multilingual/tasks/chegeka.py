@@ -26,10 +26,7 @@ from lighteval.tasks.templates.qa import get_qa_prompt_function
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-chegeka_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"chegeka_{Language.RUSSIAN.value}",
         prompt_function=get_qa_prompt_function(

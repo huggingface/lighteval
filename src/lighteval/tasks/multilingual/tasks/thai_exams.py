@@ -35,13 +35,10 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
 THAI_EXAMS_SUBSETS = ["a_level", "ic", "onet", "tgat", "tpat1"]
 
 
-thai_exams_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"thai_exams_{Language.THAI.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(Language.THAI, thai_exams_adapter, formulation=formulation),

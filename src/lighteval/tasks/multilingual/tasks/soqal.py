@@ -36,10 +36,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-soqal_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"soqal_{Language.ARABIC.value}_{formulation.name.lower()}",
         hf_subset="multiple_choice_grounded_statement_soqal_task",

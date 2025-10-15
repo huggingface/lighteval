@@ -36,9 +36,6 @@ from lighteval.tasks.templates.qa import get_qa_prompt_function
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
 MKQA_TASK_TO_ID = {
     "entity": 0,
     "long_answer": 1,
@@ -51,7 +48,7 @@ MKQA_TASK_TO_ID = {
 }
 
 
-mkqa_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"mkqa_{language.value}:{subset}",
         prompt_function=get_qa_prompt_function(language, partial(get_mkqa_adapter, language)),

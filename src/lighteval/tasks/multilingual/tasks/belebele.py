@@ -38,10 +38,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import iso_639_3_ind_to_iso_639_3_macro
 
 
-TASKS_TABLE = []
-
-
-belebele_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"belebele_{language}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(

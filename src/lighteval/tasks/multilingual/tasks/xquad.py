@@ -34,10 +34,7 @@ from lighteval.tasks.templates.qa import get_qa_prompt_function
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-xquad_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"xquad_{language.value}",
         prompt_function=get_qa_prompt_function(

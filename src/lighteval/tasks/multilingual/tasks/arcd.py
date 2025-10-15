@@ -30,10 +30,8 @@ from lighteval.utils.language import Language
 # ARCD: Arabic Reading Comprehension Dataset.
 # https://arxiv.org/pdf/1906.05394
 
-TASKS_TABLE = []
 
-
-arcd_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"arcd_{Language.ARABIC.value}",
         prompt_function=get_qa_prompt_function(

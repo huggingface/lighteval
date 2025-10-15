@@ -36,10 +36,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-hellaswag_tur_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"community_hellaswag_{Language.TURKISH.value}_{formulation.name.lower()}",
         suite=["lighteval"],

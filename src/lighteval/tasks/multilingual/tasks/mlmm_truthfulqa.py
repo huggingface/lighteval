@@ -40,10 +40,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-mlmm_truthfulqa_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"mlmm_truthfulqa_{language.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(

@@ -39,10 +39,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-piqa_ar_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"alghafa_piqa_{Language.ARABIC.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),

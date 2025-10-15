@@ -34,10 +34,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-rcb_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"rcb_{Language.RUSSIAN.value}_{formulation.name.lower()}",
         prompt_function=get_nli_prompt_function(

@@ -34,10 +34,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-afri_xnli_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"afri_xnli_{language.value}_{formulation.name.lower()}",
         suite=("lighteval",),

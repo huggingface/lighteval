@@ -27,10 +27,7 @@ from lighteval.tasks.templates.qa import get_qa_prompt_function
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-tydiqa_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"tydiqa_{language.value}",
         prompt_function=get_qa_prompt_function(

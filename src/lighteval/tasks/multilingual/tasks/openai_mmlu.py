@@ -36,9 +36,6 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
 MMLU_SUBSETS = [
     "abstract_algebra",
     "anatomy",
@@ -100,7 +97,7 @@ MMLU_SUBSETS = [
 ]
 
 
-openai_mmlu_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"openai_mmlu_{language[0].value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(

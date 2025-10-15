@@ -37,10 +37,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-mathlogicqa_rus_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"mathlogic_qa_{Language.RUSSIAN.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(

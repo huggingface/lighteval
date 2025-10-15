@@ -35,10 +35,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-arabic_arc_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"alghafa_arc_{Language.ARABIC.value}_{formulation.name.lower()}:easy",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),

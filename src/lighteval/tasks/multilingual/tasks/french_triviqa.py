@@ -26,10 +26,7 @@ from lighteval.tasks.templates.qa import get_qa_prompt_function
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-french_triviqa_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"community_triviaqa_{Language.FRENCH.value}",
         prompt_function=get_qa_prompt_function(

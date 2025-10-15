@@ -38,10 +38,7 @@ from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LIT
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-xstory_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"xstory_cloze_{lang.value}_{formulation.name.lower()}",
         prompt_function=get_continuation_prompt_function(

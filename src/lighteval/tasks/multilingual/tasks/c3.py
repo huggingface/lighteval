@@ -38,10 +38,8 @@ from lighteval.utils.language import Language
 # Reading comprehension task part of clue
 # Paper: https://arxiv.org/abs/2004.05986
 
-TASKS_TABLE = []
 
-
-c3_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"c3_{Language.CHINESE.value}_{formulation.name.lower()}",
         suite=("lighteval",),

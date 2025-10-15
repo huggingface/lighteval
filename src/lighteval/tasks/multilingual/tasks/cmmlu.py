@@ -33,9 +33,6 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
 CMMLU_SUBSETS = [
     "agronomy",
     "anatomy",
@@ -107,7 +104,7 @@ CMMLU_SUBSETS = [
 ]
 
 
-cmmlu_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"cmmlu_{Language.CHINESE.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(

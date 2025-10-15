@@ -31,9 +31,6 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language, manage_duplicate_language_codes
 
 
-TASKS_TABLE = []
-
-
 flores_200_languages = [
     # "ace_Arab",
     "ace_Latn",
@@ -249,7 +246,7 @@ def flores_adapter(lang1, lang2):
     }
 
 
-flores200_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"flores200:{lang1}-{lang2}",
         prompt_function=get_translation_prompt_function(

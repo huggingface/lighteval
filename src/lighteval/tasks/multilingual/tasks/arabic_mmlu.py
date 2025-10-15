@@ -33,9 +33,6 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
 ARABIC_MMLU_SUBSETS = [
     "Islamic Studies",
     "Islamic Studies (Middle School)",
@@ -80,7 +77,7 @@ ARABIC_MMLU_SUBSETS = [
 ]
 
 
-arabic_mmlu_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"mmlu_{Language.ARABIC.value}_{formulation.name.lower()}:{normalize_subset(subset)}",
         prompt_function=get_mcq_prompt_function(

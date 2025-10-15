@@ -36,10 +36,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-xnli_indic_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"indicnxnli_{language.value}_{formulation.name.lower()}",
         suite=["lighteval"],

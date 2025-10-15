@@ -27,10 +27,7 @@ from lighteval.tasks.templates.qa import get_qa_prompt_function
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-sber_squad_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"sber_squad_{Language.RUSSIAN.value}",
         prompt_function=get_qa_prompt_function(

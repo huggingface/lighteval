@@ -37,9 +37,6 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
 CEVAL_SUBSET = [
     "computer_network",
     "operating_system",
@@ -96,7 +93,7 @@ CEVAL_SUBSET = [
 ]
 
 
-ceval_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"ceval_{Language.CHINESE.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(

@@ -29,10 +29,7 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.utils.language import Language
 
 
-TASKS_TABLE = []
-
-
-french_boolq_tasks = [
+TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"community_boolq_{Language.FRENCH.value}",
         prompt_function=get_boolq_prompt_function(
