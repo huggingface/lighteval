@@ -23,7 +23,6 @@ import string
 import unicodedata
 from collections import Counter
 
-import emoji
 import nltk
 
 from lighteval.utils.imports import is_package_available, requires
@@ -34,6 +33,9 @@ if is_package_available("syllapy"):
 
 if is_package_available("spacy"):
     import spacy
+
+if is_package_available("emoji"):
+    import emoji
 
 import lighteval.tasks.tasks.ifeval.instructions_utils as instructions_util
 
