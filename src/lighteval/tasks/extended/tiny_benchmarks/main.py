@@ -75,6 +75,7 @@ class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
     LEADEBRBOARD_SCENARIOS = ["truthfulqa", "gsm8k", "winogrande", "arc", "hellaswag"]
     BENCHS = ["lb", "mmlu"]
     METRICS = ["irt", "pirt", "gpirt"]
+    PATH_DLD = os.path.join(pathlib.Path(__file__).parent.resolve(), "tinyBenchmarks.pkl")
     # Not included yet:
     # - helm_lite (not avail on datasets)
     # - alpaca (needs to be added to lighteval first)
@@ -92,14 +93,13 @@ class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
 
     def download(self):
         # Likely to crash in // processes if we don't include the pkl
-        path_dld = os.path.join(pathlib.Path(__file__).parent.resolve(), "tinyBenchmarks.pkl")
         # Downloading files
-        if not os.path.isfile(path_dld):
+        if not os.path.isfile(self.PATH_DLD):
             url = "https://raw.githubusercontent.com/felipemaiapolo/tinyBenchmarks/main/tinyBenchmarks/tinyBenchmarks.pkl"
             response = requests.get(url)
             if response.status_code == 200:
                 # Write the content to a file
-                with open(path_dld, "wb") as file:
+                with open(self.PATH_DLD, "wb") as file:
                     file.write(response.content)
 
     def compute(self, **args):
@@ -110,7 +110,7 @@ class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
                 ).compute(**args)
                 return dict.fromkeys(self.METRICS, res)
             else:
-                res = Metrics.gpqa_instruct_pass_at_k(sample_params={"k": 1}).compute(**args)
+                res = Metrics.gpqa_instruct_pass_at_k(sample_params={"k": 1, "n": 1}).sample_level_fn.compute(**args)
                 return dict.fromkeys(self.METRICS, res)
 
         else:
@@ -122,7 +122,7 @@ class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
             return self.estimates[self.task]
 
         # We load the weights for the relevant examples
-        with open("extended_tasks/tiny_benchmarks/tinyBenchmarks.pkl", "rb") as handle:
+        with open(self.PATH_DLD, "rb") as handle:
             tinyBenchmarks = pickle.load(handle)
 
         seen_examples = tinyBenchmarks[self.scenario]["seen_examples"]
@@ -194,6 +194,7 @@ task_params = [
         "dataset": "tinyBenchmarks/tinyWinogrande",
         "subset": "winogrande_xl",
         "prompt": prompt.winogrande,
+        "prompt_gen": prompt.winogrande_gen,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -202,6 +203,7 @@ task_params = [
         "dataset": "tinyBenchmarks/tinyAI2_arc",
         "subset": "ARC-Challenge",
         "prompt": prompt.arc,
+        "prompt_gen": prompt.arc_with_options_letters_predict,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -210,6 +212,7 @@ task_params = [
         "dataset": "tinyBenchmarks/tinyHellaswag",
         "subset": "default",
         "prompt": prompt.hellaswag_harness,
+        "prompt_gen": prompt.hellaswag_generative,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -218,6 +221,7 @@ task_params = [
         "dataset": "tinyBenchmarks/tinyMMLU",
         "subset": "all",
         "prompt": prompt.mmlu_harness,
+        "prompt_gen": prompt.mmlu_harness,
         "splits": ["validation", "dev", "test"],
         "evaluation_split": ["test"],
     },
@@ -226,6 +230,7 @@ task_params = [
         "dataset": "tinyBenchmarks/tinyTruthfulQA",
         "subset": "multiple_choice",
         "prompt": prompt.truthful_qa_multiple_choice,
+        "prompt_gen": None,
         "splits": ["validation"],
         "evaluation_split": ["validation"],
     },
@@ -234,6 +239,7 @@ task_params = [
         "dataset": "tinyBenchmarks/tinyGSM8k",
         "subset": "main",
         "prompt": prompt.gsm8k,
+        "prompt_gen": prompt.gsm8k,
         "splits": ["train", "test"],
         "evaluation_split": ["test"],
     },
@@ -243,45 +249,6 @@ task_params = [
     #        "subset": "default"
     #    },
 ]
-
-TASKS_TABLE = []
-for task in task_params:
-    name = task["name"]
-    generation_size = None
-    stop_sequence = None
-    if name == "gsm8k":
-        generation_size = 256
-        stop_sequence = ["Question:", "Question"]
-    task = LightevalTaskConfig(
-        name=f"tiny:{name}",
-        prompt_function=task["prompt"],
-        suite=["extended"],
-        hf_repo=task["dataset"],
-        hf_subset=task["subset"],
-        hf_avail_splits=task["splits"],
-        evaluation_splits=task["evaluation_split"],
-        few_shots_split=None,
-        few_shots_select="random_sampling",
-        metrics=[f"tinybench_metric_{name}"],
-        generation_size=generation_size,
-        stop_sequence=stop_sequence,
-    )
-    TASKS_TABLE.append(task)
-
-    task_gen = LightevalTaskConfig(
-        name=f"gen_tiny:{name}",
-        prompt_function=task["prompt"],
-        suite=["extended"],
-        hf_repo=task["dataset"],
-        hf_subset=task["subset"],
-        hf_avail_splits=task["splits"],
-        evaluation_splits=task["evaluation_split"],
-        few_shots_split=None,
-        few_shots_select="random_sampling",
-        generation_size=32768,  # needed for reasoning models like R1
-        metrics=[f"gen_tinybench_metric_{name}"],
-    )
-    TASKS_TABLE.append(task_gen)
 
 # CUSTOM METRIC
 for task_param in task_params:
@@ -314,3 +281,47 @@ for task_param in task_params:
             corpus_level_fn=TinyCorpusAggregator(name, generative=True),
         ),
     )
+
+TASKS_TABLE = []
+for task in task_params:
+    name = task["name"]
+    generation_size = None
+    stop_sequence = None
+    if name == "gsm8k":
+        generation_size = 256
+        stop_sequence = ["Question:", "Question"]
+    task_config = LightevalTaskConfig(
+        name=f"tiny:{name}",
+        prompt_function=task["prompt"],
+        suite=["extended"],
+        hf_repo=task["dataset"],
+        hf_subset=task["subset"],
+        hf_avail_splits=task["splits"],
+        evaluation_splits=task["evaluation_split"],
+        few_shots_split=None,
+        few_shots_select="random_sampling",
+        metrics=[Metrics[f"tinybench_metric_{name}"]],
+        generation_size=generation_size,
+        stop_sequence=stop_sequence,
+    )
+    TASKS_TABLE.append(task_config)
+
+    # Truthful QA is hard to evaluate because of the multiple golds
+    # We skip in generative mode
+    if name == "truthfulqa":
+        continue
+
+    task_gen_config = LightevalTaskConfig(
+        name=f"gen_tiny:{name}",
+        prompt_function=task["prompt_gen"],
+        suite=["extended"],
+        hf_repo=task["dataset"],
+        hf_subset=task["subset"],
+        hf_avail_splits=task["splits"],
+        evaluation_splits=task["evaluation_split"],
+        few_shots_split=None,
+        few_shots_select="random_sampling",
+        generation_size=32768,  # needed for reasoning models like R1
+        metrics=[Metrics[f"gen_tinybench_metric_{name}"]],
+    )
+    TASKS_TABLE.append(task_gen_config)

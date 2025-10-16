@@ -2617,6 +2617,25 @@ def winogrande(line, task_name: str = None):
     )
 
 
+def winogrande_gen(line, task_name: str = None):
+    gold_index = int(line["answer"]) - 1 if line["answer"] != "" else -1
+    if gold_index == -1:  # can't process sample
+        return None
+
+    query, end_of_target = line["sentence"].split("_")
+    query += "Choices:\n"
+    query += f"A. {line['option1']} {end_of_target}\n"
+    query += f"B. {line['option2']} {end_of_target}\n"
+    query += "Answer:"
+    end_of_target = end_of_target.strip()
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=["A", "B"],
+        gold_index=gold_index,
+    )
+
+
 def wnli(line, task_name: str = None):
     return Doc(
         task_name=task_name,
