@@ -29,7 +29,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 winogrande = LightevalTaskConfig(
     name="winogrande",
-    suite=["leaderboard"],
+    suite=["lighteval"],
     prompt_function=prompt.winogrande,
     hf_repo="allenai/winogrande",
     hf_subset="winogrande_xl",

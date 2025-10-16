@@ -46,7 +46,7 @@ def inspect(
 
     from lighteval.tasks.registry import Registry
 
-    registry = Registry(custom_tasks=custom_tasks, load_community=True, load_extended=True, load_multilingual=True)
+    registry = Registry(custom_tasks=custom_tasks, load_multilingual=True)
 
     # Loading task
     task_dict = registry.load_tasks()
@@ -75,7 +75,7 @@ def list(
     """List all tasks"""
     from lighteval.tasks.registry import Registry
 
-    registry = Registry(custom_tasks=custom_tasks, load_community=True, load_extended=True, load_multilingual=True)
+    registry = Registry(custom_tasks=custom_tasks, load_multilingual=True)
     registry.print_all_tasks(suites=suites)
 
 
