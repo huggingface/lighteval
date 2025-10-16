@@ -93,6 +93,7 @@ class PipelineParameters:
     reasoning_tags: str | list[tuple[str, str]] = "[('<think>', '</think>')]"
     load_responses_from_details_date_id: str | None = None
     bootstrap_iters: int = 1000
+    load_tasks_multilingual: bool = False
 
     def __post_init__(self):  # noqa C901
         if not isinstance(self.reasoning_tags, list):
@@ -209,7 +210,7 @@ class Pipeline:
         logger.info("--- LOADING TASKS ---")
 
         # The registry contains all the potential tasks
-        self.registry = Registry(tasks=tasks, load_multilingual=False)
+        self.registry = Registry(tasks=tasks, load_multilingual=self.pipeline_parameters.load_tasks_multilingual)
 
         # load the tasks from the configs and their datasets
         self.tasks_dict: dict[str, LightevalTask] = self.registry.load_tasks()
