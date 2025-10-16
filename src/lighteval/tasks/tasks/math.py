@@ -19,6 +19,7 @@ https://arxiv.org/abs/2305.20050
 
 import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.normalizations import math_normalizer
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
@@ -33,7 +34,16 @@ math_algebra = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.exact_match],
+    metrics=[
+        Metrics.maj_at_n(
+            sample_params={
+                "n": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=1,
 )
@@ -49,7 +59,16 @@ math_counting_and_probability = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.exact_match],
+    metrics=[
+        Metrics.maj_at_n(
+            sample_params={
+                "n": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=1,
 )
@@ -65,7 +84,16 @@ math_geometry = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.exact_match],
+    metrics=[
+        Metrics.maj_at_n(
+            sample_params={
+                "n": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=1,
 )
@@ -81,7 +109,16 @@ math_intermediate_algebra = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.exact_match],
+    metrics=[
+        Metrics.maj_at_n(
+            sample_params={
+                "n": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=1,
 )
@@ -97,7 +134,16 @@ math_number_theory = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.exact_match],
+    metrics=[
+        Metrics.maj_at_n(
+            sample_params={
+                "n": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=1,
 )
@@ -113,7 +159,16 @@ math_prealgebra = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.exact_match],
+    metrics=[
+        Metrics.maj_at_n(
+            sample_params={
+                "n": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=1,
 )
@@ -129,7 +184,16 @@ math_precalculus = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.exact_match],
+    metrics=[
+        Metrics.maj_at_n(
+            sample_params={
+                "n": 4,
+                "strip_strings": True,
+                "normalize_pred": math_normalizer,
+                "normalize_gold": math_normalizer,
+            }
+        ),
+    ],
     stop_sequence=["\n"],
     version=1,
 )

@@ -41,7 +41,10 @@ import numpy as np
 from tqdm import tqdm
 
 
-sys.set_int_max_str_digits(50000)
+try:
+    sys.set_int_max_str_digits(50000)
+except AttributeError:
+    print("You likely won't be able to run codegen metrics on your system.")
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

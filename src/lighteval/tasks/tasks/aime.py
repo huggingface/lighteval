@@ -40,7 +40,22 @@ aime24 = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metrics=[Metrics.pass_at_k_math(sample_params={"k": 1})],
+    metrics=[Metrics.pass_at_k_math(sample_params={"k": 1}), Metrics.avg_at_n_math(sample_params={"n": 1})],
+    version=2,
+)
+
+aime24_avg = LightevalTaskConfig(
+    name="aime24_avg",
+    suite=["lighteval"],
+    prompt_function=prompt.aime_prompt_fn,
+    hf_repo="HuggingFaceH4/aime_2024",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=None,
+    metrics=[Metrics.avg_at_n_math(sample_params={"n": 64})],
     version=2,
 )
 
@@ -54,7 +69,7 @@ aime24_gpassk = LightevalTaskConfig(
     evaluation_splits=["train"],
     few_shots_split=None,
     few_shots_select=None,
-    generation_size=8192,
+    generation_size=None,
     metrics=[Metrics.g_pass_at_k_math(sample_params={"k": 16, "n": 48})],
     version=1,
 )
@@ -69,8 +84,23 @@ aime25 = LightevalTaskConfig(
     evaluation_splits=["train"],
     few_shots_split=None,
     few_shots_select=None,
-    generation_size=10000,
-    metrics=[Metrics.pass_at_k_math(sample_params={"k": 1, "n": 1})],
+    generation_size=None,
+    metrics=[Metrics.pass_at_k_math(sample_params={"k": 1, "n": 1}), Metrics.avg_at_n_math(sample_params={"n": 1})],
+    version=2,
+)
+
+aime25_avg = LightevalTaskConfig(
+    name="aime25_avg",
+    suite=["lighteval"],
+    prompt_function=prompt.aime_prompt_fn,
+    hf_repo="yentinglin/aime_2025",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=None,
+    metrics=[Metrics.avg_at_n_math(sample_params={"n": 64})],
     version=2,
 )
 
@@ -84,7 +114,7 @@ aime25_gpassk = LightevalTaskConfig(
     evaluation_splits=["train"],
     few_shots_split=None,
     few_shots_select=None,
-    generation_size=8192,
+    generation_size=None,
     metrics=[Metrics.g_pass_at_k_math(sample_params={"k": 16, "n": 48})],
     version=1,
 )

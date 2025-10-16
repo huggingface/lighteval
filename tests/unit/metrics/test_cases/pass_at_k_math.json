@@ -16,7 +16,7 @@
         "text": ["4", "5"]
       },
       "expected_output": {
-        "pass@k_with_k&n": 0.5
+        "pass@k:k=1&n=2": 0.5
       },
       "tolerance": 0.01,
       "description": "Test pass at k math with correct math answer"
@@ -35,7 +35,7 @@
         "text": ["5", "6"]
       },
       "expected_output": {
-        "pass@k_with_k&n": 0.0
+        "pass@k:k=1&n=2": 0.0
       },
       "tolerance": 0.01,
       "description": "Test pass at k math with wrong math answer"
@@ -54,7 +54,7 @@
         "text": ["10", "12", "15"]
       },
       "expected_output": {
-        "pass@k_with_k&n": 0.66
+        "pass@k:k=2&n=3": 0.66
       },
       "tolerance": 0.01,
       "description": "Test pass at k math with multiple attempts"
