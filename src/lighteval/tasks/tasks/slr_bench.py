@@ -37,9 +37,16 @@ else:
 logger = logging.getLogger(__name__)
 
 
-@requires("pyswip", "evaluate")
+@requires("evaluate")
 def prompt_fn(line: dict, task_name: str):
     """Defines how to go from a dataset line to a doc object."""
+    # Check for SWI-Prolog installation
+    import shutil
+
+    if shutil.which("swipl") is None:
+        raise ImportError(
+            "SWI-Prolog (swipl) is not installed or not in PATH. Please install SWI-Prolog to use this task. "
+        )
 
     return Doc(
         task_name=task_name, query=line["prompt"], choices=[str(line.get("validation program", ""))], gold_index=0
@@ -48,9 +55,9 @@ def prompt_fn(line: dict, task_name: str):
 
 class VerifiableRewardMetric(SampleLevelComputation):
     # Load the symbolic judge for evaluating Prolog programs
-    symbolic_judge = load("AIML-TUDA/VerifiableRewardsForScalableLogicalReasoning")
 
     def compute(self, doc, model_response, **kwargs):
+        symbolic_judge = load("AIML-TUDA/VerifiableRewardsForScalableLogicalReasoning")
         try:
             prediction = model_response.final_text[0]
             validation_program = doc.choices[0] if doc.choices else ""
@@ -61,7 +68,7 @@ class VerifiableRewardMetric(SampleLevelComputation):
                 }
             ]
 
-            results = self.symbolic_judge.compute(predictions=[prediction], references=ref_format)
+            results = symbolic_judge.compute(predictions=[prediction], references=ref_format)
             return results["accuracy"]
 
         except Exception as e:

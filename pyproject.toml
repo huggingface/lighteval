@@ -109,7 +109,7 @@ extended_tasks = [
   "openai>1.87", # llm as a judge using openai models
   "tiktoken",
   "emoji", "spacy", "syllapy",  # ifbench
-  "evaluate", "pyswip", # slr_bench
+  "evaluate", # slr_bench
 ]
 s3 = ["s3fs"]
 multilingual = [
