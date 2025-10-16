@@ -39,14 +39,10 @@ sample-by-sample results* to debug and see how your models stack-up.
 
 ## Available Tasks
 
-Lighteval supports **1000+ evaluation tasks** across multiple domains and languages. Here's an overview of some *popular benchmarks*:
-
-<iframe
-	src="https://saylortwift-benchmark-finder.hf.space"
-	frameborder="0"
-	width="950"
-	height="550"
-></iframe>
+Lighteval supports **1000+ evaluation tasks** across multiple domains and
+languages. Use [this
+space](https://huggingface.co/spaces/SaylorTwift/benchmark_finder) to find what
+you need, or, here's an overview of some *popular benchmarks*:
 
 
 ### 📚 **Knowledge**
