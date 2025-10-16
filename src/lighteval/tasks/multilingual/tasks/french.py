@@ -23,9 +23,9 @@ import random
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import math_normalizer
 from lighteval.tasks.default_prompts import LETTER_INDICES
-from lighteval.tasks.extended.ifeval.main import ifeval_metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
+from lighteval.tasks.tasks.ifeval.main import ifeval_metrics
 from lighteval.utils.utils import as_list
 
 

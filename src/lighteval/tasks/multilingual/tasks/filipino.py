@@ -41,7 +41,6 @@ from lighteval.metrics.normalizations import (
 )
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.multilingual.tasks import MMLU_SUBSETS
 from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
@@ -54,6 +53,66 @@ from lighteval.tasks.templates.utils.formulation import (
 )
 from lighteval.utils.language import Language, iso_639_3_ind_to_iso_639_3_macro
 
+
+MMLU_SUBSETS = [
+    "abstract_algebra",
+    "anatomy",
+    "astronomy",
+    "business_ethics",
+    "clinical_knowledge",
+    "college_biology",
+    "college_chemistry",
+    "college_computer_science",
+    "college_mathematics",
+    "college_medicine",
+    "college_physics",
+    "computer_security",
+    "conceptual_physics",
+    "econometrics",
+    "electrical_engineering",
+    "elementary_mathematics",
+    "formal_logic",
+    "global_facts",
+    "high_school_biology",
+    "high_school_chemistry",
+    "high_school_computer_science",
+    "high_school_european_history",
+    "high_school_geography",
+    "high_school_government_and_politics",
+    "high_school_macroeconomics",
+    "high_school_mathematics",
+    "high_school_microeconomics",
+    "high_school_physics",
+    "high_school_psychology",
+    "high_school_statistics",
+    "high_school_us_history",
+    "high_school_world_history",
+    "human_aging",
+    "human_sexuality",
+    "international_law",
+    "jurisprudence",
+    "logical_fallacies",
+    "machine_learning",
+    "management",
+    "marketing",
+    "medical_genetics",
+    "miscellaneous",
+    "moral_disputes",
+    "moral_scenarios",
+    "nutrition",
+    "philosophy",
+    "prehistory",
+    "professional_accounting",
+    "professional_law",
+    "professional_medicine",
+    "professional_psychology",
+    "public_relations",
+    "security_studies",
+    "sociology",
+    "us_foreign_policy",
+    "virology",
+    "world_religions",
+]
 
 # Balita NLP
 FILIPINO_BALITA_TASKS = [
@@ -140,7 +199,6 @@ FILIPINO_CEBUANER_TASKS = [
         few_shots_select="random",
         suite=["community"],
         generation_size=-1,
-        trust_dataset=True,
         metrics=get_metrics_for_formulation(
             formulation,
             [
@@ -191,7 +249,6 @@ FILIPINO_READABILITY_TASKS = [
         few_shots_split="test",
         few_shots_select="random",
         generation_size=-1,
-        trust_dataset=True,
         version=0,
     )
     for formulation in [MCFFormulation(), HybridFormulation()]
@@ -233,14 +290,13 @@ FILIPINO_DENGUE_TASKS = [
         hf_subset="default",
         prompt_function=filipino_dengue_pfn,
         hf_repo="jcblaise/dengue_filipino",
-        metrics=[Metrics.loglikelihood_acc_norm],
+        metrics=[LogLikelihoodAccMetric(normalization=LogProbTokenNorm())],
         hf_avail_splits=["train", "test", "validation"],
         evaluation_splits=["train"],
         few_shots_split="train",
         few_shots_select="random",
         suite=("community",),
         generation_size=-1,
-        trust_dataset=True,
         version=0,
     )
     for subset in dengue_filipino_subsets
@@ -276,7 +332,6 @@ FILIPINO_FIRECS_TASK = [
         few_shots_select="random",
         suite=["community"],
         generation_size=-1,
-        trust_dataset=True,
         version=0,
     )
     for formulation in [MCFFormulation(), HybridFormulation()]
@@ -360,7 +415,6 @@ FILIPINO_INCLUDE_TASKS = [
         few_shots_split="test",
         few_shots_select="random",
         generation_size=-1,
-        trust_dataset=True,
         version=0,
     )
     for subset in ["culturology", "history", "language", "driving_license"]
@@ -422,7 +476,6 @@ FILIPINO_NEWSPH_NLI_TASKS = [
                 LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
-        trust_dataset=True,
     )
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
@@ -455,7 +508,6 @@ FILIPINO_NTREX_TASK = [
         few_shots_split=None,
         few_shots_select=None,
         generation_size=64,
-        trust_dataset=True,
         version=0,
     )
     for language in ["fil_Latn"]
@@ -509,7 +561,6 @@ def create_sib200_task(language: Language, formulation):
         few_shots_split="validation",
         few_shots_select="random",
         generation_size=-1,
-        trust_dataset=True,
         version=0,
     )
 
@@ -565,7 +616,6 @@ FILIPINO_STINGRAY_CORRECTNESS_TASKS = [
         few_shots_split="test",
         few_shots_select="random",
         generation_size=-1,
-        trust_dataset=True,
         version=0,
     )
     for formulation in [MCFFormulation(), HybridFormulation()]
@@ -595,7 +645,6 @@ FILIPINO_STINGRAY_SEMANTIC_TASKS = [
         few_shots_split="test",
         few_shots_select="random",
         generation_size=-1,
-        trust_dataset=True,
         version=0,
     )
     for formulation in [MCFFormulation(), HybridFormulation()]
@@ -642,7 +691,6 @@ FILIPINO_TATOEBA_TASKS = [
         ],
         hf_avail_splits=["test"],
         evaluation_splits=["test"],
-        trust_dataset=True,
         generation_size=64,
     )
     for language, meta in lang_dict.items()
@@ -675,7 +723,6 @@ FILIPINO_TICO19_TASKS = [
         evaluation_splits=["validation"],
         few_shots_split=["validation"],
         few_shots_select="random",
-        trust_dataset=True,
         generation_size=64,
     )
 ]
@@ -704,7 +751,6 @@ FILIPINO_TLUNIFIED_NER_TASK = [
         few_shots_select="random",
         suite=["community"],
         generation_size=-1,
-        trust_dataset=True,
         metrics=get_metrics_for_formulation(
             formulation,
             [
@@ -748,7 +794,6 @@ def create_universalner_task(language: Language, formulation):
         few_shots_select="random",
         suite=["community"],
         generation_size=-1,
-        trust_dataset=True,
         metrics=get_metrics_for_formulation(
             formulation,
             [

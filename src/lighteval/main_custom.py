@@ -26,9 +26,9 @@ from typer import Argument
 from typing_extensions import Annotated
 
 from lighteval.cli_args import (
-    custom_tasks,
     dataset_loading_processes,
     job_id,
+    load_tasks_multilingual,
     max_samples,
     num_fewshot_seeds,
     output_dir,
@@ -55,8 +55,8 @@ def custom(
     model_definition_file_path: Annotated[str, Argument(help="The model definition file path to evaluate")],
     tasks: tasks.type,
     # === Common parameters ===
+    load_tasks_multilingual: load_tasks_multilingual.type = load_tasks_multilingual.default,
     dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
-    custom_tasks: custom_tasks.type = custom_tasks.default,
     num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
     remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
     reasoning_tags: reasoning_tags.type = reasoning_tags.default,
@@ -97,11 +97,11 @@ def custom(
         launcher_type=parallelism_manager,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
-        custom_tasks_directory=custom_tasks,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         remove_reasoning_tags=remove_reasoning_tags,
         reasoning_tags=reasoning_tags,
+        load_tasks_multilingual=load_tasks_multilingual,
     )
     pipeline = Pipeline(
         tasks=tasks,
