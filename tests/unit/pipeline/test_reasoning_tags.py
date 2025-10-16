@@ -22,9 +22,7 @@
 
 import tempfile
 import unittest
-from pathlib import Path
-from types import ModuleType
-from typing import Optional, Union
+from typing import Optional
 from unittest.mock import patch
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -95,9 +93,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
                 return task._docs
 
         class FakeRegistry(Registry):
-            def __init__(
-                self, tasks: Optional[str] = None, custom_tasks: Optional[Union[str, Path, ModuleType]] = None
-            ):
+            def __init__(self, tasks: Optional[str] = None, load_multilingual: bool = False):
                 self.tasks_list = [input_task_name]
                 # suite_name, task_name, few_shot = input_task_name.split("|")
                 self.task_to_configs = {input_task_name: [task_config]}
