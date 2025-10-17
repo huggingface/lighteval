@@ -28,13 +28,12 @@ import importlib.util
 import logging
 import os
 import sys
+import time
 from functools import lru_cache
 from itertools import groupby
 from pathlib import Path
 from types import ModuleType
 
-import lighteval.tasks.default_tasks as default_tasks
-from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 
 
@@ -114,10 +113,8 @@ class Registry:
     def __init__(
         self,
         tasks: str | Path | None = None,
-        custom_tasks: str | Path | ModuleType | None = None,
-        load_community: bool = False,
-        load_extended: bool = False,
         load_multilingual: bool = False,
+        custom_tasks: str | Path | ModuleType | None = None,
     ):
         """
         Initialize the Registry class.
@@ -130,8 +127,6 @@ class Registry:
                 - A Path object pointing to a custom tasks file
                 - A module object containing custom task configurations
                 - None for default behavior (no custom tasks)
-            load_community: Whether to load community-contributed tasks.
-            load_extended: Whether to load extended tasks with custom logic.
             load_multilingual: Whether to load multilingual tasks.
 
                 Each custom task module should contain a TASKS_TABLE exposing
@@ -146,8 +141,6 @@ class Registry:
                         )
                     ]
         """
-        self._custom_tasks = custom_tasks
-
         if tasks is None:
             logger.warning(
                 "You passed no task name. This should only occur if you are using the CLI to inspect tasks."
@@ -155,16 +148,10 @@ class Registry:
             self.tasks_list = []
         else:
             self.tasks_list = self._get_full_task_list_from_input_string(tasks)
-        # These parameters are dynamically set by the task names provided, thanks to `activate_suites_to_load`,
-        # except in the `tasks` CLI command to display the full list
-        self._load_community = load_community
-        self._load_extended = load_extended
-        self._load_multilingual = load_multilingual
-        self._activate_loading_of_optional_suite()  # we dynamically set the loading parameters
 
-        # We load all task to
-        self._task_registry = self._load_full_registry()
-
+        self._task_registry = Registry.load_all_task_configs(
+            custom_tasks=custom_tasks, load_multilingual=load_multilingual
+        )
         self.task_to_configs = self._update_task_configs()
 
     def _get_full_task_list_from_input_string(self, tasks: str | Path) -> list[str]:
@@ -175,21 +162,7 @@ class Registry:
         else:
             tasks_list = tasks.split(",")
 
-        # We might have tasks provided as task groups in the custom tasks
-        # We load the whole task_groups mapping
-        if self._custom_tasks is None:
-            task_groups = {}
-        else:
-            custom_tasks_module = Registry.create_custom_tasks_module(custom_tasks=self._custom_tasks)
-            tasks_group_dict = {}
-            if hasattr(custom_tasks_module, "TASKS_GROUPS"):
-                tasks_group_dict = custom_tasks_module.TASKS_GROUPS
-
-            # We should allow defining task groups as comma-separated strings or lists of tasks
-            task_groups = {k: v if isinstance(v, list) else v.split(",") for k, v in tasks_group_dict.items()}
-
-        # Then link actual task_group to task list if needed
-        # (At this point the strings are either task name/superset name or group names)
+        task_groups = {}
         expanded_tasks_list: list[str] = []
         for maybe_task_group in tasks_list:
             # We either expand the group (in case it's a group name), or we keep it as is (in case it's a task name or superset name)
@@ -202,76 +175,6 @@ class Registry:
         expanded_tasks_list = list(set(expanded_tasks_list))
 
         return expanded_tasks_list
-
-    def _activate_loading_of_optional_suite(self) -> None:
-        """Dynamically selects which of the optional suite we want to load."""
-        suites = {task.split("|")[0] for task in self.tasks_list}
-
-        for suite_name in suites:
-            if suite_name not in DEFAULT_SUITES:
-                logger.warning(
-                    f"Suite {suite_name} unknown. This is not normal, unless you are testing adding new evaluations."
-                )
-
-        if "extended" in suites:
-            self._load_extended = True
-        if "multilingual" in suites:
-            self._load_multilingual = True
-        if "community" in suites:
-            self._load_community = True
-
-    def _load_full_registry(self) -> dict[str, LightevalTaskConfig]:
-        """
-        Returns:
-            dict[str, LightevalTaskConfig]: A dictionary mapping task names (suite|task) to their corresponding LightevalTask classes.
-
-        Example:
-            {
-                "lighteval|arc_easy": LightevalTaskConfig(name="arc_easy", suite="lighteval", ...),
-            }
-        """
-        custom_tasks_registry = {}
-        custom_tasks_module = []
-        custom_task_configs = []
-
-        if self._custom_tasks is not None:
-            custom_tasks_module.append(Registry.create_custom_tasks_module(custom_tasks=self._custom_tasks))
-
-        # Need to load extended tasks
-        if self._load_extended:
-            for extended_task_module in AVAILABLE_EXTENDED_TASKS_MODULES:
-                custom_tasks_module.append(extended_task_module)
-
-        # Need to load community tasks
-        if self._load_community:
-            community_modules = load_community_tasks()
-            for community_task_module in community_modules:
-                custom_tasks_module.append(community_task_module)
-
-        # Need to load multilingual tasks
-        if self._load_multilingual:
-            import lighteval.tasks.multilingual.tasks as multilingual_tasks
-
-            custom_tasks_module.append(multilingual_tasks)
-
-        # We load all
-        for module in custom_tasks_module:
-            custom_task_configs.extend(module.TASKS_TABLE)
-            logger.info(f"Found {len(module.TASKS_TABLE)} custom tasks in {module.__file__}")
-
-        if len(custom_task_configs) > 0:
-            custom_tasks_registry = Registry.create_task_config_dict(meta_table=custom_task_configs)
-
-        default_tasks_registry = Registry.create_task_config_dict()
-
-        # Check the overlap between default_tasks_registry and custom_tasks_registry
-        intersection = set(default_tasks_registry.keys()).intersection(set(custom_tasks_registry.keys()))
-        if len(intersection) > 0:
-            logger.warning(
-                f"Following tasks ({intersection}) exists both in the default and custom tasks. Will use the custom ones on conflict."
-            )
-
-        return {**default_tasks_registry, **custom_tasks_registry}
 
     def _update_task_configs(self) -> dict[str, LightevalTaskConfig]:  # noqa: C901
         """
@@ -401,26 +304,68 @@ class Registry:
             return importlib.import_module(str(custom_tasks))
 
     @staticmethod
-    def create_task_config_dict(meta_table: list[LightevalTaskConfig] | None = None) -> dict[str, LightevalTaskConfig]:
-        """Create configuration tasks based on the provided meta_table.
+    def _extract_configs(module: ModuleType) -> dict[str, LightevalTaskConfig]:
+        configs = {}
+        if hasattr(module, "TASKS_TABLE"):
+            for config in getattr(module, "TASKS_TABLE"):
+                configs[f"{config.suite[0]}|{config.name}"] = config
+        return configs
 
-        Args:
-            meta_table: meta_table containing tasks
-                configurations. If not provided, it will be loaded from TABLE_PATH.
+    @staticmethod
+    def _load_from_files(files: list[Path], module_prefix: str) -> dict[str, LightevalTaskConfig]:
+        configs = {}
+        for task_file in files:
+            module_name = task_file.stem
+            module = importlib.import_module(f"{module_prefix}.{module_name}")
+            configs.update(Registry._extract_configs(module))
+        return configs
 
-        Returns:
-            Dict[str, LightevalTaskConfig]: A dictionary of task names mapped to their corresponding LightevalTaskConfig.
-        """
-        if meta_table is None:
-            meta_table = [config for config in vars(default_tasks).values() if isinstance(config, LightevalTaskConfig)]
+    @staticmethod
+    def _load_from_subdirs(subdirs: list[Path]) -> dict[str, LightevalTaskConfig]:
+        configs = {}
+        for task_dir in subdirs:
+            module_name = task_dir.name
+            module = importlib.import_module(f"lighteval.tasks.tasks.{module_name}.main")
+            configs.update(Registry._extract_configs(module))
+        return configs
 
-        tasks_with_config: dict[str, LightevalTaskConfig] = {}
-        for config in meta_table:
-            for suite in config.suite:
-                if suite in DEFAULT_SUITES:
-                    tasks_with_config[f"{suite}|{config.name}"] = config
+    @staticmethod
+    def load_all_task_configs(
+        custom_tasks: str | Path | None = None, load_multilingual: bool = False
+    ) -> dict[str, LightevalTaskConfig]:
+        """Load all LightevalTaskConfig objects from all Python files in the tasks/ directory."""
+        time_start = time.perf_counter()
+        # Get the tasks directory
+        TASKS_DIR = Path(__file__).parent / "tasks"
+        TASKS_DIR_MULTILINGUAL = Path(__file__).parent / "multilingual" / "tasks"
+        loaded_configs = {}
 
-        return tasks_with_config
+        # Get all Python files in the tasks directory (excluding __init__.py)
+        task_files = [f for f in TASKS_DIR.glob("*.py") if f.name != "__init__.py"]
+        task_files_multilingual = [f for f in TASKS_DIR_MULTILINGUAL.glob("*.py") if f.name != "__init__.py"]
+
+        # Also get all subdirectories with main.py files
+        task_subdirs = [d for d in TASKS_DIR.iterdir() if d.is_dir() and (d / "main.py").exists()]
+
+        loaded_configs.update(Registry._load_from_files(task_files, "lighteval.tasks.tasks"))
+        if load_multilingual:
+            loaded_configs.update(
+                Registry._load_from_files(task_files_multilingual, "lighteval.tasks.multilingual.tasks")
+            )
+        loaded_configs.update(Registry._load_from_subdirs(task_subdirs))
+
+        if custom_tasks is not None:
+            custom_tasks_module = Registry.create_custom_tasks_module(custom_tasks)
+            custom_tasks_configs = Registry._extract_configs(custom_tasks_module)
+            if set(custom_tasks_configs.keys()) & set(loaded_configs.keys()):
+                raise ValueError(
+                    f"Custom tasks {custom_tasks} conflict with built-in tasks, please use a different name. Conflicting tasks: {set(custom_tasks_configs.keys()) & set(loaded_configs.keys())}"
+                )
+            loaded_configs.update(custom_tasks_configs)
+
+        time_end = time.perf_counter()
+        logger.info(f"Loaded {len(loaded_configs)} task configs in {time_end - time_start:.1f} seconds")
+        return loaded_configs
 
     def print_all_tasks(self, suites: str | None = None):
         """Print all the tasks in the task registry.

@@ -25,6 +25,9 @@
   <a href="https://huggingface.co/docs/lighteval/main/en/index" target="_blank">
     <img alt="Documentation" src="https://img.shields.io/badge/Documentation-4F4F4F?style=for-the-badge&logo=readthedocs&logoColor=white" />
   </a>
+  <a href="https://huggingface.co/spaces/SaylorTwift/benchmark_finder" target="_blank">
+    <img alt="Open Benchmark Index" src="https://img.shields.io/badge/Open%20Benchmark%20Index-4F4F4F?style=for-the-badge&logo=huggingface&logoColor=white" />
+  </a>
 </p>
 
 ---
@@ -39,7 +42,10 @@ sample-by-sample results* to debug and see how your models stack-up.
 
 ## Available Tasks
 
-Lighteval supports **7,000+ evaluation tasks** across multiple domains and languages. Here's an overview of some *popular benchmarks*:
+Lighteval supports **1000+ evaluation tasks** across multiple domains and
+languages. Use [this
+space](https://huggingface.co/spaces/SaylorTwift/benchmark_finder) to find what
+you need, or, here's an overview of some *popular benchmarks*:
 
 
 ### 📚 **Knowledge**
@@ -62,7 +68,7 @@ Lighteval supports **7,000+ evaluation tasks** across multiple domains and langu
 
 ### 🌍 **Multilingual Evaluation**
 - **Cross-lingual**: XTREME, Flores200 (200 languages), XCOPA, XQuAD
-- **Language-specific**: 
+- **Language-specific**:
   - **Arabic**: ArabicMMLU
   - **Filipino**: FilBench
   - **French**: IFEval-fr, GPQA-fr, BAC-fr

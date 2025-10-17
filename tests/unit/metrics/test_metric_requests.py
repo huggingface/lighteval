@@ -25,9 +25,9 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import LogProbPMINorm
 from lighteval.metrics.utils.metric_utils import Metric
 from lighteval.models.model_output import ModelResponse
-from lighteval.tasks.default_tasks import xstory_cloze_en_lighteval
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
+from lighteval.tasks.tasks.xstory_cloze import xstory_cloze_en
 from tests.utils import FakeModel, fake_evaluate_task
 
 
@@ -48,9 +48,9 @@ def get_pmi_task(metrics: list[Metric]):
         metrics=metrics,
         suite=["test"],
         prompt_function=dummy_prompt_fc,
-        hf_repo=xstory_cloze_en_lighteval.hf_repo,
-        hf_subset=xstory_cloze_en_lighteval.hf_subset,
-        evaluation_splits=xstory_cloze_en_lighteval.evaluation_splits,
+        hf_repo=xstory_cloze_en.hf_repo,
+        hf_subset=xstory_cloze_en.hf_subset,
+        evaluation_splits=xstory_cloze_en.evaluation_splits,
     )
     # This is manually edited when updating the config and in the post init function
     #  - we need to get a more homogeneous system for naming...
