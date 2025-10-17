@@ -213,8 +213,8 @@ class Pipeline:
         # The registry contains all the potential tasks
         self.registry = Registry(
             tasks=tasks,
-            custom_tasks=self.pipeline_parameters.custom_tasks_directory,
             load_multilingual=self.pipeline_parameters.load_tasks_multilingual,
+            custom_tasks=self.pipeline_parameters.custom_tasks_directory,
         )
 
         # load the tasks from the configs and their datasets

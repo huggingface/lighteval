@@ -106,7 +106,7 @@ def fake_evaluate_task(
     # Create a mock Registry class
 
     class FakeRegistry(Registry):
-        def __init__(self, tasks: Optional[str], load_multilingual: bool = False):
+        def __init__(self, tasks: Optional[str], load_multilingual: bool = False, custom_tasks: Optional[str] = None):
             self.tasks_list = [task_name_fs]
             self.task_to_configs = {task_name_fs: [lighteval_task.config]}
 
