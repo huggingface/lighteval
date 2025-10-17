@@ -39,6 +39,23 @@ truthfulqa_gen = LightevalTaskConfig(
     version=0,
 )
 
+truthfulqa_mc = LightevalTaskConfig(
+    name="truthfulqa:mc",
+    suite=["lighteval"],
+    prompt_function=prompt.truthful_qa_multiple_choice,
+    hf_repo="EleutherAI/truthful_qa_mc",
+    hf_subset="multiple_choice",
+    hf_avail_splits=["validation"],
+    evaluation_splits=["validation"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=-1,
+    metrics=[Metrics.truthfulqa_mc_metrics],
+    stop_sequence=["\n"],
+    version=0,
+)
+
 TASKS_TABLE = [
     truthfulqa_gen,
+    truthfulqa_mc,
 ]
