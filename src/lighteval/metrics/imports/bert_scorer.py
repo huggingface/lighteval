@@ -340,7 +340,6 @@ class BERTScorer:
             lang (str): Language of the sentences; has to specify
                 at least one of `model_type` or `lang`. `lang` needs to be
                 specified when `rescale_with_baseline` is True.
-            return_hash (bool): Return hash code of the setting.
             rescale_with_baseline (bool): Rescale bertscore with pre-computed baseline.
             baseline_path (str): Customized baseline file.
         """
