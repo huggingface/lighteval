@@ -22,6 +22,7 @@
 
 
 from lighteval.cli_args import (
+    custom_tasks,
     dataset_loading_processes,
     load_tasks_multilingual,
     max_samples,
@@ -34,6 +35,7 @@ def baseline(
     tasks: tasks.type,
     load_tasks_multilingual: load_tasks_multilingual.type = load_tasks_multilingual.default,
     dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
     output_dir: output_dir.type = output_dir.default,
     max_samples: max_samples.type = max_samples.default,
 ):
@@ -55,7 +57,7 @@ def baseline(
     from lighteval.tasks.requests import SamplingMethod
     from lighteval.utils.utils import as_list
 
-    registry = Registry(tasks=tasks, load_multilingual=load_tasks_multilingual)
+    registry = Registry(tasks=tasks, custom_tasks=custom_tasks, load_multilingual=load_tasks_multilingual)
     tasks_dict: dict[str, LightevalTask] = registry.load_tasks()
 
     evaluation_tracker = EvaluationTracker(

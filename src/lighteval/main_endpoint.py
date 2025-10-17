@@ -27,6 +27,7 @@ from typing_extensions import Annotated
 
 from lighteval.cli_args import (
     HELP_PANEL_NAME_4,
+    custom_tasks,
     dataset_loading_processes,
     job_id,
     load_responses_from_details_date_id,
@@ -67,6 +68,7 @@ def inference_endpoint(
     # === Common parameters ===
     load_tasks_multilingual: load_tasks_multilingual.type = load_tasks_multilingual.default,
     dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
     num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
     load_responses_from_details_date_id: load_responses_from_details_date_id.type = load_responses_from_details_date_id.default,
     remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
@@ -115,6 +117,7 @@ def inference_endpoint(
         launcher_type=parallelism_manager,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
+        custom_tasks_directory=custom_tasks,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
@@ -150,6 +153,7 @@ def tgi(
     # === Common parameters ===
     load_tasks_multilingual: load_tasks_multilingual.type = load_tasks_multilingual.default,
     dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
     num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
     load_responses_from_details_date_id: load_responses_from_details_date_id.type = load_responses_from_details_date_id.default,
     remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
@@ -196,6 +200,7 @@ def tgi(
         load_tasks_multilingual=load_tasks_multilingual,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
+        custom_tasks_directory=custom_tasks,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
@@ -234,6 +239,7 @@ def litellm(
     load_tasks_multilingual: load_tasks_multilingual.type = load_tasks_multilingual.default,
     dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
     num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
     load_responses_from_details_date_id: load_responses_from_details_date_id.type = load_responses_from_details_date_id.default,
     remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
     reasoning_tags: reasoning_tags.type = reasoning_tags.default,
@@ -288,6 +294,7 @@ def litellm(
         load_tasks_multilingual=load_tasks_multilingual,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
+        custom_tasks_directory=custom_tasks,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
@@ -326,6 +333,7 @@ def inference_providers(
     # === Common parameters ===
     load_tasks_multilingual: load_tasks_multilingual.type = load_tasks_multilingual.default,
     dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
     num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
     # === saving ===
     output_dir: output_dir.type = output_dir.default,
@@ -376,6 +384,7 @@ def inference_providers(
         load_tasks_multilingual=load_tasks_multilingual,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
+        custom_tasks_directory=custom_tasks,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         load_responses_from_details_date_id=None,

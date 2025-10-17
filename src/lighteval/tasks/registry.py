@@ -114,6 +114,7 @@ class Registry:
         self,
         tasks: str | Path | None = None,
         load_multilingual: bool = False,
+        custom_tasks: str | Path | ModuleType | None = None,
     ):
         """
         Initialize the Registry class.
@@ -126,7 +127,6 @@ class Registry:
                 - A Path object pointing to a custom tasks file
                 - A module object containing custom task configurations
                 - None for default behavior (no custom tasks)
-            load_community: Whether to load community-contributed tasks.
             load_multilingual: Whether to load multilingual tasks.
 
                 Each custom task module should contain a TASKS_TABLE exposing
@@ -149,7 +149,9 @@ class Registry:
         else:
             self.tasks_list = self._get_full_task_list_from_input_string(tasks)
 
-        self._task_registry = Registry.load_all_task_configs(load_multilingual=load_multilingual)
+        self._task_registry = Registry.load_all_task_configs(
+            custom_tasks=custom_tasks, load_multilingual=load_multilingual
+        )
         self.task_to_configs = self._update_task_configs()
 
     def _get_full_task_list_from_input_string(self, tasks: str | Path) -> list[str]:
@@ -328,7 +330,9 @@ class Registry:
         return configs
 
     @staticmethod
-    def load_all_task_configs(load_multilingual: bool = False) -> dict[str, LightevalTaskConfig]:
+    def load_all_task_configs(
+        custom_tasks: str | Path | None = None, load_multilingual: bool = False
+    ) -> dict[str, LightevalTaskConfig]:
         """Load all LightevalTaskConfig objects from all Python files in the tasks/ directory."""
         time_start = time.perf_counter()
         # Get the tasks directory
@@ -349,6 +353,15 @@ class Registry:
                 Registry._load_from_files(task_files_multilingual, "lighteval.tasks.multilingual.tasks")
             )
         loaded_configs.update(Registry._load_from_subdirs(task_subdirs))
+
+        if custom_tasks is not None:
+            custom_tasks_module = Registry.create_custom_tasks_module(custom_tasks)
+            custom_tasks_configs = Registry._extract_configs(custom_tasks_module)
+            if set(custom_tasks_configs.keys()) & set(loaded_configs.keys()):
+                raise ValueError(
+                    f"Custom tasks {custom_tasks} conflict with built-in tasks, please use a different name. Conflicting tasks: {set(custom_tasks_configs.keys()) & set(loaded_configs.keys())}"
+                )
+            loaded_configs.update(custom_tasks_configs)
 
         time_end = time.perf_counter()
         logger.info(f"Loaded {len(loaded_configs)} task configs in {time_end - time_start:.1f} seconds")

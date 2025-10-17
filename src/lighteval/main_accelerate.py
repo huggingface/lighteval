@@ -27,6 +27,7 @@ from typing_extensions import Annotated
 
 from lighteval.cli_args import (
     HELP_PANEL_NAME_4,
+    custom_tasks,
     dataset_loading_processes,
     job_id,
     load_responses_from_details_date_id,
@@ -59,6 +60,7 @@ def accelerate(  # noqa C901
     vision_model: Annotated[
         bool, Option(help="Use vision model for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
     ] = False,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
     load_tasks_multilingual: load_tasks_multilingual.type = load_tasks_multilingual.default,
     dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
     num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
@@ -105,6 +107,7 @@ def accelerate(  # noqa C901
     )
     pipeline_params = PipelineParameters(
         launcher_type=ParallelismManager.ACCELERATE,
+        custom_tasks_directory=custom_tasks,
         load_tasks_multilingual=load_tasks_multilingual,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,

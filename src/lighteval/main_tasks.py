@@ -25,7 +25,7 @@ import typer
 from typer import Argument, Option
 from typing_extensions import Annotated
 
-from lighteval.cli_args import load_tasks_multilingual
+from lighteval.cli_args import custom_tasks, load_tasks_multilingual
 
 
 app = typer.Typer()
@@ -34,6 +34,7 @@ app = typer.Typer()
 @app.command()
 def inspect(
     tasks: Annotated[str, Argument(help="Id of tasks or path to a text file with a list of tasks")],
+    custom_tasks: custom_tasks.type = custom_tasks.default,
     num_samples: Annotated[int, Option(help="Number of samples to display")] = 10,
     show_config: Annotated[bool, Option(help="Will display the full task config")] = False,
 ):
@@ -45,7 +46,7 @@ def inspect(
 
     from lighteval.tasks.registry import Registry
 
-    registry = Registry(load_multilingual=True)
+    registry = Registry(custom_tasks=custom_tasks, load_multilingual=True)
 
     # Loading task
     task_dict = registry.load_tasks()
@@ -64,11 +65,12 @@ def inspect(
 @app.command()
 def list(
     load_tasks_multilingual: load_tasks_multilingual.type = load_tasks_multilingual.default,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
 ):
     """List all tasks"""
     from lighteval.tasks.registry import Registry
 
-    registry = Registry(load_multilingual=load_tasks_multilingual)
+    registry = Registry(custom_tasks=custom_tasks, load_multilingual=load_tasks_multilingual)
     registry.print_all_tasks()
 
 

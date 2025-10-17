@@ -58,6 +58,17 @@ dataset_loading_processes = Arg(
     default=1,
 )
 
+custom_tasks = Arg(
+    type=Annotated[
+        Optional[str],
+        Option(
+            help="Path to a Python file containing custom task definitions. The file should define a TASKS_TABLE with LightevalTaskConfig objects.",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ],
+    default=None,
+)
+
 num_fewshot_seeds = Arg(
     type=Annotated[
         int,

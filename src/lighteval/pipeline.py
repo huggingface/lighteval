@@ -86,6 +86,7 @@ class PipelineParameters:
     dataset_loading_processes: int = 1
     nanotron_checkpoint_path: str | None = None  # only for nanotron models
     # Dataset
+    custom_tasks_directory: str | None = None
     num_fewshot_seeds: int = 1
     max_samples: int | None = None
     cot_prompt: str | None = None
@@ -210,7 +211,11 @@ class Pipeline:
         logger.info("--- LOADING TASKS ---")
 
         # The registry contains all the potential tasks
-        self.registry = Registry(tasks=tasks, load_multilingual=self.pipeline_parameters.load_tasks_multilingual)
+        self.registry = Registry(
+            tasks=tasks,
+            custom_tasks=self.pipeline_parameters.custom_tasks_directory,
+            load_multilingual=self.pipeline_parameters.load_tasks_multilingual,
+        )
 
         # load the tasks from the configs and their datasets
         self.tasks_dict: dict[str, LightevalTask] = self.registry.load_tasks()

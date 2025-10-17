@@ -1,8 +1,8 @@
-leaderboard|arc:challenge|25
-leaderboard|truthfulqa:mc|0
-leaderboard|hellaswag|10
-leaderboard|mmlu:college_chemistry|5
-leaderboard|mmlu:us_foreign_policy|5
+lighteval|arc:challenge|25
+lighteval|truthfulqa:mc|0
+lighteval|hellaswag|10
+lighteval|mmlu:college_chemistry|5
+lighteval|mmlu:us_foreign_policy|5
 lighteval|agieval:aqua-rat|0
 lighteval|agieval:logiqa-en|0
 lighteval|agieval:lsat-ar|0
@@ -24,4 +24,4 @@ lighteval|bigbench:snarks|3
 lighteval|bigbench:temporal_sequences|3
 lighteval|bigbench:tracking_shuffled_objects_five_objects|3
 lighteval|bigbench:tracking_shuffled_objects_seven_objects|3
-test|gsm8k|0
+lighteval|gsm8k_test|0

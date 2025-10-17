@@ -99,6 +99,7 @@ def nanotron(
         job_id=os.environ.get("SLURM_JOB_ID", 0),
         nanotron_checkpoint_path=checkpoint_config_path,
         dataset_loading_processes=lighteval_config.tasks.dataset_loading_processes,
+        custom_tasks_directory=lighteval_config.tasks.custom_tasks,
         num_fewshot_seeds=1,
         max_samples=lighteval_config.tasks.max_samples,
         remove_reasoning_tags=remove_reasoning_tags,
