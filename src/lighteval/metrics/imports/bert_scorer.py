@@ -110,7 +110,7 @@ def get_bert_embedding(
 
     Args:
         all_sens (list of str): sentences to encode.
-        model: a BERT model from `pytorch_pretrained_bert`.
+        model: a BERT model.
         tokenizer: a BERT tokenizer corresponds to `model`.
         idf_dict (dict): mapping a word piece index to its inverse document frequency.
         batch_size (int): batch size for processing, -1 for all sentences.
@@ -330,7 +330,6 @@ class BERTScorer:
                 `model_type` or `lang`.
             num_layers (int): The layer of representation to use.
                 Default using the number of layer tuned on WMT16 correlation data.
-            verbose (bool): Turn on intermediate status update.
             idf (bool): A boolean to specify whether to use idf or not (this should be True even if `idf_sents` is given).
             device (str): On which the contextual embedding model will be allocated on.
                 If this argument is None, the model lives on cuda:0 if cuda is available.
