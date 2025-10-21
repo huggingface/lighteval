@@ -32,7 +32,7 @@ from pytablewriter import MarkdownTableWriter
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.metrics_sample import SamplingMetric
-from lighteval.metrics.utils.metric_utils import Metric
+from lighteval.metrics.utils.metric_utils import Metric, MetricGrouping
 from lighteval.tasks.prompt_manager import FewShotSampler
 from lighteval.tasks.requests import (
     Doc,
@@ -167,7 +167,21 @@ class LightevalTaskConfig:
                 continue
             if k == "metrics":
                 for ix, metrics in enumerate(v):
+                    is_metric_grouping = False
+                    if isinstance(getattr(self, k)[ix], MetricGrouping):
+                        is_metric_grouping = True
                     for metric_k, metric_v in metrics.items():
+                        if is_metric_grouping and isinstance(metric_v, dict):
+                            for metric_sub_k, metric_sub_v in metric_v.items():
+                                if isinstance(metric_sub_v, Callable):
+                                    repr_v = metric_sub_v.__name__
+                                elif isinstance(metric_sub_v, Metric.get_allowed_types_for_metrics()):
+                                    repr_v = str(metric_sub_v)
+                                else:
+                                    repr_v = repr(metric_sub_v)
+                                values.append([f"{k} {ix}: {metric_k}: {metric_sub_k}", repr_v])
+                            continue
+
                         if isinstance(metric_v, Callable):
                             repr_v = metric_v.__name__
                         elif isinstance(metric_v, Metric.get_allowed_types_for_metrics()):
