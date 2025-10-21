@@ -110,7 +110,6 @@ class GoogleTranslateClient(LightevalModel):
 
         Args:
             requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
             list[ModelResponse]: list of generated responses.
