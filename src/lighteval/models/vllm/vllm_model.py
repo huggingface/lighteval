@@ -40,7 +40,6 @@ from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import is_package_available, requires
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -52,6 +51,7 @@ if is_package_available("vllm"):
         destroy_distributed_environment,
         destroy_model_parallel,
     )
+    from vllm.inputs import token_inputs
     from vllm.transformers_utils.tokenizer import get_tokenizer
     from vllm.v1.engine.async_llm import AsyncEngineArgs, AsyncLLM
 
@@ -437,6 +437,7 @@ class VLLMModel(LightevalModel):
             @ray.remote(num_gpus=self.tensor_parallel_size)
             def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
                 llm = LLM(**model_args)
+                requests = [token_inputs(prompt_token_ids=request) for request in requests]
                 return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
 
             # dispatch requests to all self.data_parallel_size workers, in interleaved fashion
@@ -454,6 +455,7 @@ class VLLMModel(LightevalModel):
                 if x is not None
             ]
         else:
+            inputs = [token_inputs(prompt_token_ids=input) for input in inputs]
             outputs = self.model.generate(
                 prompt_token_ids=inputs,
                 sampling_params=sampling_params,
