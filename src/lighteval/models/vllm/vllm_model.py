@@ -30,6 +30,7 @@ from typing import Coroutine, Optional
 import torch
 from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 from tqdm import tqdm
+from vllm.inputs.data import TokensPrompt
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelConfig
@@ -415,6 +416,8 @@ class VLLMModel(LightevalModel):
         generate: bool = True,
     ) -> list:
         """Contains the actual logic of the generation."""
+        # Wrap inputs with TokensPrompt to make compatible with VLLM >= 0.10.2
+        inputs = [TokensPrompt(prompt_token_ids=token_ids) for token_ids in inputs]
         sampling_params = SamplingParams(**self.config.generation_parameters.to_vllm_dict())
 
         if generate:
@@ -437,7 +440,7 @@ class VLLMModel(LightevalModel):
             @ray.remote(num_gpus=self.tensor_parallel_size)
             def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
                 llm = LLM(**model_args)
-                return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
+                return llm.generate(requests, sampling_params=sampling_params)
 
             # dispatch requests to all self.data_parallel_size workers, in interleaved fashion
             # interleaved important to balance context lengths across workers
@@ -455,7 +458,7 @@ class VLLMModel(LightevalModel):
             ]
         else:
             outputs = self.model.generate(
-                prompt_token_ids=inputs,
+                inputs,
                 sampling_params=sampling_params,
                 use_tqdm=True,
             )
