@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 class CorpusLevelComputation(ABC):
     @abstractmethod
-    def compute_corpus(self):
+    def compute_corpus(self, items):
         raise NotImplementedError
 
     def __str__(self):
