@@ -156,29 +156,29 @@ class ModelConfig(BaseModel, extra="forbid"):
 
 
 class InspectAIModelConfig(BaseModel):
-    max_tokens: int
-    system_message: str
-    temperature: float
-    top_p: float
-    top_k: int
-    frequence_penalty: float
-    presence_penalty: float
-    seed: int
-    stop_seqs: list[str]
-    num_choices: int
-    best_of: int
-    log_probs: bool
-    top_logprobs: int
-    cache_prompt: bool
-    reasoning_effort: int
-    reasoning_tokens: int
-    reasoning_history: bool
-    response_format: str
-    parallel_tool_calls: bool
-    max_tool_output: int
-    internal_tools: bool
-    max_retries: int
-    timeout: int
+    max_tokens: int | None = None
+    system_message: str | None = None
+    temperature: float | None = None
+    top_p: float | None = None
+    top_k: int | None = None
+    frequence_penalty: float | None = None
+    presence_penalty: float | None = None
+    seed: int | None = None
+    stop_seqs: list[str] | None = None
+    num_choices: int | None = None
+    best_of: int | None = None
+    log_probs: bool | None = None
+    top_logprobs: int | None = None
+    cache_prompt: bool | None = None
+    reasoning_effort: int | None = None
+    reasoning_tokens: int | None = None
+    reasoning_history: bool | None = None
+    response_format: str | None = None
+    parallel_tool_calls: bool | None = None
+    max_tool_output: int | None = None
+    internal_tools: bool | None = None
+    max_retries: int | None = None
+    timeout: int | None = None
 
     @staticmethod
     def _parse_args(args: str) -> dict:
