@@ -31,6 +31,7 @@ from lighteval.cli_args import (
     dataset_loading_processes,
     job_id,
     load_responses_from_details_date_id,
+    load_tasks_multilingual,
     max_samples,
     num_fewshot_seeds,
     output_dir,
@@ -65,6 +66,7 @@ def inference_endpoint(
         ),
     ] = False,
     # === Common parameters ===
+    load_tasks_multilingual: load_tasks_multilingual.type = load_tasks_multilingual.default,
     dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
     custom_tasks: custom_tasks.type = custom_tasks.default,
     num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
@@ -121,6 +123,7 @@ def inference_endpoint(
         load_responses_from_details_date_id=load_responses_from_details_date_id,
         remove_reasoning_tags=remove_reasoning_tags,
         reasoning_tags=reasoning_tags,
+        load_tasks_multilingual=load_tasks_multilingual,
     )
     pipeline = Pipeline(
         tasks=tasks,
@@ -148,6 +151,7 @@ def tgi(
     ],
     tasks: tasks.type,
     # === Common parameters ===
+    load_tasks_multilingual: load_tasks_multilingual.type = load_tasks_multilingual.default,
     dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
     custom_tasks: custom_tasks.type = custom_tasks.default,
     num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
@@ -193,6 +197,7 @@ def tgi(
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
+        load_tasks_multilingual=load_tasks_multilingual,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
         custom_tasks_directory=custom_tasks,
@@ -231,9 +236,10 @@ def litellm(
     ],
     tasks: tasks.type,
     # === Common parameters ===
+    load_tasks_multilingual: load_tasks_multilingual.type = load_tasks_multilingual.default,
     dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
-    custom_tasks: custom_tasks.type = custom_tasks.default,
     num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
     load_responses_from_details_date_id: load_responses_from_details_date_id.type = load_responses_from_details_date_id.default,
     remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
     reasoning_tags: reasoning_tags.type = reasoning_tags.default,
@@ -285,6 +291,7 @@ def litellm(
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
+        load_tasks_multilingual=load_tasks_multilingual,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
         custom_tasks_directory=custom_tasks,
@@ -324,6 +331,7 @@ def inference_providers(
     ],
     tasks: tasks.type,
     # === Common parameters ===
+    load_tasks_multilingual: load_tasks_multilingual.type = load_tasks_multilingual.default,
     dataset_loading_processes: dataset_loading_processes.type = dataset_loading_processes.default,
     custom_tasks: custom_tasks.type = custom_tasks.default,
     num_fewshot_seeds: num_fewshot_seeds.type = num_fewshot_seeds.default,
@@ -373,6 +381,7 @@ def inference_providers(
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
+        load_tasks_multilingual=load_tasks_multilingual,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
         custom_tasks_directory=custom_tasks,

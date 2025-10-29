@@ -29,6 +29,7 @@ from typing_extensions import Annotated
 from yaml import SafeLoader
 
 from lighteval.cli_args import (
+    load_tasks_multilingual,
     reasoning_tags,
     remove_reasoning_tags,
 )
@@ -44,6 +45,7 @@ def nanotron(
         str, Option(help="Path to the nanotron checkpoint YAML or python config file, potentially on s3.")
     ],
     lighteval_config_path: Annotated[str, Option(help="Path to a YAML config to be used for the evaluation.")],
+    load_tasks_multilingual: load_tasks_multilingual.type = load_tasks_multilingual.default,
     remove_reasoning_tags: remove_reasoning_tags.type = remove_reasoning_tags.default,
     reasoning_tags: reasoning_tags.type = reasoning_tags.default,
 ):
@@ -102,6 +104,7 @@ def nanotron(
         max_samples=lighteval_config.tasks.max_samples,
         remove_reasoning_tags=remove_reasoning_tags,
         reasoning_tags=reasoning_tags,
+        load_tasks_multilingual=load_tasks_multilingual,
     )
 
     pipeline = Pipeline(
