@@ -105,7 +105,6 @@ def math_scorer():
             explanation=state.output.completion,
             answer=str(extracted_predictions),
         )
-        return Score(value=1)
 
     return score
 
