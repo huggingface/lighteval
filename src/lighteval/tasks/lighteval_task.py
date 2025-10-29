@@ -120,6 +120,7 @@ class LightevalTaskConfig:
     scorer: None = None
     sample_fields: Callable[[dict], Sample] | None = None
     sample_to_fewshot: Callable[[Sample], str] | None = None
+    filter: Callable[[dict], bool] | None = None
 
     # Additional hf dataset config
     hf_revision: str | None = None

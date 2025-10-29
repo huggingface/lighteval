@@ -27,6 +27,9 @@ from typing import List, Literal
 
 import numpy as np
 from aenum import extend_enum
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import model_graded_fact
+from inspect_ai.solver import generate
 from pydantic import BaseModel
 
 from lighteval.metrics.metrics import Metrics
@@ -210,6 +213,15 @@ hle_metrics = CorpusLevelMetricGrouping(
 )
 extend_enum(Metrics, "hle_metrics", hle_metrics)
 
+
+def record_to_sample(record):
+    return Sample(
+        input=record["question"],
+        target=record["answer"],
+        metadata={"is_image_question": record["image"] not in [None, ""]},
+    )
+
+
 hle = LightevalTaskConfig(
     name="hle",
     suite=["lighteval"],
@@ -224,6 +236,10 @@ hle = LightevalTaskConfig(
     metrics=[Metrics.exact_match, Metrics.hle_metrics],
     stop_sequence=[],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=model_graded_fact(),
+    filter=lambda x: not x.metadata["is_image_question"],
 )
 
 
