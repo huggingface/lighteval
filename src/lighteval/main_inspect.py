@@ -232,7 +232,10 @@ def eval(
 
     results_per_model_per_task_agg = mean_metrics_by_prefix(results_per_model_per_task)
     table_md = results_to_markdown_table(results_per_model_per_task_agg)
+    print()
     print(table_md)
+    print(f"results saved to {log_dir}")
+    print(f'run "inspect view --log-dir {log_dir}" to view the results')
 
 
 if __name__ == "__main__":
