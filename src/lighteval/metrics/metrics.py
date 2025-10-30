@@ -69,7 +69,7 @@ from lighteval.metrics.utils.extractive_match_utils import (
     IndicesExtractionConfig,
     LatexExtractionConfig,
     extract_target_from_pred,
-    get_extraction_regexes,
+    get_extraction_regexes_inspect,
 )
 from lighteval.metrics.utils.metric_utils import (
     CorpusLevelMetric,
@@ -90,8 +90,8 @@ def math_scorer():
     extraction_mode = "first_match"
     timeout_seconds = 5
 
-    gold_extraction_regexes = get_extraction_regexes(gold_extraction_target, language, len_choices=1)
-    pred_extraction_regexes = get_extraction_regexes(pred_extraction_target, language, len_choices=1)
+    gold_extraction_regexes = get_extraction_regexes_inspect(gold_extraction_target, language, len_choices=1)
+    pred_extraction_regexes = get_extraction_regexes_inspect(pred_extraction_target, language, len_choices=1)
 
     async def score(state: TaskState, target: Target):
         extracted_predictions = extract_target_from_pred(
@@ -122,8 +122,8 @@ def multichoice_scorer():
     extraction_mode = "first_match"
     timeout_seconds = 5
 
-    gold_extraction_regexes = get_extraction_regexes(gold_extraction_target, language)
-    pred_extraction_regexes = get_extraction_regexes(pred_extraction_target, language)
+    gold_extraction_regexes = get_extraction_regexes_inspect(gold_extraction_target, language)
+    pred_extraction_regexes = get_extraction_regexes_inspect(pred_extraction_target, language)
 
     async def score(state: TaskState, target: Target):
         extracted_predictions = extract_target_from_pred(

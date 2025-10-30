@@ -79,6 +79,7 @@ def eval(
     retry_on_error: int = 1,
     max_retries: int = 5,
     log_dir: str = "lighteval-logs",
+    log_dir_allow_dirty: bool = True,
     display: str = "rich",
     model_config: str | None = None,
     max_samples: int | None = None,
@@ -112,6 +113,7 @@ def eval(
         limit=max_samples,
         max_tasks=max_tasks,
         log_dir=log_dir,
+        log_dir_allow_dirty=log_dir_allow_dirty,
         display=display,
         **model_config,
     )
