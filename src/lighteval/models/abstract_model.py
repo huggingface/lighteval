@@ -177,7 +177,6 @@ class InspectAIModelConfig(BaseModel):
     parallel_tool_calls: bool | None = None
     max_tool_output: int | None = None
     internal_tools: bool | None = None
-    # timeout: int | None = None
 
     @staticmethod
     def _parse_args(args: str) -> dict:
