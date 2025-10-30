@@ -344,6 +344,37 @@ def lazy_indices_regex(
     return [(re.compile(pattern), priority) for pattern, priority in regexes]
 
 
+def get_extraction_regexes_inspect(
+    target_types: Sequence[ExtractionTarget], language: Language, len_choices: int = 1
+) -> list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]]:
+    """Get extraction regexes for inspect AI.
+    Temporary implementation.
+    TODO: refacto this function to share code with get_extraction_regexes
+    """
+    extraction_regexes: list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]] = [
+        (lazy_latex_regex(target_type, language), target_type)
+        if isinstance(target_type, LatexExtractionConfig)
+        else (lazy_expr_regex(target_type, language), target_type)
+        if isinstance(target_type, ExprExtractionConfig)
+        else (lazy_indices_regex(target_type, len_choices, language), target_type)
+        for target_type in target_types
+    ]
+
+    # Sort the extraction res so that order is indices, latex, expr
+    def get_target_type_order(target_type: ExtractionTarget) -> int:
+        match target_type:
+            case IndicesExtractionConfig():
+                return 0
+            case LatexExtractionConfig():
+                return 1
+            case ExprExtractionConfig():
+                return 2
+
+    extraction_regexes = sorted(extraction_regexes, key=lambda x: get_target_type_order(x[1]))
+
+    return extraction_regexes
+
+
 def get_extraction_regexes(
     formatted_doc: Doc, target_types: Sequence[ExtractionTarget], language: Language
 ) -> list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]]:
