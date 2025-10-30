@@ -86,6 +86,11 @@ def mean_metrics_by_prefix(results_per_model_per_task, sep=":"):
         per_model_out = {}
         for task_name, metrics in tasks.items():
             if sep not in task_name:
+                # No subtasks: keep metrics as-is for this task
+                per_task_vals = {}
+                for mname, metric in metrics.items():
+                    per_task_vals[mname] = getattr(metric, "value", metric)
+                per_model_out[task_name] = per_task_vals
                 continue
             prefix = task_name.split(sep, 1)[0]
             # Keep non-averaged task metrics
@@ -158,15 +163,10 @@ def _format_metric_cell(data: dict, col: str, metric: str, stderr_metric: str) -
     if not metrics:
         return "-"
     val = metrics.get(metric)
-    se = metrics.get(stderr_metric)
     if isinstance(val, dict):
         val = val.get("value", None)
-    if isinstance(se, dict):
-        se = se.get("value", None)
-    if val is not None and se is not None:
-        return "%.4f ± %.4f" % (val, se)
     if val is not None:
-        return "%.4f" % val
+        return "%.2f" % val
     return "-"
 
 
@@ -230,8 +230,8 @@ def eval(
             if log.eval.model == model:
                 results_per_model_per_task[model][log.eval.task] = log.results.metrics
 
-    results_per_model_per_task = mean_metrics_by_prefix(results_per_model_per_task)
-    table_md = results_to_markdown_table(results_per_model_per_task)
+    results_per_model_per_task_agg = mean_metrics_by_prefix(results_per_model_per_task)
+    table_md = results_to_markdown_table(results_per_model_per_task_agg)
     print(table_md)
 
 
@@ -243,4 +243,4 @@ if __name__ == "__main__":
     task = "lighteval|gpqa|0"
     task = "lighteval|ifbench_test|0"
     model = "hf-inference-providers/meta-llama/Llama-3.1-8B-Instruct:nebius"
-    eval(task, model)
+    eval(models=[model], tasks=task)
