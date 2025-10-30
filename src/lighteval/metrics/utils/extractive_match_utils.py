@@ -349,6 +349,7 @@ def get_extraction_regexes_inspect(
 ) -> list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]]:
     """Get extraction regexes for inspect AI.
     Temporary implementation.
+    TODO: refacto this function to share code with get_extraction_regexes
     """
     extraction_regexes: list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]] = [
         (lazy_latex_regex(target_type, language), target_type)
