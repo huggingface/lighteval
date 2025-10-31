@@ -6,33 +6,25 @@ dataset:
 TIGER-Lab/MMLU-Pro
 
 abstract:
+MMLU-Pro dataset is a more robust and challenging massive multi-task
+understanding dataset tailored to more rigorously benchmark large language
+models' capabilities. This dataset contains 12K complex questions across various
+disciplines.
 
 languages:
 english
 
 tags:
-general-knowledge
+general-knowledge, knowledge, multiple-choice
 
 paper:
-
+https://arxiv.org/abs/2406.01574
 """
 from string import ascii_uppercase
 
-from lighteval.metrics.dynamic_metrics import (
-    LogLikelihoodAccMetric,
-)
 from lighteval.metrics.metrics import Metrics
-from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation
 from lighteval.tasks.requests import Doc
-from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
-from lighteval.tasks.templates.utils.formulation import (
-    CFFormulation,
-    HybridFormulation,
-    MCFFormulation,
-)
-from lighteval.utils.language import Language
 
 
 TEMPLATE = """
