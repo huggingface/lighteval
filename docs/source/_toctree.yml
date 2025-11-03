@@ -7,6 +7,8 @@
     title: Quicktour
   title: Getting started
 - sections:
+  - local: inspect-ai
+    title: Examples using Inspect-AI
   - local: saving-and-reading-results
     title: Save and read results
   - local: caching

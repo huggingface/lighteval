@@ -1,0 +1,103 @@
+# Evaluate your model with Inspect-AI
+
+You trained a model—now measure it on real benchmarks.
+
+First, pick the right benchmarks with our benchmark finder:
+
+Search by language, task type, dataset name, or keywords.
+
+
+<iframe
+	src="https://saylortwift-open-benchmark-index.hf.space"
+	frameborder="0"
+	width="850"
+	height="450"
+></iframe>
+
+Once you've chosen a benchmark, run it with `lighteval eval`. Below are examples for common setups.
+
+### Examples
+
+1. Evaluate a model via Hugging Face Inference Providers.
+
+```bash
+lighteval eval "hf-inference-providers/openai/gpt-oss-20b" "lighteval|gpqa:diamond|0"
+```
+
+2. Run multiple evals at the same time.
+
+```bash
+lighteval eval "hf-inference-providers/openai/gpt-oss-20b" "lighteval|gpqa:diamond|0,lighteval|aime25|0"
+```
+
+3. Compare providers for the same model.
+
+```bash
+lighteval eval \
+    hf-inference-providers/openai/gpt-oss-20b:fireworks-ai \
+    hf-inference-providers/openai/gpt-oss-20b:together \
+    hf-inference-providers/openai/gpt-oss-20b:nebius \
+    "lighteval|gpqa:diamond|0"
+```
+
+4. Evaluate a vLLM or SGLang model.
+
+```bash
+lighteval eval vllm/HuggingFaceTB/SmolLM-135M-Instruct "lighteval|gpqa:diamond|0"
+```
+
+5. See the impact of few-shot on your model.
+
+```bash
+lighteval eval hf-inference-providers/openai/gpt-oss-20b "lighteval|gsm8k|0,lighteval|gsm8k|5"
+```
+
+6. Optimize custom server connections.
+
+```bash
+lighteval eval hf-inference-providers/openai/gpt-oss-20b "lighteval|gsm8k|0" \
+    --max-connections 50 \
+    --timeout 30 \
+    --retry-on-error 1 \
+    --max-retries 1 \
+    --max-samples 10
+```
+
+7. Use multiple epochs for more reliable results.
+
+```bash
+lighteval eval hf-inference-providers/openai/gpt-oss-20b "lighteval|aime25|0" --epochs 16 --epochs-reducer "pass_at_4"
+```
+
+8. Push to the Hub to share results.
+
+```bash
+lighteval eval hf-inference-providers/openai/gpt-oss-20b "lighteval|hle|0" \
+    --bundle-dir gpt-oss-bundle \
+    --repo-id OpenEvals/evals \
+    --max-samples 100
+```
+
+Resulting Space:
+
+<iframe
+	src="https://openevals-evals.static.hf.space"
+	frameborder="0"
+	width="850"
+	height="450"
+></iframe>
+
+
+
+LightEval prints a per-model results table:
+
+```
+Completed all tasks in 'lighteval-logs' successfully
+
+|                 Model                 |gpqa|gpqa:diamond|
+|---------------------------------------|---:|-----------:|
+|vllm/HuggingFaceTB/SmolLM-135M-Instruct|0.01|        0.01|
+
+results saved to lighteval-logs
+run "inspect view --log-dir lighteval-logs" to view the results
+```

@@ -24,6 +24,7 @@ import logging
 from collections import defaultdict
 from typing import Literal
 
+from huggingface_hub import HfApi
 from inspect_ai import Epochs, Task, task
 from inspect_ai import eval_set as inspect_ai_eval_set
 from inspect_ai.dataset import hf_dataset
@@ -78,6 +79,13 @@ def get_inspect_ai_task(
         )
 
     return Task(dataset=dataset, solver=solver, scorer=scorers, name=name, epochs=Epochs(epochs, epochs_reducer))
+
+
+def push_to_hub(bundle_dir: str, repo_id: str):
+    api = HfApi()
+    api.create_repo(repo_id=repo_id, repo_type="space", space_sdk="static", exist_ok=True)
+    api.upload_folder(repo_id=repo_id, repo_type="space", folder_path=bundle_dir)
+    print(f"Details pushed to https://huggingface.co/spaces/{repo_id}")
 
 
 def mean_metrics_by_prefix(results_per_model_per_task, sep=":"):
@@ -187,6 +195,8 @@ def eval(
     model_config: str | None = None,
     max_samples: int | None = None,
     max_tasks: int | None = None,
+    bundle_dir: str | None = None,
+    repo_id: str | None = None,
 ):
     from lighteval.tasks.registry import Registry
 
@@ -217,6 +227,7 @@ def eval(
         log_dir=log_dir,
         log_dir_allow_dirty=log_dir_allow_dirty,
         display=display,
+        bundle_dir=bundle_dir,
         **model_config,
     )
 
@@ -234,6 +245,10 @@ def eval(
 
     results_per_model_per_task_agg = mean_metrics_by_prefix(results_per_model_per_task)
     table_md = results_to_markdown_table(results_per_model_per_task_agg)
+
+    if repo_id is not None:
+        push_to_hub(bundle_dir, repo_id)
+
     print()
     print(table_md)
     print(f"results saved to {log_dir}")
