@@ -27,6 +27,7 @@ from typing import Callable
 
 from datasets import DatasetDict, load_dataset
 from huggingface_hub import TextGenerationInputGrammarType
+from inspect_ai.dataset import Sample
 from multiprocess import Pool
 from pytablewriter import MarkdownTableWriter
 
@@ -113,6 +114,13 @@ class LightevalTaskConfig:
     hf_repo: str
     hf_subset: str
     metrics: ListLike[Metric]  # List of metric , should be configurable
+
+    # Inspect AI compatible parameters
+    solver: None = None
+    scorer: None = None
+    sample_fields: Callable[[dict], Sample] | None = None
+    sample_to_fewshot: Callable[[Sample], str] | None = None
+    filter: Callable[[dict], bool] | None = None
 
     # Additional hf dataset config
     hf_revision: str | None = None

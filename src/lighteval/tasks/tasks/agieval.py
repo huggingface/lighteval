@@ -24,14 +24,32 @@ paper:
 https://arxiv.org/abs/2304.06364
 """
 
+from string import ascii_uppercase
+
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import choice
+from inspect_ai.solver import multiple_choice
+
 import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+def record_to_sample(record):
+    # we need to remove prepended (A), (B), (C), (D) from the choices
+    choices = [
+        c.replace("(A)", "").replace("(B)", "").replace("(C)", "").replace("(D)", "").strip()
+        for c in record["choices"]
+    ]
+    return Sample(input=record["query"], target=ascii_uppercase[record["gold"][0]], choices=choices)
+
+
 agieval_aqua_rat = LightevalTaskConfig(
     name="agieval:aqua-rat",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-aqua-rat",
     hf_subset="default",
@@ -50,6 +68,9 @@ agieval_aqua_rat = LightevalTaskConfig(
 agieval_gaokao_biology = LightevalTaskConfig(
     name="agieval:gaokao-biology",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-gaokao-biology",
     hf_subset="default",
@@ -68,6 +89,9 @@ agieval_gaokao_biology = LightevalTaskConfig(
 agieval_gaokao_chemistry = LightevalTaskConfig(
     name="agieval:gaokao-chemistry",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-gaokao-chemistry",
     hf_subset="default",
@@ -86,6 +110,9 @@ agieval_gaokao_chemistry = LightevalTaskConfig(
 agieval_gaokao_chinese = LightevalTaskConfig(
     name="agieval:gaokao-chinese",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-gaokao-chinese",
     hf_subset="default",
@@ -104,6 +131,9 @@ agieval_gaokao_chinese = LightevalTaskConfig(
 agieval_gaokao_english = LightevalTaskConfig(
     name="agieval:gaokao-english",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-gaokao-english",
     hf_subset="default",
@@ -122,6 +152,9 @@ agieval_gaokao_english = LightevalTaskConfig(
 agieval_gaokao_geography = LightevalTaskConfig(
     name="agieval:gaokao-geography",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-gaokao-geography",
     hf_subset="default",
@@ -140,6 +173,9 @@ agieval_gaokao_geography = LightevalTaskConfig(
 agieval_gaokao_history = LightevalTaskConfig(
     name="agieval:gaokao-history",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-gaokao-history",
     hf_subset="default",
@@ -158,6 +194,9 @@ agieval_gaokao_history = LightevalTaskConfig(
 agieval_gaokao_mathqa = LightevalTaskConfig(
     name="agieval:gaokao-mathqa",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-gaokao-mathqa",
     hf_subset="default",
@@ -176,6 +215,9 @@ agieval_gaokao_mathqa = LightevalTaskConfig(
 agieval_gaokao_physics = LightevalTaskConfig(
     name="agieval:gaokao-physics",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-gaokao-physics",
     hf_subset="default",
@@ -194,6 +236,9 @@ agieval_gaokao_physics = LightevalTaskConfig(
 agieval_logiqa_en = LightevalTaskConfig(
     name="agieval:logiqa-en",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-logiqa-en",
     hf_subset="default",
@@ -212,6 +257,9 @@ agieval_logiqa_en = LightevalTaskConfig(
 agieval_logiqa_zh = LightevalTaskConfig(
     name="agieval:logiqa-zh",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-logiqa-zh",
     hf_subset="default",
@@ -230,6 +278,9 @@ agieval_logiqa_zh = LightevalTaskConfig(
 agieval_lsat_ar = LightevalTaskConfig(
     name="agieval:lsat-ar",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-lsat-ar",
     hf_subset="default",
@@ -248,6 +299,9 @@ agieval_lsat_ar = LightevalTaskConfig(
 agieval_lsat_lr = LightevalTaskConfig(
     name="agieval:lsat-lr",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-lsat-lr",
     hf_subset="default",
@@ -266,6 +320,9 @@ agieval_lsat_lr = LightevalTaskConfig(
 agieval_lsat_rc = LightevalTaskConfig(
     name="agieval:lsat-rc",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-lsat-rc",
     hf_subset="default",
@@ -284,6 +341,9 @@ agieval_lsat_rc = LightevalTaskConfig(
 agieval_sat_en = LightevalTaskConfig(
     name="agieval:sat-en",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-sat-en",
     hf_subset="default",
@@ -302,6 +362,9 @@ agieval_sat_en = LightevalTaskConfig(
 agieval_sat_en_without_passage = LightevalTaskConfig(
     name="agieval:sat-en-without-passage",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-sat-en-without-passage",
     hf_subset="default",
@@ -320,6 +383,9 @@ agieval_sat_en_without_passage = LightevalTaskConfig(
 agieval_sat_math = LightevalTaskConfig(
     name="agieval:sat-math",
     suite=["lighteval"],
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
     prompt_function=prompt.agieval,
     hf_repo="dmayhem93/agieval-sat-math",
     hf_subset="default",
