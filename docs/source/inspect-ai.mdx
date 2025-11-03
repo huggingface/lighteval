@@ -87,6 +87,23 @@ Resulting Space:
 	height="450"
 ></iframe>
 
+9. Change model behaviour
+
+You can use any argument defined in inspect-ai's API.
+
+```bash
+lighteval eval hf-inference-providers/openai/gpt-oss-20b "lighteval|aime25|0" --temperature 0.1
+```
+
+10. Use model-args to use any inference provider specific argument.
+
+```bash
+lighteval eval google/gemini-2.5-pro "lighteval|aime25|0" --model-args location=us-east5
+```
+
+```bash
+lighteval eval openai/gpt-4o "lighteval|gpqa:diamond|0" --model-args service_tier=flex,client_timeout=1200
+```
 
 
 LightEval prints a per-model results table:
