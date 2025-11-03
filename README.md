@@ -22,11 +22,11 @@
 ---
 
 <p align="center">
-  <a href="https://huggingface.co/docs/lighteval/main/en/index" target="_blank">
-    <img alt="Documentation" src="https://img.shields.io/badge/Documentation-4F4F4F?style=for-the-badge&logo=readthedocs&logoColor=white" />
+  <a href="https://huggingface.co/docs/lighteval/main/en/index" target="_blank" style="display:inline-block;background-image:linear-gradient(135deg,#f34079 40%,#fc894d);border:0;border-radius:10px;box-sizing:border-box;color:#fff;cursor:pointer;font-family:Inter,-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;height:44px;letter-spacing:.4px;line-height:44px;padding:0 16px;text-decoration:none;text-transform:uppercase;user-select:none;margin:4px 8px;">
+    <span>Documentation</span>
   </a>
-  <a href="https://huggingface.co/spaces/SaylorTwift/benchmark_finder" target="_blank">
-    <img alt="Open Benchmark Index" src="https://img.shields.io/badge/Open%20Benchmark%20Index-4F4F4F?style=for-the-badge&logo=huggingface&logoColor=white" />
+  <a href="https://huggingface.co/spaces/SaylorTwift/open_benchmark_index" target="_blank" style="display:inline-block;background-image:linear-gradient(135deg,#f34079 40%,#fc894d);border:0;border-radius:10px;box-sizing:border-box;color:#fff;cursor:pointer;font-family:Inter,-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;height:44px;letter-spacing:.4px;line-height:44px;padding:0 16px;text-decoration:none;text-transform:uppercase;user-select:none;margin:4px 8px;">
+    <span>Open Benchmark Index</span>
   </a>
 </p>
 
@@ -44,7 +44,7 @@ sample-by-sample results* to debug and see how your models stack-up.
 
 Lighteval supports **1000+ evaluation tasks** across multiple domains and
 languages. Use [this
-space](https://huggingface.co/spaces/SaylorTwift/benchmark_finder) to find what
+space](https://huggingface.co/spaces/SaylorTwift/open_benchmark_index) to find what
 you need, or, here's an overview of some *popular benchmarks*:
 
 
@@ -107,6 +107,7 @@ huggingface-cli login
 
 Lighteval offers the following entry points for model evaluation:
 
+- `lighteval eval`: Evaluation models using [inspect-ai](https://inspect.aisi.org.uk/) as a backend (prefered).
 - `lighteval accelerate`: Evaluate models on CPU or one or more GPUs using [🤗
   Accelerate](https://github.com/huggingface/accelerate)
 - `lighteval nanotron`: Evaluate models in distributed settings using [⚡️
@@ -126,9 +127,7 @@ Did not find what you need ? You can always make your custom model API by follow
 Here's a **quick command** to evaluate using the *Accelerate backend*:
 
 ```shell
-lighteval accelerate \
-    "model_name=gpt2" \
-    "leaderboard|truthfulqa:mc|0"
+lighteval eval "hf-inference-providers/openai/gpt-oss-20b" "lighteval|gpqa:diamond|0"
 ```
 
 Or use the **Python API** to run a model *already loaded in memory*!
