@@ -191,15 +191,21 @@ def calib_err(confidence, correct, p="2", beta=100):
     return cerr
 
 
+SYSTEM_MESSAGE = """
+Your response should be in the following format:\nExplanation: {your explanation for your answer choice}\nAnswer: {your chosen answer}\nConfidence: {your confidence score between 0% and 100% for your answer}
+""".strip()
+
+
 def hle_text_only(line, task_name: str = None):
     if line["image"] not in [None, ""]:
         return None
 
     return Doc(
         task_name=task_name,
-        query=f"Question: {line['question']}\nAnswer:",
+        query=line["question"],
         choices=[line["answer"]],
         gold_index=0,
+        instruction=SYSTEM_MESSAGE,
         specific={"question": line["question"]},
     )
 
@@ -220,11 +226,6 @@ def record_to_sample(record):
         target=record["answer"],
         metadata={"is_image_question": record["image"] not in [None, ""]},
     )
-
-
-SYSTEM_MESSAGE = """
-Your response should be in the following format:\nExplanation: {your explanation for your answer choice}\nAnswer: {your chosen answer}\nConfidence: {your confidence score between 0% and 100% for your answer}
-""".strip()
 
 
 hle = LightevalTaskConfig(

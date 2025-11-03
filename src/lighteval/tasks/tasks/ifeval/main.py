@@ -60,6 +60,29 @@ REASONING_TAG_PAIRS = [
 ]
 
 
+def _preprocess_response(response: str) -> str:
+    all_responses = []
+    r = response.split("\n")
+    response_remove_first = "\n".join(r[1:]).strip()
+    response_remove_last = "\n".join(r[:-1]).strip()
+    response_remove_both = "\n".join(r[1:-1]).strip()
+    revised_response = response.replace("*", "")
+    revised_response_remove_first = response_remove_first.replace("*", "")
+    revised_response_remove_last = response_remove_last.replace("*", "")
+    revised_response_remove_both = response_remove_both.replace("*", "")
+    all_responses = [
+        response,
+        revised_response,
+        response_remove_first,
+        response_remove_last,
+        response_remove_both,
+        revised_response_remove_first,
+        revised_response_remove_last,
+        revised_response_remove_both,
+    ]
+    return all_responses
+
+
 class IFEvalMetrics(SampleLevelComputation):
     def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict:
         response = model_response.final_text[0]
@@ -70,24 +93,7 @@ class IFEvalMetrics(SampleLevelComputation):
         prompt = doc.query
 
         # Loose instructions
-        r = response.split("\n")
-        response_remove_first = "\n".join(r[1:]).strip()
-        response_remove_last = "\n".join(r[:-1]).strip()
-        response_remove_both = "\n".join(r[1:-1]).strip()
-        revised_response = response.replace("*", "")
-        revised_response_remove_first = response_remove_first.replace("*", "")
-        revised_response_remove_last = response_remove_last.replace("*", "")
-        revised_response_remove_both = response_remove_both.replace("*", "")
-        all_responses = [
-            response,
-            revised_response,
-            response_remove_first,
-            response_remove_last,
-            response_remove_both,
-            revised_response_remove_first,
-            revised_response_remove_last,
-            revised_response_remove_both,
-        ]
+        all_responses = _preprocess_response(response)
 
         is_following_list_strict = []
         is_following_list_loose = []
@@ -170,24 +176,8 @@ def ifeval_scorer():
         all_kwargs = state.metadata["kwargs"]
         prompt = state.input
         # Loose instructions
-        r = response.split("\n")
-        response_remove_first = "\n".join(r[1:]).strip()
-        response_remove_last = "\n".join(r[:-1]).strip()
-        response_remove_both = "\n".join(r[1:-1]).strip()
-        revised_response = response.replace("*", "")
-        revised_response_remove_first = response_remove_first.replace("*", "")
-        revised_response_remove_last = response_remove_last.replace("*", "")
-        revised_response_remove_both = response_remove_both.replace("*", "")
-        all_responses = [
-            response,
-            revised_response,
-            response_remove_first,
-            response_remove_last,
-            response_remove_both,
-            revised_response_remove_first,
-            revised_response_remove_last,
-            revised_response_remove_both,
-        ]
+        all_responses = _preprocess_response(response)
+
         is_following_list_strict = []
         is_following_list_loose = []
         for index, instruction_id in enumerate(instruction_list):

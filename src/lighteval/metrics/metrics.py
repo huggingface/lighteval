@@ -101,6 +101,7 @@ def math_scorer():
             target.text, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
         )
         return Score(
+            # Correct or Incorrect, used by inspect-ai backend
             value="C" if extracted_predictions == extracted_gold else "I",
             explanation=state.output.completion,
             answer=str(extracted_predictions),
@@ -133,6 +134,7 @@ def multichoice_scorer():
             target.text, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
         )
         return Score(
+            # Correct or Incorrect, used by inspect-ai backend
             value="C" if extracted_predictions == extracted_gold else "I",
             explanation=state.output.completion,
             answer=str(extracted_predictions),

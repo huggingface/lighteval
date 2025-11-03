@@ -39,7 +39,11 @@ logger = logging.getLogger(__name__)
 
 
 @task
-def get_inspect_ai_task(lighteval_task_config: LightevalTaskConfig) -> Task:
+def get_inspect_ai_task(
+    lighteval_task_config: LightevalTaskConfig,
+    epochs: int = 1,
+    epochs_reducer: Literal["mean", "median", "mode", "max", "at_least_{n}", "pass_at_{k}"] | None = None,
+) -> Task:
     name = lighteval_task_config.name
     sample_fields = lighteval_task_config.sample_fields
 
@@ -55,8 +59,6 @@ def get_inspect_ai_task(lighteval_task_config: LightevalTaskConfig) -> Task:
     ]
     scorers = lighteval_task_config.scorer or exact()
     # TODO: have per task epoch and epoch reducer
-    epochs = 1
-    epochs_reducer = "mean"
 
     if lighteval_task_config.num_fewshots > 0:
         name += f"_{lighteval_task_config.num_fewshots}_shots"
@@ -174,7 +176,7 @@ def eval(
     models: list[str],
     tasks: str,
     epochs: int = 1,
-    epochs_reducer: Literal["mean", "median", "mode", "max", "at_least_{n}", "ass_at_{k}"] | None = None,
+    epochs_reducer: str | None = None,
     max_connections: int = 50,
     timeout: int = 30,
     retry_on_error: int = 1,
@@ -194,7 +196,7 @@ def eval(
 
     for task_name, task_configs in task_configs.items():
         for task_config in task_configs:
-            inspect_ai_tasks.append(get_inspect_ai_task(task_config))
+            inspect_ai_tasks.append(get_inspect_ai_task(task_config, epochs=epochs, epochs_reducer=epochs_reducer))
 
     if model_config is not None and model_config.endswith(".yaml"):
         model_config = InspectAIModelConfig.from_path(model_config).dict()
