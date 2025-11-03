@@ -22,11 +22,11 @@
 ---
 
 <p align="center">
-  <a href="https://huggingface.co/docs/lighteval/main/en/index" target="_blank" style="display:inline-block;background-image:linear-gradient(135deg,#f34079 40%,#fc894d);border:0;border-radius:10px;box-sizing:border-box;color:#fff;cursor:pointer;font-family:Inter,-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;height:44px;letter-spacing:.4px;line-height:44px;padding:0 16px;text-decoration:none;text-transform:uppercase;user-select:none;margin:4px 8px;">
-    <span>Documentation</span>
+  <a href="https://huggingface.co/docs/lighteval/main/en/index" target="_blank">
+    <img alt="Documentation" src="https://img.shields.io/badge/Documentation-4F4F4F?style=for-the-badge&logo=readthedocs&logoColor=white" />
   </a>
-  <a href="https://huggingface.co/spaces/SaylorTwift/open_benchmark_index" target="_blank" style="display:inline-block;background-image:linear-gradient(135deg,#f34079 40%,#fc894d);border:0;border-radius:10px;box-sizing:border-box;color:#fff;cursor:pointer;font-family:Inter,-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;height:44px;letter-spacing:.4px;line-height:44px;padding:0 16px;text-decoration:none;text-transform:uppercase;user-select:none;margin:4px 8px;">
-    <span>Open Benchmark Index</span>
+  <a href="https://huggingface.co/spaces/SaylorTwift/open_benchmark_index" target="_blank">
+    <img alt="Open Benchmark Index" src="https://img.shields.io/badge/Open%20Benchmark%20Index-4F4F4F?style=for-the-badge&logo=huggingface&logoColor=white" />
   </a>
 </p>
 
