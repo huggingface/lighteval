@@ -100,7 +100,7 @@ If you want to push results to the **Hugging Face Hub**, add your access token a
 an environment variable:
 
 ```shell
-huggingface-cli login
+hf auth login
 ```
 
 ## 🚀 Quickstart
