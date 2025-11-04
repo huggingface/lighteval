@@ -20,6 +20,9 @@ https://arxiv.org/abs/2507.02833
 
 import numpy as np
 from aenum import extend_enum
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import Score, Target, accuracy, scorer, stderr
+from inspect_ai.solver import TaskState, generate
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.metrics_sample import SampleLevelComputation
@@ -30,6 +33,7 @@ from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.tasks.tasks.ifbench import evaluation_lib
+from lighteval.utils.imports import requires
 
 
 def ifbench_prompt(line, task_name: str = ""):
@@ -84,6 +88,49 @@ def agg_inst_level_acc(items):
     return inst_level_acc
 
 
+@requires("langdetect")
+def record_to_sample(record):
+    metadata = {"instruction_id_list": record["instruction_id_list"], "kwargs": record["kwargs"]}
+    return Sample(
+        input=record["prompt"],
+        metadata=metadata,
+    )
+
+
+@scorer(
+    metrics={
+        "prompt_level_strict_acc": [accuracy(), stderr()],
+        "prompt_level_loose_acc": [accuracy(), stderr()],
+    }
+)
+def ifbench_scorer():
+    async def score(state: TaskState, target: Target):
+        response = state.output.completion
+        # Create InputExample from the doc data
+        inp = evaluation_lib.InputExample(
+            key=0,  # Not used in evaluation
+            instruction_id_list=state.metadata["instruction_id_list"],
+            prompt=state.input,
+            kwargs=state.metadata["kwargs"],
+        )
+
+        # Create prompt_to_response mapping for evaluation_lib functions
+        prompt_to_response = {state.input: response}
+
+        # Use existing evaluation_lib functions
+        strict_result = evaluation_lib.test_instruction_following_strict(inp, prompt_to_response)
+        loose_result = evaluation_lib.test_instruction_following_loose(inp, prompt_to_response)
+        return Score(
+            value={
+                "prompt_level_strict_acc": int(strict_result.follow_all_instructions),
+                "prompt_level_loose_acc": int(loose_result.follow_all_instructions),
+            },
+            explanation=str(state.metadata["instruction_id_list"]),
+        )
+
+    return score
+
+
 ifbench_metrics = SampleLevelMetricGrouping(
     metric_name=submetric_names,
     higher_is_better=dict.fromkeys(submetric_names, True),
@@ -112,6 +159,9 @@ ifbench_test = LightevalTaskConfig(
     generation_size=1280,
     stop_sequence=[],  # no stop sequence, will use eot token
     version="0.1",
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=ifbench_scorer(),
 )
 
 # Multi-turn IFBench task config
@@ -129,6 +179,9 @@ ifbench_multiturn = LightevalTaskConfig(
     generation_size=1280,
     stop_sequence=[],  # no stop sequence, will use eot token
     version="0.1",
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=ifbench_scorer(),
 )
 
 TASKS_TABLE = [ifbench_test, ifbench_multiturn]

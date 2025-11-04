@@ -27,6 +27,9 @@ from typing import List, Literal
 
 import numpy as np
 from aenum import extend_enum
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import model_graded_fact
+from inspect_ai.solver import generate, system_message
 from pydantic import BaseModel
 
 from lighteval.metrics.metrics import Metrics
@@ -188,15 +191,21 @@ def calib_err(confidence, correct, p="2", beta=100):
     return cerr
 
 
+SYSTEM_MESSAGE = """
+Your response should be in the following format:\nExplanation: {your explanation for your answer choice}\nAnswer: {your chosen answer}\nConfidence: {your confidence score between 0% and 100% for your answer}
+""".strip()
+
+
 def hle_text_only(line, task_name: str = None):
     if line["image"] not in [None, ""]:
         return None
 
     return Doc(
         task_name=task_name,
-        query=f"Question: {line['question']}\nAnswer:",
+        query=line["question"],
         choices=[line["answer"]],
         gold_index=0,
+        instruction=SYSTEM_MESSAGE,
         specific={"question": line["question"]},
     )
 
@@ -209,6 +218,15 @@ hle_metrics = CorpusLevelMetricGrouping(
     corpus_level_fn=JudgeLLMHLE(),
 )
 extend_enum(Metrics, "hle_metrics", hle_metrics)
+
+
+def record_to_sample(record):
+    return Sample(
+        input=record["question"],
+        target=record["answer"],
+        metadata={"is_image_question": record["image"] not in [None, ""]},
+    )
+
 
 hle = LightevalTaskConfig(
     name="hle",
@@ -224,6 +242,10 @@ hle = LightevalTaskConfig(
     metrics=[Metrics.exact_match, Metrics.hle_metrics],
     stop_sequence=[],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[system_message(SYSTEM_MESSAGE), generate(cache=True)],
+    scorer=model_graded_fact(),
+    filter=lambda x: not x.metadata["is_image_question"],
 )
 
 

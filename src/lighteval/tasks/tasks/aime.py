@@ -24,15 +24,40 @@ paper:
 https://maa.org/aime-thresholds-are-available/
 """
 
+from inspect_ai.dataset import Sample
+from inspect_ai.solver import generate, prompt_template
+
 import lighteval.tasks.default_prompts as prompt
-from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.metrics import Metrics, math_scorer
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+
+
+MATH_PROMPT_TEMPLATE = """
+Solve the following math problem step by step. The last line of your
+response should be of the form "ANSWER: $ANSWER" (without quotes)
+where $ANSWER is the answer to the problem.
+
+{prompt}
+
+Remember to put your answer on its own line at the end in the form
+"ANSWER: $ANSWER" (without quotes) where $ANSWER is the answer to
+the problem, and you do not need to use a \\boxed command.
+
+Reasoning:
+""".strip()
+
+
+def record_to_sample(record):
+    return Sample(input=record["problem"], target=record["answer"])
 
 
 aime24 = LightevalTaskConfig(
     name="aime24",
     suite=["lighteval"],
     prompt_function=prompt.aime_prompt_fn,
+    sample_fields=record_to_sample,
+    solver=[prompt_template(MATH_PROMPT_TEMPLATE), generate(cache=True)],
+    scorer=math_scorer(),
     hf_repo="HuggingFaceH4/aime_2024",
     hf_subset="default",
     hf_avail_splits=["train"],
@@ -48,6 +73,7 @@ aime24_avg = LightevalTaskConfig(
     name="aime24_avg",
     suite=["lighteval"],
     prompt_function=prompt.aime_prompt_fn,
+    sample_fields=record_to_sample,
     hf_repo="HuggingFaceH4/aime_2024",
     hf_subset="default",
     hf_avail_splits=["train"],
@@ -63,6 +89,7 @@ aime24_gpassk = LightevalTaskConfig(
     name="aime24_gpassk",
     suite=["lighteval"],
     prompt_function=prompt.aime_prompt_fn,
+    sample_fields=record_to_sample,
     hf_repo="HuggingFaceH4/aime_2024",
     hf_subset="default",
     hf_avail_splits=["train"],
@@ -78,6 +105,9 @@ aime25 = LightevalTaskConfig(
     name="aime25",
     suite=["lighteval"],
     prompt_function=prompt.aime_prompt_fn,
+    sample_fields=record_to_sample,
+    solver=[prompt_template(MATH_PROMPT_TEMPLATE), generate(cache=True)],
+    scorer=math_scorer(),
     hf_repo="yentinglin/aime_2025",
     hf_subset="default",
     hf_avail_splits=["train"],
@@ -93,6 +123,7 @@ aime25_avg = LightevalTaskConfig(
     name="aime25_avg",
     suite=["lighteval"],
     prompt_function=prompt.aime_prompt_fn,
+    sample_fields=record_to_sample,
     hf_repo="yentinglin/aime_2025",
     hf_subset="default",
     hf_avail_splits=["train"],
@@ -108,6 +139,7 @@ aime25_gpassk = LightevalTaskConfig(
     name="aime25_gpassk",
     suite=["lighteval"],
     prompt_function=prompt.aime_prompt_fn,
+    sample_fields=record_to_sample,
     hf_repo="yentinglin/aime_2025",
     hf_subset="default",
     hf_avail_splits=["train"],

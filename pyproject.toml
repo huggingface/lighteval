@@ -57,6 +57,7 @@ keywords = ["evaluation", "nlp", "llm"]
 dependencies = [
     # Base dependencies
     "transformers>=4.54.0",
+    "inspect-ai",
     "accelerate",
     "huggingface_hub[hf_xet]>=0.30.2",
     "torch>=2.0,<3.0",
