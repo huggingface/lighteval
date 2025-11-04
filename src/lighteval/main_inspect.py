@@ -283,7 +283,7 @@ def eval(
         bool | None, Option(help="Cache prompt prefix.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
     reasoning_effort: Annotated[
-        int | None, Option(help="Value: `minimal`, `low`, `medium`, `high`", rich_help_panel=HELP_PANEL_NAME_1)
+        str | None, Option(help="Value: `minimal`, `low`, `medium`, `high`", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
     reasoning_tokens: Annotated[
         int | None,
