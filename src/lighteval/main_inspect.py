@@ -473,5 +473,6 @@ if __name__ == "__main__":
     task = "lighteval|ifeval|0"
     task = "lighteval|gpqa|0"
     task = "lighteval|ifbench_test|0"
+    task = "lighteval|mmlu_pro|0"
     model = "hf-inference-providers/meta-llama/Llama-3.1-8B-Instruct:nebius"
     eval(models=[model], tasks=task)
