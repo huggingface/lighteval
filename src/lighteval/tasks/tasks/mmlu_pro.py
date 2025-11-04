@@ -20,7 +20,12 @@ general-knowledge, knowledge, multiple-choice
 paper:
 https://arxiv.org/abs/2406.01574
 """
+
 from string import ascii_uppercase
+
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import choice
+from inspect_ai.solver import multiple_choice
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -54,16 +59,23 @@ def mmlu_pro_prompt_function(line, task_name: str = None):
     )
 
 
+def record_to_sample(record):
+    return Sample(input=record["question"], target=record["answer"], choices=record["options"])
+
+
 mmlu_pro = LightevalTaskConfig(
-        name="mmlu_pro",
-        prompt_function=mmlu_pro_prompt_function,
-        suite=("lighteval",),
-        hf_repo="TIGER-Lab/MMLU-Pro",
-        hf_subset="default",
-        hf_revision="3373e0b32277875b8db2aa555a333b78a08477ea",
-        evaluation_splits=("test",),
-        few_shots_split="validation",
-        metrics=[Metrics.gpqa_instruct_metric],
-    )
+    name="mmlu_pro",
+    prompt_function=mmlu_pro_prompt_function,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
+    suite=("lighteval",),
+    hf_repo="TIGER-Lab/MMLU-Pro",
+    hf_subset="default",
+    hf_revision="3373e0b32277875b8db2aa555a333b78a08477ea",
+    evaluation_splits=("test",),
+    few_shots_split="validation",
+    metrics=[Metrics.gpqa_instruct_metric],
+)
 
 TASKS_TABLE = [mmlu_pro]
