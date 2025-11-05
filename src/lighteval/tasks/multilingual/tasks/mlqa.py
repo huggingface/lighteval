@@ -44,7 +44,6 @@ TASKS_TABLE = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("lighteval",),
         hf_repo="facebook/mlqa",
         hf_subset=f"mlqa.{standardize_tag(lang.value)}.{standardize_tag(lang.value)}",
         hf_revision="397ed406c1a7902140303e7faf60fff35b58d285",

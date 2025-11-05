@@ -29,7 +29,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 prost = LightevalTaskConfig(
     name="prost",
-    suite=["lighteval"],
     prompt_function=prompt.prost,
     hf_repo="lighteval/prost",
     hf_subset="default",

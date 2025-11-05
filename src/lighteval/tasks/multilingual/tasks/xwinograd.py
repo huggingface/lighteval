@@ -41,7 +41,6 @@ from lighteval.utils.language import Language
 TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"xwinograd_{language.value}_{formulation.name.lower()}",
-        suite=("lighteval",),
         prompt_function=get_continuation_prompt_function(
             language, partial(winogrand_adapter, language), formulation=formulation
         ),

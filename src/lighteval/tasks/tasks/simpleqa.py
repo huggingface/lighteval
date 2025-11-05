@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 simpleqa = LightevalTaskConfig(
     name="simpleqa",
-    suite=["lighteval"],
     prompt_function=prompt.simpleqa,
     hf_repo="lighteval/SimpleQA",
     hf_subset="default",

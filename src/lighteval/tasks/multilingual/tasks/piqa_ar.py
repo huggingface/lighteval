@@ -43,7 +43,6 @@ TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"alghafa_piqa_{Language.ARABIC.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),
-        suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff",
         hf_subset="piqa_ar",

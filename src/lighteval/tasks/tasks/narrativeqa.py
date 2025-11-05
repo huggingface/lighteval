@@ -27,7 +27,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 narrativeqa = LightevalTaskConfig(
     name="narrativeqa",
-    suite=["lighteval"],
     prompt_function=prompt.narrativeqa,
     hf_repo="lighteval/narrative_qa_helm",
     hf_subset="default",

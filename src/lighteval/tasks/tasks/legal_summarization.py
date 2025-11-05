@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 legal_summarization_billsum = LightevalTaskConfig(
     name="legal_summarization:billsum",
-    suite=["lighteval"],
     prompt_function=prompt.legal_summarization,
     hf_repo="lighteval/legal_summarization",
     hf_subset="BillSum",
@@ -50,7 +49,6 @@ legal_summarization_billsum = LightevalTaskConfig(
 
 legal_summarization_eurlexsum = LightevalTaskConfig(
     name="legal_summarization:eurlexsum",
-    suite=["lighteval"],
     prompt_function=prompt.legal_summarization,
     hf_repo="lighteval/legal_summarization",
     hf_subset="EurLexSum",
@@ -74,7 +72,6 @@ legal_summarization_eurlexsum = LightevalTaskConfig(
 
 legal_summarization_multilexsum = LightevalTaskConfig(
     name="legal_summarization:multilexsum",
-    suite=["lighteval"],
     prompt_function=prompt.multilexsum,
     hf_repo="lighteval/legal_summarization",
     hf_subset="MultiLexSum",

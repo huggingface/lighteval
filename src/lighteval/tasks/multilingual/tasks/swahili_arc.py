@@ -46,7 +46,6 @@ TASKS_TABLE = [
             },
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo=f"Mollel/ARC_{subset.capitalize()}_SWH",
         hf_subset="default",
         hf_revision="5347439d3193c8a0dabaab3819914bf076dc94d4"

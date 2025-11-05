@@ -372,7 +372,7 @@ def get_emotion_classification_grammar() -> TextGenerationInputGrammarType:
 EMOTION_CLASSIFICATION_TASK = LightevalTaskConfig(
     name="emotion_classification",  # Unique task identifier
     prompt_function=prompt_emotion_classification,  # Custom prompt formatting function
-    suite=["custom"],  # Classification as a community/custom task
+    # Classification as a community/custom task
     hf_repo="emotion",  # HuggingFace Hub dataset repository
     hf_subset=None,  # Use default subset (no subset specified)
     metrics=[emotion_classification_group],  # Evaluation metrics configuration

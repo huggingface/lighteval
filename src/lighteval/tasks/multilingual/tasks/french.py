@@ -83,7 +83,6 @@ def prompt_bac_fr(line, task_name: str = None):
 ifeval_fr_task = LightevalTaskConfig(
     name="ifeval-fr",
     prompt_function=prompt_ifeval_fr,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
-    suite=["community"],
     hf_repo="fr-gouv-coordination-ia/IFEval-fr",
     hf_subset="default",
     metrics=[ifeval_metrics],
@@ -99,7 +98,6 @@ ifeval_fr_task = LightevalTaskConfig(
 # GPQA-fr task
 gpqa_fr_task = LightevalTaskConfig(
     name="gpqa-fr",
-    suite=["community"],
     prompt_function=prompt_gpqa_fr,
     hf_repo="fr-gouv-coordination-ia/gpqa-fr",
     hf_subset="default",
@@ -116,7 +114,6 @@ gpqa_fr_task = LightevalTaskConfig(
 # BAC-fr task
 bac_fr_task = LightevalTaskConfig(
     name="bac-fr",
-    suite=["community"],
     prompt_function=prompt_bac_fr,
     hf_repo="fr-gouv-coordination-ia/bac-fr",
     hf_subset="default",

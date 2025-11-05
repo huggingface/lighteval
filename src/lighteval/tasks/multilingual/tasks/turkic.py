@@ -110,7 +110,6 @@ class CustomTUMLUTask(LightevalTaskConfig):
             evaluation_splits=["test"],
             few_shots_split=["dev"],
             few_shots_select="sequential",
-            suite=["community"],
             generation_size=-1,
             stop_sequence=None,
             version=0,

@@ -38,7 +38,6 @@ TASKS_TABLE = [
                 "choices": [line["answerText"]],
             },
         ),
-        suite=("lighteval",),
         hf_repo="AmazonScience/mintaka",
         hf_subset=standardize_tag(lang.value),
         evaluation_splits=("test",),

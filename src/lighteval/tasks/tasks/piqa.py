@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 piqa = LightevalTaskConfig(
     name="piqa",
-    suite=["lighteval"],
     prompt_function=prompt.piqa_helm,
     hf_repo="ybisk/piqa",
     hf_subset="plain_text",

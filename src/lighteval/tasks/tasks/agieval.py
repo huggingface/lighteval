@@ -46,7 +46,6 @@ def record_to_sample(record):
 
 agieval_aqua_rat = LightevalTaskConfig(
     name="agieval:aqua-rat",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -67,7 +66,6 @@ agieval_aqua_rat = LightevalTaskConfig(
 
 agieval_gaokao_biology = LightevalTaskConfig(
     name="agieval:gaokao-biology",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -88,7 +86,6 @@ agieval_gaokao_biology = LightevalTaskConfig(
 
 agieval_gaokao_chemistry = LightevalTaskConfig(
     name="agieval:gaokao-chemistry",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -109,7 +106,6 @@ agieval_gaokao_chemistry = LightevalTaskConfig(
 
 agieval_gaokao_chinese = LightevalTaskConfig(
     name="agieval:gaokao-chinese",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -130,7 +126,6 @@ agieval_gaokao_chinese = LightevalTaskConfig(
 
 agieval_gaokao_english = LightevalTaskConfig(
     name="agieval:gaokao-english",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -151,7 +146,6 @@ agieval_gaokao_english = LightevalTaskConfig(
 
 agieval_gaokao_geography = LightevalTaskConfig(
     name="agieval:gaokao-geography",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -172,7 +166,6 @@ agieval_gaokao_geography = LightevalTaskConfig(
 
 agieval_gaokao_history = LightevalTaskConfig(
     name="agieval:gaokao-history",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -193,7 +186,6 @@ agieval_gaokao_history = LightevalTaskConfig(
 
 agieval_gaokao_mathqa = LightevalTaskConfig(
     name="agieval:gaokao-mathqa",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -214,7 +206,6 @@ agieval_gaokao_mathqa = LightevalTaskConfig(
 
 agieval_gaokao_physics = LightevalTaskConfig(
     name="agieval:gaokao-physics",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -235,7 +226,6 @@ agieval_gaokao_physics = LightevalTaskConfig(
 
 agieval_logiqa_en = LightevalTaskConfig(
     name="agieval:logiqa-en",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -256,7 +246,6 @@ agieval_logiqa_en = LightevalTaskConfig(
 
 agieval_logiqa_zh = LightevalTaskConfig(
     name="agieval:logiqa-zh",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -277,7 +266,6 @@ agieval_logiqa_zh = LightevalTaskConfig(
 
 agieval_lsat_ar = LightevalTaskConfig(
     name="agieval:lsat-ar",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -298,7 +286,6 @@ agieval_lsat_ar = LightevalTaskConfig(
 
 agieval_lsat_lr = LightevalTaskConfig(
     name="agieval:lsat-lr",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -319,7 +306,6 @@ agieval_lsat_lr = LightevalTaskConfig(
 
 agieval_lsat_rc = LightevalTaskConfig(
     name="agieval:lsat-rc",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -340,7 +326,6 @@ agieval_lsat_rc = LightevalTaskConfig(
 
 agieval_sat_en = LightevalTaskConfig(
     name="agieval:sat-en",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -361,7 +346,6 @@ agieval_sat_en = LightevalTaskConfig(
 
 agieval_sat_en_without_passage = LightevalTaskConfig(
     name="agieval:sat-en-without-passage",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
@@ -382,7 +366,6 @@ agieval_sat_en_without_passage = LightevalTaskConfig(
 
 agieval_sat_math = LightevalTaskConfig(
     name="agieval:sat-math",
-    suite=["lighteval"],
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),

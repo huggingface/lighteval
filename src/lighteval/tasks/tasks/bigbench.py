@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 abstract_narrative_understanding = LightevalTaskConfig(
     name="bigbench:abstract_narrative_understanding",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="abstract_narrative_understanding",
@@ -42,7 +41,6 @@ abstract_narrative_understanding = LightevalTaskConfig(
 
 anachronisms = LightevalTaskConfig(
     name="bigbench:anachronisms",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="anachronisms",
@@ -58,7 +56,6 @@ anachronisms = LightevalTaskConfig(
 
 analogical_similarity = LightevalTaskConfig(
     name="bigbench:analogical_similarity",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="analogical_similarity",
@@ -74,7 +71,6 @@ analogical_similarity = LightevalTaskConfig(
 
 analytic_entailment = LightevalTaskConfig(
     name="bigbench:analytic_entailment",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="analytic_entailment",
@@ -90,7 +86,6 @@ analytic_entailment = LightevalTaskConfig(
 
 arithmetic_bb = LightevalTaskConfig(
     name="bigbench:arithmetic_bb",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="arithmetic",
@@ -106,7 +101,6 @@ arithmetic_bb = LightevalTaskConfig(
 
 ascii_word_recognition = LightevalTaskConfig(
     name="bigbench:ascii_word_recognition",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="ascii_word_recognition",
@@ -122,7 +116,6 @@ ascii_word_recognition = LightevalTaskConfig(
 
 authorship_verification = LightevalTaskConfig(
     name="bigbench:authorship_verification",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="authorship_verification",
@@ -138,7 +131,6 @@ authorship_verification = LightevalTaskConfig(
 
 auto_categorization = LightevalTaskConfig(
     name="bigbench:auto_categorization",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="auto_categorization",
@@ -154,7 +146,6 @@ auto_categorization = LightevalTaskConfig(
 
 auto_debugging = LightevalTaskConfig(
     name="bigbench:auto_debugging",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_linefeed_before_and_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="auto_debugging",
@@ -170,7 +161,6 @@ auto_debugging = LightevalTaskConfig(
 
 bbq_lite_json = LightevalTaskConfig(
     name="bigbench:bbq_lite_json",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_linefeed_before_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="bbq_lite_json",
@@ -186,7 +176,6 @@ bbq_lite_json = LightevalTaskConfig(
 
 bridging_anaphora_resolution_barqa = LightevalTaskConfig(
     name="bigbench:bridging_anaphora_resolution_barqa",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="bridging_anaphora_resolution_barqa",
@@ -202,7 +191,6 @@ bridging_anaphora_resolution_barqa = LightevalTaskConfig(
 
 causal_judgment = LightevalTaskConfig(
     name="bigbench:causal_judgment",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="causal_judgment",
@@ -218,7 +206,6 @@ causal_judgment = LightevalTaskConfig(
 
 cause_and_effect = LightevalTaskConfig(
     name="bigbench:cause_and_effect",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="cause_and_effect",
@@ -234,7 +221,6 @@ cause_and_effect = LightevalTaskConfig(
 
 checkmate_in_one = LightevalTaskConfig(
     name="bigbench:checkmate_in_one",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="checkmate_in_one",
@@ -250,7 +236,6 @@ checkmate_in_one = LightevalTaskConfig(
 
 chess_state_tracking = LightevalTaskConfig(
     name="bigbench:chess_state_tracking",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="chess_state_tracking",
@@ -266,7 +251,6 @@ chess_state_tracking = LightevalTaskConfig(
 
 chinese_remainder_theorem = LightevalTaskConfig(
     name="bigbench:chinese_remainder_theorem",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="chinese_remainder_theorem",
@@ -282,7 +266,6 @@ chinese_remainder_theorem = LightevalTaskConfig(
 
 cifar10_classification = LightevalTaskConfig(
     name="bigbench:cifar10_classification",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="cifar10_classification",
@@ -298,7 +281,6 @@ cifar10_classification = LightevalTaskConfig(
 
 code_line_description = LightevalTaskConfig(
     name="bigbench:code_line_description",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_linefeed_before_and_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="code_line_description",
@@ -314,7 +296,6 @@ code_line_description = LightevalTaskConfig(
 
 codenames = LightevalTaskConfig(
     name="bigbench:codenames",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="codenames",
@@ -330,7 +311,6 @@ codenames = LightevalTaskConfig(
 
 color = LightevalTaskConfig(
     name="bigbench:color",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="color",
@@ -351,7 +331,6 @@ color = LightevalTaskConfig(
 
 common_morpheme = LightevalTaskConfig(
     name="bigbench:common_morpheme",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="common_morpheme",
@@ -367,7 +346,6 @@ common_morpheme = LightevalTaskConfig(
 
 conceptual_combinations = LightevalTaskConfig(
     name="bigbench:conceptual_combinations",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_linefeed_before_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="conceptual_combinations",
@@ -383,7 +361,6 @@ conceptual_combinations = LightevalTaskConfig(
 
 conlang_translation = LightevalTaskConfig(
     name="bigbench:conlang_translation",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="conlang_translation",
@@ -399,7 +376,6 @@ conlang_translation = LightevalTaskConfig(
 
 contextual_parametric_knowledge_conflicts = LightevalTaskConfig(
     name="bigbench:contextual_parametric_knowledge_conflicts",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="contextual_parametric_knowledge_conflicts",
@@ -415,7 +391,6 @@ contextual_parametric_knowledge_conflicts = LightevalTaskConfig(
 
 crash_blossom = LightevalTaskConfig(
     name="bigbench:crash_blossom",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="crash_blossom",
@@ -431,7 +406,6 @@ crash_blossom = LightevalTaskConfig(
 
 crass_ai = LightevalTaskConfig(
     name="bigbench:crass_ai",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="crass_ai",
@@ -447,7 +421,6 @@ crass_ai = LightevalTaskConfig(
 
 cryobiology_spanish = LightevalTaskConfig(
     name="bigbench:cryobiology_spanish",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="cryobiology_spanish",
@@ -463,7 +436,6 @@ cryobiology_spanish = LightevalTaskConfig(
 
 cryptonite = LightevalTaskConfig(
     name="bigbench:cryptonite",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="cryptonite",
@@ -479,7 +451,6 @@ cryptonite = LightevalTaskConfig(
 
 cs_algorithms = LightevalTaskConfig(
     name="bigbench:cs_algorithms",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="cs_algorithms",
@@ -495,7 +466,6 @@ cs_algorithms = LightevalTaskConfig(
 
 dark_humor_detection = LightevalTaskConfig(
     name="bigbench:dark_humor_detection",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="dark_humor_detection",
@@ -511,7 +481,6 @@ dark_humor_detection = LightevalTaskConfig(
 
 date_understanding = LightevalTaskConfig(
     name="bigbench:date_understanding",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="date_understanding",
@@ -527,7 +496,6 @@ date_understanding = LightevalTaskConfig(
 
 disambiguation_qa = LightevalTaskConfig(
     name="bigbench:disambiguation_qa",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="disambiguation_qa",
@@ -543,7 +511,6 @@ disambiguation_qa = LightevalTaskConfig(
 
 discourse_marker_prediction = LightevalTaskConfig(
     name="bigbench:discourse_marker_prediction",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="discourse_marker_prediction",
@@ -559,7 +526,6 @@ discourse_marker_prediction = LightevalTaskConfig(
 
 disfl_qa = LightevalTaskConfig(
     name="bigbench:disfl_qa",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="disfl_qa",
@@ -575,7 +541,6 @@ disfl_qa = LightevalTaskConfig(
 
 dyck_languages = LightevalTaskConfig(
     name="bigbench:dyck_languages",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="dyck_languages",
@@ -591,7 +556,6 @@ dyck_languages = LightevalTaskConfig(
 
 elementary_math_qa = LightevalTaskConfig(
     name="bigbench:elementary_math_qa",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="elementary_math_qa",
@@ -607,7 +571,6 @@ elementary_math_qa = LightevalTaskConfig(
 
 emoji_movie = LightevalTaskConfig(
     name="bigbench:emoji_movie",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_linefeed_before_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="emoji_movie",
@@ -628,7 +591,6 @@ emoji_movie = LightevalTaskConfig(
 
 emojis_emotion_prediction = LightevalTaskConfig(
     name="bigbench:emojis_emotion_prediction",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="emojis_emotion_prediction",
@@ -644,7 +606,6 @@ emojis_emotion_prediction = LightevalTaskConfig(
 
 empirical_judgments = LightevalTaskConfig(
     name="bigbench:empirical_judgments",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="empirical_judgments",
@@ -660,7 +621,6 @@ empirical_judgments = LightevalTaskConfig(
 
 english_proverbs = LightevalTaskConfig(
     name="bigbench:english_proverbs",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="english_proverbs",
@@ -676,7 +636,6 @@ english_proverbs = LightevalTaskConfig(
 
 english_russian_proverbs = LightevalTaskConfig(
     name="bigbench:english_russian_proverbs",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="english_russian_proverbs",
@@ -692,7 +651,6 @@ english_russian_proverbs = LightevalTaskConfig(
 
 entailed_polarity = LightevalTaskConfig(
     name="bigbench:entailed_polarity",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="entailed_polarity",
@@ -708,7 +666,6 @@ entailed_polarity = LightevalTaskConfig(
 
 entailed_polarity_hindi = LightevalTaskConfig(
     name="bigbench:entailed_polarity_hindi",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="entailed_polarity_hindi",
@@ -724,7 +681,6 @@ entailed_polarity_hindi = LightevalTaskConfig(
 
 epistemic_reasoning = LightevalTaskConfig(
     name="bigbench:epistemic_reasoning",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="epistemic_reasoning",
@@ -740,7 +696,6 @@ epistemic_reasoning = LightevalTaskConfig(
 
 evaluating_information_essentiality = LightevalTaskConfig(
     name="bigbench:evaluating_information_essentiality",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="evaluating_information_essentiality",
@@ -756,7 +711,6 @@ evaluating_information_essentiality = LightevalTaskConfig(
 
 fact_checker = LightevalTaskConfig(
     name="bigbench:fact_checker",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="fact_checker",
@@ -772,7 +726,6 @@ fact_checker = LightevalTaskConfig(
 
 fantasy_reasoning = LightevalTaskConfig(
     name="bigbench:fantasy_reasoning",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="fantasy_reasoning",
@@ -788,7 +741,6 @@ fantasy_reasoning = LightevalTaskConfig(
 
 few_shot_nlg = LightevalTaskConfig(
     name="bigbench:few_shot_nlg",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="few_shot_nlg",
@@ -804,7 +756,6 @@ few_shot_nlg = LightevalTaskConfig(
 
 figure_of_speech_detection = LightevalTaskConfig(
     name="bigbench:figure_of_speech_detection",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="figure_of_speech_detection",
@@ -820,7 +771,6 @@ figure_of_speech_detection = LightevalTaskConfig(
 
 formal_fallacies_syllogisms_negation = LightevalTaskConfig(
     name="bigbench:formal_fallacies_syllogisms_negation",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_linefeed_before_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="formal_fallacies_syllogisms_negation",
@@ -836,7 +786,6 @@ formal_fallacies_syllogisms_negation = LightevalTaskConfig(
 
 gem = LightevalTaskConfig(
     name="bigbench:gem",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="gem",
@@ -852,7 +801,6 @@ gem = LightevalTaskConfig(
 
 gender_inclusive_sentences_german = LightevalTaskConfig(
     name="bigbench:gender_inclusive_sentences_german",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="gender_inclusive_sentences_german",
@@ -868,7 +816,6 @@ gender_inclusive_sentences_german = LightevalTaskConfig(
 
 general_knowledge = LightevalTaskConfig(
     name="bigbench:general_knowledge",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="general_knowledge",
@@ -884,7 +831,6 @@ general_knowledge = LightevalTaskConfig(
 
 geometric_shapes = LightevalTaskConfig(
     name="bigbench:geometric_shapes",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="geometric_shapes",
@@ -905,7 +851,6 @@ geometric_shapes = LightevalTaskConfig(
 
 goal_step_wikihow = LightevalTaskConfig(
     name="bigbench:goal_step_wikihow",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="goal_step_wikihow",
@@ -921,7 +866,6 @@ goal_step_wikihow = LightevalTaskConfig(
 
 gre_reading_comprehension = LightevalTaskConfig(
     name="bigbench:gre_reading_comprehension",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="gre_reading_comprehension",
@@ -937,7 +881,6 @@ gre_reading_comprehension = LightevalTaskConfig(
 
 hhh_alignment = LightevalTaskConfig(
     name="bigbench:hhh_alignment",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="hhh_alignment",
@@ -953,7 +896,6 @@ hhh_alignment = LightevalTaskConfig(
 
 hindi_question_answering = LightevalTaskConfig(
     name="bigbench:hindi_question_answering",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="hindi_question_answering",
@@ -969,7 +911,6 @@ hindi_question_answering = LightevalTaskConfig(
 
 hindu_knowledge = LightevalTaskConfig(
     name="bigbench:hindu_knowledge",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_linefeed_before_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="hindu_knowledge",
@@ -985,7 +926,6 @@ hindu_knowledge = LightevalTaskConfig(
 
 hinglish_toxicity = LightevalTaskConfig(
     name="bigbench:hinglish_toxicity",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="hinglish_toxicity",
@@ -1001,7 +941,6 @@ hinglish_toxicity = LightevalTaskConfig(
 
 human_organs_senses = LightevalTaskConfig(
     name="bigbench:human_organs_senses",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="human_organs_senses",
@@ -1017,7 +956,6 @@ human_organs_senses = LightevalTaskConfig(
 
 hyperbaton = LightevalTaskConfig(
     name="bigbench:hyperbaton",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="hyperbaton",
@@ -1033,7 +971,6 @@ hyperbaton = LightevalTaskConfig(
 
 identify_math_theorems = LightevalTaskConfig(
     name="bigbench:identify_math_theorems",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="identify_math_theorems",
@@ -1049,7 +986,6 @@ identify_math_theorems = LightevalTaskConfig(
 
 identify_odd_metaphor = LightevalTaskConfig(
     name="bigbench:identify_odd_metaphor",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="identify_odd_metaphor",
@@ -1065,7 +1001,6 @@ identify_odd_metaphor = LightevalTaskConfig(
 
 implicatures = LightevalTaskConfig(
     name="bigbench:implicatures",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="implicatures",
@@ -1081,7 +1016,6 @@ implicatures = LightevalTaskConfig(
 
 implicit_relations = LightevalTaskConfig(
     name="bigbench:implicit_relations",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="implicit_relations",
@@ -1097,7 +1031,6 @@ implicit_relations = LightevalTaskConfig(
 
 intent_recognition = LightevalTaskConfig(
     name="bigbench:intent_recognition",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="intent_recognition",
@@ -1113,7 +1046,6 @@ intent_recognition = LightevalTaskConfig(
 
 international_phonetic_alphabet_nli = LightevalTaskConfig(
     name="bigbench:international_phonetic_alphabet_nli",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="international_phonetic_alphabet_nli",
@@ -1129,7 +1061,6 @@ international_phonetic_alphabet_nli = LightevalTaskConfig(
 
 international_phonetic_alphabet_transliterate = LightevalTaskConfig(
     name="bigbench:international_phonetic_alphabet_transliterate",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="international_phonetic_alphabet_transliterate",
@@ -1145,7 +1076,6 @@ international_phonetic_alphabet_transliterate = LightevalTaskConfig(
 
 intersect_geometry = LightevalTaskConfig(
     name="bigbench:intersect_geometry",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="intersect_geometry",
@@ -1161,7 +1091,6 @@ intersect_geometry = LightevalTaskConfig(
 
 irony_identification = LightevalTaskConfig(
     name="bigbench:irony_identification",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="irony_identification",
@@ -1177,7 +1106,6 @@ irony_identification = LightevalTaskConfig(
 
 kanji_ascii = LightevalTaskConfig(
     name="bigbench:kanji_ascii",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="kanji_ascii",
@@ -1193,7 +1121,6 @@ kanji_ascii = LightevalTaskConfig(
 
 kannada = LightevalTaskConfig(
     name="bigbench:kannada",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="kannada",
@@ -1209,7 +1136,6 @@ kannada = LightevalTaskConfig(
 
 key_value_maps = LightevalTaskConfig(
     name="bigbench:key_value_maps",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="key_value_maps",
@@ -1225,7 +1151,6 @@ key_value_maps = LightevalTaskConfig(
 
 known_unknowns = LightevalTaskConfig(
     name="bigbench:known_unknowns",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_linefeed_before_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="known_unknowns",
@@ -1241,7 +1166,6 @@ known_unknowns = LightevalTaskConfig(
 
 language_games = LightevalTaskConfig(
     name="bigbench:language_games",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="language_games",
@@ -1257,7 +1181,6 @@ language_games = LightevalTaskConfig(
 
 language_identification = LightevalTaskConfig(
     name="bigbench:language_identification",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="language_identification",
@@ -1273,7 +1196,6 @@ language_identification = LightevalTaskConfig(
 
 linguistic_mappings = LightevalTaskConfig(
     name="bigbench:linguistic_mappings",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="linguistic_mappings",
@@ -1289,7 +1211,6 @@ linguistic_mappings = LightevalTaskConfig(
 
 linguistics_puzzles = LightevalTaskConfig(
     name="bigbench:linguistics_puzzles",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="linguistics_puzzles",
@@ -1305,7 +1226,6 @@ linguistics_puzzles = LightevalTaskConfig(
 
 logic_grid_puzzle = LightevalTaskConfig(
     name="bigbench:logic_grid_puzzle",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="logic_grid_puzzle",
@@ -1321,7 +1241,6 @@ logic_grid_puzzle = LightevalTaskConfig(
 
 logical_args = LightevalTaskConfig(
     name="bigbench:logical_args",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="logical_args",
@@ -1337,7 +1256,6 @@ logical_args = LightevalTaskConfig(
 
 logical_deduction = LightevalTaskConfig(
     name="bigbench:logical_deduction",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="logical_deduction",
@@ -1353,7 +1271,6 @@ logical_deduction = LightevalTaskConfig(
 
 logical_fallacy_detection = LightevalTaskConfig(
     name="bigbench:logical_fallacy_detection",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="logical_fallacy_detection",
@@ -1369,7 +1286,6 @@ logical_fallacy_detection = LightevalTaskConfig(
 
 logical_sequence = LightevalTaskConfig(
     name="bigbench:logical_sequence",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="logical_sequence",
@@ -1385,7 +1301,6 @@ logical_sequence = LightevalTaskConfig(
 
 mathematical_induction = LightevalTaskConfig(
     name="bigbench:mathematical_induction",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="mathematical_induction",
@@ -1401,7 +1316,6 @@ mathematical_induction = LightevalTaskConfig(
 
 matrixshapes = LightevalTaskConfig(
     name="bigbench:matrixshapes",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="matrixshapes",
@@ -1417,7 +1331,6 @@ matrixshapes = LightevalTaskConfig(
 
 metaphor_boolean = LightevalTaskConfig(
     name="bigbench:metaphor_boolean",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="metaphor_boolean",
@@ -1433,7 +1346,6 @@ metaphor_boolean = LightevalTaskConfig(
 
 metaphor_understanding = LightevalTaskConfig(
     name="bigbench:metaphor_understanding",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="metaphor_understanding",
@@ -1449,7 +1361,6 @@ metaphor_understanding = LightevalTaskConfig(
 
 minute_mysteries_qa = LightevalTaskConfig(
     name="bigbench:minute_mysteries_qa",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="minute_mysteries_qa",
@@ -1465,7 +1376,6 @@ minute_mysteries_qa = LightevalTaskConfig(
 
 misconceptions = LightevalTaskConfig(
     name="bigbench:misconceptions",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="misconceptions",
@@ -1481,7 +1391,6 @@ misconceptions = LightevalTaskConfig(
 
 misconceptions_russian = LightevalTaskConfig(
     name="bigbench:misconceptions_russian",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="misconceptions_russian",
@@ -1497,7 +1406,6 @@ misconceptions_russian = LightevalTaskConfig(
 
 mnist_ascii = LightevalTaskConfig(
     name="bigbench:mnist_ascii",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="mnist_ascii",
@@ -1513,7 +1421,6 @@ mnist_ascii = LightevalTaskConfig(
 
 modified_arithmetic = LightevalTaskConfig(
     name="bigbench:modified_arithmetic",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="modified_arithmetic",
@@ -1529,7 +1436,6 @@ modified_arithmetic = LightevalTaskConfig(
 
 moral_permissibility = LightevalTaskConfig(
     name="bigbench:moral_permissibility",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="moral_permissibility",
@@ -1545,7 +1451,6 @@ moral_permissibility = LightevalTaskConfig(
 
 movie_dialog_same_or_different = LightevalTaskConfig(
     name="bigbench:movie_dialog_same_or_different",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="movie_dialog_same_or_different",
@@ -1561,7 +1466,6 @@ movie_dialog_same_or_different = LightevalTaskConfig(
 
 movie_recommendation = LightevalTaskConfig(
     name="bigbench:movie_recommendation",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="movie_recommendation",
@@ -1577,7 +1481,6 @@ movie_recommendation = LightevalTaskConfig(
 
 mult_data_wrangling = LightevalTaskConfig(
     name="bigbench:mult_data_wrangling",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="mult_data_wrangling",
@@ -1593,7 +1496,6 @@ mult_data_wrangling = LightevalTaskConfig(
 
 navigate = LightevalTaskConfig(
     name="bigbench:navigate",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="navigate",
@@ -1609,7 +1511,6 @@ navigate = LightevalTaskConfig(
 
 nonsense_words_grammar = LightevalTaskConfig(
     name="bigbench:nonsense_words_grammar",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="nonsense_words_grammar",
@@ -1625,7 +1526,6 @@ nonsense_words_grammar = LightevalTaskConfig(
 
 novel_concepts = LightevalTaskConfig(
     name="bigbench:novel_concepts",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="novel_concepts",
@@ -1641,7 +1541,6 @@ novel_concepts = LightevalTaskConfig(
 
 object_counting = LightevalTaskConfig(
     name="bigbench:object_counting",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="object_counting",
@@ -1657,7 +1556,6 @@ object_counting = LightevalTaskConfig(
 
 odd_one_out = LightevalTaskConfig(
     name="bigbench:odd_one_out",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="odd_one_out",
@@ -1673,7 +1571,6 @@ odd_one_out = LightevalTaskConfig(
 
 operators = LightevalTaskConfig(
     name="bigbench:operators",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="operators",
@@ -1689,7 +1586,6 @@ operators = LightevalTaskConfig(
 
 paragraph_segmentation = LightevalTaskConfig(
     name="bigbench:paragraph_segmentation",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="paragraph_segmentation",
@@ -1705,7 +1601,6 @@ paragraph_segmentation = LightevalTaskConfig(
 
 parsinlu_qa = LightevalTaskConfig(
     name="bigbench:parsinlu_qa",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="parsinlu_qa",
@@ -1721,7 +1616,6 @@ parsinlu_qa = LightevalTaskConfig(
 
 parsinlu_reading_comprehension = LightevalTaskConfig(
     name="bigbench:parsinlu_reading_comprehension",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_linefeed_before_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="parsinlu_reading_comprehension",
@@ -1737,7 +1631,6 @@ parsinlu_reading_comprehension = LightevalTaskConfig(
 
 penguins_in_a_table = LightevalTaskConfig(
     name="bigbench:penguins_in_a_table",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="penguins_in_a_table",
@@ -1753,7 +1646,6 @@ penguins_in_a_table = LightevalTaskConfig(
 
 periodic_elements = LightevalTaskConfig(
     name="bigbench:periodic_elements",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="periodic_elements",
@@ -1769,7 +1661,6 @@ periodic_elements = LightevalTaskConfig(
 
 persian_idioms = LightevalTaskConfig(
     name="bigbench:persian_idioms",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="persian_idioms",
@@ -1785,7 +1676,6 @@ persian_idioms = LightevalTaskConfig(
 
 phrase_relatedness = LightevalTaskConfig(
     name="bigbench:phrase_relatedness",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="phrase_relatedness",
@@ -1801,7 +1691,6 @@ phrase_relatedness = LightevalTaskConfig(
 
 physical_intuition = LightevalTaskConfig(
     name="bigbench:physical_intuition",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="physical_intuition",
@@ -1817,7 +1706,6 @@ physical_intuition = LightevalTaskConfig(
 
 physics = LightevalTaskConfig(
     name="bigbench:physics",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="physics",
@@ -1833,7 +1721,6 @@ physics = LightevalTaskConfig(
 
 physics_questions = LightevalTaskConfig(
     name="bigbench:physics_questions",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="physics_questions",
@@ -1849,7 +1736,6 @@ physics_questions = LightevalTaskConfig(
 
 play_dialog_same_or_different = LightevalTaskConfig(
     name="bigbench:play_dialog_same_or_different",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_linefeed_before_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="play_dialog_same_or_different",
@@ -1865,7 +1751,6 @@ play_dialog_same_or_different = LightevalTaskConfig(
 
 polish_sequence_labeling = LightevalTaskConfig(
     name="bigbench:polish_sequence_labeling",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="polish_sequence_labeling",
@@ -1881,7 +1766,6 @@ polish_sequence_labeling = LightevalTaskConfig(
 
 presuppositions_as_nli = LightevalTaskConfig(
     name="bigbench:presuppositions_as_nli",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="presuppositions_as_nli",
@@ -1897,7 +1781,6 @@ presuppositions_as_nli = LightevalTaskConfig(
 
 qa_wikidata = LightevalTaskConfig(
     name="bigbench:qa_wikidata",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="qa_wikidata",
@@ -1918,7 +1801,6 @@ qa_wikidata = LightevalTaskConfig(
 
 question_selection = LightevalTaskConfig(
     name="bigbench:question_selection",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="question_selection",
@@ -1934,7 +1816,6 @@ question_selection = LightevalTaskConfig(
 
 real_or_fake_text = LightevalTaskConfig(
     name="bigbench:real_or_fake_text",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="real_or_fake_text",
@@ -1950,7 +1831,6 @@ real_or_fake_text = LightevalTaskConfig(
 
 reasoning_about_colored_objects = LightevalTaskConfig(
     name="bigbench:reasoning_about_colored_objects",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="reasoning_about_colored_objects",
@@ -1966,7 +1846,6 @@ reasoning_about_colored_objects = LightevalTaskConfig(
 
 repeat_copy_logic = LightevalTaskConfig(
     name="bigbench:repeat_copy_logic",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="repeat_copy_logic",
@@ -1982,7 +1861,6 @@ repeat_copy_logic = LightevalTaskConfig(
 
 rephrase = LightevalTaskConfig(
     name="bigbench:rephrase",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="rephrase",
@@ -2003,7 +1881,6 @@ rephrase = LightevalTaskConfig(
 
 rhyming = LightevalTaskConfig(
     name="bigbench:rhyming",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="rhyming",
@@ -2019,7 +1896,6 @@ rhyming = LightevalTaskConfig(
 
 riddle_sense = LightevalTaskConfig(
     name="bigbench:riddle_sense",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="riddle_sense",
@@ -2035,7 +1911,6 @@ riddle_sense = LightevalTaskConfig(
 
 ruin_names = LightevalTaskConfig(
     name="bigbench:ruin_names",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="ruin_names",
@@ -2051,7 +1926,6 @@ ruin_names = LightevalTaskConfig(
 
 salient_translation_error_detection = LightevalTaskConfig(
     name="bigbench:salient_translation_error_detection",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="salient_translation_error_detection",
@@ -2067,7 +1941,6 @@ salient_translation_error_detection = LightevalTaskConfig(
 
 scientific_press_release = LightevalTaskConfig(
     name="bigbench:scientific_press_release",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="scientific_press_release",
@@ -2083,7 +1956,6 @@ scientific_press_release = LightevalTaskConfig(
 
 semantic_parsing_in_context_sparc = LightevalTaskConfig(
     name="bigbench:semantic_parsing_in_context_sparc",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="semantic_parsing_in_context_sparc",
@@ -2099,7 +1971,6 @@ semantic_parsing_in_context_sparc = LightevalTaskConfig(
 
 semantic_parsing_spider = LightevalTaskConfig(
     name="bigbench:semantic_parsing_spider",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="semantic_parsing_spider",
@@ -2115,7 +1986,6 @@ semantic_parsing_spider = LightevalTaskConfig(
 
 sentence_ambiguity = LightevalTaskConfig(
     name="bigbench:sentence_ambiguity",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="sentence_ambiguity",
@@ -2131,7 +2001,6 @@ sentence_ambiguity = LightevalTaskConfig(
 
 similarities_abstraction = LightevalTaskConfig(
     name="bigbench:similarities_abstraction",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="similarities_abstraction",
@@ -2147,7 +2016,6 @@ similarities_abstraction = LightevalTaskConfig(
 
 simp_turing_concept = LightevalTaskConfig(
     name="bigbench:simp_turing_concept",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="simp_turing_concept",
@@ -2163,7 +2031,6 @@ simp_turing_concept = LightevalTaskConfig(
 
 simple_arithmetic_json = LightevalTaskConfig(
     name="bigbench:simple_arithmetic_json",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="simple_arithmetic_json",
@@ -2179,7 +2046,6 @@ simple_arithmetic_json = LightevalTaskConfig(
 
 simple_arithmetic_json_multiple_choice = LightevalTaskConfig(
     name="bigbench:simple_arithmetic_json_multiple_choice",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="simple_arithmetic_json_multiple_choice",
@@ -2195,7 +2061,6 @@ simple_arithmetic_json_multiple_choice = LightevalTaskConfig(
 
 simple_arithmetic_json_subtasks = LightevalTaskConfig(
     name="bigbench:simple_arithmetic_json_subtasks",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="simple_arithmetic_json_subtasks",
@@ -2211,7 +2076,6 @@ simple_arithmetic_json_subtasks = LightevalTaskConfig(
 
 simple_arithmetic_multiple_targets_json = LightevalTaskConfig(
     name="bigbench:simple_arithmetic_multiple_targets_json",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="simple_arithmetic_multiple_targets_json",
@@ -2227,7 +2091,6 @@ simple_arithmetic_multiple_targets_json = LightevalTaskConfig(
 
 simple_ethical_questions = LightevalTaskConfig(
     name="bigbench:simple_ethical_questions",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="simple_ethical_questions",
@@ -2243,7 +2106,6 @@ simple_ethical_questions = LightevalTaskConfig(
 
 simple_text_editing = LightevalTaskConfig(
     name="bigbench:simple_text_editing",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="simple_text_editing",
@@ -2259,7 +2121,6 @@ simple_text_editing = LightevalTaskConfig(
 
 snarks = LightevalTaskConfig(
     name="bigbench:snarks",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="snarks",
@@ -2275,7 +2136,6 @@ snarks = LightevalTaskConfig(
 
 social_iqa = LightevalTaskConfig(
     name="bigbench:social_iqa",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="social_iqa",
@@ -2291,7 +2151,6 @@ social_iqa = LightevalTaskConfig(
 
 social_support = LightevalTaskConfig(
     name="bigbench:social_support",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="social_support",
@@ -2307,7 +2166,6 @@ social_support = LightevalTaskConfig(
 
 sports_understanding = LightevalTaskConfig(
     name="bigbench:sports_understanding",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="sports_understanding",
@@ -2323,7 +2181,6 @@ sports_understanding = LightevalTaskConfig(
 
 strange_stories = LightevalTaskConfig(
     name="bigbench:strange_stories",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="strange_stories",
@@ -2339,7 +2196,6 @@ strange_stories = LightevalTaskConfig(
 
 strategyqa = LightevalTaskConfig(
     name="bigbench:strategyqa",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_linefeed_before_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="strategyqa",
@@ -2355,7 +2211,6 @@ strategyqa = LightevalTaskConfig(
 
 sufficient_information = LightevalTaskConfig(
     name="bigbench:sufficient_information",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="sufficient_information",
@@ -2371,7 +2226,6 @@ sufficient_information = LightevalTaskConfig(
 
 suicide_risk = LightevalTaskConfig(
     name="bigbench:suicide_risk",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="suicide_risk",
@@ -2387,7 +2241,6 @@ suicide_risk = LightevalTaskConfig(
 
 swahili_english_proverbs = LightevalTaskConfig(
     name="bigbench:swahili_english_proverbs",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="swahili_english_proverbs",
@@ -2403,7 +2256,6 @@ swahili_english_proverbs = LightevalTaskConfig(
 
 swedish_to_german_proverbs = LightevalTaskConfig(
     name="bigbench:swedish_to_german_proverbs",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="swedish_to_german_proverbs",
@@ -2419,7 +2271,6 @@ swedish_to_german_proverbs = LightevalTaskConfig(
 
 symbol_interpretation = LightevalTaskConfig(
     name="bigbench:symbol_interpretation",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_linefeed_before_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="symbol_interpretation",
@@ -2435,7 +2286,6 @@ symbol_interpretation = LightevalTaskConfig(
 
 tellmewhy = LightevalTaskConfig(
     name="bigbench:tellmewhy",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="tellmewhy",
@@ -2451,7 +2301,6 @@ tellmewhy = LightevalTaskConfig(
 
 temporal_sequences = LightevalTaskConfig(
     name="bigbench:temporal_sequences",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="temporal_sequences",
@@ -2467,7 +2316,6 @@ temporal_sequences = LightevalTaskConfig(
 
 tense = LightevalTaskConfig(
     name="bigbench:tense",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="tense",
@@ -2483,7 +2331,6 @@ tense = LightevalTaskConfig(
 
 timedial = LightevalTaskConfig(
     name="bigbench:timedial",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="timedial",
@@ -2499,7 +2346,6 @@ timedial = LightevalTaskConfig(
 
 topical_chat = LightevalTaskConfig(
     name="bigbench:topical_chat",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="topical_chat",
@@ -2515,7 +2361,6 @@ topical_chat = LightevalTaskConfig(
 
 tracking_shuffled_objects = LightevalTaskConfig(
     name="bigbench:tracking_shuffled_objects",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="tracking_shuffled_objects",
@@ -2531,7 +2376,6 @@ tracking_shuffled_objects = LightevalTaskConfig(
 
 understanding_fables = LightevalTaskConfig(
     name="bigbench:understanding_fables",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="understanding_fables",
@@ -2547,7 +2391,6 @@ understanding_fables = LightevalTaskConfig(
 
 undo_permutation = LightevalTaskConfig(
     name="bigbench:undo_permutation",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="undo_permutation",
@@ -2563,7 +2406,6 @@ undo_permutation = LightevalTaskConfig(
 
 unit_conversion = LightevalTaskConfig(
     name="bigbench:unit_conversion",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="unit_conversion",
@@ -2579,7 +2421,6 @@ unit_conversion = LightevalTaskConfig(
 
 unit_interpretation = LightevalTaskConfig(
     name="bigbench:unit_interpretation",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="unit_interpretation",
@@ -2595,7 +2436,6 @@ unit_interpretation = LightevalTaskConfig(
 
 unnatural_in_context_learning = LightevalTaskConfig(
     name="bigbench:unnatural_in_context_learning",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="unnatural_in_context_learning",
@@ -2611,7 +2451,6 @@ unnatural_in_context_learning = LightevalTaskConfig(
 
 vitaminc_fact_verification = LightevalTaskConfig(
     name="bigbench:vitaminc_fact_verification",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="vitaminc_fact_verification",
@@ -2627,7 +2466,6 @@ vitaminc_fact_verification = LightevalTaskConfig(
 
 what_is_the_tao = LightevalTaskConfig(
     name="bigbench:what_is_the_tao",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="what_is_the_tao",
@@ -2643,7 +2481,6 @@ what_is_the_tao = LightevalTaskConfig(
 
 which_wiki_edit = LightevalTaskConfig(
     name="bigbench:which_wiki_edit",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="which_wiki_edit",
@@ -2659,7 +2496,6 @@ which_wiki_edit = LightevalTaskConfig(
 
 winowhy = LightevalTaskConfig(
     name="bigbench:winowhy",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench_whitespace_after_query,
     hf_repo="tasksource/bigbench",
     hf_subset="winowhy",
@@ -2675,7 +2511,6 @@ winowhy = LightevalTaskConfig(
 
 word_sorting = LightevalTaskConfig(
     name="bigbench:word_sorting",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="word_sorting",
@@ -2691,7 +2526,6 @@ word_sorting = LightevalTaskConfig(
 
 word_unscrambling = LightevalTaskConfig(
     name="bigbench:word_unscrambling",
-    suite=["lighteval"],
     prompt_function=prompt.bigbench,
     hf_repo="tasksource/bigbench",
     hf_subset="word_unscrambling",

@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 storycloze_2016 = LightevalTaskConfig(
     name="storycloze:2016",
-    suite=["lighteval"],
     prompt_function=prompt.storycloze,
     hf_repo="MoE-UNC/story_cloze",
     hf_subset="2016",
@@ -43,7 +42,6 @@ storycloze_2016 = LightevalTaskConfig(
 
 storycloze_2018 = LightevalTaskConfig(
     name="storycloze:2018",
-    suite=["lighteval"],
     prompt_function=prompt.storycloze,
     hf_repo="MoE-UNC/story_cloze",
     hf_subset="2018",

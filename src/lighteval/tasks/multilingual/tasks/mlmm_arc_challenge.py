@@ -59,7 +59,6 @@ TASKS_TABLE = [
             },
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="jon-tow/okapi_arc_challenge",
         hf_subset=standardize_tag(language.value),
         hf_revision="823d5d7bfaf8974a3ab52a825b6cf4903b35dbc4",

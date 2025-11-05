@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 bold = LightevalTaskConfig(
     name="bold",
-    suite=["lighteval"],
     prompt_function=prompt.bold,
     hf_repo="lighteval/bold_helm",
     hf_subset="all",
@@ -42,7 +41,6 @@ bold = LightevalTaskConfig(
 
 bold_gender = LightevalTaskConfig(
     name="bold:gender",
-    suite=["lighteval"],
     prompt_function=prompt.bold,
     hf_repo="lighteval/bold_helm",
     hf_subset="gender",
@@ -58,7 +56,6 @@ bold_gender = LightevalTaskConfig(
 
 bold_political_ideology = LightevalTaskConfig(
     name="bold:political_ideology",
-    suite=["lighteval"],
     prompt_function=prompt.bold,
     hf_repo="lighteval/bold_helm",
     hf_subset="political_ideology",
@@ -74,7 +71,6 @@ bold_political_ideology = LightevalTaskConfig(
 
 bold_profession = LightevalTaskConfig(
     name="bold:profession",
-    suite=["lighteval"],
     prompt_function=prompt.bold,
     hf_repo="lighteval/bold_helm",
     hf_subset="profession",
@@ -90,7 +86,6 @@ bold_profession = LightevalTaskConfig(
 
 bold_race = LightevalTaskConfig(
     name="bold:race",
-    suite=["lighteval"],
     prompt_function=prompt.bold,
     hf_repo="lighteval/bold_helm",
     hf_subset="race",
@@ -106,7 +101,6 @@ bold_race = LightevalTaskConfig(
 
 bold_religious_ideology = LightevalTaskConfig(
     name="bold:religious_ideology",
-    suite=["lighteval"],
     prompt_function=prompt.bold,
     hf_repo="lighteval/bold_helm",
     hf_subset="religious_ideology",

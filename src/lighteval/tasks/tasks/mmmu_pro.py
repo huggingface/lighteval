@@ -24,7 +24,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 mmmu_pro_standard_4_options = LightevalTaskConfig(
     name="mmmu_pro:standard-4",
-    suite=["lighteval"],
     prompt_function=prompt.mmmu_pro,
     hf_repo="MMMU/MMMU_pro",
     hf_subset="standard (4 options)",
@@ -41,7 +40,6 @@ mmmu_pro_standard_4_options = LightevalTaskConfig(
 
 mmmu_pro_standard_10_options = LightevalTaskConfig(
     name="mmmu_pro:standard-10",
-    suite=["lighteval"],
     prompt_function=prompt.mmmu_pro,
     hf_repo="MMMU/MMMU_pro",
     hf_subset="standard (10 options)",
@@ -58,7 +56,6 @@ mmmu_pro_standard_10_options = LightevalTaskConfig(
 
 mmmu_pro_vision = LightevalTaskConfig(
     name="mmmu_pro:vision",
-    suite=["lighteval"],
     prompt_function=prompt.mmmu_pro_vision,
     hf_repo="MMMU/MMMU_pro",
     hf_subset="vision",

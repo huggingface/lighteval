@@ -87,7 +87,6 @@ _MMLU_REDUX_2_SUBSETS = [
 TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"mmlu_redux_2:{subset}",
-        suite=["lighteval"],
         prompt_function=lambda line, task_name=None, s=subset: prompt.mmlu_redux_2(line, s, task_name),
         hf_repo="edinburgh-dawg/mmlu-redux-2.0",
         hf_subset=subset,

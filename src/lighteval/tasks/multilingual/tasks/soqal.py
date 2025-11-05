@@ -43,7 +43,6 @@ TASKS_TABLE = [
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),
         evaluation_splits=["test"],
         few_shots_split="validation",
-        suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
         metrics=get_metrics_for_formulation(
             formulation,

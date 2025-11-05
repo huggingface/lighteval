@@ -57,7 +57,6 @@ def sample_to_fewshot(sample):
 
 gsm8k = LightevalTaskConfig(
     name="gsm8k",
-    suite=["lighteval"],
     prompt_function=prompt.gsm8k,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,

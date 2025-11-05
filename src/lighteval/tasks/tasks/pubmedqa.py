@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 pubmedqa = LightevalTaskConfig(
     name="pubmedqa",
-    suite=["lighteval"],
     prompt_function=prompt.pubmed_qa_helm,
     hf_repo="pubmed_qa",
     hf_subset="pqa_labeled",

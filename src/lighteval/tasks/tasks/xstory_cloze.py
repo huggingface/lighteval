@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 xstory_cloze_en = LightevalTaskConfig(
     name="xstory_cloze:en",
-    suite=["lighteval"],
     prompt_function=prompt.storycloze,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="en",
@@ -42,7 +41,6 @@ xstory_cloze_en = LightevalTaskConfig(
 
 xstory_cloze_ru = LightevalTaskConfig(
     name="xstory_cloze:ru",
-    suite=["lighteval"],
     prompt_function=prompt.storycloze,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="ru",
@@ -58,7 +56,6 @@ xstory_cloze_ru = LightevalTaskConfig(
 
 xstory_cloze_zh = LightevalTaskConfig(
     name="xstory_cloze:zh",
-    suite=["lighteval"],
     prompt_function=prompt.storycloze,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="zh",
@@ -74,7 +71,6 @@ xstory_cloze_zh = LightevalTaskConfig(
 
 xstory_cloze_es = LightevalTaskConfig(
     name="xstory_cloze:es",
-    suite=["lighteval"],
     prompt_function=prompt.storycloze,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="es",
@@ -90,7 +86,6 @@ xstory_cloze_es = LightevalTaskConfig(
 
 xstory_cloze_ar = LightevalTaskConfig(
     name="xstory_cloze:ar",
-    suite=["lighteval"],
     prompt_function=prompt.storycloze,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="ar",
@@ -106,7 +101,6 @@ xstory_cloze_ar = LightevalTaskConfig(
 
 xstory_cloze_hi = LightevalTaskConfig(
     name="xstory_cloze:hi",
-    suite=["lighteval"],
     prompt_function=prompt.storycloze,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="hi",
@@ -122,7 +116,6 @@ xstory_cloze_hi = LightevalTaskConfig(
 
 xstory_cloze_id = LightevalTaskConfig(
     name="xstory_cloze:id",
-    suite=["lighteval"],
     prompt_function=prompt.storycloze,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="id",
@@ -138,7 +131,6 @@ xstory_cloze_id = LightevalTaskConfig(
 
 xstory_cloze_te = LightevalTaskConfig(
     name="xstory_cloze:te",
-    suite=["lighteval"],
     prompt_function=prompt.storycloze,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="te",
@@ -154,7 +146,6 @@ xstory_cloze_te = LightevalTaskConfig(
 
 xstory_cloze_sw = LightevalTaskConfig(
     name="xstory_cloze:sw",
-    suite=["lighteval"],
     prompt_function=prompt.storycloze,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="sw",
@@ -170,7 +161,6 @@ xstory_cloze_sw = LightevalTaskConfig(
 
 xstory_cloze_eu = LightevalTaskConfig(
     name="xstory_cloze:eu",
-    suite=["lighteval"],
     prompt_function=prompt.storycloze,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="eu",
@@ -186,7 +176,6 @@ xstory_cloze_eu = LightevalTaskConfig(
 
 xstory_cloze_my = LightevalTaskConfig(
     name="xstory_cloze:my",
-    suite=["lighteval"],
     prompt_function=prompt.storycloze,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="my",

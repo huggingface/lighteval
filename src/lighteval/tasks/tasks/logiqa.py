@@ -29,7 +29,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 logiqa = LightevalTaskConfig(
     name="logiqa",
-    suite=["lighteval"],
     prompt_function=prompt.logiqa,
     hf_repo="lighteval/logiqa_harness",
     hf_subset="logiqa",

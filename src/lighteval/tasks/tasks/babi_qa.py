@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 babi_qa = LightevalTaskConfig(
     name="babi_qa",
-    suite=["lighteval"],
     prompt_function=prompt.babi_qa,
     hf_repo="facebook/babi_qa",
     hf_subset="en-valid-qa1",

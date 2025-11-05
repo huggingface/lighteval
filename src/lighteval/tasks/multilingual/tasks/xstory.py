@@ -60,7 +60,6 @@ TASKS_TABLE = [
             ),
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="juletxara/xstory_cloze",
         hf_subset=standardize_tag(lang.value),
         evaluation_splits=["eval"],

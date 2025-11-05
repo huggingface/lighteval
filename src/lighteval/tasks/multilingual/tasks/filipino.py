@@ -128,7 +128,6 @@ FILIPINO_BALITA_TASKS = [
             },
             formulation=formulation,
         ),
-        suite=("community",),
         hf_repo="LanceBunag/BalitaNLP",
         hf_subset="no-image",
         hf_avail_splits=["train", "validation", "test"],
@@ -158,7 +157,6 @@ FILIPINO_BELEBELE_TASKS = [
             },
             formulation=formulation,
         ),
-        suite=("community",),
         hf_repo="facebook/belebele",
         hf_subset=language,
         evaluation_splits=("test",),
@@ -197,7 +195,6 @@ FILIPINO_CEBUANER_TASKS = [
         evaluation_splits=["test"],
         few_shots_split="test",
         few_shots_select="random",
-        suite=["community"],
         generation_size=-1,
         metrics=get_metrics_for_formulation(
             formulation,
@@ -233,7 +230,6 @@ FILIPINO_READABILITY_TASKS = [
             },
             formulation=formulation,
         ),
-        suite=("community",),
         hf_subset="default",
         hf_repo="UD-Filipino/cebuano-readability",
         metrics=get_metrics_for_formulation(
@@ -295,7 +291,6 @@ FILIPINO_DENGUE_TASKS = [
         evaluation_splits=["train"],
         few_shots_split="train",
         few_shots_select="random",
-        suite=("community",),
         generation_size=-1,
         version=0,
     )
@@ -330,7 +325,6 @@ FILIPINO_FIRECS_TASK = [
         evaluation_splits=["train"],
         few_shots_split="train",
         few_shots_select="random",
-        suite=["community"],
         generation_size=-1,
         version=0,
     )
@@ -356,7 +350,6 @@ FILIPINO_GLOBAL_MMLU_TASKS = [
             },
             formulation=formulation,
         ),
-        suite=("community",),
         hf_repo="CohereForAI/Global-MMLU",
         hf_subset=standardize_tag(language.value),
         evaluation_splits=("test",),
@@ -398,7 +391,6 @@ FILIPINO_INCLUDE_TASKS = [
             },
             formulation=formulation,
         ),
-        suite=("community",),
         hf_subset="Tagalog",
         hf_repo="CohereForAI/include-base-44",
         hf_filter=partial(lambda subset, x: x["subject"].replace(" ", "_").lower() == subset, subset),
@@ -426,7 +418,6 @@ FILIPINO_INCLUDE_TASKS = [
 FILIPINO_KALAHI_TASKS = [
     LightevalTaskConfig(
         name=f"kalahi_tgl_{formulation.name.lower()}",
-        suite=["community"],
         prompt_function=get_mcq_prompt_function(
             language=Language.TAGALOG,
             adapter=lambda line: {
@@ -452,7 +443,6 @@ FILIPINO_KALAHI_TASKS = [
 FILIPINO_NEWSPH_NLI_TASKS = [
     LightevalTaskConfig(
         name=f"newsphnli_fil_{formulation.name.lower()}",
-        suite=["community"],
         prompt_function=get_nli_prompt_function(
             language=Language.TAGALOG,
             adapter=lambda line: {
@@ -493,7 +483,6 @@ FILIPINO_NTREX_TASK = [
             },
             formulation=CFFormulation(),
         ),
-        suite=("community",),
         hf_repo="mteb/NTREX",
         hf_subset="default",
         metrics=[
@@ -545,7 +534,6 @@ def create_sib200_task(language: Language, formulation):
             },
             formulation=formulation,
         ),
-        suite=("community",),
         hf_subset=f"{language.value}_Latn",
         hf_repo="Davlan/sib200",
         metrics=get_metrics_for_formulation(
@@ -600,7 +588,6 @@ FILIPINO_STINGRAY_CORRECTNESS_TASKS = [
             adapter=prepare_stingray_correctness,
             formulation=formulation,
         ),
-        suite=("community",),
         hf_subset="id_tl",
         hf_repo="StingrayBench/StingrayBench",
         metrics=get_metrics_for_formulation(
@@ -629,7 +616,6 @@ FILIPINO_STINGRAY_SEMANTIC_TASKS = [
             adapter=prepare_stingray_semantic_appropriateness,
             formulation=formulation,
         ),
-        suite=("community",),
         hf_subset="id_tl",
         hf_repo="StingrayBench/StingrayBench",
         metrics=get_metrics_for_formulation(
@@ -679,7 +665,6 @@ FILIPINO_TATOEBA_TASKS = [
             },
             formulation=CFFormulation(),
         ),
-        suite=("community",),
         hf_repo="Helsinki-NLP/tatoeba_mt",
         hf_subset=meta.get("subset"),
         metrics=[
@@ -709,7 +694,6 @@ FILIPINO_TICO19_TASKS = [
             },
             formulation=CFFormulation(),
         ),
-        suite=("community",),
         hf_repo="gmnlp/tico19",
         hf_subset="en-tl",
         metrics=[
@@ -749,7 +733,6 @@ FILIPINO_TLUNIFIED_NER_TASK = [
         evaluation_splits=["test"],
         few_shots_split="test",
         few_shots_select="random",
-        suite=["community"],
         generation_size=-1,
         metrics=get_metrics_for_formulation(
             formulation,
@@ -792,7 +775,6 @@ def create_universalner_task(language: Language, formulation):
         evaluation_splits=["test"],
         few_shots_split="test",
         few_shots_select="random",
-        suite=["community"],
         generation_size=-1,
         metrics=get_metrics_for_formulation(
             formulation,

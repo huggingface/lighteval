@@ -116,7 +116,6 @@ TASKS_TABLE = [
             },
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="haonan-li/cmmlu",
         hf_subset=subset,
         evaluation_splits=("test",),

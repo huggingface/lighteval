@@ -35,7 +35,6 @@ def aimo_prompt(line, task_name: str = None):
 task = LightevalTaskConfig(
     name="aimo_progress_prize_1",
     prompt_function=aimo_prompt,
-    suite=["community"],
     hf_subset="",
     hf_repo="lighteval/aimo_progress_prize_1",
     hf_avail_splits=["train"],

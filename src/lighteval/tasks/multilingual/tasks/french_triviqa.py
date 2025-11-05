@@ -36,7 +36,6 @@ TASKS_TABLE = [
                 "choices": [line["Answer"]],
             },
         ),
-        suite=("lighteval",),
         hf_repo="manu/french-trivia",
         hf_subset="default",
         evaluation_splits=("train",),
