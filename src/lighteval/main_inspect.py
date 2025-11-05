@@ -24,6 +24,7 @@ import logging
 from collections import defaultdict
 from typing import Literal
 
+import requests
 from huggingface_hub import HfApi
 from inspect_ai import Epochs, Task, task
 from inspect_ai import eval_set as inspect_ai_eval_set
@@ -182,13 +183,31 @@ def _format_metric_cell(data: dict, col: str, metric: str, stderr_metric: str) -
     return "-"
 
 
+def _get_huggingface_providers(model_id: str):
+    model_id = model_id.replace("hf-inference-providers/", "").replace(":all", "")
+    url = f"https://huggingface.co/api/models/{model_id}"
+    params = {"expand[]": "inferenceProviderMapping"}
+    response = requests.get(url, params=params)
+    response.raise_for_status()  # raise exception for HTTP errors
+    data = response.json()
+    # Extract provider mapping if available
+    providers = data.get("inferenceProviderMapping", {})
+
+    live_providers = []
+    for provider, info in providers.items():
+        if info.get("status") == "live":
+            live_providers.append(provider)
+
+    return live_providers
+
+
 HELP_PANEL_NAME_1 = "Modeling Parameters"
 HELP_PANEL_NAME_2 = "Task Parameters"
 HELP_PANEL_NAME_3 = "Connection and parallelization parameters"
 HELP_PANEL_NAME_4 = "Logging parameters"
 
 
-def eval(
+def eval(  # noqa C901
     models: Annotated[list[str], Argument(help="Models to evaluate")],
     tasks: Annotated[str, Argument(help="Tasks to evaluate")],
     # model arguments
@@ -404,13 +423,19 @@ def eval(
     else:
         model_args = {}
 
+    for model in models:
+        if model.split("/")[0] == "hf-inference-providers" and model.split(":")[-1] == "all":
+            providers = _get_huggingface_providers(model)
+            models = [f"{model.replace(':all', '')}:{provider}" for provider in providers]
+
     success, logs = inspect_ai_eval_set(
         inspect_ai_tasks,
         model=models,
         max_connections=max_connections,
         timeout=timeout,
         retry_on_error=retry_on_error,
-        max_retries=max_retries,
+        max_retries=max_retries,  # not counted
+        fail_on_error=True,
         limit=max_samples,
         max_tasks=max_tasks,
         log_dir=log_dir,
