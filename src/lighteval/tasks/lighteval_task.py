@@ -180,15 +180,14 @@ class LightevalTaskConfig:
                                 else:
                                     repr_v = repr(metric_sub_v)
                                 values.append([f"{k} {ix}: {metric_k}: {metric_sub_k}", repr_v])
-                            continue
-
-                        if isinstance(metric_v, Callable):
-                            repr_v = metric_v.__name__
-                        elif isinstance(metric_v, Metric.get_allowed_types_for_metrics()):
-                            repr_v = str(metric_v)
                         else:
-                            repr_v = repr(metric_v)
-                        values.append([f"{k} {ix}: {metric_k}", repr_v])
+                            if isinstance(metric_v, Callable):
+                                repr_v = metric_v.__name__
+                            elif isinstance(metric_v, Metric.get_allowed_types_for_metrics()):
+                                repr_v = str(metric_v)
+                            else:
+                                repr_v = repr(metric_v)
+                            values.append([f"{k} {ix}: {metric_k}", repr_v])
 
             else:
                 if isinstance(v, Callable):
