@@ -1,26 +1,30 @@
-# Available Tasks
+# Available tasks
 
-## Discovering Available Tasks
+Browse and inspect tasks available in LightEval.
+<iframe
+	src="https://openevals-benchmark-finder.hf.space"
+	frameborder="0"
+	width="850"
+	height="450"
+></iframe>
 
-### List All Tasks
 
-You can get a list of all available tasks by running:
+
+List all tasks:
 
 ```bash
 lighteval tasks list
 ```
 
-This command will display all tasks organized by their suites (e.g., leaderboard, lighteval, community).
+### Inspect specific tasks
 
-### Inspect Specific Tasks
-
-You can inspect a specific task to see its configuration, metrics, and requirements by running:
+Inspect a task to view its config, metrics, and requirements:
 
 ```bash
 lighteval tasks inspect <task_name>
 ```
 
-For example:
+Example:
 ```bash
-lighteval tasks inspect "leaderboard|truthfulqa:mc|0"
+lighteval tasks inspect "lighteval|truthfulqa:mc|0"
 ```

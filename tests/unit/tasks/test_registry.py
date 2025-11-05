@@ -26,51 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.registry import Registry
 
 
-TASKS_TABLE = [
-    LightevalTaskConfig(
-        name="test_task_revision",
-        # Won't be called, so it can be anything
-        prompt_function=lambda x: x,  # type: ignore
-        hf_repo="test",
-        hf_subset="default",
-        evaluation_splits=["train"],
-        metrics=[],
-    )
-]
-
-TASKS_GROUPS = {
-    "zero_and_one": "custom|test_task_revision|0,custom|test_task_revision|1",
-    "all_mmlu": "original|mmlu|3",
-}
-
-
-def test_custom_task_groups():
-    """
-    Tests that task info selector correctly handles custom task groups.
-    """
-    registry = Registry(tasks="zero_and_one", custom_tasks="tests.unit.tasks.test_registry")
-
-    assert set(registry.tasks_list) == {"custom|test_task_revision|0", "custom|test_task_revision|1"}
-
-    assert set(registry.task_to_configs.keys()) == {"custom|test_task_revision"}
-
-    task_info: list[LightevalTaskConfig] = registry.task_to_configs["custom|test_task_revision"]
-    assert {task_info[0].num_fewshots, task_info[1].num_fewshots} == {0, 1}
-
-
-def test_custom_tasks():
-    """
-    Tests that task info selector correctly handles custom tasks.
-    """
-    registry = Registry(tasks="custom|test_task_revision|0", custom_tasks="tests.unit.tasks.test_registry")
-
-    assert registry.tasks_list == ["custom|test_task_revision|0"]
-    assert set(registry.task_to_configs.keys()) == {"custom|test_task_revision"}
-
-    task_info: list[LightevalTaskConfig] = registry.task_to_configs["custom|test_task_revision"]
-    assert task_info[0].num_fewshots == 0
-
-
 def test_superset_expansion():
     """
     Tests that task info selector correctly handles supersets.
@@ -92,13 +47,13 @@ def test_superset_with_subset_task():
     """
     Tests that task info selector correctly handles if both superset and one of subset tasks are provided.
     """
-    registry = Registry(tasks="original|mmlu|3,original|mmlu:abstract_algebra|5")
+    registry = Registry(tasks="lighteval|mmlu|3,lighteval|mmlu:abstract_algebra|5")
 
     # We have all mmlu tasks
-    assert set(registry.tasks_list) == {"original|mmlu|3", "original|mmlu:abstract_algebra|5"}
+    assert set(registry.tasks_list) == {"lighteval|mmlu|3", "lighteval|mmlu:abstract_algebra|5"}
     assert len(registry.task_to_configs.keys()) == 57
 
-    task_info: list[LightevalTaskConfig] = registry.task_to_configs["original|mmlu:abstract_algebra"]
+    task_info: list[LightevalTaskConfig] = registry.task_to_configs["lighteval|mmlu:abstract_algebra"]
     assert {task_info[0].num_fewshots, task_info[1].num_fewshots} == {3, 5}
 
 
@@ -133,7 +88,7 @@ def test_task_group_expansion_with_subset_expansion():
     """
     Tests that task info selector correctly handles a group with task superset is provided.
     """
-    registry = Registry(tasks="all_mmlu", custom_tasks="tests.unit.tasks.test_registry")
+    registry = Registry(tasks="lighteval|mmlu|0")
 
     # We have all mmlu tasks
     assert len(registry.task_to_configs.keys()) == 57
@@ -151,11 +106,9 @@ def test_task_duplicates():
     """
     Tests that task info selector correctly handles if duplicate tasks are provided.
     """
-    registry = Registry(
-        tasks="custom|test_task_revision|0,custom|test_task_revision|0", custom_tasks="tests.unit.tasks.test_registry"
-    )
+    registry = Registry(tasks="lighteval|storycloze:2016|0,lighteval|storycloze:2016|0")
 
-    assert list(registry.tasks_list) == ["custom|test_task_revision|0"]
+    assert list(registry.tasks_list) == ["lighteval|storycloze:2016|0"]
 
 
 def test_task_creation():

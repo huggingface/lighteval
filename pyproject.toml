@@ -5,7 +5,7 @@ line-length = 119
 [tool.ruff.lint]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 # Never enforce `E501` (line length violations).
-ignore = ["E501", "D100", "D101", "D102", "D103", "D104", "D415", "D105", "DOC501", "DOC201"]
+ignore = ["E501", "D100", "D101", "D102", "D103", "D104", "D415", "D105", "DOC501", "DOC201", "CPY001"]
 select = ["C", "E", "F", "I", "W", "CPY", "D417", "DOC"]
 preview = true
 
@@ -57,6 +57,8 @@ keywords = ["evaluation", "nlp", "llm"]
 dependencies = [
     # Base dependencies
     "transformers>=4.54.0",
+    "inspect-ai>=0.3.140",
+    "openai",
     "accelerate",
     "huggingface_hub[hf_xet]>=0.30.2",
     "torch>=2.0,<3.0",
@@ -108,7 +110,8 @@ extended_tasks = [
   "langdetect", # ifeval
   "openai>1.87", # llm as a judge using openai models
   "tiktoken",
-  "emoji", "spacy", "syllapy"  # ifbench
+  "emoji", "spacy", "syllapy",  # ifbench
+  "evaluate", # slr_bench
 ]
 s3 = ["s3fs"]
 multilingual = [
