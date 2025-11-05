@@ -434,8 +434,7 @@ def eval(  # noqa C901
         max_connections=max_connections,
         timeout=timeout,
         retry_on_error=retry_on_error,
-        max_retries=max_retries,  # not counted
-        fail_on_error=True,
+        max_retries=max_retries,
         limit=max_samples,
         max_tasks=max_tasks,
         log_dir=log_dir,
