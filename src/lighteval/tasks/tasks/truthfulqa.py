@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 truthfulqa_gen = LightevalTaskConfig(
     name="truthfulqa:gen",
-    suite=["lighteval"],
     prompt_function=prompt.truthful_qa_generative,
     hf_repo="truthfulqa/truthful_qa",
     hf_subset="generation",
@@ -41,7 +40,6 @@ truthfulqa_gen = LightevalTaskConfig(
 
 truthfulqa_mc = LightevalTaskConfig(
     name="truthfulqa:mc",
-    suite=["lighteval"],
     prompt_function=prompt.truthful_qa_multiple_choice,
     hf_repo="truthfulqa/truthful_qa",
     hf_subset="multiple_choice",

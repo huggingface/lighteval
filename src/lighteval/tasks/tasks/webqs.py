@@ -28,7 +28,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 webqs = LightevalTaskConfig(
     name="webqs",
-    suite=["lighteval"],
     prompt_function=prompt.webqs,
     hf_repo="stanfordnlp/web_questions",
     hf_subset="default",

@@ -24,7 +24,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 legalsupport = LightevalTaskConfig(
     name="legalsupport",
-    suite=["lighteval"],
     prompt_function=prompt.legal_support,
     hf_repo="lighteval/LegalSupport",
     hf_subset="default",

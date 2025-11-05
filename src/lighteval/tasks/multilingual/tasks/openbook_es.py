@@ -46,7 +46,6 @@ TASKS_TABLE = [
             },
             formulation=formulation,
         ),
-        suite=["lighteval"],
         hf_repo="BSC-LT/openbookqa-es",
         hf_subset="default",
         evaluation_splits=("test",),

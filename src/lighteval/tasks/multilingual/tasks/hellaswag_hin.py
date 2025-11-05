@@ -35,7 +35,6 @@ from lighteval.utils.language import Language
 TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"community_hellaswag_{Language.HINDI.value}_{formulation.name.lower()}",
-        suite=["lighteval"],
         prompt_function=get_hellaswag_prompt_function(
             language=Language.HINDI,
             adapter=lambda line: {

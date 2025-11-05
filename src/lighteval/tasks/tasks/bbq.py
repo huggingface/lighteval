@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 bbq = LightevalTaskConfig(
     name="bbq",
-    suite=["lighteval"],
     prompt_function=prompt.bbq,
     hf_repo="lighteval/bbq_helm",
     hf_subset="all",
@@ -42,7 +41,6 @@ bbq = LightevalTaskConfig(
 
 bbq_Age = LightevalTaskConfig(
     name="bbq:Age",
-    suite=["lighteval"],
     prompt_function=prompt.bbq,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Age",
@@ -58,7 +56,6 @@ bbq_Age = LightevalTaskConfig(
 
 bbq_Disability_status = LightevalTaskConfig(
     name="bbq:Disability_status",
-    suite=["lighteval"],
     prompt_function=prompt.bbq,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Disability_status",
@@ -74,7 +71,6 @@ bbq_Disability_status = LightevalTaskConfig(
 
 bbq_Gender_identity = LightevalTaskConfig(
     name="bbq:Gender_identity",
-    suite=["lighteval"],
     prompt_function=prompt.bbq,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Gender_identity",
@@ -90,7 +86,6 @@ bbq_Gender_identity = LightevalTaskConfig(
 
 bbq_Nationality = LightevalTaskConfig(
     name="bbq:Nationality",
-    suite=["lighteval"],
     prompt_function=prompt.bbq,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Nationality",
@@ -106,7 +101,6 @@ bbq_Nationality = LightevalTaskConfig(
 
 bbq_Physical_appearance = LightevalTaskConfig(
     name="bbq:Physical_appearance",
-    suite=["lighteval"],
     prompt_function=prompt.bbq,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Physical_appearance",
@@ -122,7 +116,6 @@ bbq_Physical_appearance = LightevalTaskConfig(
 
 bbq_Race_ethnicity = LightevalTaskConfig(
     name="bbq:Race_ethnicity",
-    suite=["lighteval"],
     prompt_function=prompt.bbq,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Race_ethnicity",
@@ -138,7 +131,6 @@ bbq_Race_ethnicity = LightevalTaskConfig(
 
 bbq_Race_x_SES = LightevalTaskConfig(
     name="bbq:Race_x_SES",
-    suite=["lighteval"],
     prompt_function=prompt.bbq,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Race_x_SES",
@@ -154,7 +146,6 @@ bbq_Race_x_SES = LightevalTaskConfig(
 
 bbq_Race_x_gender = LightevalTaskConfig(
     name="bbq:Race_x_gender",
-    suite=["lighteval"],
     prompt_function=prompt.bbq,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Race_x_gender",
@@ -170,7 +161,6 @@ bbq_Race_x_gender = LightevalTaskConfig(
 
 bbq_Religion = LightevalTaskConfig(
     name="bbq:Religion",
-    suite=["lighteval"],
     prompt_function=prompt.bbq,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Religion",
@@ -186,7 +176,6 @@ bbq_Religion = LightevalTaskConfig(
 
 bbq_SES = LightevalTaskConfig(
     name="bbq:SES",
-    suite=["lighteval"],
     prompt_function=prompt.bbq,
     hf_repo="lighteval/bbq_helm",
     hf_subset="SES",
@@ -202,7 +191,6 @@ bbq_SES = LightevalTaskConfig(
 
 bbq_Sexual_orientation = LightevalTaskConfig(
     name="bbq:Sexual_orientation",
-    suite=["lighteval"],
     prompt_function=prompt.bbq,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Sexual_orientation",

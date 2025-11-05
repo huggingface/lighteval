@@ -105,7 +105,6 @@ TASKS_TABLE = [
             ),
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="ceval/ceval-exam",
         hf_subset=subset,
         evaluation_splits=("val",),

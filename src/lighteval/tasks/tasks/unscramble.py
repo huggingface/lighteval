@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 unscramble_anagrams1 = LightevalTaskConfig(
     name="unscramble:anagrams1",
-    suite=["lighteval"],
     prompt_function=prompt.unscramble,
     hf_repo="lighteval/GPT3_unscramble",
     hf_subset="default",
@@ -42,7 +41,6 @@ unscramble_anagrams1 = LightevalTaskConfig(
 
 unscramble_anagrams2 = LightevalTaskConfig(
     name="unscramble:anagrams2",
-    suite=["lighteval"],
     prompt_function=prompt.unscramble,
     hf_repo="lighteval/GPT3_unscramble",
     hf_subset="default",
@@ -58,7 +56,6 @@ unscramble_anagrams2 = LightevalTaskConfig(
 
 unscramble_cycle_letters = LightevalTaskConfig(
     name="unscramble:cycle_letters",
-    suite=["lighteval"],
     prompt_function=prompt.unscramble,
     hf_repo="lighteval/GPT3_unscramble",
     hf_subset="default",
@@ -74,7 +71,6 @@ unscramble_cycle_letters = LightevalTaskConfig(
 
 unscramble_random_insertion = LightevalTaskConfig(
     name="unscramble:random_insertion",
-    suite=["lighteval"],
     prompt_function=prompt.unscramble,
     hf_repo="lighteval/GPT3_unscramble",
     hf_subset="default",
@@ -90,7 +86,6 @@ unscramble_random_insertion = LightevalTaskConfig(
 
 unscramble_reversed_words = LightevalTaskConfig(
     name="unscramble:reversed_words",
-    suite=["lighteval"],
     prompt_function=prompt.unscramble,
     hf_repo="lighteval/GPT3_unscramble",
     hf_subset="default",

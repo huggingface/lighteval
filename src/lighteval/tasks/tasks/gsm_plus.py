@@ -58,7 +58,6 @@ def sample_to_fewshot(sample):
 
 gsm_plus = LightevalTaskConfig(
     name="gsm_plus",
-    suite=["lighteval"],
     prompt_function=prompt.gsm_plus,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,

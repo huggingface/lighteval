@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 glue_cola = LightevalTaskConfig(
     name="glue:cola",
-    suite=["lighteval"],
     prompt_function=prompt.cola,
     hf_repo="nyu-mll/glue",
     hf_subset="cola",
@@ -42,7 +41,6 @@ glue_cola = LightevalTaskConfig(
 
 glue_mnli = LightevalTaskConfig(
     name="glue:mnli",
-    suite=["lighteval"],
     prompt_function=prompt.mnli,
     hf_repo="nyu-mll/glue",
     hf_subset="mnli_matched",
@@ -58,7 +56,6 @@ glue_mnli = LightevalTaskConfig(
 
 glue_mnli_mismatched = LightevalTaskConfig(
     name="glue:mnli_mismatched",
-    suite=["lighteval"],
     prompt_function=prompt.mnli,
     hf_repo="nyu-mll/glue",
     hf_subset="mnli_mismatched",
@@ -74,7 +71,6 @@ glue_mnli_mismatched = LightevalTaskConfig(
 
 glue_mrpc = LightevalTaskConfig(
     name="glue:mrpc",
-    suite=["lighteval"],
     prompt_function=prompt.mrpc,
     hf_repo="nyu-mll/glue",
     hf_subset="mrpc",
@@ -90,7 +86,6 @@ glue_mrpc = LightevalTaskConfig(
 
 glue_qnli = LightevalTaskConfig(
     name="glue:qnli",
-    suite=["lighteval"],
     prompt_function=prompt.qnli,
     hf_repo="nyu-mll/glue",
     hf_subset="qnli",
@@ -106,7 +101,6 @@ glue_qnli = LightevalTaskConfig(
 
 glue_qqp = LightevalTaskConfig(
     name="glue:qqp",
-    suite=["lighteval"],
     prompt_function=prompt.qqp,
     hf_repo="nyu-mll/glue",
     hf_subset="qqp",
@@ -122,7 +116,6 @@ glue_qqp = LightevalTaskConfig(
 
 glue_rte = LightevalTaskConfig(
     name="glue:rte",
-    suite=["lighteval"],
     prompt_function=prompt.rte,
     hf_repo="nyu-mll/glue",
     hf_subset="rte",
@@ -138,7 +131,6 @@ glue_rte = LightevalTaskConfig(
 
 glue_sst2 = LightevalTaskConfig(
     name="glue:sst2",
-    suite=["lighteval"],
     prompt_function=prompt.sst,
     hf_repo="nyu-mll/glue",
     hf_subset="sst2",
@@ -154,7 +146,6 @@ glue_sst2 = LightevalTaskConfig(
 
 glue_stsb = LightevalTaskConfig(
     name="glue:stsb",
-    suite=["lighteval"],
     prompt_function=prompt.stsb,
     hf_repo="nyu-mll/glue",
     hf_subset="stsb",
@@ -170,7 +161,6 @@ glue_stsb = LightevalTaskConfig(
 
 glue_wnli = LightevalTaskConfig(
     name="glue:wnli",
-    suite=["lighteval"],
     prompt_function=prompt.wnli,
     hf_repo="nyu-mll/glue",
     hf_subset="wnli",
@@ -186,7 +176,6 @@ glue_wnli = LightevalTaskConfig(
 
 super_glue_boolq = LightevalTaskConfig(
     name="super_glue:boolq",
-    suite=["lighteval"],
     prompt_function=prompt.boolq_harness,
     hf_repo="aps/super_glue",
     hf_subset="boolq",
@@ -202,7 +191,6 @@ super_glue_boolq = LightevalTaskConfig(
 
 super_glue_cb = LightevalTaskConfig(
     name="super_glue:cb",
-    suite=["lighteval"],
     prompt_function=prompt.cb,
     hf_repo="aps/super_glue",
     hf_subset="cb",
@@ -218,7 +206,6 @@ super_glue_cb = LightevalTaskConfig(
 
 super_glue_copa = LightevalTaskConfig(
     name="super_glue:copa",
-    suite=["lighteval"],
     prompt_function=prompt.copa,
     hf_repo="aps/super_glue",
     hf_subset="copa",
@@ -234,7 +221,6 @@ super_glue_copa = LightevalTaskConfig(
 
 super_glue_rte = LightevalTaskConfig(
     name="super_glue:rte",
-    suite=["lighteval"],
     prompt_function=prompt.rte,
     hf_repo="aps/super_glue",
     hf_subset="rte",
@@ -250,7 +236,6 @@ super_glue_rte = LightevalTaskConfig(
 
 super_glue_multirc = LightevalTaskConfig(
     name="super_glue:multirc",
-    suite=["lighteval"],
     prompt_function=prompt.multirc,
     hf_repo="aps/super_glue",
     hf_subset="multirc",
@@ -266,7 +251,6 @@ super_glue_multirc = LightevalTaskConfig(
 
 super_glue_wic = LightevalTaskConfig(
     name="super_glue:wic",
-    suite=["lighteval"],
     prompt_function=prompt.wic,
     hf_repo="aps/super_glue",
     hf_subset="wic",
@@ -282,7 +266,6 @@ super_glue_wic = LightevalTaskConfig(
 
 super_glue_wsc = LightevalTaskConfig(
     name="super_glue:wsc",
-    suite=["lighteval"],
     prompt_function=prompt.wsc,
     hf_repo="aps/super_glue",
     hf_subset="wsc",

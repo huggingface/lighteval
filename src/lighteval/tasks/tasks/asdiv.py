@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 asdiv = LightevalTaskConfig(
     name="asdiv",
-    suite=["lighteval"],
     prompt_function=prompt.asdiv,
     hf_repo="EleutherAI/asdiv",
     hf_subset="asdiv",

@@ -32,7 +32,6 @@ natural_questions = LightevalTaskConfig(
         Language.ENGLISH,
         lambda line: {"question": line["question"], "choices": [line["answer"]]},
     ),
-    suite=("lighteval",),
     hf_repo="lighteval/small_natural_questions",
     hf_subset="default",
     evaluation_splits=("test",),

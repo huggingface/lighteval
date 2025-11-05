@@ -48,7 +48,6 @@ TASKS_TABLE = [
             relations=["entailment", "contradiction"],
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="ai-forever/MERA",
         hf_subset="rcb",
         # Ignore neutral label

@@ -24,7 +24,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 med_dialog_healthcaremagic = LightevalTaskConfig(
     name="med_dialog:healthcaremagic",
-    suite=["lighteval"],
     prompt_function=prompt.med_dialog,
     hf_repo="lighteval/med_dialog",
     hf_subset="healthcaremagic",
@@ -43,7 +42,6 @@ med_dialog_healthcaremagic = LightevalTaskConfig(
 
 med_dialog_icliniq = LightevalTaskConfig(
     name="med_dialog:icliniq",
-    suite=["lighteval"],
     prompt_function=prompt.med_dialog,
     hf_repo="lighteval/med_dialog",
     hf_subset="icliniq",

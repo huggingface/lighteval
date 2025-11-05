@@ -24,7 +24,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 numeracy_linear_example = LightevalTaskConfig(
     name="numeracy:linear_example",
-    suite=["lighteval"],
     prompt_function=prompt.numeracy,
     hf_repo="lighteval/numeracy",
     hf_subset="linear_example",
@@ -40,7 +39,6 @@ numeracy_linear_example = LightevalTaskConfig(
 
 numeracy_linear_standard = LightevalTaskConfig(
     name="numeracy:linear_standard",
-    suite=["lighteval"],
     prompt_function=prompt.numeracy,
     hf_repo="lighteval/numeracy",
     hf_subset="linear_standard",
@@ -56,7 +54,6 @@ numeracy_linear_standard = LightevalTaskConfig(
 
 numeracy_parabola_example = LightevalTaskConfig(
     name="numeracy:parabola_example",
-    suite=["lighteval"],
     prompt_function=prompt.numeracy,
     hf_repo="lighteval/numeracy",
     hf_subset="parabola_example",
@@ -72,7 +69,6 @@ numeracy_parabola_example = LightevalTaskConfig(
 
 numeracy_parabola_standard = LightevalTaskConfig(
     name="numeracy:parabola_standard",
-    suite=["lighteval"],
     prompt_function=prompt.numeracy,
     hf_repo="lighteval/numeracy",
     hf_subset="parabola_standard",
@@ -88,7 +84,6 @@ numeracy_parabola_standard = LightevalTaskConfig(
 
 numeracy_paraboloid_example = LightevalTaskConfig(
     name="numeracy:paraboloid_example",
-    suite=["lighteval"],
     prompt_function=prompt.numeracy,
     hf_repo="lighteval/numeracy",
     hf_subset="paraboloid_example",
@@ -104,7 +99,6 @@ numeracy_paraboloid_example = LightevalTaskConfig(
 
 numeracy_paraboloid_standard = LightevalTaskConfig(
     name="numeracy:paraboloid_standard",
-    suite=["lighteval"],
     prompt_function=prompt.numeracy,
     hf_repo="lighteval/numeracy",
     hf_subset="paraboloid_standard",
@@ -120,7 +114,6 @@ numeracy_paraboloid_standard = LightevalTaskConfig(
 
 numeracy_plane_example = LightevalTaskConfig(
     name="numeracy:plane_example",
-    suite=["lighteval"],
     prompt_function=prompt.numeracy,
     hf_repo="lighteval/numeracy",
     hf_subset="plane_example",
@@ -136,7 +129,6 @@ numeracy_plane_example = LightevalTaskConfig(
 
 numeracy_plane_standard = LightevalTaskConfig(
     name="numeracy:plane_standard",
-    suite=["lighteval"],
     prompt_function=prompt.numeracy,
     hf_repo="lighteval/numeracy",
     hf_subset="plane_standard",

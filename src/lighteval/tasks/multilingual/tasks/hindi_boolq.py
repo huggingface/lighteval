@@ -43,7 +43,6 @@ TASKS_TABLE = [
             },
             formulation=CFFormulation(),
         ),
-        suite=("lighteval",),
         hf_repo="ai4bharat/boolq-hi",
         hf_subset=standardize_tag(language.value),
         evaluation_splits=("validation",),

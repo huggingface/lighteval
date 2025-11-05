@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 wikifact_applies_to_jurisdiction = LightevalTaskConfig(
     name="wikifact:applies_to_jurisdiction",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="applies_to_jurisdiction",
@@ -41,7 +40,6 @@ wikifact_applies_to_jurisdiction = LightevalTaskConfig(
 
 wikifact_atomic_number = LightevalTaskConfig(
     name="wikifact:atomic_number",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="atomic_number",
@@ -57,7 +55,6 @@ wikifact_atomic_number = LightevalTaskConfig(
 
 wikifact_author = LightevalTaskConfig(
     name="wikifact:author",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="author",
@@ -73,7 +70,6 @@ wikifact_author = LightevalTaskConfig(
 
 wikifact_award_received = LightevalTaskConfig(
     name="wikifact:award_received",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="award_received",
@@ -89,7 +85,6 @@ wikifact_award_received = LightevalTaskConfig(
 
 wikifact_basic_form_of_government = LightevalTaskConfig(
     name="wikifact:basic_form_of_government",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="basic_form_of_government",
@@ -105,7 +100,6 @@ wikifact_basic_form_of_government = LightevalTaskConfig(
 
 wikifact_capital = LightevalTaskConfig(
     name="wikifact:capital",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="capital",
@@ -121,7 +115,6 @@ wikifact_capital = LightevalTaskConfig(
 
 wikifact_capital_of = LightevalTaskConfig(
     name="wikifact:capital_of",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="capital_of",
@@ -137,7 +130,6 @@ wikifact_capital_of = LightevalTaskConfig(
 
 wikifact_central_bank = LightevalTaskConfig(
     name="wikifact:central_bank",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="central_bank",
@@ -153,7 +145,6 @@ wikifact_central_bank = LightevalTaskConfig(
 
 wikifact_composer = LightevalTaskConfig(
     name="wikifact:composer",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="composer",
@@ -169,7 +160,6 @@ wikifact_composer = LightevalTaskConfig(
 
 wikifact_continent = LightevalTaskConfig(
     name="wikifact:continent",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="continent",
@@ -185,7 +175,6 @@ wikifact_continent = LightevalTaskConfig(
 
 wikifact_country = LightevalTaskConfig(
     name="wikifact:country",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="country",
@@ -201,7 +190,6 @@ wikifact_country = LightevalTaskConfig(
 
 wikifact_country_of_citizenship = LightevalTaskConfig(
     name="wikifact:country_of_citizenship",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="country_of_citizenship",
@@ -217,7 +205,6 @@ wikifact_country_of_citizenship = LightevalTaskConfig(
 
 wikifact_country_of_origin = LightevalTaskConfig(
     name="wikifact:country_of_origin",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="country_of_origin",
@@ -233,7 +220,6 @@ wikifact_country_of_origin = LightevalTaskConfig(
 
 wikifact_creator = LightevalTaskConfig(
     name="wikifact:creator",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="creator",
@@ -249,7 +235,6 @@ wikifact_creator = LightevalTaskConfig(
 
 wikifact_currency = LightevalTaskConfig(
     name="wikifact:currency",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="currency",
@@ -265,7 +250,6 @@ wikifact_currency = LightevalTaskConfig(
 
 wikifact_defendant = LightevalTaskConfig(
     name="wikifact:defendant",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="defendant",
@@ -281,7 +265,6 @@ wikifact_defendant = LightevalTaskConfig(
 
 wikifact_developer = LightevalTaskConfig(
     name="wikifact:developer",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="developer",
@@ -297,7 +280,6 @@ wikifact_developer = LightevalTaskConfig(
 
 wikifact_diplomatic_relation = LightevalTaskConfig(
     name="wikifact:diplomatic_relation",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="diplomatic_relation",
@@ -313,7 +295,6 @@ wikifact_diplomatic_relation = LightevalTaskConfig(
 
 wikifact_director = LightevalTaskConfig(
     name="wikifact:director",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="director",
@@ -329,7 +310,6 @@ wikifact_director = LightevalTaskConfig(
 
 wikifact_discoverer_or_inventor = LightevalTaskConfig(
     name="wikifact:discoverer_or_inventor",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="discoverer_or_inventor",
@@ -345,7 +325,6 @@ wikifact_discoverer_or_inventor = LightevalTaskConfig(
 
 wikifact_drug_or_therapy_used_for_treatment = LightevalTaskConfig(
     name="wikifact:drug_or_therapy_used_for_treatment",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="drug_or_therapy_used_for_treatment",
@@ -361,7 +340,6 @@ wikifact_drug_or_therapy_used_for_treatment = LightevalTaskConfig(
 
 wikifact_educated_at = LightevalTaskConfig(
     name="wikifact:educated_at",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="educated_at",
@@ -377,7 +355,6 @@ wikifact_educated_at = LightevalTaskConfig(
 
 wikifact_electron_configuration = LightevalTaskConfig(
     name="wikifact:electron_configuration",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="electron_configuration",
@@ -393,7 +370,6 @@ wikifact_electron_configuration = LightevalTaskConfig(
 
 wikifact_employer = LightevalTaskConfig(
     name="wikifact:employer",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="employer",
@@ -409,7 +385,6 @@ wikifact_employer = LightevalTaskConfig(
 
 wikifact_field_of_work = LightevalTaskConfig(
     name="wikifact:field_of_work",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="field_of_work",
@@ -425,7 +400,6 @@ wikifact_field_of_work = LightevalTaskConfig(
 
 wikifact_file_extension = LightevalTaskConfig(
     name="wikifact:file_extension",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="file_extension",
@@ -441,7 +415,6 @@ wikifact_file_extension = LightevalTaskConfig(
 
 wikifact_genetic_association = LightevalTaskConfig(
     name="wikifact:genetic_association",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="genetic_association",
@@ -457,7 +430,6 @@ wikifact_genetic_association = LightevalTaskConfig(
 
 wikifact_genre = LightevalTaskConfig(
     name="wikifact:genre",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="genre",
@@ -473,7 +445,6 @@ wikifact_genre = LightevalTaskConfig(
 
 wikifact_has_part = LightevalTaskConfig(
     name="wikifact:has_part",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="has_part",
@@ -489,7 +460,6 @@ wikifact_has_part = LightevalTaskConfig(
 
 wikifact_head_of_government = LightevalTaskConfig(
     name="wikifact:head_of_government",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="head_of_government",
@@ -505,7 +475,6 @@ wikifact_head_of_government = LightevalTaskConfig(
 
 wikifact_head_of_state = LightevalTaskConfig(
     name="wikifact:head_of_state",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="head_of_state",
@@ -521,7 +490,6 @@ wikifact_head_of_state = LightevalTaskConfig(
 
 wikifact_headquarters_location = LightevalTaskConfig(
     name="wikifact:headquarters_location",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="headquarters_location",
@@ -537,7 +505,6 @@ wikifact_headquarters_location = LightevalTaskConfig(
 
 wikifact_industry = LightevalTaskConfig(
     name="wikifact:industry",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="industry",
@@ -553,7 +520,6 @@ wikifact_industry = LightevalTaskConfig(
 
 wikifact_influenced_by = LightevalTaskConfig(
     name="wikifact:influenced_by",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="influenced_by",
@@ -569,7 +535,6 @@ wikifact_influenced_by = LightevalTaskConfig(
 
 wikifact_instance_of = LightevalTaskConfig(
     name="wikifact:instance_of",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="instance_of",
@@ -585,7 +550,6 @@ wikifact_instance_of = LightevalTaskConfig(
 
 wikifact_instrument = LightevalTaskConfig(
     name="wikifact:instrument",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="instrument",
@@ -601,7 +565,6 @@ wikifact_instrument = LightevalTaskConfig(
 
 wikifact_language_of_work_or_name = LightevalTaskConfig(
     name="wikifact:language_of_work_or_name",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="language_of_work_or_name",
@@ -617,7 +580,6 @@ wikifact_language_of_work_or_name = LightevalTaskConfig(
 
 wikifact_languages_spoken_written_or_signed = LightevalTaskConfig(
     name="wikifact:languages_spoken_written_or_signed",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="languages_spoken_written_or_signed",
@@ -633,7 +595,6 @@ wikifact_languages_spoken_written_or_signed = LightevalTaskConfig(
 
 wikifact_laws_applied = LightevalTaskConfig(
     name="wikifact:laws_applied",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="laws_applied",
@@ -649,7 +610,6 @@ wikifact_laws_applied = LightevalTaskConfig(
 
 wikifact_located_in_the_administrative_territorial_entity = LightevalTaskConfig(
     name="wikifact:located_in_the_administrative_territorial_entity",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="located_in_the_administrative_territorial_entity",
@@ -665,7 +625,6 @@ wikifact_located_in_the_administrative_territorial_entity = LightevalTaskConfig(
 
 wikifact_location = LightevalTaskConfig(
     name="wikifact:location",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="location",
@@ -681,7 +640,6 @@ wikifact_location = LightevalTaskConfig(
 
 wikifact_location_of_discovery = LightevalTaskConfig(
     name="wikifact:location_of_discovery",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="location_of_discovery",
@@ -697,7 +655,6 @@ wikifact_location_of_discovery = LightevalTaskConfig(
 
 wikifact_location_of_formation = LightevalTaskConfig(
     name="wikifact:location_of_formation",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="location_of_formation",
@@ -713,7 +670,6 @@ wikifact_location_of_formation = LightevalTaskConfig(
 
 wikifact_majority_opinion_by = LightevalTaskConfig(
     name="wikifact:majority_opinion_by",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="majority_opinion_by",
@@ -729,7 +685,6 @@ wikifact_majority_opinion_by = LightevalTaskConfig(
 
 wikifact_manufacturer = LightevalTaskConfig(
     name="wikifact:manufacturer",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="manufacturer",
@@ -745,7 +700,6 @@ wikifact_manufacturer = LightevalTaskConfig(
 
 wikifact_measured_physical_quantity = LightevalTaskConfig(
     name="wikifact:measured_physical_quantity",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="measured_physical_quantity",
@@ -761,7 +715,6 @@ wikifact_measured_physical_quantity = LightevalTaskConfig(
 
 wikifact_medical_condition_treated = LightevalTaskConfig(
     name="wikifact:medical_condition_treated",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="medical_condition_treated",
@@ -777,7 +730,6 @@ wikifact_medical_condition_treated = LightevalTaskConfig(
 
 wikifact_member_of = LightevalTaskConfig(
     name="wikifact:member_of",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="member_of",
@@ -793,7 +745,6 @@ wikifact_member_of = LightevalTaskConfig(
 
 wikifact_member_of_political_party = LightevalTaskConfig(
     name="wikifact:member_of_political_party",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="member_of_political_party",
@@ -809,7 +760,6 @@ wikifact_member_of_political_party = LightevalTaskConfig(
 
 wikifact_member_of_sports_team = LightevalTaskConfig(
     name="wikifact:member_of_sports_team",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="member_of_sports_team",
@@ -825,7 +775,6 @@ wikifact_member_of_sports_team = LightevalTaskConfig(
 
 wikifact_movement = LightevalTaskConfig(
     name="wikifact:movement",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="movement",
@@ -841,7 +790,6 @@ wikifact_movement = LightevalTaskConfig(
 
 wikifact_named_after = LightevalTaskConfig(
     name="wikifact:named_after",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="named_after",
@@ -857,7 +805,6 @@ wikifact_named_after = LightevalTaskConfig(
 
 wikifact_native_language = LightevalTaskConfig(
     name="wikifact:native_language",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="native_language",
@@ -873,7 +820,6 @@ wikifact_native_language = LightevalTaskConfig(
 
 wikifact_number_of_processor_cores = LightevalTaskConfig(
     name="wikifact:number_of_processor_cores",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="number_of_processor_cores",
@@ -889,7 +835,6 @@ wikifact_number_of_processor_cores = LightevalTaskConfig(
 
 wikifact_occupation = LightevalTaskConfig(
     name="wikifact:occupation",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="occupation",
@@ -905,7 +850,6 @@ wikifact_occupation = LightevalTaskConfig(
 
 wikifact_office_held_by_head_of_government = LightevalTaskConfig(
     name="wikifact:office_held_by_head_of_government",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="office_held_by_head_of_government",
@@ -921,7 +865,6 @@ wikifact_office_held_by_head_of_government = LightevalTaskConfig(
 
 wikifact_office_held_by_head_of_state = LightevalTaskConfig(
     name="wikifact:office_held_by_head_of_state",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="office_held_by_head_of_state",
@@ -937,7 +880,6 @@ wikifact_office_held_by_head_of_state = LightevalTaskConfig(
 
 wikifact_official_language = LightevalTaskConfig(
     name="wikifact:official_language",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="official_language",
@@ -953,7 +895,6 @@ wikifact_official_language = LightevalTaskConfig(
 
 wikifact_operating_system = LightevalTaskConfig(
     name="wikifact:operating_system",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="operating_system",
@@ -969,7 +910,6 @@ wikifact_operating_system = LightevalTaskConfig(
 
 wikifact_original_language_of_film_or_TV_show = LightevalTaskConfig(
     name="wikifact:original_language_of_film_or_TV_show",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="original_language_of_film_or_TV_show",
@@ -985,7 +925,6 @@ wikifact_original_language_of_film_or_TV_show = LightevalTaskConfig(
 
 wikifact_original_network = LightevalTaskConfig(
     name="wikifact:original_network",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="original_network",
@@ -1001,7 +940,6 @@ wikifact_original_network = LightevalTaskConfig(
 
 wikifact_overrules = LightevalTaskConfig(
     name="wikifact:overrules",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="overrules",
@@ -1017,7 +955,6 @@ wikifact_overrules = LightevalTaskConfig(
 
 wikifact_owned_by = LightevalTaskConfig(
     name="wikifact:owned_by",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="owned_by",
@@ -1033,7 +970,6 @@ wikifact_owned_by = LightevalTaskConfig(
 
 wikifact_part_of = LightevalTaskConfig(
     name="wikifact:part_of",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="part_of",
@@ -1049,7 +985,6 @@ wikifact_part_of = LightevalTaskConfig(
 
 wikifact_participating_team = LightevalTaskConfig(
     name="wikifact:participating_team",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="participating_team",
@@ -1065,7 +1000,6 @@ wikifact_participating_team = LightevalTaskConfig(
 
 wikifact_place_of_birth = LightevalTaskConfig(
     name="wikifact:place_of_birth",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="place_of_birth",
@@ -1081,7 +1015,6 @@ wikifact_place_of_birth = LightevalTaskConfig(
 
 wikifact_place_of_death = LightevalTaskConfig(
     name="wikifact:place_of_death",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="place_of_death",
@@ -1097,7 +1030,6 @@ wikifact_place_of_death = LightevalTaskConfig(
 
 wikifact_plaintiff = LightevalTaskConfig(
     name="wikifact:plaintiff",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="plaintiff",
@@ -1113,7 +1045,6 @@ wikifact_plaintiff = LightevalTaskConfig(
 
 wikifact_position_held = LightevalTaskConfig(
     name="wikifact:position_held",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="position_held",
@@ -1129,7 +1060,6 @@ wikifact_position_held = LightevalTaskConfig(
 
 wikifact_position_played_on_team = LightevalTaskConfig(
     name="wikifact:position_played_on_team",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="position_played_on_team",
@@ -1145,7 +1075,6 @@ wikifact_position_played_on_team = LightevalTaskConfig(
 
 wikifact_programming_language = LightevalTaskConfig(
     name="wikifact:programming_language",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="programming_language",
@@ -1161,7 +1090,6 @@ wikifact_programming_language = LightevalTaskConfig(
 
 wikifact_recommended_unit_of_measurement = LightevalTaskConfig(
     name="wikifact:recommended_unit_of_measurement",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="recommended_unit_of_measurement",
@@ -1177,7 +1105,6 @@ wikifact_recommended_unit_of_measurement = LightevalTaskConfig(
 
 wikifact_record_label = LightevalTaskConfig(
     name="wikifact:record_label",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="record_label",
@@ -1193,7 +1120,6 @@ wikifact_record_label = LightevalTaskConfig(
 
 wikifact_religion = LightevalTaskConfig(
     name="wikifact:religion",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="religion",
@@ -1209,7 +1135,6 @@ wikifact_religion = LightevalTaskConfig(
 
 wikifact_repealed_by = LightevalTaskConfig(
     name="wikifact:repealed_by",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="repealed_by",
@@ -1225,7 +1150,6 @@ wikifact_repealed_by = LightevalTaskConfig(
 
 wikifact_shares_border_with = LightevalTaskConfig(
     name="wikifact:shares_border_with",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="shares_border_with",
@@ -1241,7 +1165,6 @@ wikifact_shares_border_with = LightevalTaskConfig(
 
 wikifact_solved_by = LightevalTaskConfig(
     name="wikifact:solved_by",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="solved_by",
@@ -1257,7 +1180,6 @@ wikifact_solved_by = LightevalTaskConfig(
 
 wikifact_statement_describes = LightevalTaskConfig(
     name="wikifact:statement_describes",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="statement_describes",
@@ -1273,7 +1195,6 @@ wikifact_statement_describes = LightevalTaskConfig(
 
 wikifact_stock_exchange = LightevalTaskConfig(
     name="wikifact:stock_exchange",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="stock_exchange",
@@ -1289,7 +1210,6 @@ wikifact_stock_exchange = LightevalTaskConfig(
 
 wikifact_subclass_of = LightevalTaskConfig(
     name="wikifact:subclass_of",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="subclass_of",
@@ -1305,7 +1225,6 @@ wikifact_subclass_of = LightevalTaskConfig(
 
 wikifact_subsidiary = LightevalTaskConfig(
     name="wikifact:subsidiary",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="subsidiary",
@@ -1321,7 +1240,6 @@ wikifact_subsidiary = LightevalTaskConfig(
 
 wikifact_symptoms_and_signs = LightevalTaskConfig(
     name="wikifact:symptoms_and_signs",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="symptoms_and_signs",
@@ -1337,7 +1255,6 @@ wikifact_symptoms_and_signs = LightevalTaskConfig(
 
 wikifact_therapeutic_area = LightevalTaskConfig(
     name="wikifact:therapeutic_area",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="therapeutic_area",
@@ -1353,7 +1270,6 @@ wikifact_therapeutic_area = LightevalTaskConfig(
 
 wikifact_time_of_discovery_or_invention = LightevalTaskConfig(
     name="wikifact:time_of_discovery_or_invention",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="time_of_discovery_or_invention",
@@ -1369,7 +1285,6 @@ wikifact_time_of_discovery_or_invention = LightevalTaskConfig(
 
 wikifact_twinned_administrative_body = LightevalTaskConfig(
     name="wikifact:twinned_administrative_body",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="twinned_administrative_body",
@@ -1385,7 +1300,6 @@ wikifact_twinned_administrative_body = LightevalTaskConfig(
 
 wikifact_work_location = LightevalTaskConfig(
     name="wikifact:work_location",
-    suite=["lighteval"],
     prompt_function=prompt.wikifact,
     hf_repo="lighteval/wikifact",
     hf_subset="work_location",

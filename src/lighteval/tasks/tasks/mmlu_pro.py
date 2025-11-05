@@ -69,7 +69,6 @@ mmlu_pro = LightevalTaskConfig(
     sample_fields=record_to_sample,
     solver=[multiple_choice(cache=True)],
     scorer=choice(),
-    suite=("lighteval",),
     hf_repo="TIGER-Lab/MMLU-Pro",
     hf_subset="default",
     hf_revision="3373e0b32277875b8db2aa555a333b78a08477ea",

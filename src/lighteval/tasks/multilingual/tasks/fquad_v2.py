@@ -38,7 +38,6 @@ TASKS_TABLE = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("lighteval",),
         hf_repo="manu/fquad2_test",
         hf_subset="default",
         evaluation_splits=("test_hasAns",),

@@ -39,7 +39,6 @@ from lighteval.utils.language import Language
 TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"indicnxnli_{language.value}_{formulation.name.lower()}",
-        suite=["lighteval"],
         prompt_function=get_nli_prompt_function(
             language=language,
             adapter=lambda line: {

@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 math_algebra = LightevalTaskConfig(
     name="math:algebra",
-    suite=["lighteval"],
     prompt_function=prompt.math,
     hf_repo="DigitalLearningGmbH/MATH-lighteval",
     hf_subset="algebra",
@@ -50,7 +49,6 @@ math_algebra = LightevalTaskConfig(
 
 math_counting_and_probability = LightevalTaskConfig(
     name="math:counting_and_probability",
-    suite=["lighteval"],
     prompt_function=prompt.math,
     hf_repo="DigitalLearningGmbH/MATH-lighteval",
     hf_subset="counting_and_probability",
@@ -75,7 +73,6 @@ math_counting_and_probability = LightevalTaskConfig(
 
 math_geometry = LightevalTaskConfig(
     name="math:geometry",
-    suite=["lighteval"],
     prompt_function=prompt.math,
     hf_repo="DigitalLearningGmbH/MATH-lighteval",
     hf_subset="geometry",
@@ -100,7 +97,6 @@ math_geometry = LightevalTaskConfig(
 
 math_intermediate_algebra = LightevalTaskConfig(
     name="math:intermediate_algebra",
-    suite=["lighteval"],
     prompt_function=prompt.math,
     hf_repo="DigitalLearningGmbH/MATH-lighteval",
     hf_subset="intermediate_algebra",
@@ -125,7 +121,6 @@ math_intermediate_algebra = LightevalTaskConfig(
 
 math_number_theory = LightevalTaskConfig(
     name="math:number_theory",
-    suite=["lighteval"],
     prompt_function=prompt.math,
     hf_repo="DigitalLearningGmbH/MATH-lighteval",
     hf_subset="number_theory",
@@ -150,7 +145,6 @@ math_number_theory = LightevalTaskConfig(
 
 math_prealgebra = LightevalTaskConfig(
     name="math:prealgebra",
-    suite=["lighteval"],
     prompt_function=prompt.math,
     hf_repo="DigitalLearningGmbH/MATH-lighteval",
     hf_subset="prealgebra",
@@ -175,7 +169,6 @@ math_prealgebra = LightevalTaskConfig(
 
 math_precalculus = LightevalTaskConfig(
     name="math:precalculus",
-    suite=["lighteval"],
     prompt_function=prompt.math,
     hf_repo="DigitalLearningGmbH/MATH-lighteval",
     hf_subset="precalculus",

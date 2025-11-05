@@ -28,7 +28,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 summarization_cnn_dm = LightevalTaskConfig(
     name="summarization:cnn-dm",
-    suite=["lighteval"],
     prompt_function=prompt.cnn_dm,
     hf_repo="lighteval/summarization",
     hf_subset="cnn-dm",
@@ -52,7 +51,6 @@ summarization_cnn_dm = LightevalTaskConfig(
 
 summarization_xsum = LightevalTaskConfig(
     name="summarization:xsum",
-    suite=["lighteval"],
     prompt_function=prompt.xsum,
     hf_repo="lighteval/summarization",
     hf_subset="xsum",
@@ -76,7 +74,6 @@ summarization_xsum = LightevalTaskConfig(
 
 summarization_xsum_sampled = LightevalTaskConfig(
     name="summarization:xsum-sampled",
-    suite=["lighteval"],
     prompt_function=prompt.xsum,
     hf_repo="lighteval/summarization",
     hf_subset="xsum-sampled",

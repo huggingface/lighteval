@@ -29,7 +29,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 qa4mre_2011 = LightevalTaskConfig(
     name="qa4mre:2011",
-    suite=["lighteval"],
     prompt_function=prompt.qa4mre,
     hf_repo="qa4mre",
     hf_subset="2011.main.EN",
@@ -48,7 +47,6 @@ qa4mre_2011 = LightevalTaskConfig(
 
 qa4mre_2012 = LightevalTaskConfig(
     name="qa4mre:2012",
-    suite=["lighteval"],
     prompt_function=prompt.qa4mre,
     hf_repo="qa4mre",
     hf_subset="2012.main.EN",
@@ -67,7 +65,6 @@ qa4mre_2012 = LightevalTaskConfig(
 
 qa4mre_2013 = LightevalTaskConfig(
     name="qa4mre:2013",
-    suite=["lighteval"],
     prompt_function=prompt.qa4mre,
     hf_repo="qa4mre",
     hf_subset="2013.main.EN",

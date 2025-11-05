@@ -102,7 +102,6 @@ TASKS_TABLE = [
             },
             formulation=CFFormulation(),
         ),
-        suite=("lighteval",),
         hf_repo="OALL/ACVA",
         hf_subset=subset,
         evaluation_splits=("test",),

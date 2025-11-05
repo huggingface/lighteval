@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 raft_ade_corpus_v2 = LightevalTaskConfig(
     name="raft:ade_corpus_v2",
-    suite=["lighteval"],
     prompt_function=prompt.raft_ade_corpus_v2,
     hf_repo="ought/raft",
     hf_subset="ade_corpus_v2",
@@ -44,7 +43,6 @@ raft_ade_corpus_v2 = LightevalTaskConfig(
 
 raft_banking_77 = LightevalTaskConfig(
     name="raft:banking_77",
-    suite=["lighteval"],
     prompt_function=prompt.raft_banking_77,
     hf_repo="ought/raft",
     hf_subset="banking_77",
@@ -62,7 +60,6 @@ raft_banking_77 = LightevalTaskConfig(
 
 raft_neurips_impact_statement_risks = LightevalTaskConfig(
     name="raft:neurips_impact_statement_risks",
-    suite=["lighteval"],
     prompt_function=prompt.raft_neurips_impact_statement_risks,
     hf_repo="ought/raft",
     hf_subset="neurips_impact_statement_risks",
@@ -80,7 +77,6 @@ raft_neurips_impact_statement_risks = LightevalTaskConfig(
 
 raft_one_stop_english = LightevalTaskConfig(
     name="raft:one_stop_english",
-    suite=["lighteval"],
     prompt_function=prompt.raft_one_stop_english,
     hf_repo="ought/raft",
     hf_subset="one_stop_english",
@@ -98,7 +94,6 @@ raft_one_stop_english = LightevalTaskConfig(
 
 raft_overruling = LightevalTaskConfig(
     name="raft:overruling",
-    suite=["lighteval"],
     prompt_function=prompt.raft_overruling,
     hf_repo="ought/raft",
     hf_subset="overruling",
@@ -116,7 +111,6 @@ raft_overruling = LightevalTaskConfig(
 
 raft_semiconductor_org_types = LightevalTaskConfig(
     name="raft:semiconductor_org_types",
-    suite=["lighteval"],
     prompt_function=prompt.raft_semiconductor_org_types,
     hf_repo="ought/raft",
     hf_subset="semiconductor_org_types",
@@ -134,7 +128,6 @@ raft_semiconductor_org_types = LightevalTaskConfig(
 
 raft_systematic_review_inclusion = LightevalTaskConfig(
     name="raft:systematic_review_inclusion",
-    suite=["lighteval"],
     prompt_function=prompt.raft_systematic_review_inclusion,
     hf_repo="ought/raft",
     hf_subset="systematic_review_inclusion",
@@ -152,7 +145,6 @@ raft_systematic_review_inclusion = LightevalTaskConfig(
 
 raft_tai_safety_research = LightevalTaskConfig(
     name="raft:tai_safety_research",
-    suite=["lighteval"],
     prompt_function=prompt.raft_tai_safety_research,
     hf_repo="ought/raft",
     hf_subset="tai_safety_research",
@@ -170,7 +162,6 @@ raft_tai_safety_research = LightevalTaskConfig(
 
 raft_terms_of_service = LightevalTaskConfig(
     name="raft:terms_of_service",
-    suite=["lighteval"],
     prompt_function=prompt.raft_terms_of_service,
     hf_repo="ought/raft",
     hf_subset="terms_of_service",
@@ -188,7 +179,6 @@ raft_terms_of_service = LightevalTaskConfig(
 
 raft_tweet_eval_hate = LightevalTaskConfig(
     name="raft:tweet_eval_hate",
-    suite=["lighteval"],
     prompt_function=prompt.raft_tweet_eval_hate,
     hf_repo="ought/raft",
     hf_subset="tweet_eval_hate",
@@ -206,7 +196,6 @@ raft_tweet_eval_hate = LightevalTaskConfig(
 
 raft_twitter_complaints = LightevalTaskConfig(
     name="raft:twitter_complaints",
-    suite=["lighteval"],
     prompt_function=prompt.raft_twitter_complaints,
     hf_repo="ought/raft",
     hf_subset="twitter_complaints",

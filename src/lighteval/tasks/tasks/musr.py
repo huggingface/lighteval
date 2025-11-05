@@ -27,7 +27,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 musr_murder_mysteries = LightevalTaskConfig(
     name="musr:murder_mysteries",
-    suite=["lighteval"],
     prompt_function=prompt.musr,
     hf_repo="TAUR-Lab/MuSR",
     hf_subset="default",
@@ -44,7 +43,6 @@ musr_murder_mysteries = LightevalTaskConfig(
 
 musr_object_placements = LightevalTaskConfig(
     name="musr:object_placements",
-    suite=["lighteval"],
     prompt_function=prompt.musr,
     hf_repo="TAUR-Lab/MuSR",
     hf_subset="default",
@@ -61,7 +59,6 @@ musr_object_placements = LightevalTaskConfig(
 
 musr_team_allocation = LightevalTaskConfig(
     name="musr:team_allocation",
-    suite=["lighteval"],
     prompt_function=prompt.musr,
     hf_repo="TAUR-Lab/MuSR",
     hf_subset="default",

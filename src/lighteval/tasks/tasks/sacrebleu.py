@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 iwslt17_ar_en = LightevalTaskConfig(
     name="iwslt17:ar-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="iwslt17_ar-en",
@@ -41,7 +40,6 @@ iwslt17_ar_en = LightevalTaskConfig(
 
 iwslt17_de_en = LightevalTaskConfig(
     name="iwslt17:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="iwslt17_de-en",
@@ -57,7 +55,6 @@ iwslt17_de_en = LightevalTaskConfig(
 
 iwslt17_en_ar = LightevalTaskConfig(
     name="iwslt17:en-ar",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="iwslt17_ar-en",
@@ -73,7 +70,6 @@ iwslt17_en_ar = LightevalTaskConfig(
 
 iwslt17_en_de = LightevalTaskConfig(
     name="iwslt17:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="iwslt17_en-de",
@@ -89,7 +85,6 @@ iwslt17_en_de = LightevalTaskConfig(
 
 iwslt17_en_fr = LightevalTaskConfig(
     name="iwslt17:en-fr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="iwslt17_en-fr",
@@ -105,7 +100,6 @@ iwslt17_en_fr = LightevalTaskConfig(
 
 iwslt17_en_ja = LightevalTaskConfig(
     name="iwslt17:en-ja",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="iwslt17_en-ja",
@@ -121,7 +115,6 @@ iwslt17_en_ja = LightevalTaskConfig(
 
 iwslt17_en_ko = LightevalTaskConfig(
     name="iwslt17:en-ko",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="iwslt17_en-ko",
@@ -137,7 +130,6 @@ iwslt17_en_ko = LightevalTaskConfig(
 
 iwslt17_en_zh = LightevalTaskConfig(
     name="iwslt17:en-zh",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="iwslt17_en-zh",
@@ -153,7 +145,6 @@ iwslt17_en_zh = LightevalTaskConfig(
 
 iwslt17_fr_en = LightevalTaskConfig(
     name="iwslt17:fr-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="iwslt17_fr-en",
@@ -169,7 +160,6 @@ iwslt17_fr_en = LightevalTaskConfig(
 
 iwslt17_ja_en = LightevalTaskConfig(
     name="iwslt17:ja-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="iwslt17_ja-en",
@@ -185,7 +175,6 @@ iwslt17_ja_en = LightevalTaskConfig(
 
 iwslt17_ko_en = LightevalTaskConfig(
     name="iwslt17:ko-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="iwslt17_ko-en",
@@ -201,7 +190,6 @@ iwslt17_ko_en = LightevalTaskConfig(
 
 iwslt17_zh_en = LightevalTaskConfig(
     name="iwslt17:zh-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="iwslt17_zh-en",
@@ -217,7 +205,6 @@ iwslt17_zh_en = LightevalTaskConfig(
 
 mtnt2019_en_fr = LightevalTaskConfig(
     name="mtnt2019:en-fr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="mtnt2019_en-fr",
@@ -233,7 +220,6 @@ mtnt2019_en_fr = LightevalTaskConfig(
 
 mtnt2019_en_ja = LightevalTaskConfig(
     name="mtnt2019:en-ja",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="mtnt2019_en-ja",
@@ -249,7 +235,6 @@ mtnt2019_en_ja = LightevalTaskConfig(
 
 mtnt2019_fr_en = LightevalTaskConfig(
     name="mtnt2019:fr-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="mtnt2019_fr-en",
@@ -265,7 +250,6 @@ mtnt2019_fr_en = LightevalTaskConfig(
 
 mtnt2019_ja_en = LightevalTaskConfig(
     name="mtnt2019:ja-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="mtnt2019_ja-en",
@@ -281,7 +265,6 @@ mtnt2019_ja_en = LightevalTaskConfig(
 
 wmt08_cs_en = LightevalTaskConfig(
     name="wmt08:cs-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt08_cs-en",
@@ -297,7 +280,6 @@ wmt08_cs_en = LightevalTaskConfig(
 
 wmt08_de_en = LightevalTaskConfig(
     name="wmt08:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt08_de-en",
@@ -313,7 +295,6 @@ wmt08_de_en = LightevalTaskConfig(
 
 wmt08_en_cs = LightevalTaskConfig(
     name="wmt08:en-cs",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt08_en-cs",
@@ -329,7 +310,6 @@ wmt08_en_cs = LightevalTaskConfig(
 
 wmt08_en_de = LightevalTaskConfig(
     name="wmt08:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt08_en-de",
@@ -345,7 +325,6 @@ wmt08_en_de = LightevalTaskConfig(
 
 wmt08_en_es = LightevalTaskConfig(
     name="wmt08:en-es",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt08_en-es",
@@ -361,7 +340,6 @@ wmt08_en_es = LightevalTaskConfig(
 
 wmt08_en_fr = LightevalTaskConfig(
     name="wmt08:en-fr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt08_en-fr",
@@ -377,7 +355,6 @@ wmt08_en_fr = LightevalTaskConfig(
 
 wmt08_en_hu = LightevalTaskConfig(
     name="wmt08:en-hu",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt08_en-hu",
@@ -393,7 +370,6 @@ wmt08_en_hu = LightevalTaskConfig(
 
 wmt08_es_en = LightevalTaskConfig(
     name="wmt08:es-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt08_es-en",
@@ -409,7 +385,6 @@ wmt08_es_en = LightevalTaskConfig(
 
 wmt08_fr_en = LightevalTaskConfig(
     name="wmt08:fr-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt08_fr-en",
@@ -425,7 +400,6 @@ wmt08_fr_en = LightevalTaskConfig(
 
 wmt08_hu_en = LightevalTaskConfig(
     name="wmt08:hu-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt08_hu-en",
@@ -441,7 +415,6 @@ wmt08_hu_en = LightevalTaskConfig(
 
 wmt09_cs_en = LightevalTaskConfig(
     name="wmt09:cs-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt09_cs-en",
@@ -457,7 +430,6 @@ wmt09_cs_en = LightevalTaskConfig(
 
 wmt09_de_en = LightevalTaskConfig(
     name="wmt09:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt09_de-en",
@@ -473,7 +445,6 @@ wmt09_de_en = LightevalTaskConfig(
 
 wmt09_en_cs = LightevalTaskConfig(
     name="wmt09:en-cs",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt09_en-cs",
@@ -489,7 +460,6 @@ wmt09_en_cs = LightevalTaskConfig(
 
 wmt09_en_de = LightevalTaskConfig(
     name="wmt09:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt09_en-de",
@@ -505,7 +475,6 @@ wmt09_en_de = LightevalTaskConfig(
 
 wmt09_en_es = LightevalTaskConfig(
     name="wmt09:en-es",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt09_en-es",
@@ -521,7 +490,6 @@ wmt09_en_es = LightevalTaskConfig(
 
 wmt09_en_fr = LightevalTaskConfig(
     name="wmt09:en-fr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt09_en-fr",
@@ -537,7 +505,6 @@ wmt09_en_fr = LightevalTaskConfig(
 
 wmt09_en_hu = LightevalTaskConfig(
     name="wmt09:en-hu",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt09_en-hu",
@@ -553,7 +520,6 @@ wmt09_en_hu = LightevalTaskConfig(
 
 wmt09_en_it = LightevalTaskConfig(
     name="wmt09:en-it",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt09_en-it",
@@ -569,7 +535,6 @@ wmt09_en_it = LightevalTaskConfig(
 
 wmt09_es_en = LightevalTaskConfig(
     name="wmt09:es-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt09_es-en",
@@ -585,7 +550,6 @@ wmt09_es_en = LightevalTaskConfig(
 
 wmt09_fr_en = LightevalTaskConfig(
     name="wmt09:fr-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt09_fr-en",
@@ -601,7 +565,6 @@ wmt09_fr_en = LightevalTaskConfig(
 
 wmt09_hu_en = LightevalTaskConfig(
     name="wmt09:hu-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt09_hu-en",
@@ -617,7 +580,6 @@ wmt09_hu_en = LightevalTaskConfig(
 
 wmt09_it_en = LightevalTaskConfig(
     name="wmt09:it-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt09_it-en",
@@ -633,7 +595,6 @@ wmt09_it_en = LightevalTaskConfig(
 
 wmt10_cs_en = LightevalTaskConfig(
     name="wmt10:cs-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt10_cs-en",
@@ -649,7 +610,6 @@ wmt10_cs_en = LightevalTaskConfig(
 
 wmt10_de_en = LightevalTaskConfig(
     name="wmt10:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt10_de-en",
@@ -665,7 +625,6 @@ wmt10_de_en = LightevalTaskConfig(
 
 wmt10_en_cs = LightevalTaskConfig(
     name="wmt10:en-cs",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt10_en-cs",
@@ -681,7 +640,6 @@ wmt10_en_cs = LightevalTaskConfig(
 
 wmt10_en_de = LightevalTaskConfig(
     name="wmt10:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt10_en-de",
@@ -697,7 +655,6 @@ wmt10_en_de = LightevalTaskConfig(
 
 wmt10_en_es = LightevalTaskConfig(
     name="wmt10:en-es",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt10_en-es",
@@ -713,7 +670,6 @@ wmt10_en_es = LightevalTaskConfig(
 
 wmt10_en_fr = LightevalTaskConfig(
     name="wmt10:en-fr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt10_en-fr",
@@ -729,7 +685,6 @@ wmt10_en_fr = LightevalTaskConfig(
 
 wmt10_es_en = LightevalTaskConfig(
     name="wmt10:es-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt10_es-en",
@@ -745,7 +700,6 @@ wmt10_es_en = LightevalTaskConfig(
 
 wmt10_fr_en = LightevalTaskConfig(
     name="wmt10:fr-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt10_fr-en",
@@ -761,7 +715,6 @@ wmt10_fr_en = LightevalTaskConfig(
 
 wmt11_cs_en = LightevalTaskConfig(
     name="wmt11:cs-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt11_cs-en",
@@ -777,7 +730,6 @@ wmt11_cs_en = LightevalTaskConfig(
 
 wmt11_de_en = LightevalTaskConfig(
     name="wmt11:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt11_de-en",
@@ -793,7 +745,6 @@ wmt11_de_en = LightevalTaskConfig(
 
 wmt11_en_cs = LightevalTaskConfig(
     name="wmt11:en-cs",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt11_en-cs",
@@ -809,7 +760,6 @@ wmt11_en_cs = LightevalTaskConfig(
 
 wmt11_en_de = LightevalTaskConfig(
     name="wmt11:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt11_en-de",
@@ -825,7 +775,6 @@ wmt11_en_de = LightevalTaskConfig(
 
 wmt11_en_es = LightevalTaskConfig(
     name="wmt11:en-es",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt11_en-es",
@@ -841,7 +790,6 @@ wmt11_en_es = LightevalTaskConfig(
 
 wmt11_en_fr = LightevalTaskConfig(
     name="wmt11:en-fr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt11_en-fr",
@@ -857,7 +805,6 @@ wmt11_en_fr = LightevalTaskConfig(
 
 wmt11_es_en = LightevalTaskConfig(
     name="wmt11:es-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt11_es-en",
@@ -873,7 +820,6 @@ wmt11_es_en = LightevalTaskConfig(
 
 wmt11_fr_en = LightevalTaskConfig(
     name="wmt11:fr-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt11_fr-en",
@@ -889,7 +835,6 @@ wmt11_fr_en = LightevalTaskConfig(
 
 wmt12_cs_en = LightevalTaskConfig(
     name="wmt12:cs-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt12_cs-en",
@@ -905,7 +850,6 @@ wmt12_cs_en = LightevalTaskConfig(
 
 wmt12_de_en = LightevalTaskConfig(
     name="wmt12:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt12_de-en",
@@ -921,7 +865,6 @@ wmt12_de_en = LightevalTaskConfig(
 
 wmt12_en_cs = LightevalTaskConfig(
     name="wmt12:en-cs",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt12_en-cs",
@@ -937,7 +880,6 @@ wmt12_en_cs = LightevalTaskConfig(
 
 wmt12_en_de = LightevalTaskConfig(
     name="wmt12:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt12_en-de",
@@ -953,7 +895,6 @@ wmt12_en_de = LightevalTaskConfig(
 
 wmt12_en_es = LightevalTaskConfig(
     name="wmt12:en-es",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt12_en-es",
@@ -969,7 +910,6 @@ wmt12_en_es = LightevalTaskConfig(
 
 wmt12_en_fr = LightevalTaskConfig(
     name="wmt12:en-fr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt12_en-fr",
@@ -985,7 +925,6 @@ wmt12_en_fr = LightevalTaskConfig(
 
 wmt12_es_en = LightevalTaskConfig(
     name="wmt12:es-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt12_es-en",
@@ -1001,7 +940,6 @@ wmt12_es_en = LightevalTaskConfig(
 
 wmt12_fr_en = LightevalTaskConfig(
     name="wmt12:fr-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt12_fr-en",
@@ -1017,7 +955,6 @@ wmt12_fr_en = LightevalTaskConfig(
 
 wmt13_cs_en = LightevalTaskConfig(
     name="wmt13:cs-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt13_cs-en",
@@ -1033,7 +970,6 @@ wmt13_cs_en = LightevalTaskConfig(
 
 wmt13_de_en = LightevalTaskConfig(
     name="wmt13:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt13_de-en",
@@ -1049,7 +985,6 @@ wmt13_de_en = LightevalTaskConfig(
 
 wmt13_en_cs = LightevalTaskConfig(
     name="wmt13:en-cs",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt13_en-cs",
@@ -1065,7 +1000,6 @@ wmt13_en_cs = LightevalTaskConfig(
 
 wmt13_en_de = LightevalTaskConfig(
     name="wmt13:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt13_en-de",
@@ -1081,7 +1015,6 @@ wmt13_en_de = LightevalTaskConfig(
 
 wmt13_en_es = LightevalTaskConfig(
     name="wmt13:en-es",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt13_en-es",
@@ -1097,7 +1030,6 @@ wmt13_en_es = LightevalTaskConfig(
 
 wmt13_en_fr = LightevalTaskConfig(
     name="wmt13:en-fr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt13_en-fr",
@@ -1113,7 +1045,6 @@ wmt13_en_fr = LightevalTaskConfig(
 
 wmt13_en_ru = LightevalTaskConfig(
     name="wmt13:en-ru",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt13_en-ru",
@@ -1129,7 +1060,6 @@ wmt13_en_ru = LightevalTaskConfig(
 
 wmt13_es_en = LightevalTaskConfig(
     name="wmt13:es-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt13_es-en",
@@ -1145,7 +1075,6 @@ wmt13_es_en = LightevalTaskConfig(
 
 wmt13_fr_en = LightevalTaskConfig(
     name="wmt13:fr-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt13_fr-en",
@@ -1161,7 +1090,6 @@ wmt13_fr_en = LightevalTaskConfig(
 
 wmt13_ru_en = LightevalTaskConfig(
     name="wmt13:ru-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt13_ru-en",
@@ -1177,7 +1105,6 @@ wmt13_ru_en = LightevalTaskConfig(
 
 wmt14_cs_en = LightevalTaskConfig(
     name="wmt14:cs-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt14_cs-en",
@@ -1193,7 +1120,6 @@ wmt14_cs_en = LightevalTaskConfig(
 
 wmt14_de_en = LightevalTaskConfig(
     name="wmt14:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt14_de-en",
@@ -1209,7 +1135,6 @@ wmt14_de_en = LightevalTaskConfig(
 
 wmt14_en_cs = LightevalTaskConfig(
     name="wmt14:en-cs",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt14_en-cs",
@@ -1225,7 +1150,6 @@ wmt14_en_cs = LightevalTaskConfig(
 
 wmt14_en_de = LightevalTaskConfig(
     name="wmt14:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt14_en-de",
@@ -1241,7 +1165,6 @@ wmt14_en_de = LightevalTaskConfig(
 
 wmt14_en_fr = LightevalTaskConfig(
     name="wmt14:en-fr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="wmt14",
     hf_subset="fr-en",
@@ -1257,7 +1180,6 @@ wmt14_en_fr = LightevalTaskConfig(
 
 wmt14_en_fr = LightevalTaskConfig(
     name="wmt14:en-fr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt14_en-fr",
@@ -1273,7 +1195,6 @@ wmt14_en_fr = LightevalTaskConfig(
 
 wmt14_en_hi = LightevalTaskConfig(
     name="wmt14:en-hi",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt14_en-hi",
@@ -1289,7 +1210,6 @@ wmt14_en_hi = LightevalTaskConfig(
 
 wmt14_en_ru = LightevalTaskConfig(
     name="wmt14:en-ru",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt14_en-ru",
@@ -1305,7 +1225,6 @@ wmt14_en_ru = LightevalTaskConfig(
 
 wmt14_fr_en = LightevalTaskConfig(
     name="wmt14:fr-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="wmt14",
     hf_subset="fr-en",
@@ -1321,7 +1240,6 @@ wmt14_fr_en = LightevalTaskConfig(
 
 wmt14_fr_en = LightevalTaskConfig(
     name="wmt14:fr-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt14_fr-en",
@@ -1337,7 +1255,6 @@ wmt14_fr_en = LightevalTaskConfig(
 
 wmt14_hi_en = LightevalTaskConfig(
     name="wmt14:hi-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt14_hi-en",
@@ -1353,7 +1270,6 @@ wmt14_hi_en = LightevalTaskConfig(
 
 wmt14_ru_en = LightevalTaskConfig(
     name="wmt14:ru-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt14_ru-en",
@@ -1369,7 +1285,6 @@ wmt14_ru_en = LightevalTaskConfig(
 
 wmt15_cs_en = LightevalTaskConfig(
     name="wmt15:cs-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt15_cs-en",
@@ -1385,7 +1300,6 @@ wmt15_cs_en = LightevalTaskConfig(
 
 wmt15_de_en = LightevalTaskConfig(
     name="wmt15:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt15_de-en",
@@ -1401,7 +1315,6 @@ wmt15_de_en = LightevalTaskConfig(
 
 wmt15_en_cs = LightevalTaskConfig(
     name="wmt15:en-cs",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt15_en-cs",
@@ -1417,7 +1330,6 @@ wmt15_en_cs = LightevalTaskConfig(
 
 wmt15_en_de = LightevalTaskConfig(
     name="wmt15:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt15_en-de",
@@ -1433,7 +1345,6 @@ wmt15_en_de = LightevalTaskConfig(
 
 wmt15_en_fi = LightevalTaskConfig(
     name="wmt15:en-fi",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt15_en-fi",
@@ -1449,7 +1360,6 @@ wmt15_en_fi = LightevalTaskConfig(
 
 wmt15_en_fr = LightevalTaskConfig(
     name="wmt15:en-fr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt15_en-fr",
@@ -1465,7 +1375,6 @@ wmt15_en_fr = LightevalTaskConfig(
 
 wmt15_en_ru = LightevalTaskConfig(
     name="wmt15:en-ru",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt15_en-ru",
@@ -1481,7 +1390,6 @@ wmt15_en_ru = LightevalTaskConfig(
 
 wmt15_fi_en = LightevalTaskConfig(
     name="wmt15:fi-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt15_fi-en",
@@ -1497,7 +1405,6 @@ wmt15_fi_en = LightevalTaskConfig(
 
 wmt15_fr_en = LightevalTaskConfig(
     name="wmt15:fr-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt15_fr-en",
@@ -1513,7 +1420,6 @@ wmt15_fr_en = LightevalTaskConfig(
 
 wmt15_ru_en = LightevalTaskConfig(
     name="wmt15:ru-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt15_ru-en",
@@ -1529,7 +1435,6 @@ wmt15_ru_en = LightevalTaskConfig(
 
 wmt16_cs_en = LightevalTaskConfig(
     name="wmt16:cs-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt16_cs-en",
@@ -1545,7 +1450,6 @@ wmt16_cs_en = LightevalTaskConfig(
 
 wmt16_de_en = LightevalTaskConfig(
     name="wmt16:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="wmt16",
     hf_subset="de-en",
@@ -1561,7 +1465,6 @@ wmt16_de_en = LightevalTaskConfig(
 
 wmt16_de_en = LightevalTaskConfig(
     name="wmt16:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt16_de-en",
@@ -1577,7 +1480,6 @@ wmt16_de_en = LightevalTaskConfig(
 
 wmt16_en_cs = LightevalTaskConfig(
     name="wmt16:en-cs",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt16_en-cs",
@@ -1593,7 +1495,6 @@ wmt16_en_cs = LightevalTaskConfig(
 
 wmt16_en_de = LightevalTaskConfig(
     name="wmt16:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="wmt16",
     hf_subset="de-en",
@@ -1609,7 +1510,6 @@ wmt16_en_de = LightevalTaskConfig(
 
 wmt16_en_de = LightevalTaskConfig(
     name="wmt16:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt16_en-de",
@@ -1625,7 +1525,6 @@ wmt16_en_de = LightevalTaskConfig(
 
 wmt16_en_fi = LightevalTaskConfig(
     name="wmt16:en-fi",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt16_en-fi",
@@ -1641,7 +1540,6 @@ wmt16_en_fi = LightevalTaskConfig(
 
 wmt16_en_ro = LightevalTaskConfig(
     name="wmt16:en-ro",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="wmt16",
     hf_subset="ro-en",
@@ -1657,7 +1555,6 @@ wmt16_en_ro = LightevalTaskConfig(
 
 wmt16_en_ro = LightevalTaskConfig(
     name="wmt16:en-ro",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt16_en-ro",
@@ -1673,7 +1570,6 @@ wmt16_en_ro = LightevalTaskConfig(
 
 wmt16_en_ru = LightevalTaskConfig(
     name="wmt16:en-ru",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt16_en-ru",
@@ -1689,7 +1585,6 @@ wmt16_en_ru = LightevalTaskConfig(
 
 wmt16_en_tr = LightevalTaskConfig(
     name="wmt16:en-tr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt16_en-tr",
@@ -1705,7 +1600,6 @@ wmt16_en_tr = LightevalTaskConfig(
 
 wmt16_fi_en = LightevalTaskConfig(
     name="wmt16:fi-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt16_fi-en",
@@ -1721,7 +1615,6 @@ wmt16_fi_en = LightevalTaskConfig(
 
 wmt16_ro_en = LightevalTaskConfig(
     name="wmt16:ro-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="wmt16",
     hf_subset="ro-en",
@@ -1737,7 +1630,6 @@ wmt16_ro_en = LightevalTaskConfig(
 
 wmt16_ro_en = LightevalTaskConfig(
     name="wmt16:ro-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt16_ro-en",
@@ -1753,7 +1645,6 @@ wmt16_ro_en = LightevalTaskConfig(
 
 wmt16_ru_en = LightevalTaskConfig(
     name="wmt16:ru-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt16_ru-en",
@@ -1769,7 +1660,6 @@ wmt16_ru_en = LightevalTaskConfig(
 
 wmt16_tr_en = LightevalTaskConfig(
     name="wmt16:tr-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt16_tr-en",
@@ -1785,7 +1675,6 @@ wmt16_tr_en = LightevalTaskConfig(
 
 wmt17_cs_en = LightevalTaskConfig(
     name="wmt17:cs-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt17_cs-en",
@@ -1801,7 +1690,6 @@ wmt17_cs_en = LightevalTaskConfig(
 
 wmt17_de_en = LightevalTaskConfig(
     name="wmt17:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt17_de-en",
@@ -1817,7 +1705,6 @@ wmt17_de_en = LightevalTaskConfig(
 
 wmt17_en_cs = LightevalTaskConfig(
     name="wmt17:en-cs",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt17_en-cs",
@@ -1833,7 +1720,6 @@ wmt17_en_cs = LightevalTaskConfig(
 
 wmt17_en_de = LightevalTaskConfig(
     name="wmt17:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt17_en-de",
@@ -1849,7 +1735,6 @@ wmt17_en_de = LightevalTaskConfig(
 
 wmt17_en_fi = LightevalTaskConfig(
     name="wmt17:en-fi",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt17_en-fi",
@@ -1865,7 +1750,6 @@ wmt17_en_fi = LightevalTaskConfig(
 
 wmt17_en_lv = LightevalTaskConfig(
     name="wmt17:en-lv",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt17_en-lv",
@@ -1881,7 +1765,6 @@ wmt17_en_lv = LightevalTaskConfig(
 
 wmt17_en_ru = LightevalTaskConfig(
     name="wmt17:en-ru",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt17_en-ru",
@@ -1897,7 +1780,6 @@ wmt17_en_ru = LightevalTaskConfig(
 
 wmt17_en_tr = LightevalTaskConfig(
     name="wmt17:en-tr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt17_en-tr",
@@ -1913,7 +1795,6 @@ wmt17_en_tr = LightevalTaskConfig(
 
 wmt17_en_zh = LightevalTaskConfig(
     name="wmt17:en-zh",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt17_en-zh",
@@ -1929,7 +1810,6 @@ wmt17_en_zh = LightevalTaskConfig(
 
 wmt17_fi_en = LightevalTaskConfig(
     name="wmt17:fi-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt17_fi-en",
@@ -1945,7 +1825,6 @@ wmt17_fi_en = LightevalTaskConfig(
 
 wmt17_lv_en = LightevalTaskConfig(
     name="wmt17:lv-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt17_lv-en",
@@ -1961,7 +1840,6 @@ wmt17_lv_en = LightevalTaskConfig(
 
 wmt17_ru_en = LightevalTaskConfig(
     name="wmt17:ru-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt17_ru-en",
@@ -1977,7 +1855,6 @@ wmt17_ru_en = LightevalTaskConfig(
 
 wmt17_tr_en = LightevalTaskConfig(
     name="wmt17:tr-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt17_tr-en",
@@ -1993,7 +1870,6 @@ wmt17_tr_en = LightevalTaskConfig(
 
 wmt17_zh_en = LightevalTaskConfig(
     name="wmt17:zh-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt17_zh-en",
@@ -2009,7 +1885,6 @@ wmt17_zh_en = LightevalTaskConfig(
 
 wmt18_cs_en = LightevalTaskConfig(
     name="wmt18:cs-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt18_cs-en",
@@ -2025,7 +1900,6 @@ wmt18_cs_en = LightevalTaskConfig(
 
 wmt18_de_en = LightevalTaskConfig(
     name="wmt18:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt18_de-en",
@@ -2041,7 +1915,6 @@ wmt18_de_en = LightevalTaskConfig(
 
 wmt18_en_cs = LightevalTaskConfig(
     name="wmt18:en-cs",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt18_en-cs",
@@ -2057,7 +1930,6 @@ wmt18_en_cs = LightevalTaskConfig(
 
 wmt18_en_de = LightevalTaskConfig(
     name="wmt18:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt18_en-de",
@@ -2073,7 +1945,6 @@ wmt18_en_de = LightevalTaskConfig(
 
 wmt18_en_et = LightevalTaskConfig(
     name="wmt18:en-et",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt18_en-et",
@@ -2089,7 +1960,6 @@ wmt18_en_et = LightevalTaskConfig(
 
 wmt18_en_fi = LightevalTaskConfig(
     name="wmt18:en-fi",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt18_en-fi",
@@ -2105,7 +1975,6 @@ wmt18_en_fi = LightevalTaskConfig(
 
 wmt18_en_ru = LightevalTaskConfig(
     name="wmt18:en-ru",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt18_en-ru",
@@ -2121,7 +1990,6 @@ wmt18_en_ru = LightevalTaskConfig(
 
 wmt18_en_tr = LightevalTaskConfig(
     name="wmt18:en-tr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt18_en-tr",
@@ -2137,7 +2005,6 @@ wmt18_en_tr = LightevalTaskConfig(
 
 wmt18_en_zh = LightevalTaskConfig(
     name="wmt18:en-zh",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt18_en-zh",
@@ -2153,7 +2020,6 @@ wmt18_en_zh = LightevalTaskConfig(
 
 wmt18_et_en = LightevalTaskConfig(
     name="wmt18:et-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt18_et-en",
@@ -2169,7 +2035,6 @@ wmt18_et_en = LightevalTaskConfig(
 
 wmt18_fi_en = LightevalTaskConfig(
     name="wmt18:fi-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt18_fi-en",
@@ -2185,7 +2050,6 @@ wmt18_fi_en = LightevalTaskConfig(
 
 wmt18_ru_en = LightevalTaskConfig(
     name="wmt18:ru-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt18_ru-en",
@@ -2201,7 +2065,6 @@ wmt18_ru_en = LightevalTaskConfig(
 
 wmt18_tr_en = LightevalTaskConfig(
     name="wmt18:tr-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt18_tr-en",
@@ -2217,7 +2080,6 @@ wmt18_tr_en = LightevalTaskConfig(
 
 wmt18_zh_en = LightevalTaskConfig(
     name="wmt18:zh-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt18_zh-en",
@@ -2233,7 +2095,6 @@ wmt18_zh_en = LightevalTaskConfig(
 
 wmt19_cs_de = LightevalTaskConfig(
     name="wmt19:cs-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_cs-de",
@@ -2249,7 +2110,6 @@ wmt19_cs_de = LightevalTaskConfig(
 
 wmt19_de_cs = LightevalTaskConfig(
     name="wmt19:de-cs",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_de-cs",
@@ -2265,7 +2125,6 @@ wmt19_de_cs = LightevalTaskConfig(
 
 wmt19_de_en = LightevalTaskConfig(
     name="wmt19:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_de-en",
@@ -2281,7 +2140,6 @@ wmt19_de_en = LightevalTaskConfig(
 
 wmt19_de_fr = LightevalTaskConfig(
     name="wmt19:de-fr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_de-fr",
@@ -2297,7 +2155,6 @@ wmt19_de_fr = LightevalTaskConfig(
 
 wmt19_en_cs = LightevalTaskConfig(
     name="wmt19:en-cs",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_en-cs",
@@ -2313,7 +2170,6 @@ wmt19_en_cs = LightevalTaskConfig(
 
 wmt19_en_de = LightevalTaskConfig(
     name="wmt19:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_en-de",
@@ -2329,7 +2185,6 @@ wmt19_en_de = LightevalTaskConfig(
 
 wmt19_en_fi = LightevalTaskConfig(
     name="wmt19:en-fi",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_en-fi",
@@ -2345,7 +2200,6 @@ wmt19_en_fi = LightevalTaskConfig(
 
 wmt19_en_gu = LightevalTaskConfig(
     name="wmt19:en-gu",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_en-gu",
@@ -2361,7 +2215,6 @@ wmt19_en_gu = LightevalTaskConfig(
 
 wmt19_en_kk = LightevalTaskConfig(
     name="wmt19:en-kk",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_en-kk",
@@ -2377,7 +2230,6 @@ wmt19_en_kk = LightevalTaskConfig(
 
 wmt19_en_lt = LightevalTaskConfig(
     name="wmt19:en-lt",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_en-lt",
@@ -2393,7 +2245,6 @@ wmt19_en_lt = LightevalTaskConfig(
 
 wmt19_en_ru = LightevalTaskConfig(
     name="wmt19:en-ru",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_en-ru",
@@ -2409,7 +2260,6 @@ wmt19_en_ru = LightevalTaskConfig(
 
 wmt19_en_zh = LightevalTaskConfig(
     name="wmt19:en-zh",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_en-zh",
@@ -2425,7 +2275,6 @@ wmt19_en_zh = LightevalTaskConfig(
 
 wmt19_fi_en = LightevalTaskConfig(
     name="wmt19:fi-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_fi-en",
@@ -2441,7 +2290,6 @@ wmt19_fi_en = LightevalTaskConfig(
 
 wmt19_fr_de = LightevalTaskConfig(
     name="wmt19:fr-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_fr-de",
@@ -2457,7 +2305,6 @@ wmt19_fr_de = LightevalTaskConfig(
 
 wmt19_gu_en = LightevalTaskConfig(
     name="wmt19:gu-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_gu-en",
@@ -2473,7 +2320,6 @@ wmt19_gu_en = LightevalTaskConfig(
 
 wmt19_kk_en = LightevalTaskConfig(
     name="wmt19:kk-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_kk-en",
@@ -2489,7 +2335,6 @@ wmt19_kk_en = LightevalTaskConfig(
 
 wmt19_lt_en = LightevalTaskConfig(
     name="wmt19:lt-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_lt-en",
@@ -2505,7 +2350,6 @@ wmt19_lt_en = LightevalTaskConfig(
 
 wmt19_ru_en = LightevalTaskConfig(
     name="wmt19:ru-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_ru-en",
@@ -2521,7 +2365,6 @@ wmt19_ru_en = LightevalTaskConfig(
 
 wmt19_zh_en = LightevalTaskConfig(
     name="wmt19:zh-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt19_zh-en",
@@ -2537,7 +2380,6 @@ wmt19_zh_en = LightevalTaskConfig(
 
 wmt20_cs_en = LightevalTaskConfig(
     name="wmt20:cs-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_cs-en",
@@ -2553,7 +2395,6 @@ wmt20_cs_en = LightevalTaskConfig(
 
 wmt20_de_en = LightevalTaskConfig(
     name="wmt20:de-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_de-en",
@@ -2569,7 +2410,6 @@ wmt20_de_en = LightevalTaskConfig(
 
 wmt20_de_fr = LightevalTaskConfig(
     name="wmt20:de-fr",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_de-fr",
@@ -2585,7 +2425,6 @@ wmt20_de_fr = LightevalTaskConfig(
 
 wmt20_en_cs = LightevalTaskConfig(
     name="wmt20:en-cs",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_en-cs",
@@ -2601,7 +2440,6 @@ wmt20_en_cs = LightevalTaskConfig(
 
 wmt20_en_de = LightevalTaskConfig(
     name="wmt20:en-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_en-de",
@@ -2617,7 +2455,6 @@ wmt20_en_de = LightevalTaskConfig(
 
 wmt20_en_iu = LightevalTaskConfig(
     name="wmt20:en-iu",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_en-iu",
@@ -2633,7 +2470,6 @@ wmt20_en_iu = LightevalTaskConfig(
 
 wmt20_en_ja = LightevalTaskConfig(
     name="wmt20:en-ja",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_en-ja",
@@ -2649,7 +2485,6 @@ wmt20_en_ja = LightevalTaskConfig(
 
 wmt20_en_km = LightevalTaskConfig(
     name="wmt20:en-km",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_en-km",
@@ -2665,7 +2500,6 @@ wmt20_en_km = LightevalTaskConfig(
 
 wmt20_en_pl = LightevalTaskConfig(
     name="wmt20:en-pl",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_en-pl",
@@ -2681,7 +2515,6 @@ wmt20_en_pl = LightevalTaskConfig(
 
 wmt20_en_ps = LightevalTaskConfig(
     name="wmt20:en-ps",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_en-ps",
@@ -2697,7 +2530,6 @@ wmt20_en_ps = LightevalTaskConfig(
 
 wmt20_en_ru = LightevalTaskConfig(
     name="wmt20:en-ru",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_en-ru",
@@ -2713,7 +2545,6 @@ wmt20_en_ru = LightevalTaskConfig(
 
 wmt20_en_ta = LightevalTaskConfig(
     name="wmt20:en-ta",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_en-ta",
@@ -2729,7 +2560,6 @@ wmt20_en_ta = LightevalTaskConfig(
 
 wmt20_en_zh = LightevalTaskConfig(
     name="wmt20:en-zh",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_en-zh",
@@ -2745,7 +2575,6 @@ wmt20_en_zh = LightevalTaskConfig(
 
 wmt20_fr_de = LightevalTaskConfig(
     name="wmt20:fr-de",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_fr-de",
@@ -2761,7 +2590,6 @@ wmt20_fr_de = LightevalTaskConfig(
 
 wmt20_iu_en = LightevalTaskConfig(
     name="wmt20:iu-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_iu-en",
@@ -2777,7 +2605,6 @@ wmt20_iu_en = LightevalTaskConfig(
 
 wmt20_ja_en = LightevalTaskConfig(
     name="wmt20:ja-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_ja-en",
@@ -2793,7 +2620,6 @@ wmt20_ja_en = LightevalTaskConfig(
 
 wmt20_km_en = LightevalTaskConfig(
     name="wmt20:km-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_km-en",
@@ -2809,7 +2635,6 @@ wmt20_km_en = LightevalTaskConfig(
 
 wmt20_pl_en = LightevalTaskConfig(
     name="wmt20:pl-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_pl-en",
@@ -2825,7 +2650,6 @@ wmt20_pl_en = LightevalTaskConfig(
 
 wmt20_ps_en = LightevalTaskConfig(
     name="wmt20:ps-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_ps-en",
@@ -2841,7 +2665,6 @@ wmt20_ps_en = LightevalTaskConfig(
 
 wmt20_ru_en = LightevalTaskConfig(
     name="wmt20:ru-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_ru-en",
@@ -2857,7 +2680,6 @@ wmt20_ru_en = LightevalTaskConfig(
 
 wmt20_ta_en = LightevalTaskConfig(
     name="wmt20:ta-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_ta-en",
@@ -2873,7 +2695,6 @@ wmt20_ta_en = LightevalTaskConfig(
 
 wmt20_zh_en = LightevalTaskConfig(
     name="wmt20:zh-en",
-    suite=["lighteval"],
     prompt_function=prompt.wmt_reverse_alphabetical,
     hf_repo="lighteval/sacrebleu_manual",
     hf_subset="wmt20_zh-en",

@@ -41,7 +41,6 @@ TASKS_TABLE = [
             },
             formulation=CFFormulation(),
         ),
-        suite=("lighteval",),
         hf_repo="manu/french_boolq",
         hf_subset="default",
         evaluation_splits=("test",),

@@ -29,7 +29,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 headqa_en = LightevalTaskConfig(
     name="headqa:en",
-    suite=["lighteval"],
     prompt_function=prompt.headqa,
     hf_repo="lighteval/headqa_harness",
     hf_subset="en",
@@ -48,7 +47,6 @@ headqa_en = LightevalTaskConfig(
 
 headqa_es = LightevalTaskConfig(
     name="headqa:es",
-    suite=["lighteval"],
     prompt_function=prompt.headqa,
     hf_repo="lighteval/headqa_harness",
     hf_subset="es",

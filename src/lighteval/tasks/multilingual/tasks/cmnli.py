@@ -47,7 +47,6 @@ TASKS_TABLE = [
             relations=["entailment", "contradiction"],
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="fenffef/cmnli",
         hf_subset="default",
         hf_filter=lambda x: x["label"] in ["entailment", "contradiction"],

@@ -32,7 +32,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 swag = LightevalTaskConfig(
     name="swag",
-    suite=["lighteval"],
     prompt_function=prompt.swag,
     hf_repo="allenai/swag",
     hf_subset="regular",

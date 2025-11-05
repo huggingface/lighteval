@@ -44,7 +44,6 @@ TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"xcodah_{language.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(language, partial(xcodah_adapter, language), formulation=formulation),
-        suite=("lighteval",),
         hf_repo="INK-USC/xcsr",
         hf_subset=f"X-CODAH-{standardize_tag(language.value) if language != Language.JAPANESE else 'jap'}",
         evaluation_splits=("validation",),

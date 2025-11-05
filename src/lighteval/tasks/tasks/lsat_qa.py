@@ -24,7 +24,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 lsat_qa = LightevalTaskConfig(
     name="lsat_qa",
-    suite=["lighteval"],
     prompt_function=prompt.lsat_qa,
     hf_repo="lighteval/lsat_qa",
     hf_subset="all",
@@ -40,7 +39,6 @@ lsat_qa = LightevalTaskConfig(
 
 lsat_qa_assignment = LightevalTaskConfig(
     name="lsat_qa:assignment",
-    suite=["lighteval"],
     prompt_function=prompt.lsat_qa,
     hf_repo="lighteval/lsat_qa",
     hf_subset="assignment",
@@ -56,7 +54,6 @@ lsat_qa_assignment = LightevalTaskConfig(
 
 lsat_qa_grouping = LightevalTaskConfig(
     name="lsat_qa:grouping",
-    suite=["lighteval"],
     prompt_function=prompt.lsat_qa,
     hf_repo="lighteval/lsat_qa",
     hf_subset="grouping",
@@ -72,7 +69,6 @@ lsat_qa_grouping = LightevalTaskConfig(
 
 lsat_qa_miscellaneous = LightevalTaskConfig(
     name="lsat_qa:miscellaneous",
-    suite=["lighteval"],
     prompt_function=prompt.lsat_qa,
     hf_repo="lighteval/lsat_qa",
     hf_subset="miscellaneous",
@@ -88,7 +84,6 @@ lsat_qa_miscellaneous = LightevalTaskConfig(
 
 lsat_qa_ordering = LightevalTaskConfig(
     name="lsat_qa:ordering",
-    suite=["lighteval"],
     prompt_function=prompt.lsat_qa,
     hf_repo="lighteval/lsat_qa",
     hf_subset="ordering",

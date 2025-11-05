@@ -47,7 +47,6 @@ from lighteval.utils.language import Language
 TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"m3exams_{language.value}_{formulation.name.lower()}",
-        suite=("lighteval",),
         prompt_function=get_mcq_prompt_function(
             language,
             partial(get_m3exam_adapter, language),

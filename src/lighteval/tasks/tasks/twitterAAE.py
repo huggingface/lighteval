@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 twitterAAE_aa = LightevalTaskConfig(
     name="twitterAAE:aa",
-    suite=["lighteval"],
     prompt_function=prompt.twitter_aae,
     hf_repo="lighteval/twitterAAE",
     hf_subset="aa",
@@ -42,7 +41,6 @@ twitterAAE_aa = LightevalTaskConfig(
 
 twitterAAE_white = LightevalTaskConfig(
     name="twitterAAE:white",
-    suite=["lighteval"],
     prompt_function=prompt.twitter_aae,
     hf_repo="lighteval/twitterAAE",
     hf_subset="white",

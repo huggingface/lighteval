@@ -45,7 +45,6 @@ TASKS_TABLE = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("lighteval",),
         hf_repo="google/xquad",
         hf_subset=f"xquad.{standardize_tag(language.value)}",
         evaluation_splits=("validation",),
