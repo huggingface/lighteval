@@ -338,7 +338,7 @@ class VLMTransformersModel(LightevalModel):
 
         return 2048
 
-    @cached(SamplingMethod.GENERATIVE)
+    # @cached(SamplingMethod.GENERATIVE)
     def greedy_until(
         self,
         docs: list[Doc],
