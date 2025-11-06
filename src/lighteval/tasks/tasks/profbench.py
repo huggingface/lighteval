@@ -1,5 +1,29 @@
-from inspect_ai import Task, task
-from inspect_ai.dataset import Sample, hf_dataset
+"""
+name:
+ProfBench
+
+dataset:
+nvidia/ProfBench
+
+abstract:
+More than 3000 rubric criteria across 40 human-annotated tasks presenting
+reports addressing professional tasks across PhD STEM (Chemistry, Physics) and
+Professional Services (Financial Services, Management Consulting) domains.
+
+languages:
+english
+
+tags:
+reasoning, professional-reports
+
+paper:
+https://arxiv.org/abs/2510.18941
+
+starred:
+true
+"""
+
+from inspect_ai.dataset import Sample
 from inspect_ai.model import get_model
 from inspect_ai.scorer import Score, accuracy, scorer
 from inspect_ai.solver import generate
@@ -99,25 +123,6 @@ def record_to_sample(record):
             "rubrics": record["rubrics"],
             "filepaths": record.get("filepaths", []),
         },
-    )
-
-
-@task
-def _profbench():
-    """
-    ProfBench report generation task.
-    """
-    # Load dataset
-    dataset_obj = hf_dataset(
-        path="nvidia/ProfBench",
-        split="test",
-        sample_fields=record_to_sample,
-    )
-
-    return Task(
-        dataset=dataset_obj,
-        solver=[generate()],
-        scorer=profbench_weighted_scorer(),
     )
 
 
