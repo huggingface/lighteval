@@ -45,7 +45,8 @@ async def evaluate_criterion_with_judge(response, criterion_description, domain,
     """Evaluate a single criterion using LLM judge."""
     prompt = QUESTION_PROMPT_YES_NO.format(response=response, criterion_description=criterion_description)
 
-    model = get_model()
+    # The original code uses GPT-oss-120b as the judge model.
+    model = get_model("hf-inference-providers/openai/gpt-oss-120b")
     result = await model.generate(prompt)
 
     judge_rating = result.completion.strip()
@@ -126,9 +127,14 @@ def record_to_sample(record):
     )
 
 
+def profbench_prompt_function(line, task_name):
+    """Prompt function for ProfBench."""
+    raise NotImplementedError("ProfBench not implemented yet for backends other than inspect-ai.")
+
+
 profbench = LightevalTaskConfig(
     name="profbench",
-    prompt_function=lambda line, task_name: line["prompt"],
+    prompt_function=profbench_prompt_function,
     hf_repo="nvidia/ProfBench",
     hf_subset="default",
     evaluation_splits=["test"],
