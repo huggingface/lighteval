@@ -127,7 +127,7 @@ Did not find what you need ? You can always make your custom model API by follow
 Here's a **quick command** to evaluate using the *Accelerate backend*:
 
 ```shell
-lighteval eval "hf-inference-providers/openai/gpt-oss-20b" "lighteval|gpqa:diamond|0"
+lighteval eval "hf-inference-providers/openai/gpt-oss-20b" gpqa:diamond
 ```
 
 Or use the **Python API** to run a model *already loaded in memory*!
@@ -141,7 +141,7 @@ from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
 
 MODEL_NAME = "meta-llama/Meta-Llama-3-8B-Instruct"
-BENCHMARKS = "lighteval|gsm8k|0"
+BENCHMARKS = "gsm8k"
 
 evaluation_tracker = EvaluationTracker(output_dir="./results")
 pipeline_params = PipelineParameters(

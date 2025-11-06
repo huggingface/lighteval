@@ -29,7 +29,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 anli_r1 = LightevalTaskConfig(
     name="anli:r1",
-    suite=["lighteval"],
     prompt_function=prompt.anli,
     hf_repo="facebook/anli",
     hf_subset="plain_text",
@@ -46,7 +45,6 @@ anli_r1 = LightevalTaskConfig(
 
 anli_r2 = LightevalTaskConfig(
     name="anli:r2",
-    suite=["lighteval"],
     prompt_function=prompt.anli,
     hf_repo="facebook/anli",
     hf_subset="plain_text",
@@ -63,7 +61,6 @@ anli_r2 = LightevalTaskConfig(
 
 anli_r3 = LightevalTaskConfig(
     name="anli:r3",
-    suite=["lighteval"],
     prompt_function=prompt.anli,
     hf_repo="facebook/anli",
     hf_subset="plain_text",

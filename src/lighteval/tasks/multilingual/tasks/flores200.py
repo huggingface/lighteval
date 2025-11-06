@@ -255,7 +255,6 @@ TASKS_TABLE = [
             adapter=flores_adapter(lang1, lang2),
             formulation=CFFormulation(),
         ),
-        suite=("lighteval",),
         hf_repo="facebook/flores",
         hf_subset=f"{lang1}-{lang2}",
         hf_avail_splits=["dev", "devtest"],

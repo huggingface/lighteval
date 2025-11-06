@@ -35,7 +35,6 @@ TASKS_TABLE = [
                 "choices": [line["golden"]],
             },
         ),
-        suite=("lighteval",),
         hf_repo="weitianwen/cmath",
         hf_subset="default",
         evaluation_splits=("test",),

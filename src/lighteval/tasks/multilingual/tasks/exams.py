@@ -163,7 +163,6 @@ TASKS_TABLE = [
             },
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="mhardalov/exams",
         hf_subset="multilingual",
         # Weird bug in dataset

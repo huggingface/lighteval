@@ -37,7 +37,6 @@ TASKS_TABLE = [
                 "choices": [a["text"] for a in line["answers"]],
             },
         ),
-        suite=("lighteval",),
         hf_repo="erdometo/tquad2",
         hf_subset="default",
         evaluation_splits=("validation",),

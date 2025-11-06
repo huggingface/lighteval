@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 lextreme_brazilian_court_decisions_judgment = LightevalTaskConfig(
     name="lextreme:brazilian_court_decisions_judgment",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_brazilian_court_decisions_judgment,
     hf_repo="lighteval/lextreme",
     hf_subset="brazilian_court_decisions_judgment",
@@ -41,7 +40,6 @@ lextreme_brazilian_court_decisions_judgment = LightevalTaskConfig(
 
 lextreme_brazilian_court_decisions_unanimity = LightevalTaskConfig(
     name="lextreme:brazilian_court_decisions_unanimity",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_brazilian_court_decisions_unanimity,
     hf_repo="lighteval/lextreme",
     hf_subset="brazilian_court_decisions_unanimity",
@@ -57,7 +55,6 @@ lextreme_brazilian_court_decisions_unanimity = LightevalTaskConfig(
 
 lextreme_covid19_emergency_event = LightevalTaskConfig(
     name="lextreme:covid19_emergency_event",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_covid19_emergency_event,
     hf_repo="lighteval/lextreme",
     hf_subset="covid19_emergency_event",
@@ -73,7 +70,6 @@ lextreme_covid19_emergency_event = LightevalTaskConfig(
 
 lextreme_german_argument_mining = LightevalTaskConfig(
     name="lextreme:german_argument_mining",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_german_argument_mining,
     hf_repo="lighteval/lextreme",
     hf_subset="german_argument_mining",
@@ -89,7 +85,6 @@ lextreme_german_argument_mining = LightevalTaskConfig(
 
 lextreme_greek_legal_code_chapter = LightevalTaskConfig(
     name="lextreme:greek_legal_code_chapter",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_greek_legal_code_chapter,
     hf_repo="lighteval/lextreme",
     hf_subset="greek_legal_code_chapter",
@@ -105,7 +100,6 @@ lextreme_greek_legal_code_chapter = LightevalTaskConfig(
 
 lextreme_greek_legal_code_subject = LightevalTaskConfig(
     name="lextreme:greek_legal_code_subject",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_greek_legal_code_subject,
     hf_repo="lighteval/lextreme",
     hf_subset="greek_legal_code_subject",
@@ -121,7 +115,6 @@ lextreme_greek_legal_code_subject = LightevalTaskConfig(
 
 lextreme_greek_legal_code_volume = LightevalTaskConfig(
     name="lextreme:greek_legal_code_volume",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_greek_legal_code_volume,
     hf_repo="lighteval/lextreme",
     hf_subset="greek_legal_code_volume",
@@ -137,7 +130,6 @@ lextreme_greek_legal_code_volume = LightevalTaskConfig(
 
 lextreme_greek_legal_ner = LightevalTaskConfig(
     name="lextreme:greek_legal_ner",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_greek_legal_ner,
     hf_repo="lighteval/lextreme",
     hf_subset="greek_legal_ner",
@@ -153,7 +145,6 @@ lextreme_greek_legal_ner = LightevalTaskConfig(
 
 lextreme_legalnero = LightevalTaskConfig(
     name="lextreme:legalnero",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_legalnero,
     hf_repo="lighteval/lextreme",
     hf_subset="legalnero",
@@ -169,7 +160,6 @@ lextreme_legalnero = LightevalTaskConfig(
 
 lextreme_lener_br = LightevalTaskConfig(
     name="lextreme:lener_br",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_lener_br,
     hf_repo="lighteval/lextreme",
     hf_subset="lener_br",
@@ -185,7 +175,6 @@ lextreme_lener_br = LightevalTaskConfig(
 
 lextreme_mapa_coarse = LightevalTaskConfig(
     name="lextreme:mapa_coarse",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_mapa_coarse,
     hf_repo="lighteval/lextreme",
     hf_subset="mapa_coarse",
@@ -201,7 +190,6 @@ lextreme_mapa_coarse = LightevalTaskConfig(
 
 lextreme_mapa_fine = LightevalTaskConfig(
     name="lextreme:mapa_fine",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_mapa_fine,
     hf_repo="lighteval/lextreme",
     hf_subset="mapa_fine",
@@ -217,7 +205,6 @@ lextreme_mapa_fine = LightevalTaskConfig(
 
 lextreme_multi_eurlex_level_1 = LightevalTaskConfig(
     name="lextreme:multi_eurlex_level_1",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_multi_eurlex_level_1,
     hf_repo="lighteval/lextreme",
     hf_subset="multi_eurlex_level_1",
@@ -233,7 +220,6 @@ lextreme_multi_eurlex_level_1 = LightevalTaskConfig(
 
 lextreme_multi_eurlex_level_2 = LightevalTaskConfig(
     name="lextreme:multi_eurlex_level_2",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_multi_eurlex_level_2,
     hf_repo="lighteval/lextreme",
     hf_subset="multi_eurlex_level_2",
@@ -249,7 +235,6 @@ lextreme_multi_eurlex_level_2 = LightevalTaskConfig(
 
 lextreme_multi_eurlex_level_3 = LightevalTaskConfig(
     name="lextreme:multi_eurlex_level_3",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_multi_eurlex_level_3,
     hf_repo="lighteval/lextreme",
     hf_subset="multi_eurlex_level_3",
@@ -265,7 +250,6 @@ lextreme_multi_eurlex_level_3 = LightevalTaskConfig(
 
 lextreme_online_terms_of_service_clause_topics = LightevalTaskConfig(
     name="lextreme:online_terms_of_service_clause_topics",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_online_terms_of_service_clause_topics,
     hf_repo="lighteval/lextreme",
     hf_subset="online_terms_of_service_clause_topics",
@@ -281,7 +265,6 @@ lextreme_online_terms_of_service_clause_topics = LightevalTaskConfig(
 
 lextreme_online_terms_of_service_unfairness_levels = LightevalTaskConfig(
     name="lextreme:online_terms_of_service_unfairness_levels",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_online_terms_of_service_unfairness_levels,
     hf_repo="lighteval/lextreme",
     hf_subset="online_terms_of_service_unfairness_levels",
@@ -297,7 +280,6 @@ lextreme_online_terms_of_service_unfairness_levels = LightevalTaskConfig(
 
 lextreme_swiss_judgment_prediction = LightevalTaskConfig(
     name="lextreme:swiss_judgment_prediction",
-    suite=["lighteval"],
     prompt_function=prompt.lextreme_swiss_judgment_prediction,
     hf_repo="lighteval/lextreme",
     hf_subset="swiss_judgment_prediction",

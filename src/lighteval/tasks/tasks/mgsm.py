@@ -28,7 +28,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 mgsm_en = LightevalTaskConfig(
     name="mgsm:en",
-    suite=["lighteval"],
     prompt_function=prompt.mgsm_en,
     hf_repo="juletxara/mgsm",
     hf_subset="en",
@@ -44,7 +43,6 @@ mgsm_en = LightevalTaskConfig(
 
 mgsm_es = LightevalTaskConfig(
     name="mgsm:es",
-    suite=["lighteval"],
     prompt_function=prompt.mgsm_es,
     hf_repo="juletxara/mgsm",
     hf_subset="es",
@@ -60,7 +58,6 @@ mgsm_es = LightevalTaskConfig(
 
 mgsm_fr = LightevalTaskConfig(
     name="mgsm:fr",
-    suite=["lighteval"],
     prompt_function=prompt.mgsm_fr,
     hf_repo="juletxara/mgsm",
     hf_subset="fr",
@@ -76,7 +73,6 @@ mgsm_fr = LightevalTaskConfig(
 
 mgsm_de = LightevalTaskConfig(
     name="mgsm:de",
-    suite=["lighteval"],
     prompt_function=prompt.mgsm_de,
     hf_repo="juletxara/mgsm",
     hf_subset="de",
@@ -92,7 +88,6 @@ mgsm_de = LightevalTaskConfig(
 
 mgsm_ru = LightevalTaskConfig(
     name="mgsm:ru",
-    suite=["lighteval"],
     prompt_function=prompt.mgsm_ru,
     hf_repo="juletxara/mgsm",
     hf_subset="ru",
@@ -108,7 +103,6 @@ mgsm_ru = LightevalTaskConfig(
 
 mgsm_zh = LightevalTaskConfig(
     name="mgsm:zh",
-    suite=["lighteval"],
     prompt_function=prompt.mgsm_zh,
     hf_repo="juletxara/mgsm",
     hf_subset="zh",
@@ -124,7 +118,6 @@ mgsm_zh = LightevalTaskConfig(
 
 mgsm_ja = LightevalTaskConfig(
     name="mgsm:ja",
-    suite=["lighteval"],
     prompt_function=prompt.mgsm_ja,
     hf_repo="juletxara/mgsm",
     hf_subset="ja",
@@ -140,7 +133,6 @@ mgsm_ja = LightevalTaskConfig(
 
 mgsm_th = LightevalTaskConfig(
     name="mgsm:th",
-    suite=["lighteval"],
     prompt_function=prompt.mgsm_th,
     hf_repo="juletxara/mgsm",
     hf_subset="th",
@@ -156,7 +148,6 @@ mgsm_th = LightevalTaskConfig(
 
 mgsm_sw = LightevalTaskConfig(
     name="mgsm:sw",
-    suite=["lighteval"],
     prompt_function=prompt.mgsm_sw,
     hf_repo="juletxara/mgsm",
     hf_subset="sw",
@@ -172,7 +163,6 @@ mgsm_sw = LightevalTaskConfig(
 
 mgsm_bn = LightevalTaskConfig(
     name="mgsm:bn",
-    suite=["lighteval"],
     prompt_function=prompt.mgsm_bn,
     hf_repo="juletxara/mgsm",
     hf_subset="bn",
@@ -188,7 +178,6 @@ mgsm_bn = LightevalTaskConfig(
 
 mgsm_te = LightevalTaskConfig(
     name="mgsm:te",
-    suite=["lighteval"],
     prompt_function=prompt.mgsm_te,
     hf_repo="juletxara/mgsm",
     hf_subset="te",

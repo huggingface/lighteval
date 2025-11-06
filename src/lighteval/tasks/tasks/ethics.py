@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 ethics_commonsense = LightevalTaskConfig(
     name="ethics:commonsense",
-    suite=["lighteval"],
     prompt_function=prompt.ethics_commonsense,
     hf_repo="lighteval/hendrycks_ethics",
     hf_subset="commonsense",
@@ -42,7 +41,6 @@ ethics_commonsense = LightevalTaskConfig(
 
 ethics_deontology = LightevalTaskConfig(
     name="ethics:deontology",
-    suite=["lighteval"],
     prompt_function=prompt.ethics_deontology,
     hf_repo="lighteval/hendrycks_ethics",
     hf_subset="deontology",
@@ -58,7 +56,6 @@ ethics_deontology = LightevalTaskConfig(
 
 ethics_justice = LightevalTaskConfig(
     name="ethics:justice",
-    suite=["lighteval"],
     prompt_function=prompt.ethics_justice,
     hf_repo="lighteval/hendrycks_ethics",
     hf_subset="justice",
@@ -74,7 +71,6 @@ ethics_justice = LightevalTaskConfig(
 
 ethics_utilitarianism = LightevalTaskConfig(
     name="ethics:utilitarianism",
-    suite=["lighteval"],
     prompt_function=prompt.ethics_utilitarianism,
     hf_repo="lighteval/hendrycks_ethics",
     hf_subset="utilitarianism",
@@ -90,7 +86,6 @@ ethics_utilitarianism = LightevalTaskConfig(
 
 ethics_virtue = LightevalTaskConfig(
     name="ethics:virtue",
-    suite=["lighteval"],
     prompt_function=prompt.ethics_virtue,
     hf_repo="lighteval/hendrycks_ethics",
     hf_subset="virtue",

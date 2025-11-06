@@ -35,7 +35,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 siqa = LightevalTaskConfig(
     name="siqa",
-    suite=["lighteval"],
     prompt_function=prompt.siqa,
     hf_repo="allenai/social_i_qa",
     hf_subset="default",

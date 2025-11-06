@@ -38,7 +38,6 @@ TASKS_TABLE = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("lighteval",),
         hf_repo="eraldoluis/faquad",
         hf_subset="plain_text",
         hf_revision="205ba826a2282a4a5aa9bd3651e55ee4f2da1546",

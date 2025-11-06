@@ -39,7 +39,6 @@ TASKS_TABLE = [
                 "choices": [str(line["answer_number"])],
             },
         ),
-        suite=("lighteval",),
         hf_repo="masakhane/afrimgsm",
         hf_subset=language.value,
         evaluation_splits=("test",),

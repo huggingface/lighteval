@@ -29,7 +29,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 coqa_first_question = LightevalTaskConfig(
     name="coqa",
     prompt_function=prompt.coqa,
-    suite=["lighteval"],
     hf_repo="stanfordnlp/coqa",
     hf_subset="default",
     hf_avail_splits=["train", "validation"],

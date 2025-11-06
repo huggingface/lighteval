@@ -29,7 +29,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 sciq = LightevalTaskConfig(
     name="sciq",
-    suite=["lighteval"],
     prompt_function=prompt.sciq,
     hf_repo="allenai/sciq",
     hf_subset="default",

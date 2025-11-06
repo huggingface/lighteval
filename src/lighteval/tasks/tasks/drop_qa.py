@@ -44,7 +44,6 @@ drop_qa = LightevalTaskConfig(
             ),
         },
     ),
-    suite=("lighteval",),
     hf_repo="lighteval/drop_harness",
     hf_subset="default",
     hf_filter=lambda line: list(

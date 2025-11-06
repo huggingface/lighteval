@@ -21,6 +21,7 @@ Lighteval can be used with several different commands, each optimized for differ
 
 ### Evaluation Backends
 
+- `lighteval eval`: Use [inspect-ai](https://inspect.aisi.org.uk/) as backend to evaluate and inspect your models ! (prefered way)
 - `lighteval accelerate`: Evaluate models on CPU or one or more GPUs using [🤗
   Accelerate](https://github.com/huggingface/accelerate)
 - `lighteval nanotron`: Evaluate models in distributed settings using [⚡️
@@ -54,10 +55,8 @@ To evaluate `GPT-2` on the Truthful QA benchmark with [🤗
 ```bash
 lighteval accelerate \
      "model_name=openai-community/gpt2" \
-     "leaderboard|truthfulqa:mc|0"
+     truthfulqa:mc
 ```
-
-Here, we first choose a backend (either `accelerate`, `nanotron`, `endpoint`, or `vllm`), and then specify the model and task(s) to run.
 
 ### Task Specification
 
@@ -96,7 +95,7 @@ When specifying a path to a file, it should start with `./`.
 lighteval accelerate \
      "model_name=openai-community/gpt2" \
      ./path/to/lighteval/examples/tasks/recommended_set.txt
-# or, e.g., "leaderboard|truthfulqa:mc|0,leaderboard|gsm8k|3"
+# or, e.g., "truthfulqa:mc|0,gsm8k|3"
 ```
 
 ## Backend Configuration
@@ -120,7 +119,7 @@ thinking tokens:
 ```bash
 lighteval vllm \
     "model_name=mistralai/Magistral-Small-2507,dtype=float16,data_parallel_size=4" \
-    "lighteval|aime24|0" \
+    aime24 \
     --remove-reasoning-tags \
     --reasoning-tags="[('[THINK]','[/THINK]')]"
 ```

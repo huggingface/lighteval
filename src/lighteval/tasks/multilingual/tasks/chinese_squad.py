@@ -38,7 +38,6 @@ TASKS_TABLE = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("lighteval",),
         hf_repo="lighteval/ChineseSquad",
         hf_subset="default",
         evaluation_splits=("validation",),

@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 dyck_language_2 = LightevalTaskConfig(
     name="dyck_language:2",
-    suite=["lighteval"],
     prompt_function=prompt.dyck_language,
     hf_repo="lighteval/DyckLanguage",
     hf_subset="2",
@@ -42,7 +41,6 @@ dyck_language_2 = LightevalTaskConfig(
 
 dyck_language_3 = LightevalTaskConfig(
     name="dyck_language:3",
-    suite=["lighteval"],
     prompt_function=prompt.dyck_language,
     hf_repo="lighteval/DyckLanguage",
     hf_subset="3",
@@ -59,7 +57,6 @@ dyck_language_3 = LightevalTaskConfig(
 
 dyck_language_4 = LightevalTaskConfig(
     name="dyck_language:4",
-    suite=["lighteval"],
     prompt_function=prompt.dyck_language,
     hf_repo="lighteval/DyckLanguage",
     hf_subset="4",

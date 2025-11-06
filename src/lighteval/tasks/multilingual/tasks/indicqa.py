@@ -41,7 +41,6 @@ TASKS_TABLE = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("lighteval",),
         hf_repo="ai4bharat/IndicQA",
         hf_subset=f"indicqa.{LangCodeLanguage.get(language.value).language}",
         hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),

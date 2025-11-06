@@ -115,7 +115,6 @@ TASKS_TABLE = [
             },
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="CohereForAI/Global-MMLU",
         hf_subset=standardize_tag(language.value),
         evaluation_splits=("test",),

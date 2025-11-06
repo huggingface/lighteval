@@ -29,7 +29,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 arc_challenge = LightevalTaskConfig(
     name="arc:challenge",
-    suite=["lighteval"],
     prompt_function=prompt.arc,
     hf_repo="allenai/ai2_arc",
     hf_subset="ARC-Challenge",
@@ -47,7 +46,6 @@ arc_challenge = LightevalTaskConfig(
 
 arc_easy = LightevalTaskConfig(
     name="arc:easy",
-    suite=["lighteval"],
     prompt_function=prompt.arc,
     hf_repo="allenai/ai2_arc",
     hf_subset="ARC-Easy",

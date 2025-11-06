@@ -44,7 +44,6 @@ from lighteval.utils.language import Language
 TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"mlmm_hellaswag_{lang.value}_{formulation.name.lower()}",
-        suite=["lighteval"],
         prompt_function=get_hellaswag_prompt_function(
             language=lang,
             adapter=lambda line: {

@@ -29,7 +29,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 triviaqa = LightevalTaskConfig(
     name="triviaqa",
-    suite=["lighteval"],
     prompt_function=prompt.triviaqa,
     hf_repo="mandarjoshi/trivia_qa",
     hf_subset="rc.nocontext",

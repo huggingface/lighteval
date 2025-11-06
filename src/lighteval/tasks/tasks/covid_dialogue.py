@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 covid_dialogue = LightevalTaskConfig(
     name="covid_dialogue",
-    suite=["lighteval"],
     prompt_function=prompt.covid_dialogue,
     hf_repo="lighteval/covid_dialogue",
     hf_subset="default",

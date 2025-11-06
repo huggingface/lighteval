@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 entity_data_imputation_Buy = LightevalTaskConfig(
     name="entity_data_imputation:Buy",
-    suite=["lighteval"],
     prompt_function=prompt.entity_data_imputation,
     hf_repo="lighteval/Buy",
     hf_subset="default",
@@ -44,7 +43,6 @@ entity_data_imputation_Buy = LightevalTaskConfig(
 
 entity_data_imputation_Restaurant = LightevalTaskConfig(
     name="entity_data_imputation:Restaurant",
-    suite=["lighteval"],
     prompt_function=prompt.entity_data_imputation,
     hf_repo="lighteval/Restaurant",
     hf_subset="default",

@@ -47,7 +47,6 @@ TASKS_TABLE = [
             },
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="ai4bharat/ai2_arc-hi",
         hf_subset=f"ARC-{subset.capitalize()}",
         evaluation_splits=("test",),

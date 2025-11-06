@@ -42,7 +42,6 @@ squad_v2 = LightevalTaskConfig(
             "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
         },
     ),
-    suite=("lighteval",),
     hf_repo="rajpurkar/squad_v2",
     hf_subset="squad_v2",
     hf_filter=lambda line: any(ans for ans in line["answers"]["text"] if len(ans) > 0),

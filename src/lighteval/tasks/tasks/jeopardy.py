@@ -32,7 +32,6 @@ jeopardy = LightevalTaskConfig(
             "choices": [line["answer"]],
         },
     ),
-    suite=("lighteval",),
     hf_repo="openaccess-ai-collective/jeopardy",
     hf_subset="default",
     evaluation_splits=("train",),

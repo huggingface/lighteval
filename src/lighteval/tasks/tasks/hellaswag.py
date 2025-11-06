@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 hellaswag = LightevalTaskConfig(
     name="hellaswag",
-    suite=["lighteval"],
     prompt_function=prompt.hellaswag_generative,
     hf_repo="Rowan/hellaswag",
     hf_subset="default",

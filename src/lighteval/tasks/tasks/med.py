@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 med_mcqa = LightevalTaskConfig(
     name="med_mcqa",
-    suite=["lighteval"],
     prompt_function=prompt.med_mcqa,
     hf_repo="lighteval/med_mcqa",
     hf_subset="default",
@@ -44,7 +43,6 @@ med_mcqa = LightevalTaskConfig(
 
 med_paragraph_simplification = LightevalTaskConfig(
     name="med_paragraph_simplification",
-    suite=["lighteval"],
     prompt_function=prompt.med_paragraph_simplification,
     hf_repo="lighteval/med_paragraph_simplification",
     hf_subset="default",
@@ -63,7 +61,6 @@ med_paragraph_simplification = LightevalTaskConfig(
 
 med_qa = LightevalTaskConfig(
     name="med_qa",
-    suite=["lighteval"],
     prompt_function=prompt.med_qa,
     hf_repo="bigbio/med_qa",
     hf_subset="med_qa_en_source",

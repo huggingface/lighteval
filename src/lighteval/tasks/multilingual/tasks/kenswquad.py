@@ -38,7 +38,6 @@ TASKS_TABLE = [
                 "choices": [line["answer"]],
             },
         ),
-        suite=("lighteval",),
         hf_repo="lighteval/KenSwQuAD",
         hf_subset="default",
         evaluation_splits=("test",),

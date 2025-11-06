@@ -51,7 +51,6 @@ TASKS_TABLE = [
             ),
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="maritaca-ai/enem",
         hf_subset=year,
         evaluation_splits=("train",),

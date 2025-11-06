@@ -52,7 +52,6 @@ TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"mkqa_{language.value}:{subset}",
         prompt_function=get_qa_prompt_function(language, partial(get_mkqa_adapter, language)),
-        suite=("lighteval",),
         hf_repo="apple/mkqa",
         hf_subset="mkqa",
         hf_revision="325131889721ae0ed885b76ecb8011369d75abad",

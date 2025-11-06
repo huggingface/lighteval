@@ -37,7 +37,6 @@ TASKS_TABLE = [
                 "choices": [ans for ans in line["answers"]["answer"] if len(ans) > 0],
             },
         ),
-        suite=("lighteval",),
         hf_repo="lighteval/thaiqa_squad_fixed",
         hf_subset="default",
         evaluation_splits=("train",),

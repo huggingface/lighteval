@@ -179,6 +179,10 @@ class Registry:
     def _update_task_configs(self) -> dict[str, LightevalTaskConfig]:  # noqa: C901
         """
         Updates each config depending on the input tasks (we replace all provided params, like few shot number, sampling params, etc)
+        Now expects task specs in the form:
+        - task|few_shot
+        - task (defaults to few_shot=0)
+        Backwards-compat for suite|task|few_shot is preserved but the suite is ignored.
         """
         task_to_configs = collections.defaultdict(list)
 
@@ -186,13 +190,16 @@ class Registry:
         for task in self.tasks_list:
             metric_params_dict = {}
             try:
-                if task.count("|") == 3:
+                if task.count("|") == 2:
                     logger.warning(
-                        "Deprecation warning: You provided 4 arguments in your task name, but we no longer support the `truncate_fewshot` option. We will ignore the parameter for now, but it will fail in a couple of versions, so you should change your task name to `suite|task|num_fewshot`."
+                        "Deprecation warning: Provided suite|task|few_shot; `suite` is ignored. Use task|few_shot instead."
                     )
-                    suite_name, task_name, few_shot, _ = tuple(task.split("|"))
+                    _, task_name, few_shot = tuple(task.split("|"))
+                elif task.count("|") == 1:
+                    task_name, few_shot = tuple(task.split("|"))
                 else:
-                    suite_name, task_name, few_shot = tuple(task.split("|"))
+                    task_name = task
+                    few_shot = 0
                 if "@" in task_name:
                     split_task_name = task_name.split("@")
                     task_name, metric_params = split_task_name[0], split_task_name[1:]
@@ -202,10 +209,10 @@ class Registry:
                 few_shot = int(few_shot)
 
             except ValueError:
-                raise ValueError(f"Cannot get task info from {task}. correct format is suite|task|few_shot")
+                raise ValueError(f"Cannot get task info from {task}. correct format is task|few_shot")
 
             # This adds support for task supersets (eg: mmlu -> all the mmlu tasks)
-            for expanded_task in self._expand_task_definition(f"{suite_name}|{task_name}"):
+            for expanded_task in self._expand_task_definition(task_name):
                 # todo: it's likely we'll want this step at the list set up step, not here
 
                 # We load each config
@@ -308,7 +315,7 @@ class Registry:
         configs = {}
         if hasattr(module, "TASKS_TABLE"):
             for config in getattr(module, "TASKS_TABLE"):
-                configs[f"{config.suite[0]}|{config.name}"] = config
+                configs[f"{config.name}"] = config
         return configs
 
     @staticmethod

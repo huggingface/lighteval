@@ -89,8 +89,6 @@ class LightevalTaskConfig:
             per input. Defaults to None.
 
     Task Configuration:
-        suite (ListLike[str], optional): Evaluation suites this task belongs to.
-            Defaults to ["custom"].
         version (int, optional): Task version number. Increment when dataset or
             prompt changes. Defaults to 0.
         num_fewshots (int, optional): Number of few-shot examples to include.
@@ -138,8 +136,6 @@ class LightevalTaskConfig:
     stop_sequence: ListLike[str] | None = None
     num_samples: list[int] | None = None
 
-    suite: ListLike[str] = field(default_factory=lambda: ["custom"])
-
     original_num_docs: int = -1
     effective_num_docs: int = -1
 
@@ -152,12 +148,10 @@ class LightevalTaskConfig:
     def __post_init__(self):
         # If we got a Metrics enums instead of a Metric, we convert
         self.metrics = [metric.value if isinstance(metric, Metrics) else metric for metric in self.metrics]
-
         # Convert list to tuple for hashing
         self.metrics = tuple(self.metrics)
         self.hf_avail_splits = tuple(self.hf_avail_splits)
         self.evaluation_splits = tuple(self.evaluation_splits)
-        self.suite = tuple(self.suite)
         self.stop_sequence = self.stop_sequence if self.stop_sequence is not None else ()
         self.full_name = f"{self.name}|{self.num_fewshots}"  # todo clefourrier: this is likely incorrect
 
@@ -212,7 +206,6 @@ class LightevalTask:
         self.config = config
         self.name = config.name
         self.version = config.version
-        self.suite = config.suite
         self.dataset_config = config
 
         self.full_name = config.full_name

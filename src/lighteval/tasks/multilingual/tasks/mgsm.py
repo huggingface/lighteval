@@ -40,7 +40,6 @@ TASKS_TABLE = [
                 "choices": [str(line["answer_number"])],
             },
         ),
-        suite=("lighteval",),
         hf_repo="juletxara/mgsm",
         hf_subset=standardize_tag(language.value),
         evaluation_splits=("test",),

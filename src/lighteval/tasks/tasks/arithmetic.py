@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 arithmetic_1dc = LightevalTaskConfig(
     name="arithmetic:1dc",
-    suite=["lighteval"],
     prompt_function=prompt.arithmetic,
     hf_repo="EleutherAI/arithmetic",
     hf_subset="arithmetic_1dc",
@@ -42,7 +41,6 @@ arithmetic_1dc = LightevalTaskConfig(
 
 arithmetic_2da = LightevalTaskConfig(
     name="arithmetic:2da",
-    suite=["lighteval"],
     prompt_function=prompt.arithmetic,
     hf_repo="EleutherAI/arithmetic",
     hf_subset="arithmetic_2da",
@@ -58,7 +56,6 @@ arithmetic_2da = LightevalTaskConfig(
 
 arithmetic_2dm = LightevalTaskConfig(
     name="arithmetic:2dm",
-    suite=["lighteval"],
     prompt_function=prompt.arithmetic,
     hf_repo="EleutherAI/arithmetic",
     hf_subset="arithmetic_2dm",
@@ -74,7 +71,6 @@ arithmetic_2dm = LightevalTaskConfig(
 
 arithmetic_2ds = LightevalTaskConfig(
     name="arithmetic:2ds",
-    suite=["lighteval"],
     prompt_function=prompt.arithmetic,
     hf_repo="EleutherAI/arithmetic",
     hf_subset="arithmetic_2ds",
@@ -90,7 +86,6 @@ arithmetic_2ds = LightevalTaskConfig(
 
 arithmetic_3da = LightevalTaskConfig(
     name="arithmetic:3da",
-    suite=["lighteval"],
     prompt_function=prompt.arithmetic,
     hf_repo="EleutherAI/arithmetic",
     hf_subset="arithmetic_3da",
@@ -106,7 +101,6 @@ arithmetic_3da = LightevalTaskConfig(
 
 arithmetic_3ds = LightevalTaskConfig(
     name="arithmetic:3ds",
-    suite=["lighteval"],
     prompt_function=prompt.arithmetic,
     hf_repo="EleutherAI/arithmetic",
     hf_subset="arithmetic_3ds",
@@ -122,7 +116,6 @@ arithmetic_3ds = LightevalTaskConfig(
 
 arithmetic_4da = LightevalTaskConfig(
     name="arithmetic:4da",
-    suite=["lighteval"],
     prompt_function=prompt.arithmetic,
     hf_repo="EleutherAI/arithmetic",
     hf_subset="arithmetic_4da",
@@ -138,7 +131,6 @@ arithmetic_4da = LightevalTaskConfig(
 
 arithmetic_4ds = LightevalTaskConfig(
     name="arithmetic:4ds",
-    suite=["lighteval"],
     prompt_function=prompt.arithmetic,
     hf_repo="EleutherAI/arithmetic",
     hf_subset="arithmetic_4ds",
@@ -154,7 +146,6 @@ arithmetic_4ds = LightevalTaskConfig(
 
 arithmetic_5da = LightevalTaskConfig(
     name="arithmetic:5da",
-    suite=["lighteval"],
     prompt_function=prompt.arithmetic,
     hf_repo="EleutherAI/arithmetic",
     hf_subset="arithmetic_5da",
@@ -170,7 +161,6 @@ arithmetic_5da = LightevalTaskConfig(
 
 arithmetic_5ds = LightevalTaskConfig(
     name="arithmetic:5ds",
-    suite=["lighteval"],
     prompt_function=prompt.arithmetic,
     hf_repo="EleutherAI/arithmetic",
     hf_subset="arithmetic_5ds",
