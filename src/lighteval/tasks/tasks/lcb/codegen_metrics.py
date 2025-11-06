@@ -349,7 +349,7 @@ def grade_stdio(  # noqa: C901
     return all_results
 
 
-def run_test(sample: dict[str, str], test=None, timeout: int = 6) -> list[int | bool]:
+def run_test(inputs: list, outputs: list, fn_name: str, model_answer: str, timeout: int = 6) -> list[int | bool]:
     """If test(generated_code) is not None it'll try to run the code.
     otherwise it'll just return an input and output pair.
     The return codes are all for errors. A True value means the function worked, and a False
@@ -359,33 +359,26 @@ def run_test(sample: dict[str, str], test=None, timeout: int = 6) -> list[int | 
 
     # Disable functionalities that can make destructive changes to the test.
     # max memory is set to 4GB
+    print("Disabling functionalities that can make destructive changes to the test.")
     reliability_guard()
 
-    try:
-        in_outs = json.loads(sample["input_output"])
-    except ValueError:
-        in_outs = None
+    if fn_name is None:
+        which_type = CODE_TYPE.standard_input  # Standard input
+        method_name = None
+    else:
+        which_type = CODE_TYPE.call_based  # Call-based
+        method_name = fn_name
 
-    if in_outs:
-        if in_outs.get("fn_name") is None:
-            which_type = CODE_TYPE.standard_input  # Standard input
-            method_name = None
-
-        else:
-            which_type = CODE_TYPE.call_based  # Call-based
-            method_name = in_outs["fn_name"]
-
-    if test is None:
-        # assert False, "should not happen: test code is none"
-        return in_outs
+    print(f"Running test with type: {which_type} and method name: {method_name}")
 
     if which_type == CODE_TYPE.call_based:
         signal.alarm(timeout)
+        print(f"Setting alarm for {timeout} seconds.")
         try:
             return grade_call_based(
-                code=test,
-                all_inputs=in_outs["inputs"],
-                all_outputs=in_outs["outputs"],
+                code=model_answer,
+                all_inputs=inputs,
+                all_outputs=outputs,
                 fn_name=method_name,
                 timeout=timeout,
             )
@@ -398,11 +391,12 @@ def run_test(sample: dict[str, str], test=None, timeout: int = 6) -> list[int | 
 
     elif which_type == CODE_TYPE.standard_input:
         signal.alarm(timeout)
+        print(f"Setting alarm for {timeout} seconds.")
         try:
             return grade_stdio(
-                code=test,
-                all_inputs=in_outs["inputs"],
-                all_outputs=in_outs["outputs"],
+                code=model_answer,
+                all_inputs=inputs,
+                all_outputs=outputs,
                 timeout=timeout,
             )
 
@@ -546,6 +540,23 @@ def evaluate_generations_by_problem(args: list[list]) -> list:
             res.append(curr_res)
 
     return res
+
+
+def evaluate_single_generation(sample: dict[str, str], model_answer: str, timeout: int = 6) -> int:
+    """Evaluate a single generation for a single sample.
+
+    Args:
+        sample: Dict with key "input_output" containing a JSON string of {"inputs": [...], "outputs": [...], "fn_name": str | None}
+        model_answer: The code generation to evaluate (as a single string)
+        timeout: Timeout in seconds per test run
+
+    Returns:
+        1 if all tests pass, otherwise 0
+    """
+    results = check_correctness(sample, model_answer, timeout=timeout)
+    # Success when all entries are strictly True
+    all_passed = all(bool(x) is True for x in results)
+    return 1 if all_passed else 0
 
 
 def evaluate_generations(

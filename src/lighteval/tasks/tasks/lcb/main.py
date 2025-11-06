@@ -22,10 +22,14 @@ https://livecodebench.github.io/
 """
 
 import json
+from textwrap import dedent
 from typing import Any
 
 import numpy as np
 from aenum import extend_enum
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import Score, Target, accuracy, scorer
+from inspect_ai.solver import TaskState, generate
 
 from lighteval.metrics.metrics import Metrics, SampleLevelMetric
 from lighteval.metrics.metrics_sample import SampleLevelComputation
@@ -35,6 +39,7 @@ from lighteval.tasks.requests import SamplingMethod
 from lighteval.tasks.tasks.lcb.codegen_metrics import (
     codegen_metrics,
     extract_code,
+    run_test,
     translate_private_test_cases,
 )
 
@@ -141,6 +146,96 @@ configs = [
 
 tasks = []
 
+
+PROMPT_TEMPLATE_STARTER_CODE = dedent("""
+You will be given a question (problem specification) and will generate a correct Python program that matches the specification and passes all tests.
+
+Question: {question_content}
+
+{starter_code}
+
+Read the inputs from stdin solve the problem and write the answer to stdout (do not directly test on the sample inputs). Enclose your code within delimiters as follows. Ensure that when the python program runs, it reads the inputs, runs the algorithm and writes output to STDOUT.
+
+```python
+# YOUR CODE HERE
+```
+""")
+
+PROMPT_TEMPLATE_NO_STARTER_CODE = dedent("""
+You will be given a question (problem specification) and will generate a correct Python program that matches the specification and passes all tests.
+
+Question: {question_content}
+
+Read the inputs from stdin solve the problem and write the answer to stdout (do not directly test on the sample inputs). Enclose your code within delimiters as follows. Ensure that when the python program runs, it reads the inputs, runs the algorithm and writes output to STDOUT.
+
+```python
+# YOUR CODE HERE
+```
+""")
+
+
+@scorer(metrics=[accuracy()])
+def lcb_scorer():
+    async def score(state: TaskState, target: Target):
+        # Extract model output text
+        model_answer = state.output.completion
+        # Extract code block from model output
+        generated_code = extract_code(model_answer)
+
+        # Build single-sample spec from target metadata
+        inputs = state.metadata.get("inputs")
+        outputs = state.metadata.get("outputs")
+        fn_name = state.metadata.get("fn_name")
+
+        # inputs = json.loads(inputs)
+        # outputs = json.loads(outputs)
+
+        print(f"Inputs: {inputs}")
+        print(f"Outputs: {outputs}")
+        print(f"Fn name: {fn_name}")
+        print(f"Generated code: {generated_code}")
+
+        passed = run_test(
+            inputs=inputs,
+            outputs=outputs,
+            fn_name=fn_name,
+            model_answer=generated_code,
+            timeout=3,
+        )
+
+        print(f"Passed: {passed}")
+
+        passed = 1
+
+        return Score(value=float(passed))
+
+    return score
+
+
+def record_to_sample(record):
+    if starter_code := record.get("starter_code", None):
+        input = PROMPT_TEMPLATE_STARTER_CODE.format(
+            question_content=record["question_content"], starter_code=starter_code
+        )
+    else:
+        input = PROMPT_TEMPLATE_NO_STARTER_CODE.format(question_content=record["question_content"])
+
+    public_test_cases = json.loads(record["public_test_cases"])
+    private_test_cases = translate_private_test_cases(record["private_test_cases"])
+    inputs = [test["input"] for test in public_test_cases + private_test_cases]
+    outputs = [test["output"] for test in public_test_cases + private_test_cases]
+
+    return Sample(
+        input=input,
+        target="",
+        metadata={
+            "inputs": inputs,
+            "outputs": outputs,
+            "fn_name": json.loads(record["metadata"]).get("func_name", None),
+        },
+    )
+
+
 for subset in configs:
     # To keep the base subset as the default, the others are named "lcb:codegeneration_v4", "lcb:codegeneration_v5"... etc
     name = "lcb:codegeneration" if subset == "v4_v5" else f"lcb:codegeneration_{subset}"
@@ -155,6 +250,12 @@ for subset in configs:
         metrics=[Metrics.lcb_codegen_metric],
         stop_sequence=[],  # no stop sequence, will use EOS token
         version=0,
+        sample_fields=record_to_sample,
+        solver=[generate(cache=True)],
+        scorer=lcb_scorer(),
+        sandbox="docker",
+        epochs=4,
+        epochs_reducer="pass_at_1",
     )
     tasks.append(task)
 
