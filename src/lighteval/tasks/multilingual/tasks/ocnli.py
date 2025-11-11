@@ -47,7 +47,6 @@ TASKS_TABLE = [
             relations=["entailment", "contradiction"],
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="clue/clue",
         hf_subset="ocnli",
         # Only keep the positive and negative examples

@@ -59,7 +59,6 @@ afri_mmlu_tasks = [
             },
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="masakhane/afrimmlu",
         # Temporary until the pr is merged
         hf_revision="refs/pr/1",

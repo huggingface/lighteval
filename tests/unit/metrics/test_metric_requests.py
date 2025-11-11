@@ -46,7 +46,6 @@ def get_pmi_task(metrics: list[Metric]):
     config = LightevalTaskConfig(
         name="pmi_test_task",
         metrics=metrics,
-        suite=["test"],
         prompt_function=dummy_prompt_fc,
         hf_repo=xstory_cloze_en.hf_repo,
         hf_subset=xstory_cloze_en.hf_subset,
@@ -54,7 +53,7 @@ def get_pmi_task(metrics: list[Metric]):
     )
     # This is manually edited when updating the config and in the post init function
     #  - we need to get a more homogeneous system for naming...
-    config.full_name = "test|pmi_test_task|0"
+    config.full_name = "pmi_test_task|0"
     return config
 
 
@@ -77,7 +76,7 @@ def test_pmi_request():
     pmi_test_config = get_pmi_task(metrics=[metric])
     task = LightevalTask(pmi_test_config)
     evaluation = fake_evaluate_task(task, fake_model, max_samples=1)
-    results = evaluation["results"]["test:pmi_test_task:0"]
+    results = evaluation["results"]["pmi_test_task:0"]
     # Correct choice after norm should be the second one so 0 acc
     assert results[metric.metric_name] == 0
 
@@ -101,7 +100,7 @@ def test_pmi_request_with_logprob_metric():
     metrics = [LogLikelihoodAccMetric(normalization=LogProbPMINorm()), LogLikelihoodAccMetric(normalization=None)]
     pmi_test_config = get_pmi_task(metrics=metrics)
     task = LightevalTask(pmi_test_config)
-    result = fake_evaluate_task(task, fake_model, max_samples=1)["results"]["test:pmi_test_task:0"]
+    result = fake_evaluate_task(task, fake_model, max_samples=1)["results"]["pmi_test_task:0"]
     # Correct choice after norm should be the second one so 0 acc
     assert result[metrics[0].metric_name] == 0
     assert result[metrics[1].metric_name] == 1
@@ -134,6 +133,6 @@ def test_pmi_request_with_generative_metric():
     metrics = [LogLikelihoodAccMetric(normalization=LogProbPMINorm()), Metrics.exact_match.value]
     pmi_test_config = get_pmi_task(metrics=metrics)
     task = LightevalTask(pmi_test_config)
-    results = fake_evaluate_task(task, fake_model, max_samples=1)["results"]["test:pmi_test_task:0"]
+    results = fake_evaluate_task(task, fake_model, max_samples=1)["results"]["pmi_test_task:0"]
     assert results[metrics[0].metric_name] == 0
     assert results[metrics[1].metric_name] == 1

@@ -55,7 +55,6 @@ TASKS_TABLE = [
             ),
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="jon-tow/okapi_truthfulqa",
         hf_subset=standardize_tag(language.value),
         hf_revision="cdd5db1a66fd04105622109d1c2a5cbc8cde7586",

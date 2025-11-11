@@ -93,14 +93,11 @@ def _compare_metrics(current, reference):
 
     metric_diffs = {}
     for metric_name in set(current_metrics.keys()) & set(reference_metrics.keys()):
-        try:
-            current_val = current_metrics.get(metric_name)
-            reference_val = reference_metrics.get(metric_name)
+        current_val = current_metrics.get(metric_name)
+        reference_val = reference_metrics.get(metric_name)
 
-            if not math.isclose(current_val, reference_val, abs_tol=0.05):
-                metric_diffs[metric_name] = {"current": current_val, "reference": reference_val}
-        except Exception:
-            breakpoint()
+        if not math.isclose(current_val, reference_val, abs_tol=0.05):
+            metric_diffs[metric_name] = {"current": current_val, "reference": reference_val}
 
     if metric_diffs:
         sample_diff["metric_differences"] = metric_diffs
@@ -155,7 +152,6 @@ def compare_sample_details(current_details, reference_details):
 
     for task_name in current_details:
         if task_name not in reference_details:
-            breakpoint()
             differences[task_name] = [{"error": "Task not found in reference results"}]
             continue
 

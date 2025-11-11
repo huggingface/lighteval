@@ -49,7 +49,6 @@ TASKS_TABLE = [
             },
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="ai-forever/MERA",
         hf_subset="ruworldtree",
         evaluation_splits=("train",),

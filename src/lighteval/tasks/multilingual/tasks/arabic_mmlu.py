@@ -90,7 +90,6 @@ TASKS_TABLE = [
             },
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="MBZUAI/ArabicMMLU",
         hf_subset=subset,
         evaluation_splits=("test",),

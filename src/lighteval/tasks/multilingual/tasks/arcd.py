@@ -42,7 +42,6 @@ TASKS_TABLE = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("lighteval",),
         hf_repo="hsseinmz/arcd",
         hf_subset="plain_text",
         evaluation_splits=("validation",),

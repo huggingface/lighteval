@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 civil_comments = LightevalTaskConfig(
     name="civil_comments",
-    suite=["lighteval"],
     prompt_function=prompt.civil_comments,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="all",
@@ -41,7 +40,6 @@ civil_comments = LightevalTaskConfig(
 
 civil_comments_LGBTQ = LightevalTaskConfig(
     name="civil_comments:LGBTQ",
-    suite=["lighteval"],
     prompt_function=prompt.civil_comments,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="LGBTQ",
@@ -57,7 +55,6 @@ civil_comments_LGBTQ = LightevalTaskConfig(
 
 civil_comments_black = LightevalTaskConfig(
     name="civil_comments:black",
-    suite=["lighteval"],
     prompt_function=prompt.civil_comments,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="black",
@@ -73,7 +70,6 @@ civil_comments_black = LightevalTaskConfig(
 
 civil_comments_christian = LightevalTaskConfig(
     name="civil_comments:christian",
-    suite=["lighteval"],
     prompt_function=prompt.civil_comments,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="christian",
@@ -89,7 +85,6 @@ civil_comments_christian = LightevalTaskConfig(
 
 civil_comments_female = LightevalTaskConfig(
     name="civil_comments:female",
-    suite=["lighteval"],
     prompt_function=prompt.civil_comments,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="female",
@@ -105,7 +100,6 @@ civil_comments_female = LightevalTaskConfig(
 
 civil_comments_male = LightevalTaskConfig(
     name="civil_comments:male",
-    suite=["lighteval"],
     prompt_function=prompt.civil_comments,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="male",
@@ -121,7 +115,6 @@ civil_comments_male = LightevalTaskConfig(
 
 civil_comments_muslim = LightevalTaskConfig(
     name="civil_comments:muslim",
-    suite=["lighteval"],
     prompt_function=prompt.civil_comments,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="muslim",
@@ -137,7 +130,6 @@ civil_comments_muslim = LightevalTaskConfig(
 
 civil_comments_other_religions = LightevalTaskConfig(
     name="civil_comments:other_religions",
-    suite=["lighteval"],
     prompt_function=prompt.civil_comments,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="other_religions",
@@ -153,7 +145,6 @@ civil_comments_other_religions = LightevalTaskConfig(
 
 civil_comments_white = LightevalTaskConfig(
     name="civil_comments:white",
-    suite=["lighteval"],
     prompt_function=prompt.civil_comments,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="white",

@@ -52,7 +52,6 @@ def sample_to_fewshot(sample):
 
 gpqa = LightevalTaskConfig(
     name="gpqa:mc",
-    suite=["lighteval"],
     prompt_function=prompt.gpqa,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
@@ -72,7 +71,6 @@ gpqa = LightevalTaskConfig(
 
 gpqa_diamond_instruct = LightevalTaskConfig(
     name="gpqa:diamond",
-    suite=["lighteval"],
     prompt_function=prompt.gpqa_instruct,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
@@ -92,7 +90,6 @@ gpqa_diamond_instruct = LightevalTaskConfig(
 
 gpqa_extended_instruct = LightevalTaskConfig(
     name="gpqa:extended",
-    suite=["lighteval"],
     prompt_function=prompt.gpqa_instruct,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
@@ -112,7 +109,6 @@ gpqa_extended_instruct = LightevalTaskConfig(
 
 gpqa_main_instruct = LightevalTaskConfig(
     name="gpqa:main",
-    suite=["lighteval"],
     prompt_function=prompt.gpqa_instruct,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,

@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 quac = LightevalTaskConfig(
     name="quac",
-    suite=["lighteval"],
     prompt_function=prompt.quac,
     hf_repo="lighteval/quac_helm",
     hf_subset="default",

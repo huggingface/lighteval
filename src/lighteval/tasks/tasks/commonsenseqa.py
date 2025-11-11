@@ -30,7 +30,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 commonsenseqa = LightevalTaskConfig(
     name="commonsenseqa",
-    suite=["lighteval"],
     prompt_function=prompt.commonsense_qa,
     hf_repo="tau/commonsense_qa",
     hf_subset="default",

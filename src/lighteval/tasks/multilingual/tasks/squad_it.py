@@ -38,7 +38,6 @@ TASKS_TABLE = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("lighteval",),
         hf_repo="crux82/squad_it",
         hf_subset="default",
         hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),

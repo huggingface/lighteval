@@ -82,7 +82,6 @@ llm_judge_mt_bench = SampleLevelMetricGrouping(
 task = LightevalTaskConfig(
     name="mt_bench",
     prompt_function=mt_bench_prompt,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
-    suite=["lighteval"],
     hf_repo="lighteval/mt-bench",
     hf_subset="default",
     hf_avail_splits=["train"],

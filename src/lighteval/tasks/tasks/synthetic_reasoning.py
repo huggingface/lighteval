@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 synthetic_reasoning_induction = LightevalTaskConfig(
     name="synthetic_reasoning:induction",
-    suite=["lighteval"],
     prompt_function=prompt.synthetic_reasoning,
     hf_repo="lighteval/synthetic_reasoning",
     hf_subset="induction",
@@ -44,7 +43,6 @@ synthetic_reasoning_induction = LightevalTaskConfig(
 
 synthetic_reasoning_natural_easy = LightevalTaskConfig(
     name="synthetic_reasoning:natural_easy",
-    suite=["lighteval"],
     prompt_function=prompt.synthetic_reasoning_natural,
     hf_repo="lighteval/synthetic_reasoning_natural",
     hf_subset="easy",
@@ -61,7 +59,6 @@ synthetic_reasoning_natural_easy = LightevalTaskConfig(
 
 synthetic_reasoning_natural_hard = LightevalTaskConfig(
     name="synthetic_reasoning:natural_hard",
-    suite=["lighteval"],
     prompt_function=prompt.synthetic_reasoning_natural,
     hf_repo="lighteval/synthetic_reasoning_natural",
     hf_subset="hard",
@@ -78,7 +75,6 @@ synthetic_reasoning_natural_hard = LightevalTaskConfig(
 
 synthetic_reasoning_pattern_match = LightevalTaskConfig(
     name="synthetic_reasoning:pattern_match",
-    suite=["lighteval"],
     prompt_function=prompt.synthetic_reasoning,
     hf_repo="lighteval/synthetic_reasoning",
     hf_subset="pattern_match",
@@ -97,7 +93,6 @@ synthetic_reasoning_pattern_match = LightevalTaskConfig(
 
 synthetic_reasoning_variable_substitution = LightevalTaskConfig(
     name="synthetic_reasoning:variable_substitution",
-    suite=["lighteval"],
     prompt_function=prompt.synthetic_reasoning,
     hf_repo="lighteval/synthetic_reasoning",
     hf_subset="variable_substitution",

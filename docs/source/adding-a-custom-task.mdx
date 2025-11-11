@@ -78,7 +78,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 task = LightevalTaskConfig(
     name="myothertask",
     prompt_function=prompt_fn,  # Must be defined in the file or imported
-    suite=["community"],
     hf_repo="your_dataset_repo_on_hf",
     hf_subset="default",
     hf_avail_splits=["train", "test"],
@@ -115,7 +114,6 @@ class CustomSubsetTask(LightevalTaskConfig):
             evaluation_splits=["test"],
             few_shots_split="train",
             few_shots_select="random_sampling_from_train",
-            suite=["lighteval"],
             generation_size=256,
             stop_sequence=["\n", "Question:"],
         )
@@ -149,22 +147,16 @@ Once your file is created, you can run the evaluation with the following command
 ```bash
 lighteval accelerate \
     "model_name=HuggingFaceH4/zephyr-7b-beta" \
-    "lighteval|{task}|{fewshots}" \
+    {task} \
     --custom-tasks {path_to_your_custom_task_file}
 ```
 
 ### Example Usage
 
 ```bash
-# Run a custom task with zero-shot evaluation
+# Run a custom task with 3 shot evaluation
 lighteval accelerate \
     "model_name=openai-community/gpt2" \
-    "lighteval|myothertask|0" \
-    --custom-tasks community_tasks/my_custom_task.py
-
-# Run a custom task with few-shot evaluation
-lighteval accelerate \
-    "model_name=openai-community/gpt2" \
-    "lighteval|myothertask|3" \
+    "myothertask|3" \
     --custom-tasks community_tasks/my_custom_task.py
 ```

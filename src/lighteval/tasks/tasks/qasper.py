@@ -30,7 +30,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 qasper = LightevalTaskConfig(
     name="qasper",
-    suite=["lighteval"],
     prompt_function=prompt.qasper,
     hf_repo="allenai/qasper",
     hf_subset="qasper",

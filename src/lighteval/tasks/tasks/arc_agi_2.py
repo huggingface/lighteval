@@ -35,7 +35,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 arc_agi_2 = LightevalTaskConfig(
     name="arc_agi_2",
-    suite=["lighteval"],
     prompt_function=prompt.arc_agi_2,
     hf_repo="arc-agi-community/arc-agi-2",
     hf_subset="default",

@@ -47,7 +47,6 @@ TASKS_TABLE = [
             },
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="eduagarcia/oab_exams",
         hf_subset="default",
         evaluation_splits=("train",),

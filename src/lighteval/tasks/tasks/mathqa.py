@@ -28,7 +28,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 mathqa = LightevalTaskConfig(
     name="mathqa",
-    suite=["lighteval"],
     prompt_function=prompt.mathqa,
     hf_repo="allenai/math_qa",
     hf_subset="default",

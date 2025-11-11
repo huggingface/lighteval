@@ -28,7 +28,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 lambada_standard = LightevalTaskConfig(
     name="lambada:standard",
-    suite=["lighteval"],
     prompt_function=prompt.lambada,
     hf_repo="cimec/lambada",
     hf_subset="plain_text",
@@ -45,7 +44,6 @@ lambada_standard = LightevalTaskConfig(
 
 lambada_standard_cloze = LightevalTaskConfig(
     name="lambada:standard_cloze",
-    suite=["lighteval"],
     prompt_function=prompt.lambada_cloze,
     hf_repo="cimec/lambada",
     hf_subset="plain_text",

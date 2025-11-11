@@ -11,7 +11,7 @@ To use VLLM, simply change the `model_args` to reflect the arguments you want to
 ```bash
 lighteval vllm \
     "model_name=HuggingFaceH4/zephyr-7b-beta" \
-    "extended|ifeval|0"
+    ifeval
 ```
 
 ## Parallelism Options
@@ -26,7 +26,7 @@ For example, if you have 4 GPUs, you can split the model across them using tenso
 ```bash
 export VLLM_WORKER_MULTIPROC_METHOD=spawn && lighteval vllm \
     "model_name=HuggingFaceH4/zephyr-7b-beta,tensor_parallel_size=4" \
-    "extended|ifeval|0"
+    ifeval
 ```
 
 ### Data Parallelism
@@ -36,7 +36,7 @@ If your model fits on a single GPU, you can use data parallelism to speed up the
 ```bash
 export VLLM_WORKER_MULTIPROC_METHOD=spawn && lighteval vllm \
     "model_name=HuggingFaceH4/zephyr-7b-beta,data_parallel_size=4" \
-    "extended|ifeval|0"
+    ifeval
 ```
 
 ## Using a Configuration File
@@ -47,7 +47,7 @@ An example configuration file is shown below and can be found at `examples/model
 ```bash
 lighteval vllm \
     "examples/model_configs/vllm_model_config.yaml" \
-    "extended|ifeval|0"
+    ifeval
 ```
 
 ```yaml

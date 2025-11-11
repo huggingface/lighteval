@@ -28,7 +28,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 wikitext_103_document_level = LightevalTaskConfig(
     name="wikitext:103:document_level",
-    suite=["lighteval"],
     prompt_function=prompt.wikitext_helm,
     hf_repo="EleutherAI/wikitext_document_level",
     hf_subset="wikitext-103-raw-v1",

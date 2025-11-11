@@ -68,7 +68,7 @@ dependencies = [
     "numpy>=2",  # pinned to avoid incompatibilities
     "hf-xet>=1.1.8",  # pinned to avoid failing test suite
     # Prettiness
-    "typer",
+    "typer>=0.20.0",
     "termcolor==2.3.0",
     "pytablewriter",
     "rich",

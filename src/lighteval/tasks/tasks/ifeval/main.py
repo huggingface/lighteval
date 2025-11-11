@@ -217,7 +217,6 @@ def ifeval_scorer():
 ifeval = LightevalTaskConfig(
     name="ifeval",
     prompt_function=ifeval_prompt,
-    suite=["lighteval"],
     hf_repo="google/IFEval",
     hf_subset="default",
     metrics=[ifeval_metrics],

@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 imdb = LightevalTaskConfig(
     name="imdb",
-    suite=["lighteval"],
     prompt_function=prompt.imdb,
     hf_repo="lighteval/IMDB_helm",
     hf_subset="default",
@@ -45,7 +44,6 @@ imdb = LightevalTaskConfig(
 
 imdb_contrastset = LightevalTaskConfig(
     name="imdb:contrastset",
-    suite=["lighteval"],
     prompt_function=prompt.imdb_contrastset,
     hf_repo="lighteval/IMDB_helm",
     hf_subset="default",

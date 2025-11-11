@@ -61,7 +61,6 @@ def prompt_fn_oz_eval_task(line, task_name: str = None):
 oz_eval_task = LightevalTaskConfig(
     name="serbian_evals:oz_task",
     prompt_function=prompt_fn_oz_eval_task,
-    suite=["community"],
     hf_repo="DjMel/oz-eval",
     hf_subset="default",
     hf_avail_splits=["test"],

@@ -97,8 +97,8 @@ def fake_evaluate_task(
 ):
     # Mock the Registry.get_task_dict method
 
-    task_name = f"{lighteval_task.suite[0]}|{lighteval_task.name}"
-    task_name_fs = f"{lighteval_task.suite[0]}|{lighteval_task.name}|{n_fewshot}"
+    task_name = f"{lighteval_task.name}"
+    task_name_fs = f"{lighteval_task.name}|{n_fewshot}"
 
     task_dict = {task_name: lighteval_task}
     evaluation_tracker = EvaluationTracker(output_dir="outputs")

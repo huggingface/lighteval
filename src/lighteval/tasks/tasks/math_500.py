@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 math_500 = LightevalTaskConfig(
     name="math_500",
-    suite=["lighteval"],
     prompt_function=prompt.math_500,
     hf_repo="HuggingFaceH4/MATH-500",
     hf_subset="default",

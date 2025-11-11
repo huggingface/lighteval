@@ -230,7 +230,6 @@ def record_to_sample(record):
 
 hle = LightevalTaskConfig(
     name="hle",
-    suite=["lighteval"],
     prompt_function=hle_text_only,
     hf_repo="cais/hle",
     hf_subset="default",

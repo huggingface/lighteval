@@ -53,7 +53,6 @@ def record_to_sample(record):
 
 aime24 = LightevalTaskConfig(
     name="aime24",
-    suite=["lighteval"],
     prompt_function=prompt.aime_prompt_fn,
     sample_fields=record_to_sample,
     solver=[prompt_template(MATH_PROMPT_TEMPLATE), generate(cache=True)],
@@ -71,7 +70,6 @@ aime24 = LightevalTaskConfig(
 
 aime24_avg = LightevalTaskConfig(
     name="aime24_avg",
-    suite=["lighteval"],
     prompt_function=prompt.aime_prompt_fn,
     sample_fields=record_to_sample,
     hf_repo="HuggingFaceH4/aime_2024",
@@ -87,7 +85,6 @@ aime24_avg = LightevalTaskConfig(
 
 aime24_gpassk = LightevalTaskConfig(
     name="aime24_gpassk",
-    suite=["lighteval"],
     prompt_function=prompt.aime_prompt_fn,
     sample_fields=record_to_sample,
     hf_repo="HuggingFaceH4/aime_2024",
@@ -103,7 +100,6 @@ aime24_gpassk = LightevalTaskConfig(
 
 aime25 = LightevalTaskConfig(
     name="aime25",
-    suite=["lighteval"],
     prompt_function=prompt.aime_prompt_fn,
     sample_fields=record_to_sample,
     solver=[prompt_template(MATH_PROMPT_TEMPLATE), generate(cache=True)],
@@ -121,7 +117,6 @@ aime25 = LightevalTaskConfig(
 
 aime25_avg = LightevalTaskConfig(
     name="aime25_avg",
-    suite=["lighteval"],
     prompt_function=prompt.aime_prompt_fn,
     sample_fields=record_to_sample,
     hf_repo="yentinglin/aime_2025",
@@ -137,7 +132,6 @@ aime25_avg = LightevalTaskConfig(
 
 aime25_gpassk = LightevalTaskConfig(
     name="aime25_gpassk",
-    suite=["lighteval"],
     prompt_function=prompt.aime_prompt_fn,
     sample_fields=record_to_sample,
     hf_repo="yentinglin/aime_2025",

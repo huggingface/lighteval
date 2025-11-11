@@ -51,7 +51,6 @@ TASKS_TABLE = [
             },
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="facebook/belebele",
         hf_subset=language,
         evaluation_splits=("test",),

@@ -36,7 +36,6 @@ TASKS_TABLE = [
                 "choices": [line["outputs"]],
             },
         ),
-        suite=("lighteval",),
         hf_repo="ai-forever/MERA",
         hf_subset="chegeka",
         evaluation_splits=("train",),

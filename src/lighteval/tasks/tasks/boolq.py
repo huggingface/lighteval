@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 boolq = LightevalTaskConfig(
     name="boolq",
-    suite=["lighteval"],
     prompt_function=prompt.boolq_helm,
     hf_repo="lighteval/boolq_helm",
     hf_subset="default",
@@ -44,7 +43,6 @@ boolq = LightevalTaskConfig(
 
 boolq_contrastset = LightevalTaskConfig(
     name="boolq:contrastset",
-    suite=["lighteval"],
     prompt_function=prompt.boolq_helm_contrastset,
     hf_repo="lighteval/boolq_helm",
     hf_subset="default",

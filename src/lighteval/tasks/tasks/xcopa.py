@@ -27,7 +27,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 xcopa_en = LightevalTaskConfig(
     name="xcopa:en",
-    suite=["lighteval"],
     prompt_function=prompt.xcopa_en,
     hf_repo="cambridgeltl/xcopa",
     hf_subset="default",
@@ -43,7 +42,6 @@ xcopa_en = LightevalTaskConfig(
 
 xcopa_et = LightevalTaskConfig(
     name="xcopa:et",
-    suite=["lighteval"],
     prompt_function=prompt.xcopa_et,
     hf_repo="cambridgeltl/xcopa",
     hf_subset="et",
@@ -59,7 +57,6 @@ xcopa_et = LightevalTaskConfig(
 
 xcopa_ht = LightevalTaskConfig(
     name="xcopa:ht",
-    suite=["lighteval"],
     prompt_function=prompt.xcopa_ht,
     hf_repo="cambridgeltl/xcopa",
     hf_subset="ht",
@@ -75,7 +72,6 @@ xcopa_ht = LightevalTaskConfig(
 
 xcopa_it = LightevalTaskConfig(
     name="xcopa:it",
-    suite=["lighteval"],
     prompt_function=prompt.xcopa_it,
     hf_repo="cambridgeltl/xcopa",
     hf_subset="it",
@@ -91,7 +87,6 @@ xcopa_it = LightevalTaskConfig(
 
 xcopa_id = LightevalTaskConfig(
     name="xcopa:id",
-    suite=["lighteval"],
     prompt_function=prompt.xcopa_id,
     hf_repo="cambridgeltl/xcopa",
     hf_subset="id",
@@ -107,7 +102,6 @@ xcopa_id = LightevalTaskConfig(
 
 xcopa_qu = LightevalTaskConfig(
     name="xcopa:qu",
-    suite=["lighteval"],
     prompt_function=prompt.xcopa_qu,
     hf_repo="cambridgeltl/xcopa",
     hf_subset="qu",
@@ -123,7 +117,6 @@ xcopa_qu = LightevalTaskConfig(
 
 xcopa_sw = LightevalTaskConfig(
     name="xcopa:sw",
-    suite=["lighteval"],
     prompt_function=prompt.xcopa_sw,
     hf_repo="cambridgeltl/xcopa",
     hf_subset="sw",
@@ -139,7 +132,6 @@ xcopa_sw = LightevalTaskConfig(
 
 xcopa_zh = LightevalTaskConfig(
     name="xcopa:zh",
-    suite=["lighteval"],
     prompt_function=prompt.xcopa_zh,
     hf_repo="cambridgeltl/xcopa",
     hf_subset="zh",
@@ -155,7 +147,6 @@ xcopa_zh = LightevalTaskConfig(
 
 xcopa_ta = LightevalTaskConfig(
     name="xcopa:ta",
-    suite=["lighteval"],
     prompt_function=prompt.xcopa_ta,
     hf_repo="cambridgeltl/xcopa",
     hf_subset="ta",
@@ -171,7 +162,6 @@ xcopa_ta = LightevalTaskConfig(
 
 xcopa_th = LightevalTaskConfig(
     name="xcopa:th",
-    suite=["lighteval"],
     prompt_function=prompt.xcopa_th,
     hf_repo="cambridgeltl/xcopa",
     hf_subset="th",
@@ -187,7 +177,6 @@ xcopa_th = LightevalTaskConfig(
 
 xcopa_tr = LightevalTaskConfig(
     name="xcopa:tr",
-    suite=["lighteval"],
     prompt_function=prompt.xcopa_tr,
     hf_repo="cambridgeltl/xcopa",
     hf_subset="tr",
@@ -203,7 +192,6 @@ xcopa_tr = LightevalTaskConfig(
 
 xcopa_vi = LightevalTaskConfig(
     name="xcopa:vi",
-    suite=["lighteval"],
     prompt_function=prompt.xcopa_vi,
     hf_repo="cambridgeltl/xcopa",
     hf_subset="vi",

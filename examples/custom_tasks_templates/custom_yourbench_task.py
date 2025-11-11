@@ -247,7 +247,6 @@ extend_enum(Metrics, "yourbench_metrics", yourbench_metrics)
 
 yourbench = LightevalTaskConfig(
     name="HF_TASK_NAME",  # noqa: F821
-    suite=["custom"],
     prompt_function=yourbench_prompt,
     hf_repo="HF_DATASET_NAME",  # noqa: F821
     hf_subset="lighteval",

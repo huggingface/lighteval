@@ -26,7 +26,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 toxigen = LightevalTaskConfig(
     name="toxigen",
-    suite=["lighteval"],
     prompt_function=prompt.toxigen,
     hf_repo="skg/toxigen-data",
     hf_subset="annotated",

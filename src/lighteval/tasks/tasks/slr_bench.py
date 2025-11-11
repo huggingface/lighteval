@@ -106,7 +106,6 @@ class SLRBenchTask(LightevalTaskConfig):
             evaluation_splits=["test"],
             few_shots_split="train",
             few_shots_select="random_sampling_from_train",
-            suite=["community"],
             generation_size=4096,
             stop_sequence=None,
             version=1,

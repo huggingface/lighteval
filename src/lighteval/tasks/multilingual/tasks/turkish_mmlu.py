@@ -58,7 +58,6 @@ TASKS_TABLE = [
             },
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="AYueksel/TurkishMMLU",
         hf_subset=subset,
         evaluation_splits=("test",),

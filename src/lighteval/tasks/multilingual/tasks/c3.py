@@ -42,7 +42,6 @@ from lighteval.utils.language import Language
 TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"c3_{Language.CHINESE.value}_{formulation.name.lower()}",
-        suite=("lighteval",),
         prompt_function=get_mcq_prompt_function(
             Language.CHINESE,
             lambda line: {

@@ -114,7 +114,6 @@ TASKS_TABLE = [
             },
             formulation=formulation,
         ),
-        suite=("lighteval",),
         hf_repo="jon-tow/okapi_mmlu",
         hf_subset=standardize_tag(language.value),
         hf_revision="refs/pr/1",

@@ -25,7 +25,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 xwinograd_en = LightevalTaskConfig(
     name="xwinograd:en",
-    suite=["lighteval"],
     prompt_function=prompt.winogrande,
     hf_repo="Muennighoff/xwinograd",
     hf_subset="en",
@@ -41,7 +40,6 @@ xwinograd_en = LightevalTaskConfig(
 
 xwinograd_fr = LightevalTaskConfig(
     name="xwinograd:fr",
-    suite=["lighteval"],
     prompt_function=prompt.winogrande,
     hf_repo="Muennighoff/xwinograd",
     hf_subset="fr",
@@ -57,7 +55,6 @@ xwinograd_fr = LightevalTaskConfig(
 
 xwinograd_jp = LightevalTaskConfig(
     name="xwinograd:jp",
-    suite=["lighteval"],
     prompt_function=prompt.winogrande,
     hf_repo="Muennighoff/xwinograd",
     hf_subset="jp",
@@ -73,7 +70,6 @@ xwinograd_jp = LightevalTaskConfig(
 
 xwinograd_pt = LightevalTaskConfig(
     name="xwinograd:pt",
-    suite=["lighteval"],
     prompt_function=prompt.winogrande,
     hf_repo="Muennighoff/xwinograd",
     hf_subset="pt",
@@ -89,7 +85,6 @@ xwinograd_pt = LightevalTaskConfig(
 
 xwinograd_ru = LightevalTaskConfig(
     name="xwinograd:ru",
-    suite=["lighteval"],
     prompt_function=prompt.winogrande,
     hf_repo="Muennighoff/xwinograd",
     hf_subset="ru",
@@ -105,7 +100,6 @@ xwinograd_ru = LightevalTaskConfig(
 
 xwinograd_zh = LightevalTaskConfig(
     name="xwinograd:zh",
-    suite=["lighteval"],
     prompt_function=prompt.winogrande,
     hf_repo="Muennighoff/xwinograd",
     hf_subset="zh",

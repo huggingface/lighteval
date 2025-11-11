@@ -29,7 +29,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 openbookqa = LightevalTaskConfig(
     name="openbookqa",
-    suite=["lighteval"],
     prompt_function=prompt.openbookqa_helm,
     hf_repo="allenai/openbookqa",
     hf_subset="main",

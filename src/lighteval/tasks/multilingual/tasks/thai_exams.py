@@ -42,7 +42,6 @@ TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"thai_exams_{Language.THAI.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(Language.THAI, thai_exams_adapter, formulation=formulation),
-        suite=("lighteval",),
         hf_repo="scb10x/thai_exam",
         hf_subset=subset,
         evaluation_splits=("test",),

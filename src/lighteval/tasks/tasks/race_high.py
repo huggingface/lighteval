@@ -29,7 +29,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 race_high = LightevalTaskConfig(
     name="race:high",
-    suite=["lighteval"],
     prompt_function=prompt.race,
     hf_repo="EleutherAI/race",
     hf_subset="high",
