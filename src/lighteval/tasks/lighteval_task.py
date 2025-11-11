@@ -388,7 +388,7 @@ class LightevalTask:
             )
             doc.sampling_methods.extend(self.sampling_methods)
             doc.generation_size = self.generation_size
-            doc.use_logits = True
+            doc.use_logits = doc.use_logits if doc.use_logits is not None else True
             doc.stop_sequences = self.stop_sequence
             doc.num_samples = max(self.num_samples)
             docs.append(doc)
