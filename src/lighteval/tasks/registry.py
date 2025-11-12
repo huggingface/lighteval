@@ -453,7 +453,6 @@ class Registry:
         TASKS_DIR = Path(__file__).parent / "tasks"
         TASKS_DIR_MULTILINGUAL = Path(__file__).parent / "multilingual" / "tasks"
 
-
         task_files = [f for f in TASKS_DIR.glob("*.py") if f.name != "__init__.py"]
         task_files_multilingual = [f for f in TASKS_DIR_MULTILINGUAL.glob("*.py") if f.name != "__init__.py"]
         task_subdirs = [d for d in TASKS_DIR.iterdir() if d.is_dir() and (d / "main.py").exists()]
