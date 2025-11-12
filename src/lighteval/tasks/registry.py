@@ -31,10 +31,10 @@ import os
 import sys
 import time
 from dataclasses import asdict
-from functools import lru_cache, partial
+from functools import lru_cache
 from itertools import groupby
 from pathlib import Path
-from types import FunctionType, ModuleType
+from types import ModuleType
 
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 
@@ -544,20 +544,6 @@ class Registry:
             process_current_key_value(current_key, current_value, list_fields, parsed)
             return parsed
 
-        def serialize_value(v):
-            if isinstance(v, (FunctionType, partial)):
-                func_name = getattr(v.func if isinstance(v, partial) else v, "__name__", str(v))
-                return f"<function: {func_name}>"
-            if callable(v) and not isinstance(v, type):
-                return f"<callable: {getattr(v, '__name__', str(v))}>"
-            if isinstance(v, type):
-                return f"<class: {v.__name__}>"
-            if type(v) in (list, tuple):
-                return [serialize_value(item) for item in v]
-            if isinstance(v, dict):
-                return {k: serialize_value(val) for k, val in v.items()}
-            return v
-
         modules_data = []
         for module, task_names in module_to_task_names.items():
             docstring_raw = module_to_docstring.get(module, "")
@@ -568,7 +554,7 @@ class Registry:
             for task_name in task_names:
                 config = task_configs[task_name]
                 config_dict = asdict(config)
-                config_dict = {k: serialize_value(v) for k, v in config_dict.items()}
+                config_dict = {k: v.__str__() for k, v in config_dict.items()}
                 tasks_in_module.append({"name": task_name, "config": config_dict})
 
             modules_data.append({"module": module_name, "docstring": docstring_parsed, "tasks": tasks_in_module})
