@@ -156,7 +156,7 @@ class LightevalTaskConfig:
         self.stop_sequence = self.stop_sequence if self.stop_sequence is not None else ()
         self.full_name = f"{self.name}|{self.num_fewshots}"  # todo clefourrier: this is likely incorrect
 
-    def __str__(self, lite: bool = False):
+    def __str__(self, lite: bool = False):  # noqa: C901
         md_writer = MarkdownTableWriter()
         md_writer.headers = ["Key", "Value"]
 
