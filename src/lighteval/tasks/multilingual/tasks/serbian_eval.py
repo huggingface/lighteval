@@ -234,7 +234,6 @@ def create_task_config(
     hf_subset: str,
     metrics: List,
     evaluation_splits: List[str] = ["test"],
-    suite: List[str] = ["community"],
     hf_avail_splits: List[str] = ["test", "validation"],
     few_shots_split: str = "validation",
     generation_size=5,
@@ -249,7 +248,6 @@ def create_task_config(
         hf_subset: Subset of the dataset.
         metrics: The metrics to use for the task.
         evaluation_splits: The evaluation splits to use (default is "test").
-        suite: The suite of tasks.
         hf_avail_splits: Available splits (default is "test", "validation").
         few_shots_split: Split used for few-shot examples.
         generation_size: Number of generations to produce (default is 5).
@@ -260,7 +258,6 @@ def create_task_config(
     return LightevalTaskConfig(
         name=task_name,
         prompt_function=prompt_function,
-        suite=suite,
         hf_repo=hf_repo,
         hf_subset=hf_subset,
         hf_avail_splits=hf_avail_splits,
