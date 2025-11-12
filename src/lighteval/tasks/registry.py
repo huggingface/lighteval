@@ -516,47 +516,33 @@ class Registry:
 
             list_fields = {"dataset", "languages", "tags"}
 
+            def process_current_key_value(current_key, current_value, list_fields, parsed):
+                if current_key and current_value:
+                    value = "\n".join(current_value).strip()
+                    if current_key in list_fields:
+                        if "," in value:
+                            parsed[current_key] = [item.strip() for item in value.split(",") if item.strip()]
+                        else:
+                            parsed[current_key] = [value] if value else []
+                    else:
+                        parsed[current_key] = value
+
             for line in lines:
                 line = line.strip()
                 if not line:
-                    if current_key and current_value:
-                        value = "\n".join(current_value).strip()
-                        if current_key in list_fields:
-                            if "," in value:
-                                parsed[current_key] = [item.strip() for item in value.split(",") if item.strip()]
-                            else:
-                                parsed[current_key] = [value] if value else []
-                        else:
-                            parsed[current_key] = value
-                        current_value = []
+                    process_current_key_value(current_key, current_value, list_fields, parsed)
+                    current_value = []
                     continue
 
                 if line.endswith(":"):
-                    if current_key and current_value:
-                        value = "\n".join(current_value).strip()
-                        if current_key in list_fields:
-                            if "," in value:
-                                parsed[current_key] = [item.strip() for item in value.split(",") if item.strip()]
-                            else:
-                                parsed[current_key] = [value] if value else []
-                        else:
-                            parsed[current_key] = value
+                    process_current_key_value(current_key, current_value, list_fields, parsed)
                     current_key = line[:-1].strip()
                     current_value = []
                 else:
                     if current_key:
                         current_value.append(line)
 
-            if current_key and current_value:
-                value = "\n".join(current_value).strip()
-                if current_key in list_fields:
-                    if "," in value:
-                        parsed[current_key] = [item.strip() for item in value.split(",") if item.strip()]
-                    else:
-                        parsed[current_key] = [value] if value else []
-                else:
-                    parsed[current_key] = value
-
+            process_current_key_value(current_key, current_value, list_fields, parsed)
             return parsed
 
         def serialize_value(v):
