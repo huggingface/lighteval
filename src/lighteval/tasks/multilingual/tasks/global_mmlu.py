@@ -35,8 +35,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation
 from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
 from lighteval.tasks.templates.utils.formulation import (
-    CFFormulation,
-    HybridFormulation,
     MCFFormulation,
 )
 from lighteval.utils.language import Language
@@ -176,8 +174,6 @@ TASKS_TABLE = [
     ]
     for formulation in [
         MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
     ]
-    for sensitivity_label in ["ALL", "CA", "CS", "UNK"]
+    for sensitivity_label in ["ALL"]
 ]
