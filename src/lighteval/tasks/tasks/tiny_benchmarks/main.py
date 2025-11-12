@@ -27,16 +27,16 @@ import pickle
 
 import numpy as np
 import requests
-from aenum import extend_enum
 from scipy.optimize import minimize
 
 import lighteval.tasks.default_prompts as prompt
-from lighteval.metrics.metrics import CorpusLevelMetricGrouping, Metrics
+from lighteval.metrics.metrics import CorpusLevelMetricGrouping
 from lighteval.metrics.metrics_corpus import CorpusLevelComputation
 from lighteval.metrics.metrics_sample import ExactMatches, LoglikelihoodAcc, SampleLevelComputation
 from lighteval.metrics.normalizations import gsm8k_normalizer
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import SamplingMethod
+from lighteval.tasks.requests import Doc, SamplingMethod
 
 
 # Utility functions
@@ -96,18 +96,18 @@ class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
                 with open(path_dld, "wb") as file:
                     file.write(response.content)
 
-    def compute(self, **args):
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> float:
         if self.task == "gsm8k":
             res = ExactMatches(
                 strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
-            ).compute(**args)
+            ).compute(doc, model_response, **kwargs)
             return dict.fromkeys(self.METRICS, res)
         else:
-            res = LoglikelihoodAcc().compute(**args)
+            res = LoglikelihoodAcc().compute(doc, model_response, **kwargs)
             return dict.fromkeys(self.METRICS, res)
 
-    def compute_corpus(self, y_input):
-        if len(y_input) == self.num_samples and self.estimates is not None:
+    def compute_corpus(self, items):
+        if len(items) == self.num_samples and self.estimates is not None:
             return self.estimates[self.task]
 
         # We load the weights for the relevant examples
@@ -144,7 +144,7 @@ class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
         # Creating vector y and estimating theta
         y = np.zeros(N)
         for i, j in enumerate(seen_examples):
-            y[j] = y_input[i]
+            y[j] = items[i]
 
         # Getting estimates
         theta = fit_theta(y, seen_examples, A, B)
@@ -170,7 +170,7 @@ class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
             estimates[scenario]["pirt"] = IRTp
             estimates[scenario]["gpirt"] = IRTpp
 
-        self.num_samples = len(y_input)
+        self.num_samples = len(items)
         self.estimates = estimates
 
         return estimates[self.task]
@@ -233,6 +233,25 @@ task_params = [
     #    },
 ]
 
+metrics = {}
+
+for task_param in task_params:
+    name = task_param["name"]
+    if name == "gsm8k":
+        category = SamplingMethod.GENERATIVE
+    else:
+        category = SamplingMethod.LOGPROBS
+
+    metrics[f"tinybench_metric_{name}"] = (
+        CorpusLevelMetricGrouping(
+            metric_name=TinyCorpusAggregator.METRICS,
+            higher_is_better=dict.fromkeys(TinyCorpusAggregator.METRICS, True),
+            sample_level_fn=TinyCorpusAggregator(name),
+            category=category,
+            corpus_level_fn=TinyCorpusAggregator(name),
+        ),
+    )
+
 TASKS_TABLE = []
 for task in task_params:
     name = task["name"]
@@ -250,28 +269,8 @@ for task in task_params:
         evaluation_splits=task["evaluation_split"],
         few_shots_split=None,
         few_shots_select="random_sampling",
-        metrics=[f"tinybench_metric_{name}"],
+        metrics=metrics[f"tinybench_metric_{name}"],
         generation_size=generation_size,
         stop_sequence=stop_sequence,
     )
     TASKS_TABLE.append(task)
-
-# CUSTOM METRIC
-for task_param in task_params:
-    name = task_param["name"]
-    if name == "gsm8k":
-        category = SamplingMethod.GENERATIVE
-    else:
-        category = SamplingMethod.LOGPROBS
-
-    extend_enum(
-        Metrics,
-        f"tinybench_metric_{name}",
-        CorpusLevelMetricGrouping(
-            metric_name=TinyCorpusAggregator.METRICS,
-            higher_is_better=dict.fromkeys(TinyCorpusAggregator.METRICS, True),
-            sample_level_fn=TinyCorpusAggregator(name),
-            category=category,
-            corpus_level_fn=TinyCorpusAggregator(name),
-        ),
-    )
