@@ -1199,7 +1199,7 @@ class AvgAtN(SamplingMetric, SampleLevelComputation):
             float: Aggregated score over the current sample's items.
         """
         all_scores = []
-        for i in range(self.k):
+        for i in range(self.n):
             all_scores.append(self.compute_score(doc, model_response[i]))
 
         avg_score = np.mean(all_scores)
@@ -1235,7 +1235,7 @@ class MajAtN(SamplingMetric, SampleLevelComputation):
         Returns:
             float: Aggregated score over the current sample's items.
         """
-        if self.k is None:
+        if self.n is None:
             raise Exception("You did not set the value of n")
 
         golds = doc.get_golds()

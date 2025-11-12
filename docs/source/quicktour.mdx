@@ -60,12 +60,6 @@ lighteval accelerate \
 
 ### Task Specification
 
-The syntax for the task specification might be a bit hard to grasp at first. The format is as follows:
-
-```txt
-{suite}|{task}|{num_few_shot}
-```
-
 Tasks have a function applied at the sample level and one at the corpus level. For example,
 - an exact match can be applied per sample, then averaged over the corpus to give the final score
 - samples can be left untouched before applying Corpus BLEU at the corpus level
@@ -74,7 +68,7 @@ etc.
 If the task you are looking at has a sample level function (`sample_level_fn`) which can be parametrized, you can pass parameters in the CLI.
 For example
 ```txt
-{suite}|{task}@{parameter_name1}={value1}@{parameter_name2}={value2},...|0
+{task}@{parameter_name1}={value1}@{parameter_name2}={value2},...|0
 ```
 
 All officially supported tasks can be found at the [tasks_list](available-tasks) and in the
