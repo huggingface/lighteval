@@ -484,13 +484,11 @@ class Registry:
             docstring = (inspect.getdoc(custom_tasks_module) or custom_tasks_module.__doc__ or "").strip()
             module_to_docstring[custom_tasks_module] = docstring
 
-        config_to_module = {}
         module_to_task_names = {}
         for module, docstring in module_to_docstring.items():
             if hasattr(module, "TASKS_TABLE"):
                 task_names_in_module = []
                 for config in getattr(module, "TASKS_TABLE"):
-                    config_to_module[config.name] = module
                     if config.name in task_configs:
                         task_names_in_module.append(config.name)
                 if task_names_in_module:
