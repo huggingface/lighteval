@@ -25,7 +25,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def mmlu_helm(line, task_name: str = None):
+def mmlu_prompt(line, task_name: str = None):
     subject = line["subject"]
     query = f"The following are multiple choice questions (with answers) about {subject.replace('_', ' ')}.\n\nQuestion: {line['question']}"
     query += "".join([f"\n{key}. {choice}" for key, choice in zip(ascii_uppercase, line["choices"])])
@@ -45,7 +45,7 @@ def mmlu_helm(line, task_name: str = None):
 
 mmlu_abstract_algebra = LightevalTaskConfig(
     name="mmlu:abstract_algebra",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="abstract_algebra",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -60,7 +60,7 @@ mmlu_abstract_algebra = LightevalTaskConfig(
 
 mmlu_anatomy = LightevalTaskConfig(
     name="mmlu:anatomy",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="anatomy",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -75,7 +75,7 @@ mmlu_anatomy = LightevalTaskConfig(
 
 mmlu_astronomy = LightevalTaskConfig(
     name="mmlu:astronomy",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="astronomy",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -90,7 +90,7 @@ mmlu_astronomy = LightevalTaskConfig(
 
 mmlu_business_ethics = LightevalTaskConfig(
     name="mmlu:business_ethics",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="business_ethics",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -105,7 +105,7 @@ mmlu_business_ethics = LightevalTaskConfig(
 
 mmlu_clinical_knowledge = LightevalTaskConfig(
     name="mmlu:clinical_knowledge",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="clinical_knowledge",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -120,7 +120,7 @@ mmlu_clinical_knowledge = LightevalTaskConfig(
 
 mmlu_college_biology = LightevalTaskConfig(
     name="mmlu:college_biology",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="college_biology",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -135,7 +135,7 @@ mmlu_college_biology = LightevalTaskConfig(
 
 mmlu_college_chemistry = LightevalTaskConfig(
     name="mmlu:college_chemistry",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="college_chemistry",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -150,7 +150,7 @@ mmlu_college_chemistry = LightevalTaskConfig(
 
 mmlu_college_computer_science = LightevalTaskConfig(
     name="mmlu:college_computer_science",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="college_computer_science",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -165,7 +165,7 @@ mmlu_college_computer_science = LightevalTaskConfig(
 
 mmlu_college_mathematics = LightevalTaskConfig(
     name="mmlu:college_mathematics",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="college_mathematics",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -180,7 +180,7 @@ mmlu_college_mathematics = LightevalTaskConfig(
 
 mmlu_college_medicine = LightevalTaskConfig(
     name="mmlu:college_medicine",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="college_medicine",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -195,7 +195,7 @@ mmlu_college_medicine = LightevalTaskConfig(
 
 mmlu_college_physics = LightevalTaskConfig(
     name="mmlu:college_physics",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="college_physics",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -210,7 +210,7 @@ mmlu_college_physics = LightevalTaskConfig(
 
 mmlu_computer_security = LightevalTaskConfig(
     name="mmlu:computer_security",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="computer_security",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -225,7 +225,7 @@ mmlu_computer_security = LightevalTaskConfig(
 
 mmlu_conceptual_physics = LightevalTaskConfig(
     name="mmlu:conceptual_physics",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="conceptual_physics",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -240,7 +240,7 @@ mmlu_conceptual_physics = LightevalTaskConfig(
 
 mmlu_econometrics = LightevalTaskConfig(
     name="mmlu:econometrics",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="econometrics",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -255,7 +255,7 @@ mmlu_econometrics = LightevalTaskConfig(
 
 mmlu_electrical_engineering = LightevalTaskConfig(
     name="mmlu:electrical_engineering",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="electrical_engineering",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -270,7 +270,7 @@ mmlu_electrical_engineering = LightevalTaskConfig(
 
 mmlu_elementary_mathematics = LightevalTaskConfig(
     name="mmlu:elementary_mathematics",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="elementary_mathematics",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -285,7 +285,7 @@ mmlu_elementary_mathematics = LightevalTaskConfig(
 
 mmlu_formal_logic = LightevalTaskConfig(
     name="mmlu:formal_logic",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="formal_logic",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -300,7 +300,7 @@ mmlu_formal_logic = LightevalTaskConfig(
 
 mmlu_global_facts = LightevalTaskConfig(
     name="mmlu:global_facts",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="global_facts",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -315,7 +315,7 @@ mmlu_global_facts = LightevalTaskConfig(
 
 mmlu_high_school_biology = LightevalTaskConfig(
     name="mmlu:high_school_biology",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="high_school_biology",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -330,7 +330,7 @@ mmlu_high_school_biology = LightevalTaskConfig(
 
 mmlu_high_school_chemistry = LightevalTaskConfig(
     name="mmlu:high_school_chemistry",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="high_school_chemistry",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -345,7 +345,7 @@ mmlu_high_school_chemistry = LightevalTaskConfig(
 
 mmlu_high_school_computer_science = LightevalTaskConfig(
     name="mmlu:high_school_computer_science",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="high_school_computer_science",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -360,7 +360,7 @@ mmlu_high_school_computer_science = LightevalTaskConfig(
 
 mmlu_high_school_european_history = LightevalTaskConfig(
     name="mmlu:high_school_european_history",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="high_school_european_history",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -375,7 +375,7 @@ mmlu_high_school_european_history = LightevalTaskConfig(
 
 mmlu_high_school_geography = LightevalTaskConfig(
     name="mmlu:high_school_geography",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="high_school_geography",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -390,7 +390,7 @@ mmlu_high_school_geography = LightevalTaskConfig(
 
 mmlu_high_school_government_and_politics = LightevalTaskConfig(
     name="mmlu:high_school_government_and_politics",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="high_school_government_and_politics",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -405,7 +405,7 @@ mmlu_high_school_government_and_politics = LightevalTaskConfig(
 
 mmlu_high_school_macroeconomics = LightevalTaskConfig(
     name="mmlu:high_school_macroeconomics",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="high_school_macroeconomics",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -420,7 +420,7 @@ mmlu_high_school_macroeconomics = LightevalTaskConfig(
 
 mmlu_high_school_mathematics = LightevalTaskConfig(
     name="mmlu:high_school_mathematics",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="high_school_mathematics",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -435,7 +435,7 @@ mmlu_high_school_mathematics = LightevalTaskConfig(
 
 mmlu_high_school_microeconomics = LightevalTaskConfig(
     name="mmlu:high_school_microeconomics",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="high_school_microeconomics",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -450,7 +450,7 @@ mmlu_high_school_microeconomics = LightevalTaskConfig(
 
 mmlu_high_school_physics = LightevalTaskConfig(
     name="mmlu:high_school_physics",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="high_school_physics",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -465,7 +465,7 @@ mmlu_high_school_physics = LightevalTaskConfig(
 
 mmlu_high_school_psychology = LightevalTaskConfig(
     name="mmlu:high_school_psychology",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="high_school_psychology",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -480,7 +480,7 @@ mmlu_high_school_psychology = LightevalTaskConfig(
 
 mmlu_high_school_statistics = LightevalTaskConfig(
     name="mmlu:high_school_statistics",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="high_school_statistics",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -495,7 +495,7 @@ mmlu_high_school_statistics = LightevalTaskConfig(
 
 mmlu_high_school_us_history = LightevalTaskConfig(
     name="mmlu:high_school_us_history",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="high_school_us_history",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -510,7 +510,7 @@ mmlu_high_school_us_history = LightevalTaskConfig(
 
 mmlu_high_school_world_history = LightevalTaskConfig(
     name="mmlu:high_school_world_history",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="high_school_world_history",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -525,7 +525,7 @@ mmlu_high_school_world_history = LightevalTaskConfig(
 
 mmlu_human_aging = LightevalTaskConfig(
     name="mmlu:human_aging",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="human_aging",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -540,7 +540,7 @@ mmlu_human_aging = LightevalTaskConfig(
 
 mmlu_human_sexuality = LightevalTaskConfig(
     name="mmlu:human_sexuality",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="human_sexuality",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -555,7 +555,7 @@ mmlu_human_sexuality = LightevalTaskConfig(
 
 mmlu_international_law = LightevalTaskConfig(
     name="mmlu:international_law",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="international_law",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -570,7 +570,7 @@ mmlu_international_law = LightevalTaskConfig(
 
 mmlu_jurisprudence = LightevalTaskConfig(
     name="mmlu:jurisprudence",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="jurisprudence",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -585,7 +585,7 @@ mmlu_jurisprudence = LightevalTaskConfig(
 
 mmlu_logical_fallacies = LightevalTaskConfig(
     name="mmlu:logical_fallacies",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="logical_fallacies",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -600,7 +600,7 @@ mmlu_logical_fallacies = LightevalTaskConfig(
 
 mmlu_machine_learning = LightevalTaskConfig(
     name="mmlu:machine_learning",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="machine_learning",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -615,7 +615,7 @@ mmlu_machine_learning = LightevalTaskConfig(
 
 mmlu_management = LightevalTaskConfig(
     name="mmlu:management",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="management",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -630,7 +630,7 @@ mmlu_management = LightevalTaskConfig(
 
 mmlu_marketing = LightevalTaskConfig(
     name="mmlu:marketing",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="marketing",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -645,7 +645,7 @@ mmlu_marketing = LightevalTaskConfig(
 
 mmlu_medical_genetics = LightevalTaskConfig(
     name="mmlu:medical_genetics",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="medical_genetics",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -660,7 +660,7 @@ mmlu_medical_genetics = LightevalTaskConfig(
 
 mmlu_miscellaneous = LightevalTaskConfig(
     name="mmlu:miscellaneous",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="miscellaneous",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -675,7 +675,7 @@ mmlu_miscellaneous = LightevalTaskConfig(
 
 mmlu_moral_disputes = LightevalTaskConfig(
     name="mmlu:moral_disputes",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="moral_disputes",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -690,7 +690,7 @@ mmlu_moral_disputes = LightevalTaskConfig(
 
 mmlu_moral_scenarios = LightevalTaskConfig(
     name="mmlu:moral_scenarios",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="moral_scenarios",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -705,7 +705,7 @@ mmlu_moral_scenarios = LightevalTaskConfig(
 
 mmlu_nutrition = LightevalTaskConfig(
     name="mmlu:nutrition",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="nutrition",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -720,7 +720,7 @@ mmlu_nutrition = LightevalTaskConfig(
 
 mmlu_philosophy = LightevalTaskConfig(
     name="mmlu:philosophy",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="philosophy",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -735,7 +735,7 @@ mmlu_philosophy = LightevalTaskConfig(
 
 mmlu_prehistory = LightevalTaskConfig(
     name="mmlu:prehistory",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="prehistory",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -750,7 +750,7 @@ mmlu_prehistory = LightevalTaskConfig(
 
 mmlu_professional_accounting = LightevalTaskConfig(
     name="mmlu:professional_accounting",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="professional_accounting",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -765,7 +765,7 @@ mmlu_professional_accounting = LightevalTaskConfig(
 
 mmlu_professional_law = LightevalTaskConfig(
     name="mmlu:professional_law",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="professional_law",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -780,7 +780,7 @@ mmlu_professional_law = LightevalTaskConfig(
 
 mmlu_professional_medicine = LightevalTaskConfig(
     name="mmlu:professional_medicine",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="professional_medicine",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -795,7 +795,7 @@ mmlu_professional_medicine = LightevalTaskConfig(
 
 mmlu_professional_psychology = LightevalTaskConfig(
     name="mmlu:professional_psychology",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="professional_psychology",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -810,7 +810,7 @@ mmlu_professional_psychology = LightevalTaskConfig(
 
 mmlu_public_relations = LightevalTaskConfig(
     name="mmlu:public_relations",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="public_relations",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -825,7 +825,7 @@ mmlu_public_relations = LightevalTaskConfig(
 
 mmlu_security_studies = LightevalTaskConfig(
     name="mmlu:security_studies",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="security_studies",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -840,7 +840,7 @@ mmlu_security_studies = LightevalTaskConfig(
 
 mmlu_sociology = LightevalTaskConfig(
     name="mmlu:sociology",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="sociology",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -855,7 +855,7 @@ mmlu_sociology = LightevalTaskConfig(
 
 mmlu_us_foreign_policy = LightevalTaskConfig(
     name="mmlu:us_foreign_policy",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="us_foreign_policy",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -870,7 +870,7 @@ mmlu_us_foreign_policy = LightevalTaskConfig(
 
 mmlu_virology = LightevalTaskConfig(
     name="mmlu:virology",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="virology",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
@@ -885,7 +885,7 @@ mmlu_virology = LightevalTaskConfig(
 
 mmlu_world_religions = LightevalTaskConfig(
     name="mmlu:world_religions",
-    prompt_function=mmlu_helm,
+    prompt_function=mmlu_prompt,
     hf_repo="lighteval/mmlu",
     hf_subset="world_religions",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
