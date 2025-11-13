@@ -141,14 +141,132 @@ def call_method(method: Callable, inputs: list | str):
     @patch("sys.stdin.readlines", lambda *args: inputs.split("\n"))
     @patch("sys.stdin.read", lambda *args: inputs)
     def _inner_call_method(_method):
+        _snapshot = _snapshot_reliability_state()
+        reliability_guard()
         try:
             return _method()
         except SystemExit:
             pass
         finally:
-            pass
+            _restore_reliability_state(_snapshot)
 
     return _inner_call_method(method)
+
+
+def _snapshot_reliability_state():
+    import builtins as _b
+    import faulthandler as _fh
+    import os as _o
+    import shutil as _sh
+    import subprocess as _sp
+    import sys as _s
+
+    _fh_enabled = _fh.is_enabled()
+    _b_quit = getattr(_b, "quit", None)
+
+    _help_prev = None
+    if isinstance(__builtins__, dict) and "help" in __builtins__:
+        _help_prev = __builtins__["help"]
+
+    _omp_prev = _o.environ.get("OMP_NUM_THREADS")
+
+    _os_attrs = [
+        "kill",
+        "system",
+        "putenv",
+        "remove",
+        "removedirs",
+        "rmdir",
+        "fchdir",
+        "setuid",
+        "fork",
+        "forkpty",
+        "killpg",
+        "rename",
+        "renames",
+        "truncate",
+        "replace",
+        "unlink",
+        "fchmod",
+        "fchown",
+        "chmod",
+        "chown",
+        "chroot",
+        "fchdir",
+        "lchflags",
+        "lchmod",
+        "lchown",
+        "getcwd",
+        "chdir",
+    ]
+    _os_prev = {name: getattr(_o, name, None) for name in _os_attrs}
+    _sh_prev = {name: getattr(_sh, name, None) for name in ["rmtree", "move", "chown"]}
+    _sp_popen_prev = getattr(_sp, "Popen", None)
+    _sys_modules_keys = ["ipdb", "joblib", "resource", "psutil", "tkinter"]
+    _sys_modules_prev = {k: _s.modules.get(k, None) for k in _sys_modules_keys}
+
+    return {
+        "fh_enabled": _fh_enabled,
+        "b_quit": _b_quit,
+        "help_prev": _help_prev,
+        "omp_prev": _omp_prev,
+        "os_prev": _os_prev,
+        "sh_prev": _sh_prev,
+        "sp_popen_prev": _sp_popen_prev,
+        "sys_modules_prev": _sys_modules_prev,
+    }
+
+
+def _restore_reliability_state(_snap):
+    _restore_faulthandler_and_builtins(_snap)
+    _restore_env_and_os(_snap)
+    _restore_modules(_snap)
+
+
+def _restore_faulthandler_and_builtins(_snap):
+    import builtins as _b
+    import faulthandler as _fh
+
+    if _snap["fh_enabled"] and not _fh.is_enabled():
+        _fh.enable()
+    if (not _snap["fh_enabled"]) and _fh.is_enabled():
+        _fh.disable()
+
+    _b.quit = _snap["b_quit"]
+    if isinstance(__builtins__, dict):
+        if _snap["help_prev"] is None:
+            __builtins__.pop("help", None)
+        else:
+            __builtins__["help"] = _snap["help_prev"]
+
+
+def _restore_env_and_os(_snap):
+    import os as _o
+    import shutil as _sh
+
+    if _snap["omp_prev"] is None:
+        _o.environ.pop("OMP_NUM_THREADS", None)
+    else:
+        _o.environ["OMP_NUM_THREADS"] = _snap["omp_prev"]
+
+    for _name, _val in _snap["os_prev"].items():
+        setattr(_o, _name, _val)
+    for _name, _val in _snap["sh_prev"].items():
+        setattr(_sh, _name, _val)
+
+
+def _restore_modules(_snap):
+    import subprocess as _sp
+    import sys as _s
+
+    if _snap["sp_popen_prev"] is not None:
+        _sp.Popen = _snap["sp_popen_prev"]
+
+    for _k, _v in _snap["sys_modules_prev"].items():
+        if _v is None:
+            _s.modules.pop(_k, None)
+        else:
+            _s.modules[_k] = _v
 
 
 def get_function(compiled_sol, fn_name: str) -> str:  # type: ignore
@@ -260,6 +378,7 @@ def grade_stdio(  # noqa: C901
     all_inputs: list,
     all_outputs: list,
     timeout: int,
+    sandbox=None,
 ) -> list[int | bool]:
     # runtime doesn't interact well with __name__ == '__main__'
     code = clean_if_name(code)
@@ -349,18 +468,23 @@ def grade_stdio(  # noqa: C901
     return all_results
 
 
-def run_test(inputs: list, outputs: list, fn_name: str, model_answer: str, timeout: int = 6) -> list[int | bool]:
+def run_test(
+    inputs: list, outputs: list, fn_name: str, model_answer: str, timeout: int = 6, sandbox=None
+) -> list[int | bool]:
     """If test(generated_code) is not None it'll try to run the code.
     otherwise it'll just return an input and output pair.
     The return codes are all for errors. A True value means the function worked, and a False
     value means the function did not work.
     """
-    signal.signal(signal.SIGALRM, timeout_handler)
+    # signal.signal(signal.SIGALRM, timeout_handler)
+
+    if model_answer is None or model_answer == "":
+        return [-4]
 
     # Disable functionalities that can make destructive changes to the test.
     # max memory is set to 4GB
     print("Disabling functionalities that can make destructive changes to the test.")
-    reliability_guard()
+    # reliability_guard()
 
     if fn_name is None:
         which_type = CODE_TYPE.standard_input  # Standard input
@@ -372,7 +496,7 @@ def run_test(inputs: list, outputs: list, fn_name: str, model_answer: str, timeo
     print(f"Running test with type: {which_type} and method name: {method_name}")
 
     if which_type == CODE_TYPE.call_based:
-        signal.alarm(timeout)
+        # signal.alarm(timeout)
         print(f"Setting alarm for {timeout} seconds.")
         try:
             return grade_call_based(
@@ -381,6 +505,7 @@ def run_test(inputs: list, outputs: list, fn_name: str, model_answer: str, timeo
                 all_outputs=outputs,
                 fn_name=method_name,
                 timeout=timeout,
+                sandbox=sandbox,
             )
 
         except Exception:
@@ -390,7 +515,7 @@ def run_test(inputs: list, outputs: list, fn_name: str, model_answer: str, timeo
             signal.alarm(0)
 
     elif which_type == CODE_TYPE.standard_input:
-        signal.alarm(timeout)
+        # signal.alarm(timeout)
         print(f"Setting alarm for {timeout} seconds.")
         try:
             return grade_stdio(
@@ -398,6 +523,7 @@ def run_test(inputs: list, outputs: list, fn_name: str, model_answer: str, timeo
                 all_inputs=inputs,
                 all_outputs=outputs,
                 timeout=timeout,
+                sandbox=sandbox,
             )
 
         except Exception:

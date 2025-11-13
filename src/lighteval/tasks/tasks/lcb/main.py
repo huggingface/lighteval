@@ -37,9 +37,16 @@ from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import Doc, LightevalTaskConfig
 from lighteval.tasks.requests import SamplingMethod
 from lighteval.tasks.tasks.lcb.codegen_metrics import (
+    Capturing,
+    call_method,
+    clean_if_name,
     codegen_metrics,
+    compile_code,
+    convert_line_to_decimals,
     extract_code,
-    run_test,
+    get_function,
+    get_stripped_lines,
+    make_function,
     translate_private_test_cases,
 )
 
@@ -174,6 +181,81 @@ Read the inputs from stdin solve the problem and write the answer to stdout (do 
 """)
 
 
+def _prepare_wrapped_method_from_code(generated_code: str):
+    code = clean_if_name(generated_code)
+    code = make_function(code)
+    compiled_sol = compile_code(code, 3)
+
+    if compiled_sol is None:
+        return None, Score(value=0, explanation=f"The code could not be compiled: {generated_code}")
+
+    method = get_function(compiled_sol, "wrapped_function")
+
+    if method is None:
+        return None, Score(
+            value=0,
+            explanation=f"The function to evaluate could not be extracted from the code: {generated_code}",
+        )
+
+    return method, None
+
+
+def _compare_prediction_to_output(prediction: str, gt_out: str):
+    stripped_prediction_lines = get_stripped_lines(prediction)
+    stripped_gt_out_lines = get_stripped_lines(gt_out)
+
+    if len(stripped_prediction_lines) != len(stripped_gt_out_lines):
+        return Score(
+            value=0,
+            explanation=f"The number of lines in the prediction and the ground truth output do not match: {len(stripped_prediction_lines)} vs {len(stripped_gt_out_lines)}",
+        )
+
+    for output_line_idx, (stripped_prediction_line, stripped_gt_out_line) in enumerate(
+        zip(stripped_prediction_lines, stripped_gt_out_lines)
+    ):
+        if stripped_prediction_line == stripped_gt_out_line:
+            continue
+
+        success, decimal_prediction_line = convert_line_to_decimals(stripped_prediction_line)
+        if not success:
+            return Score(
+                value=0,
+                explanation=f"The prediction line {output_line_idx} could not be converted to decimals: {stripped_prediction_line}",
+            )
+
+        success, decimal_gtout_line = convert_line_to_decimals(stripped_gt_out_line)
+        if not success:
+            return Score(
+                value=0,
+                explanation=f"The ground truth line {output_line_idx} could not be converted to decimals: {stripped_gt_out_line}",
+            )
+
+        if decimal_prediction_line != decimal_gtout_line:
+            return Score(
+                value=0,
+                explanation=f"The prediction line {output_line_idx} and the ground truth line {output_line_idx} do not match: {decimal_prediction_line} vs {decimal_gtout_line}",
+            )
+
+    return None
+
+
+def _evaluate_stdio(generated_code: str, inputs, outputs) -> Score:
+    method, error_score = _prepare_wrapped_method_from_code(generated_code)
+    if error_score is not None:
+        return error_score
+
+    for gt_inp, gt_out in zip(inputs, outputs):
+        with Capturing() as captured_output:
+            _ = call_method(method, gt_inp)
+
+        prediction = captured_output[0]
+        error = _compare_prediction_to_output(prediction, gt_out)
+        if error is not None:
+            return error
+
+    return Score(value=1, explanation="The code passed all the tests")
+
+
 @scorer(metrics=[accuracy()])
 def lcb_scorer():
     async def score(state: TaskState, target: Target):
@@ -187,27 +269,9 @@ def lcb_scorer():
         outputs = state.metadata.get("outputs")
         fn_name = state.metadata.get("fn_name")
 
-        # inputs = json.loads(inputs)
-        # outputs = json.loads(outputs)
-
-        print(f"Inputs: {inputs}")
-        print(f"Outputs: {outputs}")
-        print(f"Fn name: {fn_name}")
-        print(f"Generated code: {generated_code}")
-
-        passed = run_test(
-            inputs=inputs,
-            outputs=outputs,
-            fn_name=fn_name,
-            model_answer=generated_code,
-            timeout=3,
-        )
-
-        print(f"Passed: {passed}")
-
-        passed = 1
-
-        return Score(value=float(passed))
+        if fn_name is None:
+            return _evaluate_stdio(generated_code, inputs, outputs)
+        return Score(value=0, explanation="The code did not pass all the tests")
 
     return score
 

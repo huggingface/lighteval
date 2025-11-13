@@ -81,7 +81,14 @@ def get_inspect_ai_task(
             system_message("\n\n".join([lighteval_task_config.sample_to_fewshot(sample) for sample in fewshots])),
         )
 
-    return Task(dataset=dataset, solver=solver, scorer=scorers, name=name, epochs=Epochs(epochs, epochs_reducer))
+    return Task(
+        dataset=dataset,
+        solver=solver,
+        scorer=scorers,
+        name=name,
+        epochs=Epochs(epochs, epochs_reducer),
+        sandbox="docker",
+    )
 
 
 def push_to_hub(bundle_dir: str, repo_id: str, public: bool = False):
