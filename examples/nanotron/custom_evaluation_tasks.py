@@ -35,7 +35,7 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import LogProbCharNorm, helm_normalizer, math_normalizer
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.tasks.tasks.arc import arc
+from lighteval.tasks.tasks.arc import arc_prompt
 from lighteval.tasks.tasks.gsm8k import gsm8k_prompt
 from lighteval.tasks.tasks.math import math_prompt
 from lighteval.tasks.tasks.openbookqa import openbookqa_prompt
@@ -159,7 +159,7 @@ COMMON_SENSE_REASONING_TASKS = [
     ),
     LightevalTaskConfig(
         name="arc:easy",
-        prompt_function=arc,
+        prompt_function=arc_prompt,
         hf_repo="ai2_arc",
         hf_subset="ARC-Easy",
         evaluation_splits=["test"],
@@ -174,7 +174,7 @@ COMMON_SENSE_REASONING_TASKS = [
     ),
     LightevalTaskConfig(
         name="arc:challenge",
-        prompt_function=arc,
+        prompt_function=arc_prompt,
         hf_repo="ai2_arc",
         hf_subset="ARC-Challenge",
         evaluation_splits=["test"],
