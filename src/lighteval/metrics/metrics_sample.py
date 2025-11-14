@@ -1255,7 +1255,7 @@ class MajAtN(SamplingMetric, SampleLevelComputation):
         new_model_response = ModelResponse(
             text=[majority_prediction],
         )
-        return self.compute_score(new_model_response, new_doc)
+        return self.compute_score(new_doc, new_model_response)
 
     def num_samples(self):
         return self.n
