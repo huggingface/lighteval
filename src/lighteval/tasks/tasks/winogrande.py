@@ -22,14 +22,28 @@ paper:
 https://arxiv.org/abs/1907.10641
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
 
+
+def winogrande(line, task_name: str = None):
+    query, end_of_target = line["sentence"].split("_")
+    end_of_target = end_of_target.strip()
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=[f"{line['option1']} {end_of_target}", f"{line['option2']} {end_of_target}"],
+        gold_index=int(line["answer"]) - 1 if line["answer"] != "" else -1,
+    )
+
+
+# Keep a reference to the prompt function before the task config rebinds the name
+winogrande_prompt = winogrande
 
 winogrande = LightevalTaskConfig(
     name="winogrande",
-    prompt_function=prompt.winogrande,
+    prompt_function=winogrande,
     hf_repo="allenai/winogrande",
     hf_subset="winogrande_xl",
     hf_avail_splits=["train", "test", "validation"],

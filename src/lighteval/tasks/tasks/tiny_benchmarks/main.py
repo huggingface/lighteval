@@ -29,7 +29,6 @@ import numpy as np
 import requests
 from scipy.optimize import minimize
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import CorpusLevelMetricGrouping
 from lighteval.metrics.metrics_corpus import CorpusLevelComputation
 from lighteval.metrics.metrics_sample import ExactMatches, LoglikelihoodAcc, SampleLevelComputation
@@ -37,6 +36,13 @@ from lighteval.metrics.normalizations import gsm8k_normalizer
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.tasks.tasks.arc import arc as arc_prompt
+from lighteval.tasks.tasks.gsm8k import gsm8k_prompt
+from lighteval.tasks.tasks.mmlu import mmlu_prompt as mmlu_prompt
+from lighteval.tasks.tasks.truthfulqa import truthful_qa_multiple_choice as truthful_qa_multiple_choice_prompt
+from lighteval.tasks.tasks.winogrande import winogrande_prompt
+from lighteval.tasks.templates.hellaswag import get_hellaswag_prompt_function
+from lighteval.utils.language import Language
 
 
 # Utility functions
@@ -177,12 +183,30 @@ class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
 
 
 # TASK CREATION
+# Build a local Hellaswag harness-style prompt using the template
+hellaswag_harness = get_hellaswag_prompt_function(
+    Language.ENGLISH,
+    {
+        "ctx_a": "ctx_a",
+        "ctx_b": "ctx_b",
+        "continuations": "endings",
+        "gold_idx": "label",
+        "activity_label": "activity_label",
+    },
+)
+
+
+# MMLU prompt function alias
+def mmlu_harness(line, task_name: str):
+    return mmlu_prompt(line, task_name)
+
+
 task_params = [
     {
         "name": "winogrande",
         "dataset": "tinyBenchmarks/tinyWinogrande",
         "subset": "winogrande_xl",
-        "prompt": prompt.winogrande,
+        "prompt": winogrande_prompt,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -190,7 +214,7 @@ task_params = [
         "name": "arc",
         "dataset": "tinyBenchmarks/tinyAI2_arc",
         "subset": "ARC-Challenge",
-        "prompt": prompt.arc,
+        "prompt": arc_prompt,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -198,7 +222,7 @@ task_params = [
         "name": "hellaswag",
         "dataset": "tinyBenchmarks/tinyHellaswag",
         "subset": "default",
-        "prompt": prompt.hellaswag_harness,
+        "prompt": hellaswag_harness,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -206,7 +230,7 @@ task_params = [
         "name": "mmlu",
         "dataset": "tinyBenchmarks/tinyMMLU",
         "subset": "all",
-        "prompt": prompt.mmlu_harness,
+        "prompt": mmlu_harness,
         "splits": ["validation", "dev", "test"],
         "evaluation_split": ["test"],
     },
@@ -214,7 +238,7 @@ task_params = [
         "name": "truthfulqa",
         "dataset": "tinyBenchmarks/tinyTruthfulQA",
         "subset": "multiple_choice",
-        "prompt": prompt.truthful_qa_multiple_choice,
+        "prompt": truthful_qa_multiple_choice_prompt,
         "splits": ["validation"],
         "evaluation_split": ["validation"],
     },
@@ -222,7 +246,7 @@ task_params = [
         "name": "gsm8k",
         "dataset": "tinyBenchmarks/tinyGSM8k",
         "subset": "main",
-        "prompt": prompt.gsm8k,
+        "prompt": gsm8k_prompt,
         "splits": ["train", "test"],
         "evaluation_split": ["test"],
     },

@@ -22,14 +22,23 @@ paper:
 https://arxiv.org/abs/1910.14599
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def anli_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"{line['premise']}\nQuestion: {line['hypothesis']} True, False, or Neither?\nAnswer:",
+        choices=[" True", " Neither", " False"],
+        gold_index=int(line["label"]),
+    )
 
 
 anli_r1 = LightevalTaskConfig(
     name="anli:r1",
-    prompt_function=prompt.anli,
+    prompt_function=anli_prompt,
     hf_repo="facebook/anli",
     hf_subset="plain_text",
     hf_avail_splits=["train_r1", "dev_r1", "test_r1"],
@@ -45,7 +54,7 @@ anli_r1 = LightevalTaskConfig(
 
 anli_r2 = LightevalTaskConfig(
     name="anli:r2",
-    prompt_function=prompt.anli,
+    prompt_function=anli_prompt,
     hf_repo="facebook/anli",
     hf_subset="plain_text",
     hf_avail_splits=["train_r2", "dev_r2", "test_r2"],
@@ -61,7 +70,7 @@ anli_r2 = LightevalTaskConfig(
 
 anli_r3 = LightevalTaskConfig(
     name="anli:r3",
-    prompt_function=prompt.anli,
+    prompt_function=anli_prompt,
     hf_repo="facebook/anli",
     hf_subset="plain_text",
     hf_avail_splits=["train_r3", "dev_r3", "test_r3"],

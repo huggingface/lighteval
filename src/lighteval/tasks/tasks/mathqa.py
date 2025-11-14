@@ -21,14 +21,37 @@ paper:
 https://arxiv.org/abs/1905.13319
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def mathqa_prompt(line, task_name: str = None):
+    query = f"Problem: {line['Problem']}\n"
+    query += "Options:\n"
+    query += "".join(
+        [
+            f"{key}) {choice}\n"
+            for key, choice in zip(
+                ["a", "b", "c", "d", "e"],
+                [line["option_a"], line["option_b"], line["option_c"], line["option_d"], line["option_e"]],
+            )
+        ]
+    )
+    query += "Answer:"
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=[
+            f" {c}" for c in [line["option_a"], line["option_b"], line["option_c"], line["option_d"], line["option_e"]]
+        ],
+        gold_index=["a", "b", "c", "d", "e"].index(line["correct"]),
+    )
 
 
 mathqa = LightevalTaskConfig(
     name="mathqa",
-    prompt_function=prompt.mathqa,
+    prompt_function=mathqa_prompt,
     hf_repo="allenai/math_qa",
     hf_subset="default",
     hf_avail_splits=["train", "validation", "test"],

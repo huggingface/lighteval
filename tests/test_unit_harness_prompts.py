@@ -20,19 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import importlib
 import json
 import os
 
 import pytest
 
-import lighteval.tasks.default_prompts as default_prompts
 from lighteval.tasks.requests import Doc
 
 
 PATH_TO_HARNESS_PROMPTS = os.path.join(os.path.dirname(__file__), "reference_scores/harness_prompts.json")
 
 
-def pytest_generate_tests(metafunc: pytest.Metafunc):
+def pytest_generate_tests(metafunc: pytest.Metafunc):  # noqa: C901
     """Initializes the main test setup. This function is automatically called by pytest and
     should not be called manually.
 
@@ -49,7 +49,34 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
             prompt_fn_to_examples = json.load(f)
 
             for prompt_fn_name, examples in prompt_fn_to_examples.items():
-                formatter_fn = getattr(default_prompts, prompt_fn_name)
+                module = importlib.import_module(f"lighteval.tasks.tasks.{prompt_fn_name}")
+                candidates = [
+                    f"{prompt_fn_name}_prompt",
+                    f"{prompt_fn_name}_helm",
+                    f"{prompt_fn_name}_generative",
+                    prompt_fn_name,
+                ]
+                # Special-case aliases where the function name differs from the module name
+                if prompt_fn_name == "winogrande":
+                    candidates = ["winogrande_prompt"] + candidates
+                if prompt_fn_name == "gsm8k":
+                    candidates = ["gsm8k_prompt"] + candidates
+                if prompt_fn_name == "openbookqa":
+                    candidates = ["openbookqa_helm"] + candidates
+                if prompt_fn_name == "piqa":
+                    candidates = ["piqa_helm"] + candidates
+                if prompt_fn_name == "quac":
+                    candidates = ["quac_prompt"] + candidates
+                if prompt_fn_name == "math":
+                    candidates = ["math_prompt"] + candidates
+
+                formatter_fn = None
+                for attr in candidates:
+                    if hasattr(module, attr):
+                        fn = getattr(module, attr)
+                        if callable(fn):
+                            formatter_fn = fn
+                            break
 
                 cur_params = []
 
