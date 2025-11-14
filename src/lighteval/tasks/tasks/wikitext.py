@@ -26,10 +26,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-wikitext_prompt = None
-
-
-def wikitext_helm(line, task_name: str = None):  # perplexity metric
+def wikitext_prompt(line, task_name: str = None):  # perplexity metric
     def wikitext_detokenizer(cur_string):
         import re
 
@@ -70,7 +67,7 @@ def wikitext_helm(line, task_name: str = None):  # perplexity metric
 
 wikitext_103_document_level = LightevalTaskConfig(
     name="wikitext:103:document_level",
-    prompt_function=wikitext_helm,
+    prompt_function=wikitext_prompt,
     hf_repo="EleutherAI/wikitext_document_level",
     hf_subset="wikitext-103-raw-v1",
     hf_avail_splits=["train", "test"],

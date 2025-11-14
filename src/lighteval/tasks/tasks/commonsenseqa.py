@@ -30,7 +30,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def commonsense_qa(line, task_name: str = None):
+def commonsenseqa_prompt(line, task_name: str = None):
     query = f"The following are multiple choice questions (with answers) about common sense.\nQuestion: {line['question']}\n"
     query += "".join(
         [f"{key}. {choice}\n" for key, choice in zip(ascii_uppercase, [f" {c}" for c in line["choices"]["text"]])]
@@ -48,7 +48,7 @@ def commonsense_qa(line, task_name: str = None):
 
 commonsenseqa = LightevalTaskConfig(
     name="commonsenseqa",
-    prompt_function=commonsense_qa,
+    prompt_function=commonsenseqa_prompt,
     hf_repo="tau/commonsense_qa",
     hf_subset="default",
     hf_avail_splits=["train", "test", "validation"],

@@ -22,7 +22,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def med_dialog(line, task_name: str = None):
+def med_dialog_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"###\nArticle:{line['src']}\n\nSummarize the above article in 1 sentence.\n",
@@ -33,7 +33,7 @@ def med_dialog(line, task_name: str = None):
 
 med_dialog_healthcaremagic = LightevalTaskConfig(
     name="med_dialog:healthcaremagic",
-    prompt_function=med_dialog,
+    prompt_function=med_dialog_prompt,
     hf_repo="lighteval/med_dialog",
     hf_subset="healthcaremagic",
     hf_avail_splits=["train", "test", "validation"],
@@ -51,7 +51,7 @@ med_dialog_healthcaremagic = LightevalTaskConfig(
 
 med_dialog_icliniq = LightevalTaskConfig(
     name="med_dialog:icliniq",
-    prompt_function=med_dialog,
+    prompt_function=med_dialog_prompt,
     hf_repo="lighteval/med_dialog",
     hf_subset="icliniq",
     hf_avail_splits=["train", "test", "validation"],

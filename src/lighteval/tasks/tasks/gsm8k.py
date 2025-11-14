@@ -55,7 +55,7 @@ def sample_to_fewshot(sample):
     return f"{sample.input}\n\nReasoning:\n" + f"{sample.metadata['reasoning']}\n\n" + f"ANSWER: {sample.target}"
 
 
-def gsm8k(line, task_name: str = None):
+def gsm8k_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"Question: {line['question']}\nAnswer:",
@@ -64,13 +64,9 @@ def gsm8k(line, task_name: str = None):
     )
 
 
-# Keep a reference to the prompt function before the task config rebinds the name
-gsm8k_prompt = gsm8k
-
-
 gsm8k = LightevalTaskConfig(
     name="gsm8k",
-    prompt_function=gsm8k,
+    prompt_function=gsm8k_prompt,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
     solver=[prompt_template(MATH_PROMPT_TEMPLATE), generate(cache=True)],

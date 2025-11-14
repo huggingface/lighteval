@@ -27,7 +27,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def qa4mre(line, task_name: str = None):
+def qa4mre_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"{line['question']}",
@@ -38,7 +38,7 @@ def qa4mre(line, task_name: str = None):
 
 qa4mre_2011 = LightevalTaskConfig(
     name="qa4mre:2011",
-    prompt_function=qa4mre,
+    prompt_function=qa4mre_prompt,
     hf_repo="qa4mre",
     hf_subset="2011.main.EN",
     hf_avail_splits=["train"],
@@ -56,7 +56,7 @@ qa4mre_2011 = LightevalTaskConfig(
 
 qa4mre_2012 = LightevalTaskConfig(
     name="qa4mre:2012",
-    prompt_function=qa4mre,
+    prompt_function=qa4mre_prompt,
     hf_repo="qa4mre",
     hf_subset="2012.main.EN",
     hf_avail_splits=["train"],
@@ -74,7 +74,7 @@ qa4mre_2012 = LightevalTaskConfig(
 
 qa4mre_2013 = LightevalTaskConfig(
     name="qa4mre:2013",
-    prompt_function=qa4mre,
+    prompt_function=qa4mre_prompt,
     hf_repo="qa4mre",
     hf_subset="2013.main.EN",
     hf_avail_splits=["train"],

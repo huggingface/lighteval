@@ -26,7 +26,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def piqa_helm(line, task_name: str = None):
+def piqa_prompt(line, task_name: str = None):
     letters = list(ascii_uppercase)[:2]
     query = "The following are multiple choice questions (with answers) about common sense.\n"
     query += f"Question: {line['goal']}\n"
@@ -46,7 +46,7 @@ def piqa_helm(line, task_name: str = None):
 
 piqa = LightevalTaskConfig(
     name="piqa",
-    prompt_function=piqa_helm,
+    prompt_function=piqa_prompt,
     hf_repo="ybisk/piqa",
     hf_subset="plain_text",
     hf_avail_splits=["train", "test", "validation"],

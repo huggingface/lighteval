@@ -27,7 +27,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def winogrande(line, task_name: str = None):
+def winogrande_prompt(line, task_name: str = None):
     query, end_of_target = line["sentence"].split("_")
     end_of_target = end_of_target.strip()
     return Doc(
@@ -38,12 +38,9 @@ def winogrande(line, task_name: str = None):
     )
 
 
-# Keep a reference to the prompt function before the task config rebinds the name
-winogrande_prompt = winogrande
-
 winogrande = LightevalTaskConfig(
     name="winogrande",
-    prompt_function=winogrande,
+    prompt_function=winogrande_prompt,
     hf_repo="allenai/winogrande",
     hf_subset="winogrande_xl",
     hf_avail_splits=["train", "test", "validation"],

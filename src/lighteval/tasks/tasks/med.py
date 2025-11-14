@@ -25,7 +25,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def med_mcqa(line, task_name: str = None):
+def med_mcqa_prompt(line, task_name: str = None):
     query = f"Give a letter answer among A, B, C or D.\nQuestion: {line['question']}\n"
     query += "".join(
         [
@@ -43,7 +43,7 @@ def med_mcqa(line, task_name: str = None):
     )
 
 
-def med_paragraph_simplification(line, task_name: str = None):
+def med_paragraph_simplification_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"###\nArticle:{line['query']}\n\nSummarize the above article in 10 sentences.\n",
@@ -52,7 +52,7 @@ def med_paragraph_simplification(line, task_name: str = None):
     )
 
 
-def med_qa(line, task_name: str = None):
+def med_qa_prompt(line, task_name: str = None):
     query = f"Give a letter answer among A, B, C or D.\nQuestion: {line['question']}\n"
     query += "".join([f"{option['key']}. {option['value']}\n" for option in line["options"]])
     query += "Answer:"
@@ -67,7 +67,7 @@ def med_qa(line, task_name: str = None):
 
 med_mcqa = LightevalTaskConfig(
     name="med_mcqa",
-    prompt_function=med_mcqa,
+    prompt_function=med_mcqa_prompt,
     hf_repo="lighteval/med_mcqa",
     hf_subset="default",
     hf_avail_splits=["train", "test", "validation"],
@@ -85,7 +85,7 @@ med_mcqa = LightevalTaskConfig(
 
 med_paragraph_simplification = LightevalTaskConfig(
     name="med_paragraph_simplification",
-    prompt_function=med_paragraph_simplification,
+    prompt_function=med_paragraph_simplification_prompt,
     hf_repo="lighteval/med_paragraph_simplification",
     hf_subset="default",
     hf_avail_splits=["train", "test", "validation"],
@@ -103,7 +103,7 @@ med_paragraph_simplification = LightevalTaskConfig(
 
 med_qa = LightevalTaskConfig(
     name="med_qa",
-    prompt_function=med_qa,
+    prompt_function=med_qa_prompt,
     hf_repo="bigbio/med_qa",
     hf_subset="med_qa_en_source",
     hf_avail_splits=["train", "test", "validation"],

@@ -27,10 +27,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-sciq_prompt = None
-
-
-def sciq(line, task_name: str = None):
+def sciq_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"{line['support']}\nQuestion: {line['question']}\nAnswer:".strip(),
@@ -43,7 +40,7 @@ def sciq(line, task_name: str = None):
 
 sciq = LightevalTaskConfig(
     name="sciq",
-    prompt_function=sciq,
+    prompt_function=sciq_prompt,
     hf_repo="allenai/sciq",
     hf_subset="default",
     hf_avail_splits=["train", "validation", "test"],

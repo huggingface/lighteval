@@ -22,7 +22,7 @@
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.tasks.gpqa import gpqa_instruct
+from lighteval.tasks.tasks.gpqa import gpqa_instruct_prompt
 from lighteval.tasks.tasks.gsm8k import gsm8k_prompt
 
 
@@ -43,7 +43,7 @@ gsm8k_test = LightevalTaskConfig(
 
 gpqa_diamond_test = LightevalTaskConfig(
     name="gpqa:diamond_test",
-    prompt_function=gpqa_instruct,
+    prompt_function=gpqa_instruct_prompt,
     hf_repo="Idavidrein/gpqa",
     hf_subset="gpqa_diamond",
     hf_avail_splits=["train"],

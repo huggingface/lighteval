@@ -25,7 +25,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def mmlu_redux_2(line, topic, task_name: str = None):
+def __mmlu_redux_2_prompt(line, topic, task_name: str = None):
     query = f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n"
     query += line["question"] + "\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTERS, line["choices"])])
@@ -42,7 +42,7 @@ def mmlu_redux_2(line, topic, task_name: str = None):
 
 def mmlu_redux_2_prompt(topic):
     def _fn(line, task_name: str = None):
-        return mmlu_redux_2(line, topic, task_name)
+        return __mmlu_redux_2_prompt(line, topic, task_name)
 
     return _fn
 

@@ -23,7 +23,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def boolq_helm(line, task_name: str = None):
+def boolq_prompt(line, task_name: str = None):
     question = line["question"][:-1] if line["question"][-2:] == "??" else line["question"]
     return Doc(
         task_name=task_name,
@@ -33,9 +33,9 @@ def boolq_helm(line, task_name: str = None):
     )
 
 
-def boolq_helm_contrastset(line, task_name: str = None):
+def boolq_contrastset_prompt(line, task_name: str = None):
     if line["contrast_inputs"] in [None, ""]:
-        return boolq_helm(line)
+        return boolq_prompt(line)
 
     return [
         Doc(
@@ -50,7 +50,7 @@ def boolq_helm_contrastset(line, task_name: str = None):
 
 boolq = LightevalTaskConfig(
     name="boolq",
-    prompt_function=boolq_helm,
+    prompt_function=boolq_prompt,
     hf_repo="lighteval/boolq_helm",
     hf_subset="default",
     hf_avail_splits=["train", "validation"],
@@ -68,7 +68,7 @@ boolq = LightevalTaskConfig(
 
 boolq_contrastset = LightevalTaskConfig(
     name="boolq:contrastset",
-    prompt_function=boolq_helm_contrastset,
+    prompt_function=boolq_contrastset_prompt,
     hf_repo="lighteval/boolq_helm",
     hf_subset="default",
     hf_avail_splits=["validation"],

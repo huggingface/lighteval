@@ -23,7 +23,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def dyck_language(line, task_name: str = None):
+def dyck_language_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"Please complete the rest of the following Dyck sequences, making sure that the parentheses are closed properly.\n Input: {line['input']}",
@@ -35,7 +35,7 @@ def dyck_language(line, task_name: str = None):
 
 dyck_language_2 = LightevalTaskConfig(
     name="dyck_language:2",
-    prompt_function=dyck_language,
+    prompt_function=dyck_language_prompt,
     hf_repo="lighteval/DyckLanguage",
     hf_subset="2",
     hf_avail_splits=["train", "test"],
@@ -51,7 +51,7 @@ dyck_language_2 = LightevalTaskConfig(
 
 dyck_language_3 = LightevalTaskConfig(
     name="dyck_language:3",
-    prompt_function=dyck_language,
+    prompt_function=dyck_language_prompt,
     hf_repo="lighteval/DyckLanguage",
     hf_subset="3",
     hf_avail_splits=["train", "test"],
@@ -67,7 +67,7 @@ dyck_language_3 = LightevalTaskConfig(
 
 dyck_language_4 = LightevalTaskConfig(
     name="dyck_language:4",
-    prompt_function=dyck_language,
+    prompt_function=dyck_language_prompt,
     hf_repo="lighteval/DyckLanguage",
     hf_subset="4",
     hf_avail_splits=["train", "test"],

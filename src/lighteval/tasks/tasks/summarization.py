@@ -26,7 +26,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def cnn_dm(line, task_name: str = None):
+def cnn_dm_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"Article: {line['article']}\n\nTL;DR:",
@@ -35,7 +35,7 @@ def cnn_dm(line, task_name: str = None):
     )
 
 
-def xsum(line, task_name: str = None):
+def xsum_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"Document: {line['document']}\n\nA one-sentence summary of the above document is:",
@@ -46,7 +46,7 @@ def xsum(line, task_name: str = None):
 
 summarization_cnn_dm = LightevalTaskConfig(
     name="summarization:cnn-dm",
-    prompt_function=cnn_dm,
+    prompt_function=cnn_dm_prompt,
     hf_repo="lighteval/summarization",
     hf_subset="cnn-dm",
     hf_avail_splits=["train", "test", "validation"],
@@ -69,7 +69,7 @@ summarization_cnn_dm = LightevalTaskConfig(
 
 summarization_xsum = LightevalTaskConfig(
     name="summarization:xsum",
-    prompt_function=xsum,
+    prompt_function=xsum_prompt,
     hf_repo="lighteval/summarization",
     hf_subset="xsum",
     hf_avail_splits=["train", "test", "validation"],
@@ -92,7 +92,7 @@ summarization_xsum = LightevalTaskConfig(
 
 summarization_xsum_sampled = LightevalTaskConfig(
     name="summarization:xsum-sampled",
-    prompt_function=xsum,
+    prompt_function=xsum_prompt,
     hf_repo="lighteval/summarization",
     hf_subset="xsum-sampled",
     hf_avail_splits=["train", "test", "validation"],

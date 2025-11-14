@@ -27,7 +27,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def musr(line, task_name: str = None):
+def musr_prompt(line, task_name: str = None):
     choices = ast.literal_eval(line["choices"])
 
     query = line["narrative"] + "\n\n"
@@ -41,7 +41,7 @@ def musr(line, task_name: str = None):
 
 musr_murder_mysteries = LightevalTaskConfig(
     name="musr:murder_mysteries",
-    prompt_function=musr,
+    prompt_function=musr_prompt,
     hf_repo="TAUR-Lab/MuSR",
     hf_subset="default",
     hf_avail_splits=["murder_mysteries"],
@@ -57,7 +57,7 @@ musr_murder_mysteries = LightevalTaskConfig(
 
 musr_object_placements = LightevalTaskConfig(
     name="musr:object_placements",
-    prompt_function=musr,
+    prompt_function=musr_prompt,
     hf_repo="TAUR-Lab/MuSR",
     hf_subset="default",
     hf_avail_splits=["object_placements"],
@@ -73,7 +73,7 @@ musr_object_placements = LightevalTaskConfig(
 
 musr_team_allocation = LightevalTaskConfig(
     name="musr:team_allocation",
-    prompt_function=musr,
+    prompt_function=musr_prompt,
     hf_repo="TAUR-Lab/MuSR",
     hf_subset="default",
     hf_avail_splits=["team_allocation"],

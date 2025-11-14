@@ -26,7 +26,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def webqs(line, task_name: str = None):
+def webqs_prompt(line, task_name: str = None):
     def _remove_prefixes(aliases):
         aliases.sort()
         ret = [aliases[0]]
@@ -45,7 +45,7 @@ def webqs(line, task_name: str = None):
 
 webqs = LightevalTaskConfig(
     name="webqs",
-    prompt_function=webqs,
+    prompt_function=webqs_prompt,
     hf_repo="stanfordnlp/web_questions",
     hf_subset="default",
     hf_avail_splits=["train", "test"],

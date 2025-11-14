@@ -66,7 +66,7 @@ def __convert_2d_list_to_string(list_of_lists: list[list[int]]) -> str:
     return string_list
 
 
-def prompt_fn(line, task_name: str = None):
+def arc_agi_2_prompt(line, task_name: str = None):
     training_pairs = line["fewshots"]
     training_examples = ""
     for i, pair in enumerate(training_pairs):
@@ -111,7 +111,7 @@ def record_to_sample(record):
 
 arc_agi_2 = LightevalTaskConfig(
     name="arc_agi_2",
-    prompt_function=prompt_fn,
+    prompt_function=arc_agi_2_prompt,
     hf_repo="arc-agi-community/arc-agi-2",
     hf_subset="default",
     hf_avail_splits=["train", "test"],

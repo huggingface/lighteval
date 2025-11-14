@@ -22,7 +22,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def bbh_lighteval(line, task_name: str = None):
+def bbh_prompt(line, task_name: str = None):
     line = {k: v for k, v in line.items() if v is not None}
 
     query = line.get("task_prefix", "")
@@ -43,7 +43,7 @@ def bbh_lighteval(line, task_name: str = None):
 
 causal_judgment = LightevalTaskConfig(
     name="bigbench_hard:causal_judgment",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="causal_judgement",
     hf_avail_splits=["train"],
@@ -58,7 +58,7 @@ causal_judgment = LightevalTaskConfig(
 
 date_understanding = LightevalTaskConfig(
     name="bigbench_hard:date_understanding",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="date_understanding",
     hf_avail_splits=["train"],
@@ -73,7 +73,7 @@ date_understanding = LightevalTaskConfig(
 
 disambiguation_qa = LightevalTaskConfig(
     name="bigbench_hard:disambiguation_qa",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="disambiguation_qa",
     hf_avail_splits=["train"],
@@ -88,7 +88,7 @@ disambiguation_qa = LightevalTaskConfig(
 
 geometric_shapes = LightevalTaskConfig(
     name="bigbench_hard:geometric_shapes",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="geometric_shapes",
     hf_avail_splits=["train"],
@@ -103,7 +103,7 @@ geometric_shapes = LightevalTaskConfig(
 
 logical_deduction_five_objects = LightevalTaskConfig(
     name="bigbench_hard:logical_deduction_five_objects",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="logical_deduction_five_objects",
     hf_avail_splits=["train"],
@@ -118,7 +118,7 @@ logical_deduction_five_objects = LightevalTaskConfig(
 
 logical_deduction_seven_objects = LightevalTaskConfig(
     name="bigbench_hard:logical_deduction_seven_objects",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="logical_deduction_seven_objects",
     hf_avail_splits=["train"],
@@ -133,7 +133,7 @@ logical_deduction_seven_objects = LightevalTaskConfig(
 
 logical_deduction_three_objects = LightevalTaskConfig(
     name="bigbench_hard:logical_deduction_three_objects",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="logical_deduction_three_objects",
     hf_avail_splits=["train"],
@@ -148,7 +148,7 @@ logical_deduction_three_objects = LightevalTaskConfig(
 
 movie_recommendation = LightevalTaskConfig(
     name="bigbench_hard:movie_recommendation",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="movie_recommendation",
     hf_avail_splits=["train"],
@@ -163,7 +163,7 @@ movie_recommendation = LightevalTaskConfig(
 
 navigate = LightevalTaskConfig(
     name="bigbench_hard:navigate",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="navigate",
     hf_avail_splits=["train"],
@@ -178,7 +178,7 @@ navigate = LightevalTaskConfig(
 
 reasoning_about_colored_objects = LightevalTaskConfig(
     name="bigbench_hard:reasoning_about_colored_objects",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="reasoning_about_colored_objects",
     hf_avail_splits=["train"],
@@ -193,7 +193,7 @@ reasoning_about_colored_objects = LightevalTaskConfig(
 
 ruin_names = LightevalTaskConfig(
     name="bigbench_hard:ruin_names",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="ruin_names",
     hf_avail_splits=["train"],
@@ -208,7 +208,7 @@ ruin_names = LightevalTaskConfig(
 
 salient_translation_error_detection = LightevalTaskConfig(
     name="bigbench_hard:salient_translation_error_detection",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="salient_translation_error_detection",
     hf_avail_splits=["train"],
@@ -223,7 +223,7 @@ salient_translation_error_detection = LightevalTaskConfig(
 
 snarks = LightevalTaskConfig(
     name="bigbench_hard:snarks",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="snarks",
     hf_avail_splits=["train"],
@@ -238,7 +238,7 @@ snarks = LightevalTaskConfig(
 
 sports_understanding = LightevalTaskConfig(
     name="bigbench_hard:sports_understanding",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="sports_understanding",
     hf_avail_splits=["train"],
@@ -253,7 +253,7 @@ sports_understanding = LightevalTaskConfig(
 
 temporal_sequences = LightevalTaskConfig(
     name="bigbench_hard:temporal_sequences",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="temporal_sequences",
     hf_avail_splits=["train"],
@@ -268,7 +268,7 @@ temporal_sequences = LightevalTaskConfig(
 
 tracking_shuffled_objects_five_objects = LightevalTaskConfig(
     name="bigbench_hard:tracking_shuffled_objects_five_objects",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="tracking_shuffled_objects_five_objects",
     hf_avail_splits=["train"],
@@ -283,7 +283,7 @@ tracking_shuffled_objects_five_objects = LightevalTaskConfig(
 
 tracking_shuffled_objects_seven_objects = LightevalTaskConfig(
     name="bigbench_hard:tracking_shuffled_objects_seven_objects",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="tracking_shuffled_objects_seven_objects",
     hf_avail_splits=["train"],
@@ -298,7 +298,7 @@ tracking_shuffled_objects_seven_objects = LightevalTaskConfig(
 
 tracking_shuffled_objects_three_objects = LightevalTaskConfig(
     name="bigbench_hard:tracking_shuffled_objects_three_objects",
-    prompt_function=bbh_lighteval,
+    prompt_function=bbh_prompt,
     hf_repo="lighteval/bbh",
     hf_subset="tracking_shuffled_objects_three_objects",
     hf_avail_splits=["train"],

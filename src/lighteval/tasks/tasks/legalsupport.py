@@ -22,7 +22,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def legal_support(line, task_name: str = None):
+def legalsupport_prompt(line, task_name: str = None):
     query = f"Which statement best supports the passage?\nPassage: {line['context']}\n"
     query += "".join(
         [
@@ -44,7 +44,7 @@ def legal_support(line, task_name: str = None):
 
 legalsupport = LightevalTaskConfig(
     name="legalsupport",
-    prompt_function=legal_support,
+    prompt_function=legalsupport_prompt,
     hf_repo="lighteval/LegalSupport",
     hf_subset="default",
     hf_avail_splits=["train", "test", "validation"],

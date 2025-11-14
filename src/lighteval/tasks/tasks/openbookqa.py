@@ -29,7 +29,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def openbookqa_helm(line, task_name: str = None):
+def openbookqa_prompt(line, task_name: str = None):
     query = "The following are multiple choice questions (with answers) about common sense.\n"
     query += f"Question: {line['question_stem']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(ascii_uppercase, line["choices"]["text"])])
@@ -47,7 +47,7 @@ def openbookqa_helm(line, task_name: str = None):
 
 openbookqa = LightevalTaskConfig(
     name="openbookqa",
-    prompt_function=openbookqa_helm,
+    prompt_function=openbookqa_prompt,
     hf_repo="allenai/openbookqa",
     hf_subset="main",
     hf_avail_splits=["train", "test", "validation"],

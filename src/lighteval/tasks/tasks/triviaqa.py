@@ -29,7 +29,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def triviaqa(line, task_name: str = None):
+def triviaqa_prompt(line, task_name: str = None):
     def _remove_prefixes(aliases):
         aliases.sort()
         ret = [aliases[0]]
@@ -53,7 +53,7 @@ def triviaqa(line, task_name: str = None):
 
 triviaqa = LightevalTaskConfig(
     name="triviaqa",
-    prompt_function=triviaqa,
+    prompt_function=triviaqa_prompt,
     hf_repo="mandarjoshi/trivia_qa",
     hf_subset="rc.nocontext",
     hf_avail_splits=["train", "test", "validation"],

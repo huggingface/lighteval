@@ -29,7 +29,7 @@ from lighteval.tasks.requests import Doc
 lambada_cloze_query_suffix = " ____. ->"
 
 
-def lambada_cloze(line, task_name: str = None):
+def lambada_cloze_prompt(line, task_name: str = None):
     query, choice = line["text"].rsplit(" ", 1)
     return Doc(
         task_name=task_name,
@@ -39,7 +39,7 @@ def lambada_cloze(line, task_name: str = None):
     )
 
 
-def lambada(line, task_name: str = None):
+def lambada_prompt(line, task_name: str = None):
     query, choice = line["text"].rsplit(" ", 1)
     return Doc(
         task_name=task_name,
@@ -51,7 +51,7 @@ def lambada(line, task_name: str = None):
 
 lambada_standard = LightevalTaskConfig(
     name="lambada:standard",
-    prompt_function=lambada,
+    prompt_function=lambada_prompt,
     hf_repo="cimec/lambada",
     hf_subset="plain_text",
     hf_avail_splits=["train", "test", "validation"],
@@ -67,7 +67,7 @@ lambada_standard = LightevalTaskConfig(
 
 lambada_standard_cloze = LightevalTaskConfig(
     name="lambada:standard_cloze",
-    prompt_function=lambada_cloze,
+    prompt_function=lambada_cloze_prompt,
     hf_repo="cimec/lambada",
     hf_subset="plain_text",
     hf_avail_splits=["train", "test", "validation"],

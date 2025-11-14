@@ -27,7 +27,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def headqa(line, task_name: str = None):
+def headqa_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"Question: {line['qtext']}\nAnswer:",
@@ -38,7 +38,7 @@ def headqa(line, task_name: str = None):
 
 headqa_en = LightevalTaskConfig(
     name="headqa:en",
-    prompt_function=headqa,
+    prompt_function=headqa_prompt,
     hf_repo="lighteval/headqa_harness",
     hf_subset="en",
     hf_avail_splits=["train", "test", "validation"],
@@ -56,7 +56,7 @@ headqa_en = LightevalTaskConfig(
 
 headqa_es = LightevalTaskConfig(
     name="headqa:es",
-    prompt_function=headqa,
+    prompt_function=headqa_prompt,
     hf_repo="lighteval/headqa_harness",
     hf_subset="es",
     hf_avail_splits=["train", "test", "validation"],

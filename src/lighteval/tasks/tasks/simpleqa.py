@@ -24,7 +24,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def simpleqa(line, task_name: str = None):
+def simpleqa_prompt(line, task_name: str = None):
     query = f"Question: {line['question']}\n"
     query += "".join(
         [f"\n{key}. {choice}" for key, choice in zip(["A", "B", "C", "D", "E", "F"], line["choices"]["text"])]
@@ -40,7 +40,7 @@ def simpleqa(line, task_name: str = None):
 
 simpleqa = LightevalTaskConfig(
     name="simpleqa",
-    prompt_function=simpleqa,
+    prompt_function=simpleqa_prompt,
     hf_repo="lighteval/SimpleQA",
     hf_subset="default",
     hf_avail_splits=["test"],

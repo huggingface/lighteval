@@ -49,7 +49,7 @@ def record_to_sample(record):
     return Sample(input=record["problem"], target=record["answer"])
 
 
-def aime_prompt_fn(line, task_name: str = None):
+def aime_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=MATH_PROMPT_TEMPLATE.format(prompt=line["problem"]),
@@ -60,7 +60,7 @@ def aime_prompt_fn(line, task_name: str = None):
 
 aime24 = LightevalTaskConfig(
     name="aime24",
-    prompt_function=aime_prompt_fn,
+    prompt_function=aime_prompt,
     sample_fields=record_to_sample,
     solver=[prompt_template(MATH_PROMPT_TEMPLATE), generate(cache=True)],
     scorer=math_scorer(),
@@ -77,7 +77,7 @@ aime24 = LightevalTaskConfig(
 
 aime24_avg = LightevalTaskConfig(
     name="aime24_avg",
-    prompt_function=aime_prompt_fn,
+    prompt_function=aime_prompt,
     sample_fields=record_to_sample,
     hf_repo="HuggingFaceH4/aime_2024",
     hf_subset="default",
@@ -92,7 +92,7 @@ aime24_avg = LightevalTaskConfig(
 
 aime24_gpassk = LightevalTaskConfig(
     name="aime24_gpassk",
-    prompt_function=aime_prompt_fn,
+    prompt_function=aime_prompt,
     sample_fields=record_to_sample,
     hf_repo="HuggingFaceH4/aime_2024",
     hf_subset="default",
@@ -107,7 +107,7 @@ aime24_gpassk = LightevalTaskConfig(
 
 aime25 = LightevalTaskConfig(
     name="aime25",
-    prompt_function=aime_prompt_fn,
+    prompt_function=aime_prompt,
     sample_fields=record_to_sample,
     solver=[prompt_template(MATH_PROMPT_TEMPLATE), generate(cache=True)],
     scorer=math_scorer(),
@@ -124,7 +124,7 @@ aime25 = LightevalTaskConfig(
 
 aime25_avg = LightevalTaskConfig(
     name="aime25_avg",
-    prompt_function=aime_prompt_fn,
+    prompt_function=aime_prompt,
     sample_fields=record_to_sample,
     hf_repo="yentinglin/aime_2025",
     hf_subset="default",
@@ -139,7 +139,7 @@ aime25_avg = LightevalTaskConfig(
 
 aime25_gpassk = LightevalTaskConfig(
     name="aime25_gpassk",
-    prompt_function=aime_prompt_fn,
+    prompt_function=aime_prompt,
     sample_fields=record_to_sample,
     hf_repo="yentinglin/aime_2025",
     hf_subset="default",

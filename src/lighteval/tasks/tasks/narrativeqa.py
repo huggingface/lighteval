@@ -28,7 +28,7 @@ from lighteval.tasks.requests import Doc
 narrativeqa_instruction = "Answer the question based on the passage.\n"
 
 
-def narrativeqa(line, task_name: str = None):
+def narrativeqa_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"Passage: {line['passage']}\nQuestion: {line['question']}\nAnswer:",
@@ -39,7 +39,7 @@ def narrativeqa(line, task_name: str = None):
 
 narrativeqa = LightevalTaskConfig(
     name="narrativeqa",
-    prompt_function=narrativeqa,
+    prompt_function=narrativeqa_prompt,
     hf_repo="lighteval/narrative_qa_helm",
     hf_subset="default",
     hf_avail_splits=["train", "test", "validation"],

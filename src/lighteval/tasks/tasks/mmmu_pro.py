@@ -26,7 +26,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def mmmu_pro(line, task_name: str = None):
+def mmmu_pro_prompt(line, task_name: str = None):
     question = line["question"]
     choices_string = line["options"]
     answer = line["answer"]
@@ -63,7 +63,7 @@ def mmmu_pro(line, task_name: str = None):
     )
 
 
-def mmmu_pro_vision(line, task_name: str = None):
+def mmmu_pro_vision_prompt(line, task_name: str = None):
     instruction = (
         "Answer with the option letter from the given choices directly."
         " The last line of your response should be of the following format: "
@@ -92,7 +92,7 @@ def mmmu_pro_vision(line, task_name: str = None):
 
 mmmu_pro_standard_4_options = LightevalTaskConfig(
     name="mmmu_pro:standard-4",
-    prompt_function=mmmu_pro,
+    prompt_function=mmmu_pro_prompt,
     hf_repo="MMMU/MMMU_pro",
     hf_subset="standard (4 options)",
     hf_avail_splits=["test"],
@@ -108,7 +108,7 @@ mmmu_pro_standard_4_options = LightevalTaskConfig(
 
 mmmu_pro_standard_10_options = LightevalTaskConfig(
     name="mmmu_pro:standard-10",
-    prompt_function=mmmu_pro,
+    prompt_function=mmmu_pro_prompt,
     hf_repo="MMMU/MMMU_pro",
     hf_subset="standard (10 options)",
     hf_avail_splits=["test"],
@@ -124,7 +124,7 @@ mmmu_pro_standard_10_options = LightevalTaskConfig(
 
 mmmu_pro_vision = LightevalTaskConfig(
     name="mmmu_pro:vision",
-    prompt_function=mmmu_pro_vision,
+    prompt_function=mmmu_pro_vision_prompt,
     hf_repo="MMMU/MMMU_pro",
     hf_subset="vision",
     hf_avail_splits=["test"],

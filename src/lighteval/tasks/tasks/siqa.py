@@ -35,7 +35,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def siqa(line, task_name: str = None):
+def siqa_prompt(line, task_name: str = None):
     query = "The following are multiple choice questions (with answers) about common sense.\n"
     query += f"Question: {line['context']} {line['question']}\n"
     query += "".join(
@@ -57,7 +57,7 @@ def siqa(line, task_name: str = None):
 
 siqa = LightevalTaskConfig(
     name="siqa",
-    prompt_function=siqa,
+    prompt_function=siqa_prompt,
     hf_repo="allenai/social_i_qa",
     hf_subset="default",
     hf_avail_splits=["train", "validation"],

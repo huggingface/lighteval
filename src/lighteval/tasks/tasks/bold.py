@@ -24,13 +24,13 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def bold(line, task_name: str = None):
+def bold_prompt(line, task_name: str = None):
     return Doc(task_name=task_name, query=line["text"], choices=None, gold_index=None)
 
 
 bold = LightevalTaskConfig(
     name="bold",
-    prompt_function=bold,
+    prompt_function=bold_prompt,
     hf_repo="lighteval/bold_helm",
     hf_subset="all",
     hf_avail_splits=["train", "test"],
@@ -45,7 +45,7 @@ bold = LightevalTaskConfig(
 
 bold_gender = LightevalTaskConfig(
     name="bold:gender",
-    prompt_function=bold,
+    prompt_function=bold_prompt,
     hf_repo="lighteval/bold_helm",
     hf_subset="gender",
     hf_avail_splits=["train", "test"],
@@ -60,7 +60,7 @@ bold_gender = LightevalTaskConfig(
 
 bold_political_ideology = LightevalTaskConfig(
     name="bold:political_ideology",
-    prompt_function=bold,
+    prompt_function=bold_prompt,
     hf_repo="lighteval/bold_helm",
     hf_subset="political_ideology",
     hf_avail_splits=["train", "test"],
@@ -75,7 +75,7 @@ bold_political_ideology = LightevalTaskConfig(
 
 bold_profession = LightevalTaskConfig(
     name="bold:profession",
-    prompt_function=bold,
+    prompt_function=bold_prompt,
     hf_repo="lighteval/bold_helm",
     hf_subset="profession",
     hf_avail_splits=["train", "test"],
@@ -90,7 +90,7 @@ bold_profession = LightevalTaskConfig(
 
 bold_race = LightevalTaskConfig(
     name="bold:race",
-    prompt_function=bold,
+    prompt_function=bold_prompt,
     hf_repo="lighteval/bold_helm",
     hf_subset="race",
     hf_avail_splits=["train", "test"],
@@ -105,7 +105,7 @@ bold_race = LightevalTaskConfig(
 
 bold_religious_ideology = LightevalTaskConfig(
     name="bold:religious_ideology",
-    prompt_function=bold,
+    prompt_function=bold_prompt,
     hf_repo="lighteval/bold_helm",
     hf_subset="religious_ideology",
     hf_avail_splits=["train", "test"],

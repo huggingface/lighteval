@@ -24,7 +24,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def imdb(line, task_name: str = None):
+def imdb_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"Passage: {line['input']}\nSentiment: ",
@@ -33,7 +33,7 @@ def imdb(line, task_name: str = None):
     )
 
 
-def imdb_contrastset(line, task_name: str = None):
+def imdb_contrastset_prompt(line, task_name: str = None):
     if line["contrast_input"] is None or line["contrast_references"] is None:
         return imdb(line)
 
@@ -47,7 +47,7 @@ def imdb_contrastset(line, task_name: str = None):
 
 imdb = LightevalTaskConfig(
     name="imdb",
-    prompt_function=imdb,
+    prompt_function=imdb_prompt,
     hf_repo="lighteval/IMDB_helm",
     hf_subset="default",
     hf_avail_splits=["train", "test"],
@@ -65,7 +65,7 @@ imdb = LightevalTaskConfig(
 
 imdb_contrastset = LightevalTaskConfig(
     name="imdb:contrastset",
-    prompt_function=imdb_contrastset,
+    prompt_function=imdb_contrastset_prompt,
     hf_repo="lighteval/IMDB_helm",
     hf_subset="default",
     hf_avail_splits=["test"],

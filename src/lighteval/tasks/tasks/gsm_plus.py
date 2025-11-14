@@ -56,7 +56,7 @@ def sample_to_fewshot(sample):
     return f"{sample.input}\n\nReasoning:\n" + f"{sample.metadata['reasoning']}\n\n" + f"ANSWER: {sample.target}"
 
 
-def gsm_plus(line, task_name: str = None):
+def gsm_plus_prompt(line, task_name: str = None):
     if line["perturbation_type"] == "critical thinking":
         return None
     return Doc(
@@ -69,7 +69,7 @@ def gsm_plus(line, task_name: str = None):
 
 gsm_plus = LightevalTaskConfig(
     name="gsm_plus",
-    prompt_function=gsm_plus,
+    prompt_function=gsm_plus_prompt,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
     solver=[prompt_template(MATH_PROMPT_TEMPLATE), generate(cache=True)],

@@ -37,11 +37,11 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.tasks.arc import arc
 from lighteval.tasks.tasks.gsm8k import gsm8k_prompt
-from lighteval.tasks.tasks.math import math_prompt as math
-from lighteval.tasks.tasks.openbookqa import openbookqa_helm
-from lighteval.tasks.tasks.piqa import piqa_helm as piqa_harness
-from lighteval.tasks.tasks.quac import quac_prompt as quac
-from lighteval.tasks.tasks.triviaqa import triviaqa
+from lighteval.tasks.tasks.math import math_prompt
+from lighteval.tasks.tasks.openbookqa import openbookqa_prompt
+from lighteval.tasks.tasks.piqa import piqa_prompt
+from lighteval.tasks.tasks.quac import quac_prompt
+from lighteval.tasks.tasks.triviaqa import triviaqa_prompt
 from lighteval.tasks.tasks.winogrande import winogrande_prompt
 
 
@@ -119,7 +119,7 @@ COMMON_SENSE_REASONING_TASKS = [
     ),
     LightevalTaskConfig(
         name="piqa",
-        prompt_function=piqa_harness,
+        prompt_function=piqa_prompt,
         hf_repo="piqa",
         hf_subset="plain_text",
         metrics=[
@@ -146,7 +146,7 @@ COMMON_SENSE_REASONING_TASKS = [
     ),
     LightevalTaskConfig(
         name="openbookqa",
-        prompt_function=openbookqa_helm,
+        prompt_function=openbookqa_prompt,
         hf_repo="openbookqa",
         hf_subset="main",
         metrics=[
@@ -223,7 +223,7 @@ def natural_questions_prompt(line, task_name: str = None):
 WORLD_KNOWLEDGE_TASKS = [
     LightevalTaskConfig(
         name="trivia_qa",
-        prompt_function=triviaqa,
+        prompt_function=triviaqa_prompt,
         hf_repo="trivia_qa",
         hf_subset="rc.nocontext",
         metrics=[
@@ -273,7 +273,7 @@ READING_COMP_TASKS = [
     ),
     LightevalTaskConfig(
         name="quac",
-        prompt_function=quac,
+        prompt_function=quac_prompt,
         hf_repo="lighteval/quac_helm",
         hf_subset="deault",
         metrics=[
@@ -297,7 +297,7 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
     def __init__(
         self,
         name,
-        prompt_function=math,
+        prompt_function=math_prompt,
         hf_repo="DigitalLearningGmbH/MATH-lighteval",
         hf_subset=None,
         metrics=[

@@ -50,7 +50,7 @@ def sample_to_fewshot(sample):
     return f"{sample.input}\n\n" + f"ANSWER: {sample.target}"
 
 
-def gpqa(line, task_name: str = None):
+def gpqa_prompt(line, task_name: str = None):
     GPQA_QUERY_TEMPLATE = """
 Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.
 
@@ -78,7 +78,7 @@ D) {D}
     )
 
 
-def gpqa_instruct(line, task_name: str = None):
+def gpqa_instruct_prompt(line, task_name: str = None):
     gold_index = random.randint(0, 3)
     choices = [line["Incorrect Answer 1"], line["Incorrect Answer 2"], line["Incorrect Answer 3"]]
     choices.insert(gold_index, line["Correct Answer"])
@@ -104,7 +104,7 @@ def gpqa_instruct(line, task_name: str = None):
 
 gpqa = LightevalTaskConfig(
     name="gpqa:mc",
-    prompt_function=gpqa,
+    prompt_function=gpqa_prompt,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
     solver=[multiple_choice(cache=True)],
@@ -123,7 +123,7 @@ gpqa = LightevalTaskConfig(
 
 gpqa_diamond_instruct = LightevalTaskConfig(
     name="gpqa:diamond",
-    prompt_function=gpqa_instruct,
+    prompt_function=gpqa_instruct_prompt,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
     solver=[multiple_choice(cache=True)],
@@ -142,7 +142,7 @@ gpqa_diamond_instruct = LightevalTaskConfig(
 
 gpqa_extended_instruct = LightevalTaskConfig(
     name="gpqa:extended",
-    prompt_function=gpqa_instruct,
+    prompt_function=gpqa_instruct_prompt,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
     solver=[multiple_choice(cache=True)],
@@ -161,7 +161,7 @@ gpqa_extended_instruct = LightevalTaskConfig(
 
 gpqa_main_instruct = LightevalTaskConfig(
     name="gpqa:main",
-    prompt_function=gpqa_instruct,
+    prompt_function=gpqa_instruct_prompt,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
     solver=[multiple_choice(cache=True)],

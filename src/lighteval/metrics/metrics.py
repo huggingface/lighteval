@@ -25,7 +25,7 @@ from copy import deepcopy
 
 import numpy as np
 from aenum import Enum
-from inspect_ai.scorer import Score, Target, accuracy, mean, scorer, stderr
+from inspect_ai.scorer import Score, Target, accuracy, scorer, stderr
 from inspect_ai.solver import TaskState
 
 from lighteval.metrics.dynamic_metrics import MultilingualExtractiveMatchMetric
@@ -105,18 +105,6 @@ def math_scorer():
             value="C" if extracted_predictions == extracted_gold else "I",
             explanation=state.output.completion,
             answer=str(extracted_predictions),
-        )
-
-    return score
-
-
-@scorer(metrics=[mean()])
-def perplexity_scorer():
-    async def score(state: TaskState, target: Target):
-        # Compute perplexity of the output
-        # requires the --loglikelihood
-        return Score(
-            value=1,
         )
 
     return score

@@ -24,7 +24,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def asdiv(line, task_name: str = None):
+def asdiv_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"{line['body']}\nQuestion:{line['question']}\nAnswer:",
@@ -35,7 +35,7 @@ def asdiv(line, task_name: str = None):
 
 asdiv = LightevalTaskConfig(
     name="asdiv",
-    prompt_function=asdiv,
+    prompt_function=asdiv_prompt,
     hf_repo="EleutherAI/asdiv",
     hf_subset="asdiv",
     hf_avail_splits=["validation"],

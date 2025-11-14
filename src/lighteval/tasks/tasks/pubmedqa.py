@@ -23,7 +23,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def pubmed_qa_helm(line, task_name: str = None):
+def pubmed_qa_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"{line['QUESTION']}\n{line['CONTEXTS']}\nAnswer: ",
@@ -34,7 +34,7 @@ def pubmed_qa_helm(line, task_name: str = None):
 
 pubmedqa = LightevalTaskConfig(
     name="pubmedqa",
-    prompt_function=pubmed_qa_helm,
+    prompt_function=pubmed_qa_prompt,
     hf_repo="pubmed_qa",
     hf_subset="pqa_labeled",
     hf_avail_splits=["train"],

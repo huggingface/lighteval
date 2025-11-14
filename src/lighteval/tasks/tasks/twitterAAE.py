@@ -23,13 +23,13 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def twitter_aae(line, task_name: str = None):
+def twitter_aae_prompt(line, task_name: str = None):
     return Doc(task_name=task_name, query=line["tweet"], choices=None, gold_index=None)
 
 
 twitterAAE_aa = LightevalTaskConfig(
     name="twitterAAE:aa",
-    prompt_function=twitter_aae,
+    prompt_function=twitter_aae_prompt,
     hf_repo="lighteval/twitterAAE",
     hf_subset="aa",
     hf_avail_splits=["test"],
@@ -45,7 +45,7 @@ twitterAAE_aa = LightevalTaskConfig(
 
 twitterAAE_white = LightevalTaskConfig(
     name="twitterAAE:white",
-    prompt_function=twitter_aae,
+    prompt_function=twitter_aae_prompt,
     hf_repo="lighteval/twitterAAE",
     hf_subset="white",
     hf_avail_splits=["test"],

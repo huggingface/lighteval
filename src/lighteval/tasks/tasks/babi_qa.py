@@ -26,7 +26,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def babi_qa(line, task_name: str = None):
+def babi_qa_prompt(line, task_name: str = None):
     def process_path(path: str) -> str:
         steps = path.split(",")
         directions = {"s": "south", "n": "north", "e": "east", "w": "west"}
@@ -53,7 +53,7 @@ def babi_qa(line, task_name: str = None):
 
 babi_qa = LightevalTaskConfig(
     name="babi_qa",
-    prompt_function=babi_qa,
+    prompt_function=babi_qa_prompt,
     hf_repo="facebook/babi_qa",
     hf_subset="en-valid-qa1",
     hf_avail_splits=["train", "test", "validation"],
