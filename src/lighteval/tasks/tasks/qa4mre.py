@@ -22,14 +22,23 @@ paper:
 https://link.springer.com/chapter/10.1007/978-3-642-40802-1_29
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def qa4mre_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"{line['question']}",
+        choices=[f" {c}" for c in line["choices"]],
+        gold_index=line["label"],
+    )
 
 
 qa4mre_2011 = LightevalTaskConfig(
     name="qa4mre:2011",
-    prompt_function=prompt.qa4mre,
+    prompt_function=qa4mre_prompt,
     hf_repo="qa4mre",
     hf_subset="2011.main.EN",
     hf_avail_splits=["train"],
@@ -47,7 +56,7 @@ qa4mre_2011 = LightevalTaskConfig(
 
 qa4mre_2012 = LightevalTaskConfig(
     name="qa4mre:2012",
-    prompt_function=prompt.qa4mre,
+    prompt_function=qa4mre_prompt,
     hf_repo="qa4mre",
     hf_subset="2012.main.EN",
     hf_avail_splits=["train"],
@@ -65,7 +74,7 @@ qa4mre_2012 = LightevalTaskConfig(
 
 qa4mre_2013 = LightevalTaskConfig(
     name="qa4mre:2013",
-    prompt_function=prompt.qa4mre,
+    prompt_function=qa4mre_prompt,
     hf_repo="qa4mre",
     hf_subset="2013.main.EN",
     hf_avail_splits=["train"],

@@ -27,6 +27,7 @@ Contact:
 
 from collections import OrderedDict
 from functools import partial
+from string import ascii_uppercase
 from typing import Any
 
 from langcodes import Language as LangCodeLanguage
@@ -39,7 +40,6 @@ from lighteval.metrics.normalizations import (
     LogProbPMINorm,
     LogProbTokenNorm,
 )
-from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation
 from lighteval.tasks.requests import Doc
@@ -346,7 +346,7 @@ FILIPINO_GLOBAL_MMLU_TASKS = [
                     line["option_c"],
                     line["option_d"],
                 ],
-                "gold_idx": LETTER_INDICES.index(line["answer"]),
+                "gold_idx": ascii_uppercase.index(line["answer"]),
             },
             formulation=formulation,
         ),
@@ -423,7 +423,7 @@ FILIPINO_KALAHI_TASKS = [
             adapter=lambda line: {
                 "question": line["prompts"][0]["question"],
                 "choices": [entry[3:] for entry in line["prompts"][0]["mcq"].split("\n")],
-                "gold_idx": LETTER_INDICES.index(line["label"]),
+                "gold_idx": ascii_uppercase.index(line["label"]),
             },
             formulation=formulation,
         ),

@@ -19,14 +19,23 @@ paper:
 https://arxiv.org/abs/2410.12853
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def asdiv_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"{line['body']}\nQuestion:{line['question']}\nAnswer:",
+        choices=line["answer"].split(" (")[0],
+        gold_index=[0],
+    )
 
 
 asdiv = LightevalTaskConfig(
     name="asdiv",
-    prompt_function=prompt.asdiv,
+    prompt_function=asdiv_prompt,
     hf_repo="EleutherAI/asdiv",
     hf_subset="asdiv",
     hf_avail_splits=["validation"],

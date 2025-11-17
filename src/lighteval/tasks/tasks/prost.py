@@ -22,14 +22,23 @@ paper:
 https://arxiv.org/abs/2106.03634
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def prost_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=line["question"],
+        choices=[f" {c}" for c in line["choices"]],
+        gold_index=int(line["label"]) if isinstance(line["label"], int) else int(line["label"]),
+    )
 
 
 prost = LightevalTaskConfig(
     name="prost",
-    prompt_function=prompt.prost,
+    prompt_function=prost_prompt,
     hf_repo="lighteval/prost",
     hf_subset="default",
     hf_avail_splits=["test"],

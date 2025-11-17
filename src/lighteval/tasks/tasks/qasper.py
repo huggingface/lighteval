@@ -23,14 +23,23 @@ paper:
 https://arxiv.org/abs/2105.03011
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def qasper_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"Title: {line['title']}\n\nPassage: {line['passage']}\n\n Question: {line['question']}\nAnswer: ",
+        gold_index=0,
+        choices=[line["gold"]],
+    )
 
 
 qasper = LightevalTaskConfig(
     name="qasper",
-    prompt_function=prompt.qasper,
+    prompt_function=qasper_prompt,
     hf_repo="allenai/qasper",
     hf_subset="qasper",
     hf_avail_splits=["train", "validation"],

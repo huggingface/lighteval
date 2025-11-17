@@ -18,14 +18,23 @@ paper:
 https://pubmedqa.github.io/
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def pubmed_qa_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"{line['QUESTION']}\n{line['CONTEXTS']}\nAnswer: ",
+        choices=[line["final_decision"]],
+        gold_index=0,
+    )
 
 
 pubmedqa = LightevalTaskConfig(
     name="pubmedqa",
-    prompt_function=prompt.pubmed_qa_helm,
+    prompt_function=pubmed_qa_prompt,
     hf_repo="pubmed_qa",
     hf_subset="pqa_labeled",
     hf_avail_splits=["train"],

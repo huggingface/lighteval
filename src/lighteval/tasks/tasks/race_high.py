@@ -22,14 +22,35 @@ paper:
 https://aclanthology.org/D17-1082/
 """
 
-import lighteval.tasks.default_prompts as prompt
+import ast
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def race_prompt(line, task_name: str = None):
+    line["problems"] = ast.literal_eval(line["problems"])
+    text = f"Article: {line['article']}\n\n"
+    for problem in line["problems"][:-1]:
+        index = ["A", "B", "C", "D", "E"].index(problem["answer"])
+        if problem["question"][-6:] == "  _  .":
+            text += f"{problem['question'][-5:]}{problem['options'][index]}\n"
+        else:
+            text += f"Question: {problem['question']}\n"
+            text += f"Answer: {problem['options'][index]}\n"
+    text += line["problems"][-1]["question"]
+    return Doc(
+        task_name=task_name,
+        query=text,
+        choices=[f" {o}" for o in line["problems"][-1]["options"]],
+        gold_index=["A", "B", "C", "D", "E"].index(line["problems"][-1]["answer"]),
+    )
 
 
 race_high = LightevalTaskConfig(
     name="race:high",
-    prompt_function=prompt.race,
+    prompt_function=race_prompt,
     hf_repo="EleutherAI/race",
     hf_subset="high",
     hf_avail_splits=["test"],

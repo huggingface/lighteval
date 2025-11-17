@@ -18,14 +18,34 @@ paper:
 https://arxiv.org/abs/2206.03855
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def synthetic_reasoning_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"Please solve the following problem.\n\n{line['source']}\nTarget: ",
+        gold_index=0,
+        choices=[line["target"]],
+        instruction="Please solve the following problem.\n\n",
+    )
+
+
+def synthetic_reasoning_natural_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"Please solve the following problem.\n\nRules: \n{line['question']}",
+        gold_index=0,
+        choices=[line["target"]],
+        instruction="Please solve the following problem.\n\n",
+    )
 
 
 synthetic_reasoning_induction = LightevalTaskConfig(
     name="synthetic_reasoning:induction",
-    prompt_function=prompt.synthetic_reasoning,
+    prompt_function=synthetic_reasoning_prompt,
     hf_repo="lighteval/synthetic_reasoning",
     hf_subset="induction",
     hf_avail_splits=["train", "test", "validation"],
@@ -43,7 +63,7 @@ synthetic_reasoning_induction = LightevalTaskConfig(
 
 synthetic_reasoning_natural_easy = LightevalTaskConfig(
     name="synthetic_reasoning:natural_easy",
-    prompt_function=prompt.synthetic_reasoning_natural,
+    prompt_function=synthetic_reasoning_natural_prompt,
     hf_repo="lighteval/synthetic_reasoning_natural",
     hf_subset="easy",
     hf_avail_splits=["train", "test", "validation"],
@@ -59,7 +79,7 @@ synthetic_reasoning_natural_easy = LightevalTaskConfig(
 
 synthetic_reasoning_natural_hard = LightevalTaskConfig(
     name="synthetic_reasoning:natural_hard",
-    prompt_function=prompt.synthetic_reasoning_natural,
+    prompt_function=synthetic_reasoning_natural_prompt,
     hf_repo="lighteval/synthetic_reasoning_natural",
     hf_subset="hard",
     hf_avail_splits=["train", "test", "validation"],
@@ -75,7 +95,7 @@ synthetic_reasoning_natural_hard = LightevalTaskConfig(
 
 synthetic_reasoning_pattern_match = LightevalTaskConfig(
     name="synthetic_reasoning:pattern_match",
-    prompt_function=prompt.synthetic_reasoning,
+    prompt_function=synthetic_reasoning_prompt,
     hf_repo="lighteval/synthetic_reasoning",
     hf_subset="pattern_match",
     hf_avail_splits=["train", "test", "validation"],
@@ -93,7 +113,7 @@ synthetic_reasoning_pattern_match = LightevalTaskConfig(
 
 synthetic_reasoning_variable_substitution = LightevalTaskConfig(
     name="synthetic_reasoning:variable_substitution",
-    prompt_function=prompt.synthetic_reasoning,
+    prompt_function=synthetic_reasoning_prompt,
     hf_repo="lighteval/synthetic_reasoning",
     hf_subset="variable_substitution",
     hf_avail_splits=["train", "test", "validation"],

@@ -19,10 +19,10 @@ https://huggingface.co/fr-gouv-coordination-ia
 """
 
 import random
+from string import ascii_uppercase
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import math_normalizer
-from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.tasks.ifeval.main import ifeval_metrics
@@ -50,12 +50,12 @@ def prompt_gpqa_fr(line, task_name: str = None):
     instruction = "Choisissez la réponse correcte aux questions suivantes.\n\n"
 
     query = f"Question: {line['Question']}\n"
-    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, choices)])
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(ascii_uppercase, choices)])
     query += "Réponse: "
     return Doc(
         task_name=task_name,
         query=f"{instruction}{query}",
-        choices=LETTER_INDICES[: len(choices)],
+        choices=ascii_uppercase[: len(choices)],
         gold_index=gold_index,
         instruction=instruction,
     )
@@ -65,7 +65,7 @@ def prompt_gpqa_fr(line, task_name: str = None):
 def prompt_bac_fr(line, task_name: str = None):
     prompt = f"Enoncé: {line['enonce']}\n{line['instruction']}\n"
     if line["choix"] is not None:  # Multichoice evaluation
-        # prompt += "\n".join([f"{LETTER_INDICES[ix]}.{choix}" for ix, choix in enumerate(line["choix"])])
+        # prompt += "\n".join([f"{ascii_uppercase[ix]}.{choix}" for ix, choix in enumerate(line["choix"])])
         return Doc(
             task_name=task_name,
             query=prompt,
@@ -78,8 +78,6 @@ def prompt_bac_fr(line, task_name: str = None):
 
 
 # IFEVal-fr task
-
-
 ifeval_fr_task = LightevalTaskConfig(
     name="ifeval-fr",
     prompt_function=prompt_ifeval_fr,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
