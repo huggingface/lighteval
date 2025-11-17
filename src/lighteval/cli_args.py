@@ -243,7 +243,7 @@ tasks = Arg(
     type=Annotated[
         str,
         Argument(
-            help="Comma-separated list of tasks to evaluate. Format: 'task1,task2' or 'suite|task|version|split'. Use 'lighteval tasks list' to see available tasks."
+            help="Comma-separated list of tasks to evaluate. Format: 'task1,task2' or 'task{|fewshot}'. Use 'lighteval tasks list' to see available tasks."
         ),
     ],
     default=None,  # Required argument, no default

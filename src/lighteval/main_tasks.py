@@ -19,6 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import json
 import logging
 
 import typer
@@ -92,3 +93,17 @@ def create(template: str, task_name: str, dataset_name: str):
         f.write(content)
 
     logger.info(f"Task created in custom_{task_name}_task.py")
+
+
+@app.command()
+def dump(
+    load_tasks_multilingual: load_tasks_multilingual.type = load_tasks_multilingual.default,
+    custom_tasks: custom_tasks.type = custom_tasks.default,
+):
+    """Dump all task names, metadata, and docstrings as JSON"""
+    from lighteval.tasks.registry import Registry
+
+    registry = Registry(custom_tasks=custom_tasks, load_multilingual=load_tasks_multilingual)
+    modules_data = registry.get_tasks_dump()
+
+    print(json.dumps(modules_data, indent=2, default=str))

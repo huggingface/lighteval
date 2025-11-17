@@ -25,10 +25,12 @@ import collections
 import copy
 import importlib
 import importlib.util
+import inspect
 import logging
 import os
 import sys
 import time
+from dataclasses import asdict
 from functools import lru_cache
 from itertools import groupby
 from pathlib import Path
@@ -148,6 +150,9 @@ class Registry:
             self.tasks_list = []
         else:
             self.tasks_list = self._get_full_task_list_from_input_string(tasks)
+
+        self._load_multilingual = load_multilingual
+        self._custom_tasks = custom_tasks
 
         self._task_registry = Registry.load_all_task_configs(
             custom_tasks=custom_tasks, load_multilingual=load_multilingual
@@ -433,3 +438,125 @@ class Registry:
         # Print summary
         total_tasks = len([t for t in tasks_names if t.split("|")[1]])
         print(f"\nTotal tasks displayed: {total_tasks}")
+
+    def get_tasks_dump(self) -> list[dict]:  # noqa: C901
+        """Get all task names, metadata, and docstrings as a Python object.
+
+        Returns:
+            list[dict]: List of dictionaries, each containing:
+                - module: Module name
+                - docstring: Parsed docstring as dict
+                - tasks: List of task configs for this module
+        """
+        task_configs = self._task_registry
+
+        TASKS_DIR = Path(__file__).parent / "tasks"
+        TASKS_DIR_MULTILINGUAL = Path(__file__).parent / "multilingual" / "tasks"
+
+        task_files = [f for f in TASKS_DIR.glob("*.py") if f.name != "__init__.py"]
+        task_files_multilingual = [f for f in TASKS_DIR_MULTILINGUAL.glob("*.py") if f.name != "__init__.py"]
+        task_subdirs = [d for d in TASKS_DIR.iterdir() if d.is_dir() and (d / "main.py").exists()]
+
+        module_to_docstring = {}
+
+        for task_file in task_files:
+            module_name = task_file.stem
+            module = importlib.import_module(f"lighteval.tasks.tasks.{module_name}")
+            docstring = (inspect.getdoc(module) or module.__doc__ or "").strip()
+            module_to_docstring[module] = docstring
+
+        if self._load_multilingual:
+            for task_file in task_files_multilingual:
+                module_name = task_file.stem
+                module = importlib.import_module(f"lighteval.tasks.multilingual.tasks.{module_name}")
+                docstring = (inspect.getdoc(module) or module.__doc__ or "").strip()
+                module_to_docstring[module] = docstring
+
+        for task_dir in task_subdirs:
+            module_name = task_dir.name
+            module = importlib.import_module(f"lighteval.tasks.tasks.{module_name}.main")
+            docstring = (inspect.getdoc(module) or module.__doc__ or "").strip()
+            module_to_docstring[module] = docstring
+
+        if self._custom_tasks is not None:
+            custom_tasks_module = Registry.create_custom_tasks_module(self._custom_tasks)
+            docstring = (inspect.getdoc(custom_tasks_module) or custom_tasks_module.__doc__ or "").strip()
+            module_to_docstring[custom_tasks_module] = docstring
+
+        module_to_task_names = {}
+        for module, docstring in module_to_docstring.items():
+            if hasattr(module, "TASKS_TABLE"):
+                task_names_in_module = []
+                for config in getattr(module, "TASKS_TABLE"):
+                    if config.name in task_configs:
+                        task_names_in_module.append(config.name)
+                if task_names_in_module:
+                    module_to_task_names[module] = task_names_in_module
+
+        def parse_docstring(docstring: str) -> dict:  # noqa: C901
+            """Parse a structured docstring into a JSON object.
+
+            Expected format:
+            key:
+            value
+
+            key2:
+            value2
+
+            Fields 'dataset', 'languages', and 'tags' are parsed as lists if comma-separated.
+            """
+            if not docstring:
+                return {}
+
+            parsed = {}
+            lines = docstring.split("\n")
+            current_key = None
+            current_value = []
+
+            list_fields = {"dataset", "languages", "tags"}
+
+            def process_current_key_value(current_key, current_value, list_fields, parsed):
+                if current_key and current_value:
+                    value = "\n".join(current_value).strip()
+                    if current_key in list_fields:
+                        if "," in value:
+                            parsed[current_key] = [item.strip() for item in value.split(",") if item.strip()]
+                        else:
+                            parsed[current_key] = [value] if value else []
+                    else:
+                        parsed[current_key] = value
+
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    process_current_key_value(current_key, current_value, list_fields, parsed)
+                    current_value = []
+                    continue
+
+                if line.endswith(":"):
+                    process_current_key_value(current_key, current_value, list_fields, parsed)
+                    current_key = line[:-1].strip()
+                    current_value = []
+                else:
+                    if current_key:
+                        current_value.append(line)
+
+            process_current_key_value(current_key, current_value, list_fields, parsed)
+            return parsed
+
+        modules_data = []
+        for module, task_names in module_to_task_names.items():
+            docstring_raw = module_to_docstring.get(module, "")
+            docstring_parsed = parse_docstring(docstring_raw)
+            module_name = getattr(module, "__name__", str(module))
+
+            tasks_in_module = []
+            for task_name in task_names:
+                config = task_configs[task_name]
+                config_dict = asdict(config)
+                config_dict = {k: v.__str__() for k, v in config_dict.items()}
+                tasks_in_module.append({"name": task_name, "config": config_dict})
+
+            modules_data.append({"module": module_name, "docstring": docstring_parsed, "tasks": tasks_in_module})
+
+        return modules_data
