@@ -19,13 +19,13 @@ paper:
 
 import random
 import re
+from string import ascii_uppercase
 from typing import Any, Dict, List, Optional, Union
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import LogProbCharNorm
 from lighteval.metrics.utils.llm_as_judge import JudgeLM
 from lighteval.metrics.utils.metric_utils import Metric
-from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc, SamplingMethod
 
@@ -190,7 +190,7 @@ def arabic_mmlu_mt_pfn(line, task_name: str = None):
     choices = [line["A"], line["B"], line["C"], line["D"]]
     # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
     # it will then be applied to arabic letters
-    answer_index = LETTER_INDICES.index(
+    answer_index = ascii_uppercase.index(
         line["answer"]
     )  # line["answer"] is the correct answer. That's why we need to index it !
 
@@ -347,7 +347,7 @@ def arabic_exams_pfn(line, task_name: str = None):
     choices = [line["A"], line["B"], line["C"], line["D"]]
     choices_formatted = [f" {LETTER_INDICES_AR[i]}) {choice}\n" for i, choice in enumerate(choices)]
     answer = line["answer"]
-    answer_index = LETTER_INDICES.index(answer)
+    answer_index = ascii_uppercase.index(answer)
 
     instruction = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
     query = f"{instruction}السؤال: {question}\n"

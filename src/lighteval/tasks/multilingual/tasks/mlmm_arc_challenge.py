@@ -27,13 +27,14 @@ paper:
 https://github.com/nlp-uoregon/mlmm-evaluation
 """
 
+from string import ascii_uppercase
+
 from langcodes import standardize_tag
 
 from lighteval.metrics.dynamic_metrics import (
     LogLikelihoodAccMetric,
 )
 from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm
-from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation
 from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
@@ -55,7 +56,7 @@ TASKS_TABLE = [
                 "choices": line["choices"]["text"],
                 "gold_idx": int(line["answerKey"]) - 1
                 if line["answerKey"].isdigit()
-                else LETTER_INDICES.index(line["answerKey"]),
+                else ascii_uppercase.index(line["answerKey"]),
             },
             formulation=formulation,
         ),

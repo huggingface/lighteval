@@ -21,9 +21,9 @@
 # SOFTWARE.
 
 from dataclasses import dataclass
+from string import ascii_uppercase
 from typing import Literal
 
-from lighteval.tasks.default_prompts import INTEGER_INDICES, LETTER_INDICES
 from lighteval.tasks.templates.utils.translation_literals import TranslationLiterals
 
 
@@ -72,11 +72,11 @@ Formulation = CFFormulation | HybridFormulation | MCFFormulation
 
 def get_prefix(choice_prefix: ChoicePrefix, translation_literals: TranslationLiterals):
     if choice_prefix == "Letters":
-        return LETTER_INDICES
+        return ascii_uppercase
     elif choice_prefix == "NativeLetters":
         return translation_literals.indices
     elif choice_prefix == "Numbers":
-        return INTEGER_INDICES
+        return list(map(str, list(range(1, 27))))
 
 
 def build_choices(
