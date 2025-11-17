@@ -71,7 +71,6 @@ def mmlu_anatomy(line):
 TASKS_TABLE = [
     LightevalTaskConfig(
         name="mmlu:anatomy",
-        suite=["custom"],
         prompt_function=mmlu_anatomy,
         hf_repo="lighteval/mmlu",
         hf_subset="anatomy",
@@ -85,7 +84,6 @@ TASKS_TABLE = [
     ),
     LightevalTaskConfig(
         name="mmlu:anatomy_signs",
-        suite=["custom"],
         prompt_function=mmlu_anatomy_signs,
         hf_repo="lighteval/mmlu",
         hf_subset="anatomy",

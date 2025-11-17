@@ -3,7 +3,7 @@ name:
 AIMO Progress Prize 1
 
 dataset:
-https://www.kaggle.com/competitions/ai-mathematical-olympiad-prize
+lighteval/aimo_progress_prize_1
 
 abstract:
 Task to evaluate LLMs on the training set of the Kaggle AIMO competition:
