@@ -24,8 +24,12 @@ https://mixeval.github.io/
 
 import logging
 import re
+from string import ascii_uppercase
 
 import numpy as np
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import choice, model_graded_fact
+from inspect_ai.solver import generate, multiple_choice
 
 from lighteval.metrics.metrics_sample import JudgeLLMMixEval
 from lighteval.metrics.utils.metric_utils import SampleLevelMetricGrouping
@@ -74,6 +78,19 @@ def mixeval_multichoice_prompt(line, task_name: str = ""):
             "question": line["prompt"],
         },
     )
+
+
+def record_to_sample_freeform(record):
+    query = record["prompt"]
+    target = record["target"][0]
+    return Sample(input=query, target=target)
+
+
+def record_to_sample_multichoice(record):
+    query = record["prompt"]
+    choices = record["options"]
+    target = ascii_uppercase[int(record["target"][0])]
+    return Sample(input=query, target=target, choices=choices)
 
 
 def process_judge_response(x):
@@ -190,6 +207,9 @@ mixeval_freeform_easy = LightevalTaskConfig(
     generation_size=100,
     stop_sequence=[],  # no stop sequence, will use eot token
     version="0.1",
+    sample_fields=record_to_sample_freeform,
+    solver=[generate(cache=True)],
+    scorer=model_graded_fact(),
 )
 
 
@@ -206,6 +226,9 @@ mixeval_multichoice_easy = LightevalTaskConfig(
     generation_size=100,
     stop_sequence=[],  # no stop sequence, will use eot token
     version="0.1",
+    sample_fields=record_to_sample_multichoice,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 mixeval_freeform_hard = LightevalTaskConfig(
@@ -221,6 +244,9 @@ mixeval_freeform_hard = LightevalTaskConfig(
     generation_size=100,
     stop_sequence=[],  # no stop sequence, will use eot token
     version="0.1",
+    sample_fields=record_to_sample_freeform,
+    solver=[generate(cache=True)],
+    scorer=model_graded_fact(),
 )
 
 
@@ -237,6 +263,9 @@ mixeval_multichoice_hard = LightevalTaskConfig(
     generation_size=100,
     stop_sequence=[],  # no stop sequence, will use eot token
     version="0.1",
+    sample_fields=record_to_sample_multichoice,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 

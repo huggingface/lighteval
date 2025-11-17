@@ -21,6 +21,11 @@ https://arxiv.org/abs/2310.16049
 """
 
 import ast
+from string import ascii_uppercase
+
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import choice
+from inspect_ai.solver import multiple_choice
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -32,11 +37,18 @@ def musr_prompt(line, task_name: str = None):
 
     query = line["narrative"] + "\n\n"
     query += line["question"] + "\n\n"
-    for i, choice in enumerate(choices):
-        query += f"{i + 1} - {choice}\n"
+    for i, choice_ in enumerate(choices):
+        query += f"{i + 1} - {choice_}\n"
     query += "Answer:"
 
     return Doc(task_name=task_name, query=query, choices=choices, gold_index=line["answer_index"])
+
+
+def record_to_sample(record):
+    query = record["narrative"] + "\n\n" + record["question"]
+    choices = ast.literal_eval(record["choices"])
+    target = ascii_uppercase[record["answer_index"]]
+    return Sample(input=query, target=target, choices=choices)
 
 
 musr_murder_mysteries = LightevalTaskConfig(
@@ -52,6 +64,9 @@ musr_murder_mysteries = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 
@@ -68,6 +83,9 @@ musr_object_placements = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 
@@ -84,6 +102,9 @@ musr_team_allocation = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 TASKS_TABLE = [
