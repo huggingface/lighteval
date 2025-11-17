@@ -45,7 +45,7 @@ from lighteval.models.model_output import ModelResponse
 from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.cache_management import SampleCache, cached
+from lighteval.utils.cache_management import cached
 from lighteval.utils.imports import (
     is_package_available,
 )
@@ -176,9 +176,6 @@ class VLMTransformersModel(LightevalModel):
         self.prompt_manager = PromptManager(
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
-
-        # Initialize cache for tokenization and predictions
-        self._cache = SampleCache(config)
 
     @property
     def tokenizer(self):

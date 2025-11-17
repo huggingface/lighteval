@@ -53,7 +53,7 @@ from lighteval.models.model_output import (
 from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.cache_management import SampleCache, cached
+from lighteval.utils.cache_management import cached
 from lighteval.utils.imports import (
     is_package_available,
 )
@@ -237,9 +237,6 @@ class TransformersModel(LightevalModel):
             use_chat_template=self.use_chat_template, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
 
-        # Initialize cache for tokenization and predictions
-        self._cache = SampleCache(config)
-
     def cleanup(self):
         """Clean up operations if needed, such as closing an endpoint."""
         del self.model
@@ -300,9 +297,6 @@ class TransformersModel(LightevalModel):
             tokenizer=self.tokenizer,
             system_prompt=config.system_prompt if config else None,
         )
-
-        # Initialize cache for tokenization and predictions
-        self._cache = SampleCache(config) if config else None
 
         return self
 

@@ -144,8 +144,6 @@ class Pipeline:
         self.model_config = model_config
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
-        # Must occur after model and task init
-        self.model._cache._init_registry(self.registry)
         # Must occur after model init
         self._init_accelerator_seeds()
 
@@ -308,6 +306,8 @@ class Pipeline:
                     model_outputs = await self.model.loglikelihood(docs)
                     outputs[sampling_method] = model_outputs
 
+        self.model.cleanup()
+
         return outputs
 
     def _run_model_sync(self):
@@ -327,6 +327,8 @@ class Pipeline:
                     model_outputs = self.model.loglikelihood_rolling(docs)
                     outputs[sampling_method] = model_outputs
 
+        self.model.cleanup()
+
         return outputs
 
     def _run_model(self):
@@ -338,9 +340,6 @@ class Pipeline:
             outputs = asyncio.run(self._run_model_async())
         else:
             outputs = self._run_model_sync()
-
-        # Cleaning up the model before running metrics
-        self.model.cleanup()
 
         return outputs
 

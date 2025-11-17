@@ -27,6 +27,7 @@ import logging
 import os
 from typing import Coroutine, Optional
 
+import rich
 import torch
 from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 from tqdm import tqdm
@@ -37,7 +38,7 @@ from lighteval.models.model_output import ModelResponse
 from lighteval.models.utils import _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.cache_management import SampleCache, cached
+from lighteval.utils.cache_management import cached
 from lighteval.utils.imports import is_package_available, requires
 
 
@@ -215,9 +216,6 @@ class VLLMModel(LightevalModel):
         self.pairwise_tokenization = config.pairwise_tokenization
 
         self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer, config.system_prompt)
-
-        # Initialize cache for tokenization and predictions
-        self._cache = SampleCache(config)
 
     @property
     def tokenizer(self):
@@ -544,6 +542,7 @@ class AsyncVLLMModel(VLLMModel):
     is_async = True
 
     def cleanup(self):
+        self.model.shutdown()
         gc.collect()
         destroy_distributed_environment()
         torch.cuda.empty_cache()
@@ -621,11 +620,30 @@ class AsyncVLLMModel(VLLMModel):
         return output
 
     async def _async_batch(self, docs: list[Doc], generative: bool) -> list:
-        processed_requests = [
-            self._async_one_item(index=index, doc=doc, generative=generative) for index, doc in enumerate(docs)
-        ]
-        results = await asyncio.gather(*processed_requests)
-        return results
+        with rich.progress.Progress(
+            "[progress.description]{task.description}",
+            rich.progress.BarColumn(),
+            "[progress.completed]{task.completed}/{task.total}",
+            "•",
+            rich.progress.TimeElapsedColumn(),
+            "•",
+            rich.progress.TimeRemainingColumn(),
+        ) as pbar:
+            task_id = pbar.add_task("[green]Sending Requests...", total=len(docs))
+
+            async def track(coro):
+                """Wraps a coroutine to update progress bar when done."""
+                result = await coro
+                pbar.update(task_id, advance=1)
+                return result
+
+            wrapped = [
+                track(self._async_one_item(index=index, doc=doc, generative=generative))
+                for index, doc in enumerate(docs)
+            ]
+
+            result = await asyncio.gather(*wrapped)
+        return result
 
     @cached(SamplingMethod.GENERATIVE)
     async def greedy_until(
