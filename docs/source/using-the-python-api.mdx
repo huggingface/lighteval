@@ -41,7 +41,7 @@ def main():
         dtype="float16",
     )
 
-    task = "lighteval|gsm8k|5"
+    task = "gsm8k|5"
 
     pipeline = Pipeline(
         tasks=task,
@@ -78,7 +78,7 @@ You can evaluate on multiple tasks by providing a comma-separated list or a file
 
 ```python
 # Multiple tasks as comma-separated string
-tasks = "lighteval|aime24|0,lighteval|aime25|0"
+tasks = "aime24,aime25"
 
 # Or load from a file
 tasks = "./path/to/tasks.txt"

@@ -26,8 +26,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 gsm8k_test = LightevalTaskConfig(
-    name="gsm8k",
-    suite=["test"],
+    name="gsm8k_test",
     prompt_function=prompt.gsm8k,
     hf_repo="gsm8k",
     hf_subset="main",
@@ -42,8 +41,7 @@ gsm8k_test = LightevalTaskConfig(
 )
 
 gpqa_diamond_test = LightevalTaskConfig(
-    name="gpqa:diamond",
-    suite=["test"],
+    name="gpqa:diamond_test",
     prompt_function=prompt.gpqa_instruct,
     hf_repo="Idavidrein/gpqa",
     hf_subset="gpqa_diamond",

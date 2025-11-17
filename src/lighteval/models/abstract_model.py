@@ -155,6 +155,68 @@ class ModelConfig(BaseModel, extra="forbid"):
         return model_config
 
 
+class InspectAIModelConfig(BaseModel):
+    max_tokens: int | None = None
+    system_message: str | None = None
+    temperature: float | None = None
+    top_p: float | None = None
+    top_k: int | None = None
+    frequence_penalty: float | None = None
+    presence_penalty: float | None = None
+    seed: int | None = None
+    stop_seqs: list[str] | None = None
+    num_choices: int | None = None
+    best_of: int | None = None
+    log_probs: bool | None = None
+    top_logprobs: int | None = None
+    cache_prompt: bool | None = None
+    reasoning_effort: int | None = None
+    reasoning_tokens: int | None = None
+    reasoning_history: bool | None = None
+    response_format: str | None = None
+    parallel_tool_calls: bool | None = None
+    max_tool_output: int | None = None
+    internal_tools: bool | None = None
+
+    @staticmethod
+    def _parse_args(args: str) -> dict:
+        """Parse a string of arguments into a configuration dictionary.
+
+        This function parses a string containing model arguments and generation parameters
+        into a structured dictionary with two main sections: 'model' and 'generation'.
+        It specifically handles generation parameters enclosed in curly braces.
+
+        Args:
+            args (str): A string containing comma-separated key-value pairs, where generation
+                parameters can be specified in a nested JSON-like format.
+
+        Returns:
+            dict: A dictionary with two keys:
+                - 'model': Contains general model configuration parameters
+                - 'generation': Contains generation-specific parameters
+
+        Examples:
+            >>> parse_args("max_length=100")
+            {
+                'max_tokens': '100',
+            }
+        """
+        args = re.sub(r"generation_parameters=\{.*?\},?", "", args).strip(",")
+        return {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.split(",")}
+
+    @classmethod
+    def from_path(cls, path: str):
+        with open(path, "r") as f:
+            config = yaml.safe_load(f)
+
+        return cls(**config["model_parameters"])
+
+    @classmethod
+    def from_args(cls, args: str):
+        config = cls._parse_args(args)
+        return cls(**config)
+
+
 class LightevalModel(ABC):
     DATASET_SPLITS = 4
     is_async = False

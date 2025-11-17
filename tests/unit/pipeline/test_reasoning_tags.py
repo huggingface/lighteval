@@ -22,9 +22,7 @@
 
 import tempfile
 import unittest
-from pathlib import Path
-from types import ModuleType
-from typing import Optional, Union
+from typing import Optional
 from unittest.mock import patch
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -48,7 +46,6 @@ class TestPipelineReasoningTags(unittest.TestCase):
         # Create a simple test task
         self.task_config = LightevalTaskConfig(
             name="test_reasoning_task",
-            suite=["test"],
             prompt_function=lambda x: x,
             hf_repo="test_repo",
             hf_subset="default",
@@ -61,7 +58,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             stop_sequence=["\n"],
             num_fewshots=0,
         )
-        self.input_task_name = "test|test_reasoning_task|0"
+        self.input_task_name = "test_reasoning_task|0"
         self.task_config_name = self.task_config.full_name
 
         # Create test documents with reasoning tags in expected responses
@@ -96,7 +93,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
 
         class FakeRegistry(Registry):
             def __init__(
-                self, tasks: Optional[str] = None, custom_tasks: Optional[Union[str, Path, ModuleType]] = None
+                self, tasks: Optional[str] = None, load_multilingual: bool = False, custom_tasks: Optional[str] = None
             ):
                 self.tasks_list = [input_task_name]
                 # suite_name, task_name, few_shot = input_task_name.split("|")
@@ -147,7 +144,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             model = TestDummyModel(DummyModelConfig(seed=42))
 
             pipeline = Pipeline(
-                tasks="test|test_reasoning_task|0",
+                tasks="test_reasoning_task|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
@@ -159,7 +156,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             # Check that reasoning tags were removed from post-processed text
             details = pipeline.evaluation_tracker.details
             self.assertEqual(
-                details["test|test_reasoning_task|0"][0]["model_response"]["text_post_processed"], ["The answer is 4"]
+                details["test_reasoning_task|0"][0]["model_response"]["text_post_processed"], ["The answer is 4"]
             )
 
     def test_remove_reasoning_tags_enabled_tags_as_string(self):
@@ -193,7 +190,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             model = TestDummyModel(DummyModelConfig(seed=42))
 
             pipeline = Pipeline(
-                tasks="test|test_reasoning_task|0",
+                tasks="test_reasoning_task|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
@@ -205,7 +202,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             # Check that reasoning tags were removed from post-processed text
             details = pipeline.evaluation_tracker.details
             self.assertEqual(
-                details["test|test_reasoning_task|0"][0]["model_response"]["text_post_processed"], ["The answer is 4"]
+                details["test_reasoning_task|0"][0]["model_response"]["text_post_processed"], ["The answer is 4"]
             )
 
     def test_remove_reasoning_tags_enabled_default_tags(self):
@@ -236,7 +233,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             model = TestDummyModel(DummyModelConfig(seed=42))
 
             pipeline = Pipeline(
-                tasks="test|test_reasoning_task|0",
+                tasks="test_reasoning_task|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
@@ -248,7 +245,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             # Check that reasoning tags were removed from post-processed text
             details = pipeline.evaluation_tracker.details
             self.assertEqual(
-                details["test|test_reasoning_task|0"][0]["model_response"]["text_post_processed"], ["The answer is 4"]
+                details["test_reasoning_task|0"][0]["model_response"]["text_post_processed"], ["The answer is 4"]
             )
 
     def test_remove_reasoning_tags_disabled(self):
@@ -282,7 +279,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             model = TestDummyModel(DummyModelConfig(seed=42))
 
             pipeline = Pipeline(
-                tasks="test|test_reasoning_task|0",
+                tasks="test_reasoning_task|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
@@ -294,7 +291,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             # Check that post-processed text is None (= no post processing happened)
             details = pipeline.evaluation_tracker.details
             self.assertIsNone(
-                details["test|test_reasoning_task|0"][0]["model_response"]["text_post_processed"],
+                details["test_reasoning_task|0"][0]["model_response"]["text_post_processed"],
             )
 
     def test_custom_reasoning_tags(self):
@@ -328,7 +325,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             model = TestDummyModel(DummyModelConfig(seed=42))
 
             pipeline = Pipeline(
-                tasks="test|test_reasoning_task|0",
+                tasks="test_reasoning_task|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
@@ -340,7 +337,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             # Check that reasoning tags were removed from post-processed text
             details = pipeline.evaluation_tracker.details
             self.assertEqual(
-                details["test|test_reasoning_task|0"][0]["model_response"]["text_post_processed"], ["Final answer: 4"]
+                details["test_reasoning_task|0"][0]["model_response"]["text_post_processed"], ["Final answer: 4"]
             )
 
     def test_multiple_reasoning_tags(self):
@@ -374,7 +371,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             model = TestDummyModel(DummyModelConfig(seed=42))
 
             pipeline = Pipeline(
-                tasks="test|test|test_reasoning_task|0",
+                tasks="test_reasoning_task|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
@@ -386,7 +383,7 @@ class TestPipelineReasoningTags(unittest.TestCase):
             # Check that reasoning tags were removed from post-processed text
             details = pipeline.evaluation_tracker.details
             self.assertEqual(
-                details["test|test_reasoning_task|0"][0]["model_response"]["text_post_processed"],
+                details["test_reasoning_task|0"][0]["model_response"]["text_post_processed"],
                 ["Some textFinal: 4"],
             )
 

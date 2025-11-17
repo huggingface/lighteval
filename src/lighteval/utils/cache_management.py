@@ -79,7 +79,6 @@ class SampleCache:
 
         Args:
             model_config: Configuration for the model being cached
-            cache_dir: Directory to store cache files
         """
         self.model_config = model_config
         self.model_hash = self.get_model_hash(model_config)
@@ -154,7 +153,7 @@ class SampleCache:
         """Builds a task_hash from the LightevalTaskConfig loaded from the task name and the registry.
 
         Args:
-            full_task_name (str): task_name as provided to the registry (with suite|task|few_shot)
+            full_task_name (str): task name as provided to the registry (supports both task|few_shot and legacy suite|task|few_shot)
 
         Returns:
             str: a hash of the task config in its current state in the registry, or the NO_HASH string if the
@@ -166,11 +165,19 @@ class SampleCache:
             )
             return "NO_HASH"
         if full_task_name not in self._task_hashes:
-            task_suite, task_name, _ = full_task_name.split("|")
-            task_configs: list[LightevalTaskConfig] = sorted(
-                self.registry.task_to_configs[f"{task_suite}|{task_name}"]
-            )
-            config_str = "|".join([task_config.__str__(lite=True) for task_config in task_configs])
+            parts = full_task_name.split("|")
+            if len(parts) == 3:
+                # Legacy: suite|task|few_shot -> ignore suite
+                _, task_name, _ = parts
+            elif len(parts) == 2:
+                task_name, _ = parts
+            else:
+                task_name = parts[0]
+
+            task_configs: list[LightevalTaskConfig] = self.registry.task_to_configs[task_name]
+            # Use deterministic ordering based on string repr
+            config_strs = sorted([cfg.__str__(lite=True) for cfg in task_configs])
+            config_str = "|".join(config_strs)
             task_hash = hashlib.sha256(config_str.encode()).hexdigest()[:16]
             self._task_hashes[full_task_name] = task_hash
         return self._task_hashes[full_task_name]
@@ -213,7 +220,6 @@ class SampleCache:
 
         Args:
             sample: Raw sample data from cache, arrives as a dataframe row
-            sample_type: Type of sample being loaded
 
         Returns:
             Union[dict, ModelResponse]: Loaded sample in appropriate format for processing
@@ -360,7 +366,7 @@ def cached(sampling_method: SamplingMethod = None):  # noqa C901
     Decorator to cache method results based on Doc inputs.
 
     Args:
-        cache_type_name: Type of cache ("tokenization" or "predictions")
+        sampling_method: Sampling method to cache
 
     Usage:
         @cached(SamplingMethod.GENERATIVE)

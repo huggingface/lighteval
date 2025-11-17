@@ -37,29 +37,6 @@ def _to_plain_list(value):
     return new_value
 
 
-def _logprobs_approximately_equal(current_logprobs, reference_logprobs):
-    """Check if logprobs are sorted in the same order.
-    for example:
-        current_logprobs = [1.1, 2.1, 3.1]
-        reference_logprobs = [1.0, 2.0, 3.0]
-        should return True
-    """
-    if current_logprobs is None and reference_logprobs is None:
-        return True
-    if current_logprobs is None or reference_logprobs is None:
-        return False
-
-    current_logprobs = _to_plain_list(current_logprobs)
-    reference_logprobs = _to_plain_list(reference_logprobs)
-
-    # Check if both lists have the same ordering
-    # Convert to relative ordering: 0 for smallest, 1 for second smallest, etc.
-    current_indices = sorted(range(len(current_logprobs)), key=lambda i: current_logprobs[i])
-    reference_indices = sorted(range(len(reference_logprobs)), key=lambda i: reference_logprobs[i])
-
-    return current_indices == reference_indices
-
-
 def load_sample_details(details_dir: str):
     """Load sample-level details from parquet files in the details directory."""
     details = {}
@@ -115,7 +92,7 @@ def _compare_metrics(current, reference):
     reference_metrics = reference["metric"]
 
     metric_diffs = {}
-    for metric_name in set(current_metrics.keys()) | set(reference_metrics.keys()):
+    for metric_name in set(current_metrics.keys()) & set(reference_metrics.keys()):
         current_val = current_metrics.get(metric_name)
         reference_val = reference_metrics.get(metric_name)
 

@@ -20,9 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from pathlib import Path
-from types import ModuleType
-from typing import Optional, Union
+from typing import Optional
 from unittest.mock import patch
 
 from transformers import AutoTokenizer
@@ -99,8 +97,8 @@ def fake_evaluate_task(
 ):
     # Mock the Registry.get_task_dict method
 
-    task_name = f"{lighteval_task.suite[0]}|{lighteval_task.name}"
-    task_name_fs = f"{lighteval_task.suite[0]}|{lighteval_task.name}|{n_fewshot}"
+    task_name = f"{lighteval_task.name}"
+    task_name_fs = f"{lighteval_task.name}|{n_fewshot}"
 
     task_dict = {task_name: lighteval_task}
     evaluation_tracker = EvaluationTracker(output_dir="outputs")
@@ -108,7 +106,7 @@ def fake_evaluate_task(
     # Create a mock Registry class
 
     class FakeRegistry(Registry):
-        def __init__(self, tasks: Optional[str], custom_tasks: Optional[Union[str, Path, ModuleType]] = None):
+        def __init__(self, tasks: Optional[str], load_multilingual: bool = False, custom_tasks: Optional[str] = None):
             self.tasks_list = [task_name_fs]
             self.task_to_configs = {task_name_fs: [lighteval_task.config]}
 

@@ -380,8 +380,8 @@ class MetricsLogger:
         # Build aggregation
         for k, metrics in self.metric_aggregated.items():
             if "|" in k:
-                suite, task, fewshot = k.split("|")
-                grouped_tasks[f"{suite}|{task.split(':')[0]}:_average|{fewshot}"].append(k)
+                task, fewshot = k.split("|")
+                grouped_tasks[f"{task.split(':')[0]}:_average|{fewshot}"].append(k)
             for metric, value in metrics.items():
                 suite_average[metric] = suite_average.get(metric, 0) + value
                 suite_nb[metric] = suite_nb.get(metric, 0) + 1

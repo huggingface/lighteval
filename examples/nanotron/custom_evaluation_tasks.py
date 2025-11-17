@@ -300,7 +300,6 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
         evaluation_splits=["test"],
         few_shots_split=None,
         few_shots_select=None,
-        suite=["custom"],
         generation_size=40,
         stop_sequence=None,
     ):
@@ -314,7 +313,6 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
             evaluation_splits=evaluation_splits,
             few_shots_split=few_shots_split,
             few_shots_select=few_shots_select,
-            suite=suite,
             generation_size=generation_size,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
         )
@@ -401,7 +399,6 @@ class CustomMMLUEvaluationTask(LightevalTaskConfig):
         evaluation_splits=["test"],
         few_shots_split="dev",
         few_shots_select=None,
-        suite=None,
         generation_size=-1,
         stop_sequence=None,
     ):
@@ -415,7 +412,6 @@ class CustomMMLUEvaluationTask(LightevalTaskConfig):
             evaluation_splits=evaluation_splits,
             few_shots_split=few_shots_split,
             few_shots_select=few_shots_select,
-            suite=suite,
             generation_size=generation_size,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
         )
@@ -512,7 +508,6 @@ class CustomBBHEvaluationTask(LightevalTaskConfig):
         evaluation_splits=["train"],
         few_shots_split="train",
         few_shots_select=None,
-        suite=None,
         generation_size=4,
         stop_sequence=None,
     ):
@@ -526,7 +521,6 @@ class CustomBBHEvaluationTask(LightevalTaskConfig):
             evaluation_splits=evaluation_splits,
             few_shots_split=few_shots_split,
             few_shots_select=few_shots_select,
-            suite=suite,
             generation_size=generation_size,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
         )
@@ -646,7 +640,6 @@ class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
         evaluation_splits=["train"],
         few_shots_split="validation",
         few_shots_select=None,
-        suite=None,
         generation_size=-1,
         stop_sequence=None,
     ):
@@ -660,7 +653,6 @@ class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
             evaluation_splits=evaluation_splits,
             few_shots_split=few_shots_split,
             few_shots_select=few_shots_select,
-            suite=suite,
             generation_size=generation_size,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
         )
