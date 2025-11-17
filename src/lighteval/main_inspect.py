@@ -51,6 +51,11 @@ def get_inspect_ai_task(
     name = lighteval_task_config.name
     sample_fields = lighteval_task_config.sample_fields
 
+    if sample_fields is None:
+        raise ValueError(
+            f"Task {name} is not supported by inspect_ai yet. You can either define it or use a different backend, `lighteval --help`"
+        )
+
     dataset_repo = lighteval_task_config.hf_repo
     dataset_subset = lighteval_task_config.hf_subset
     dataset_split = lighteval_task_config.evaluation_splits[0]
