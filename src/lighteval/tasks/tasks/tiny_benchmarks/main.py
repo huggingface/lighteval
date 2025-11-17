@@ -36,13 +36,12 @@ from lighteval.metrics.normalizations import gsm8k_normalizer
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.tasks.tasks.arc import arc as arc_prompt
+from lighteval.tasks.tasks.arc import arc_prompt
 from lighteval.tasks.tasks.gsm8k import gsm8k_prompt
-from lighteval.tasks.tasks.mmlu import mmlu_prompt as mmlu_prompt
-from lighteval.tasks.tasks.truthfulqa import truthful_qa_multiple_choice as truthful_qa_multiple_choice_prompt
+from lighteval.tasks.tasks.hellaswag import hellaswag_prompt
+from lighteval.tasks.tasks.mmlu import mmlu_prompt
+from lighteval.tasks.tasks.truthfulqa import truthful_qa_multiple_choice_prompt
 from lighteval.tasks.tasks.winogrande import winogrande_prompt
-from lighteval.tasks.templates.hellaswag import get_hellaswag_prompt_function
-from lighteval.utils.language import Language
 
 
 # Utility functions
@@ -183,23 +182,6 @@ class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
 
 
 # TASK CREATION
-# Build a local Hellaswag harness-style prompt using the template
-hellaswag_harness = get_hellaswag_prompt_function(
-    Language.ENGLISH,
-    {
-        "ctx_a": "ctx_a",
-        "ctx_b": "ctx_b",
-        "continuations": "endings",
-        "gold_idx": "label",
-        "activity_label": "activity_label",
-    },
-)
-
-
-# MMLU prompt function alias
-def mmlu_harness(line, task_name: str):
-    return mmlu_prompt(line, task_name)
-
 
 task_params = [
     {
@@ -222,7 +204,7 @@ task_params = [
         "name": "hellaswag",
         "dataset": "tinyBenchmarks/tinyHellaswag",
         "subset": "default",
-        "prompt": hellaswag_harness,
+        "prompt": hellaswag_prompt,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -230,7 +212,7 @@ task_params = [
         "name": "mmlu",
         "dataset": "tinyBenchmarks/tinyMMLU",
         "subset": "all",
-        "prompt": mmlu_harness,
+        "prompt": mmlu_prompt,
         "splits": ["validation", "dev", "test"],
         "evaluation_split": ["test"],
     },
