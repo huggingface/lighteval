@@ -44,7 +44,7 @@ from lighteval.logging.info_loggers import (
     VersionsLogger,
 )
 from lighteval.utils.imports import is_package_available, not_installed_error_message
-from lighteval.utils.utils import obj_to_markdown
+from lighteval.utils.utils import obj_to_markdown, sanitize_filename
 
 
 logger = logging.getLogger(__name__)
@@ -336,16 +336,21 @@ class EvaluationTracker:
         logger.info(f"Loading details from {output_dir_details_sub_folder}")
         date_id = output_dir_details_sub_folder.name  # Overwrite date_id in case of latest
         details_datasets = {}
+        sanitized_task_names = {sanitize_filename(tn): tn for tn in task_names}
         for file in self.fs.glob(str(output_dir_details_sub_folder / f"details_*_{date_id}.parquet")):
-            task_name = Path(file).stem.replace("details_", "").replace(f"_{date_id}", "")
-            if "|".join(task_name.split("|")[:-1]) not in task_names:
-                logger.info(f"Skipping {task_name} because it is not in the task_names list")
-                continue
+            sanitized_task_name = Path(file).stem.replace("details_", "").replace(f"_{date_id}", "")
+            if sanitized_task_name in sanitized_task_names:
+                task_name = sanitized_task_names[sanitized_task_name]
+            else:
+                task_name = sanitized_task_name.replace("__", "|")
+                if "|".join(task_name.split("|")[:-1]) not in task_names:
+                    logger.info(f"Skipping {task_name} because it is not in the task_names list")
+                    continue
             dataset = load_dataset("parquet", data_files=file, split="train")
             details_datasets[task_name] = dataset
 
         for task_name in task_names:
-            if not any(task_name.startswith(task_name) for task_name in details_datasets.keys()):
+            if not any(task_name.startswith(tn) for tn in details_datasets.keys()):
                 raise ValueError(
                     f"Task {task_name} not found in details datasets. Check the tasks to be evaluated or the date_id used to load the details ({date_id})."
                 )
@@ -356,7 +361,8 @@ class EvaluationTracker:
         self.fs.mkdirs(output_dir_details_sub_folder, exist_ok=True)
         logger.info(f"Saving details to {output_dir_details_sub_folder}")
         for task_name, dataset in details_datasets.items():
-            output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
+            sanitized_task_name = sanitize_filename(task_name)
+            output_file_details = output_dir_details_sub_folder / f"details_{sanitized_task_name}_{date_id}.parquet"
             with self.fs.open(str(output_file_details), "wb") as f:
                 dataset.to_parquet(f)
 
@@ -421,7 +427,8 @@ class EvaluationTracker:
         results_dataset.to_parquet(f"{fsspec_repo_uri}/{result_file_base_name}.parquet")
 
         for task_name, dataset in details.items():
-            output_file_details = Path(date_id) / f"details_{task_name}_{date_id}.parquet"
+            sanitized_task_name = sanitize_filename(task_name)
+            output_file_details = Path(date_id) / f"details_{sanitized_task_name}_{date_id}.parquet"
             dataset.to_parquet(f"{fsspec_repo_uri}/{output_file_details}")
 
         self.recreate_metadata_card(repo_id)
@@ -474,11 +481,15 @@ class EvaluationTracker:
 
             # subfile have this general format:
             # `2023-09-03T10-57-04.203304/details_harness|hendrycksTest-us_foreign_policy|5_2023-09-03T10-57-04.203304.parquet`
+            # or with sanitized names: `2023-09-03T10-57-04.203304/details_harness_hendrycksTest-us_foreign_policy_5_2023-09-03T10-57-04.203304.parquet`
             # in the iso date, the `:` are replaced by `-` because windows does not allow `:` in their filenames
-            task_name = (
+            sanitized_task_name = (
                 details_file_regex.match(os.path.basename(sub_file)).group("task_name")  # type: ignore
             )
-            # task_name is then equal to `leaderboard|mmlu:us_foreign_policy|5`
+            # Reconstruct original task name by replacing underscores with pipes
+            # This handles both old format (with pipes) and new format (sanitized with underscores)
+            task_name = sanitized_task_name.replace("__", "|")
+            # task_name is then equal to `leaderboard|mmlu:us_foreign_policy|5` (or sanitized equivalent)
 
             # to be able to parse the filename as iso dates, we need to re-replace the `-` with `:`
             # iso_date[13] = iso_date[16] = ':'
@@ -514,7 +525,9 @@ class EvaluationTracker:
                 task_name_match = details_file_regex.match(filename)  # type: ignore
                 if not task_name_match:
                     raise ValueError(f"Could not parse task name from filename: {filename}")
-                task_name = task_name_match.group("task_name")
+                sanitized_task_name = task_name_match.group("task_name")
+                # Reconstruct original task name by replacing underscores with pipes
+                task_name = sanitized_task_name.replace("__", "|")
                 eval_date = task_name_match.group("date")
 
                 sanitized_task = re.sub(r"\W", "_", task_name)

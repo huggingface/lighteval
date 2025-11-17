@@ -37,7 +37,7 @@ from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.registry import Registry
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.utils import as_list
+from lighteval.utils.utils import as_list, sanitize_filename
 
 
 logger = logging.getLogger(__name__)
@@ -114,7 +114,10 @@ class SampleCache:
             try:
                 # cache_file.parts gives all the subfolders of the url, up to the file name
                 # last 3 are task_name/task_hash/file_name.parquet, so we take -3 and -2
-                task_name, task_hash = cache_file.parts[-3:-1]
+                sanitized_task_name, task_hash = cache_file.parts[-3:-1]
+                # Reconstruct original task name by replacing underscores with pipes
+                # This works because task names use "|" as separators and we sanitize by replacing "|" with "_"
+                task_name = sanitized_task_name.replace("__", "|")
                 sampling_method = SamplingMethod[cache_file.stem]  # removes the file extension
                 task_id = TaskID(task_name, task_hash, sampling_method)
 
@@ -191,7 +194,8 @@ class SampleCache:
         Returns:
             Path: Path to the cache file for the given task and sample type
         """
-        return self.cache_dir / task_id.task_name / task_id.task_hash / f"{task_id.sampling_method.name}.parquet"
+        sanitized_task_name = sanitize_filename(task_id.task_name)
+        return self.cache_dir / sanitized_task_name / task_id.task_hash / f"{task_id.sampling_method.name}.parquet"
 
     def get_task_id(self, task_name: str, sampling_method: SamplingMethod) -> TaskID:
         """Returns a unique task indentifier. Depends on the task name,
