@@ -15,7 +15,7 @@ the answer), making it extremely relevant for users to choose a model for their
 next domain specific task.
 
 paper:
-https://huggingface.co/datasets/ArtificialAnalysis/AA-Omniscience-Public/blob/main/AA_Omniscience__Evaluating_Cross_Domain_Knowledge_Reliability_in_Large_Language_Models.pdf
+https://arxiv.org/abs/2511.13029
 
 languages:
 english
