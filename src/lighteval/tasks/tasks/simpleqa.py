@@ -17,6 +17,9 @@ factuality, general-knowledge, qa
 
 paper:
 https://openai.com/index/introducing-simpleqa/
+
+starred:
+true
 """
 
 from lighteval.metrics.metrics import Metrics

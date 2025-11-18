@@ -19,6 +19,9 @@ code-generation
 
 paper:
 https://livecodebench.github.io/
+
+starred:
+true
 """
 
 import json

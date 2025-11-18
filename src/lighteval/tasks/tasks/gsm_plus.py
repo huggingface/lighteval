@@ -18,6 +18,9 @@ math, reasoning
 
 paper:
 https://arxiv.org/abs/2402.19255
+
+starred:
+true
 """
 
 from inspect_ai.dataset import Sample
