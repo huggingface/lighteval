@@ -7,10 +7,21 @@
 
 Lighteval can be used with several different commands, each optimized for different evaluation scenarios.
 
+
+## Find your benchmark
+
+<iframe
+	src="https://openevals-open-benchmark-index.hf.space"
+	frameborder="0"
+	width="850"
+	height="450"
+></iframe>
+
 ## Available Commands
 
 ### Evaluation Backends
 
+- `lighteval eval`: Use [inspect-ai](https://inspect.aisi.org.uk/) as backend to evaluate and inspect your models ! (prefered way)
 - `lighteval accelerate`: Evaluate models on CPU or one or more GPUs using [🤗
   Accelerate](https://github.com/huggingface/accelerate)
 - `lighteval nanotron`: Evaluate models in distributed settings using [⚡️
@@ -44,18 +55,10 @@ To evaluate `GPT-2` on the Truthful QA benchmark with [🤗
 ```bash
 lighteval accelerate \
      "model_name=openai-community/gpt2" \
-     "leaderboard|truthfulqa:mc|0"
+     truthfulqa:mc
 ```
-
-Here, we first choose a backend (either `accelerate`, `nanotron`, `endpoint`, or `vllm`), and then specify the model and task(s) to run.
 
 ### Task Specification
-
-The syntax for the task specification might be a bit hard to grasp at first. The format is as follows:
-
-```txt
-{suite}|{task}|{num_few_shot}
-```
 
 Tasks have a function applied at the sample level and one at the corpus level. For example,
 - an exact match can be applied per sample, then averaged over the corpus to give the final score
@@ -65,7 +68,7 @@ etc.
 If the task you are looking at has a sample level function (`sample_level_fn`) which can be parametrized, you can pass parameters in the CLI.
 For example
 ```txt
-{suite}|{task}@{parameter_name1}={value1}@{parameter_name2}={value2},...|0
+{task}@{parameter_name1}={value1}@{parameter_name2}={value2},...|0
 ```
 
 All officially supported tasks can be found at the [tasks_list](available-tasks) and in the
@@ -86,7 +89,7 @@ When specifying a path to a file, it should start with `./`.
 lighteval accelerate \
      "model_name=openai-community/gpt2" \
      ./path/to/lighteval/examples/tasks/recommended_set.txt
-# or, e.g., "leaderboard|truthfulqa:mc|0,leaderboard|gsm8k|3"
+# or, e.g., "truthfulqa:mc|0,gsm8k|3"
 ```
 
 ## Backend Configuration
@@ -110,7 +113,7 @@ thinking tokens:
 ```bash
 lighteval vllm \
     "model_name=mistralai/Magistral-Small-2507,dtype=float16,data_parallel_size=4" \
-    "lighteval|aime24|0" \
+    aime24 \
     --remove-reasoning-tags \
     --reasoning-tags="[('[THINK]','[/THINK]')]"
 ```

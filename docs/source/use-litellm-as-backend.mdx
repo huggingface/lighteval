@@ -12,7 +12,7 @@ OpenAI, Groq, and many others.
 ```bash
 lighteval endpoint litellm \
     "provider=openai,model_name=gpt-3.5-turbo" \
-    "lighteval|gsm8k|0"
+    gsm8k
 ```
 
 ## Using a Configuration File
@@ -63,8 +63,8 @@ vllm serve HuggingFaceH4/zephyr-7b-beta --host 0.0.0.0 --port 8000
 2. Configure LiteLLM to use the local server:
 ```yaml
 model_parameters:
-    provider: "openai"
-    model_name: "HuggingFaceH4/zephyr-7b-beta"
+    provider: "hosted_vllm"
+    model_name: "hosted_vllm/HuggingFaceH4/zephyr-7b-beta"
     base_url: "http://localhost:8000/v1"
     api_key: ""
 ```

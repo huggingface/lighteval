@@ -25,6 +25,9 @@
   <a href="https://huggingface.co/docs/lighteval/main/en/index" target="_blank">
     <img alt="Documentation" src="https://img.shields.io/badge/Documentation-4F4F4F?style=for-the-badge&logo=readthedocs&logoColor=white" />
   </a>
+  <a href="https://huggingface.co/spaces/OpenEvals/open_benchmark_index" target="_blank">
+    <img alt="Open Benchmark Index" src="https://img.shields.io/badge/Open%20Benchmark%20Index-4F4F4F?style=for-the-badge&logo=huggingface&logoColor=white" />
+  </a>
 </p>
 
 ---
@@ -39,7 +42,10 @@ sample-by-sample results* to debug and see how your models stack-up.
 
 ## Available Tasks
 
-Lighteval supports **7,000+ evaluation tasks** across multiple domains and languages. Here's an overview of some *popular benchmarks*:
+Lighteval supports **1000+ evaluation tasks** across multiple domains and
+languages. Use [this
+space](https://huggingface.co/spaces/OpenEvals/open_benchmark_index) to find what
+you need, or, here's an overview of some *popular benchmarks*:
 
 
 ### 📚 **Knowledge**
@@ -62,7 +68,7 @@ Lighteval supports **7,000+ evaluation tasks** across multiple domains and langu
 
 ### 🌍 **Multilingual Evaluation**
 - **Cross-lingual**: XTREME, Flores200 (200 languages), XCOPA, XQuAD
-- **Language-specific**: 
+- **Language-specific**:
   - **Arabic**: ArabicMMLU
   - **Filipino**: FilBench
   - **French**: IFEval-fr, GPQA-fr, BAC-fr
@@ -94,13 +100,14 @@ If you want to push results to the **Hugging Face Hub**, add your access token a
 an environment variable:
 
 ```shell
-huggingface-cli login
+hf auth login
 ```
 
 ## 🚀 Quickstart
 
 Lighteval offers the following entry points for model evaluation:
 
+- `lighteval eval`: Evaluation models using [inspect-ai](https://inspect.aisi.org.uk/) as a backend (prefered).
 - `lighteval accelerate`: Evaluate models on CPU or one or more GPUs using [🤗
   Accelerate](https://github.com/huggingface/accelerate)
 - `lighteval nanotron`: Evaluate models in distributed settings using [⚡️
@@ -120,9 +127,7 @@ Did not find what you need ? You can always make your custom model API by follow
 Here's a **quick command** to evaluate using the *Accelerate backend*:
 
 ```shell
-lighteval accelerate \
-    "model_name=gpt2" \
-    "leaderboard|truthfulqa:mc|0"
+lighteval eval "hf-inference-providers/openai/gpt-oss-20b" gpqa:diamond
 ```
 
 Or use the **Python API** to run a model *already loaded in memory*!
@@ -136,7 +141,7 @@ from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
 
 MODEL_NAME = "meta-llama/Meta-Llama-3-8B-Instruct"
-BENCHMARKS = "lighteval|gsm8k|0"
+BENCHMARKS = "gsm8k"
 
 evaluation_tracker = EvaluationTracker(output_dir="./results")
 pipeline_params = PipelineParameters(

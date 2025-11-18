@@ -2,37 +2,17 @@
 
 Lighteval provides a flexible framework for creating custom evaluation tasks. This guide explains how to create and integrate new tasks into the evaluation system.
 
-## Task Categories
-
-Before creating a custom task, consider which category it belongs to:
-
-### Core Evaluations
-Core evaluations are evaluations that only require standard logic in their
-metrics and processing, and that we will add to our test suite to ensure non-regression through time. They already see high usage in the community.
-
-### Extended Evaluations
-Extended evaluations are evaluations that require custom logic in their
-metrics (complex normalization, an LLM as a judge, etc.), that we added to
-facilitate the life of users. They already see high usage in the community.
-
-### Community Evaluations
-Community evaluations are submissions by the community of new tasks.
-
-A popular community evaluation can move to become an extended or core evaluation over time.
-
-> [!TIP]
-> You can find examples of custom tasks in the [community_tasks](https://github.com/huggingface/lighteval/tree/main/community_tasks) directory.
-
-## Step-by-Step Creation of a Custom Task
+## Step-by-Step Creation of a Task
 
 > [!WARNING]
-> To contribute your custom task to the Lighteval repository, you would first need
+> To contribute your task to the Lighteval repository, you would first need
 > to install the required dev dependencies by running `pip install -e .[dev]`
 > and then run `pre-commit install` to install the pre-commit hooks.
 
 ### Step 1: Create the Task File
 
-First, create a Python file under the `community_tasks` directory.
+First, create a Python file or directory under the `src/lighteval/tasks/tasks` directory.
+A directory is helpfull if you need to split your file into multiple ones, just make sure to have one of the file named `main.py`.
 
 ### Step 2: Define the Prompt Function
 
@@ -98,7 +78,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 task = LightevalTaskConfig(
     name="myothertask",
     prompt_function=prompt_fn,  # Must be defined in the file or imported
-    suite=["community"],
     hf_repo="your_dataset_repo_on_hf",
     hf_subset="default",
     hf_avail_splits=["train", "test"],
@@ -135,12 +114,11 @@ class CustomSubsetTask(LightevalTaskConfig):
             evaluation_splits=["test"],
             few_shots_split="train",
             few_shots_select="random_sampling_from_train",
-            suite=["community"],
             generation_size=256,
             stop_sequence=["\n", "Question:"],
         )
 
-SUBSET_TASKS = [CustomSubsetTask(name=f"mytask:{subset}", hf_subset=subset) for subset in SAMPLE_SUBSETS]
+SUBSET_TASKS = [CustomSubsetTask(name=f"task:{subset}", hf_subset=subset) for subset in SAMPLE_SUBSETS]
 ```
 
 ### Step 5: Add Tasks to the Table
@@ -169,22 +147,16 @@ Once your file is created, you can run the evaluation with the following command
 ```bash
 lighteval accelerate \
     "model_name=HuggingFaceH4/zephyr-7b-beta" \
-    "community|{custom_task}|{fewshots}" \
+    {task} \
     --custom-tasks {path_to_your_custom_task_file}
 ```
 
 ### Example Usage
 
 ```bash
-# Run a custom task with zero-shot evaluation
+# Run a custom task with 3 shot evaluation
 lighteval accelerate \
     "model_name=openai-community/gpt2" \
-    "community|myothertask|0" \
-    --custom-tasks community_tasks/my_custom_task.py
-
-# Run a custom task with few-shot evaluation
-lighteval accelerate \
-    "model_name=openai-community/gpt2" \
-    "community|myothertask|3" \
+    "myothertask|3" \
     --custom-tasks community_tasks/my_custom_task.py
 ```

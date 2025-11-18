@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import functools
 import logging
 import random
 from dataclasses import asdict, dataclass, field
@@ -27,6 +28,7 @@ from typing import Callable
 
 from datasets import DatasetDict, load_dataset
 from huggingface_hub import TextGenerationInputGrammarType
+from inspect_ai.dataset import Sample
 from multiprocess import Pool
 from pytablewriter import MarkdownTableWriter
 
@@ -88,8 +90,6 @@ class LightevalTaskConfig:
             per input. Defaults to None.
 
     Task Configuration:
-        suite (ListLike[str], optional): Evaluation suites this task belongs to.
-            Defaults to ["custom"].
         version (int, optional): Task version number. Increment when dataset or
             prompt changes. Defaults to 0.
         num_fewshots (int, optional): Number of few-shot examples to include.
@@ -114,6 +114,13 @@ class LightevalTaskConfig:
     hf_subset: str
     metrics: ListLike[Metric]  # List of metric , should be configurable
 
+    # Inspect AI compatible parameters
+    solver: None = None
+    scorer: None = None
+    sample_fields: Callable[[dict], Sample] | None = None
+    sample_to_fewshot: Callable[[Sample], str] | None = None
+    filter: Callable[[dict], bool] | None = None
+
     # Additional hf dataset config
     hf_revision: str | None = None
     hf_filter: Callable[[dict], bool] | None = None
@@ -130,8 +137,6 @@ class LightevalTaskConfig:
     stop_sequence: ListLike[str] | None = None
     num_samples: list[int] | None = None
 
-    suite: ListLike[str] = field(default_factory=lambda: ["custom"])
-
     original_num_docs: int = -1
     effective_num_docs: int = -1
 
@@ -144,16 +149,14 @@ class LightevalTaskConfig:
     def __post_init__(self):
         # If we got a Metrics enums instead of a Metric, we convert
         self.metrics = [metric.value if isinstance(metric, Metrics) else metric for metric in self.metrics]
-
         # Convert list to tuple for hashing
         self.metrics = tuple(self.metrics)
         self.hf_avail_splits = tuple(self.hf_avail_splits)
         self.evaluation_splits = tuple(self.evaluation_splits)
-        self.suite = tuple(self.suite)
         self.stop_sequence = self.stop_sequence if self.stop_sequence is not None else ()
         self.full_name = f"{self.name}|{self.num_fewshots}"  # todo clefourrier: this is likely incorrect
 
-    def __str__(self, lite: bool = False):
+    def __str__(self, lite: bool = False):  # noqa: C901
         md_writer = MarkdownTableWriter()
         md_writer.headers = ["Key", "Value"]
 
@@ -168,8 +171,11 @@ class LightevalTaskConfig:
             if k == "metrics":
                 for ix, metrics in enumerate(v):
                     for metric_k, metric_v in metrics.items():
-                        if isinstance(metric_v, Callable):
-                            repr_v = metric_v.__name__
+                        if isinstance(metric_v, functools.partial):
+                            func_name = getattr(metric_v.func, "__name__", str(metric_v.func))
+                            repr_v = f"partial({func_name}, ...)"
+                        elif isinstance(metric_v, Callable):
+                            repr_v = getattr(metric_v, "__name__", repr(metric_v))
                         elif isinstance(metric_v, Metric.get_allowed_types_for_metrics()):
                             repr_v = str(metric_v)
                         else:
@@ -177,8 +183,11 @@ class LightevalTaskConfig:
                         values.append([f"{k} {ix}: {metric_k}", repr_v])
 
             else:
-                if isinstance(v, Callable):
-                    values.append([k, v.__name__])
+                if isinstance(v, functools.partial):
+                    func_name = getattr(v.func, "__name__", str(v.func))
+                    values.append([k, f"partial({func_name}, ...)"])
+                elif isinstance(v, Callable):
+                    values.append([k, getattr(v, "__name__", repr(v))])
                 else:
                     values.append([k, repr(v)])
 
@@ -204,7 +213,6 @@ class LightevalTask:
         self.config = config
         self.name = config.name
         self.version = config.version
-        self.suite = config.suite
         self.dataset_config = config
 
         self.full_name = config.full_name
@@ -387,7 +395,7 @@ class LightevalTask:
             )
             doc.sampling_methods.extend(self.sampling_methods)
             doc.generation_size = self.generation_size
-            doc.use_logits = True
+            doc.use_logits = doc.use_logits if doc.use_logits is not None else True
             doc.stop_sequences = self.stop_sequence
             doc.num_samples = max(self.num_samples)
             docs.append(doc)

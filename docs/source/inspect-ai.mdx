@@ -1,0 +1,127 @@
+# Evaluate your model with Inspect-AI
+
+Pick the right benchmarks with our benchmark finder:
+Search by language, task type, dataset name, or keywords.
+
+> [!WARNING]
+> Not all tasks are compatible with inspect-ai's API as of yet, we are working on converting all of them !
+
+
+<iframe
+	src="https://openevals-open-benchmark-index.hf.space"
+	frameborder="0"
+	width="850"
+	height="450"
+></iframe>
+
+Once you've chosen a benchmark, run it with `lighteval eval`. Below are examples for common setups.
+
+### Examples
+
+1. Evaluate a model via Hugging Face Inference Providers.
+
+```bash
+lighteval eval "hf-inference-providers/openai/gpt-oss-20b" gpqa:diamond
+```
+
+2. Run multiple evals at the same time.
+
+```bash
+lighteval eval "hf-inference-providers/openai/gpt-oss-20b" gpqa:diamond,aime25
+```
+
+3. Compare providers for the same model.
+
+```bash
+lighteval eval \
+    hf-inference-providers/openai/gpt-oss-20b:fireworks-ai \
+    hf-inference-providers/openai/gpt-oss-20b:together \
+    hf-inference-providers/openai/gpt-oss-20b:nebius \
+    gpqa:diamond
+```
+
+You can also compare every providers serving one model in one line:
+
+```bash
+    hf-inference-providers/openai/gpt-oss-20b:all \
+    "lighteval|gpqa:diamond|0"
+```
+
+4. Evaluate a vLLM or SGLang model.
+
+```bash
+lighteval eval vllm/HuggingFaceTB/SmolLM-135M-Instruct gpqa:diamond
+```
+
+5. See the impact of few-shot on your model.
+
+```bash
+lighteval eval hf-inference-providers/openai/gpt-oss-20b "gsm8k|0,gsm8k|5"
+```
+
+6. Optimize custom server connections.
+
+```bash
+lighteval eval hf-inference-providers/openai/gpt-oss-20b gsm8k \
+    --max-connections 50 \
+    --timeout 30 \
+    --retry-on-error 1 \
+    --max-retries 1 \
+    --max-samples 10
+```
+
+7. Use multiple epochs for more reliable results.
+
+```bash
+lighteval eval hf-inference-providers/openai/gpt-oss-20b aime25 --epochs 16 --epochs-reducer "pass_at_4"
+```
+
+8. Push to the Hub to share results.
+
+```bash
+lighteval eval hf-inference-providers/openai/gpt-oss-20b hle \
+    --bundle-dir gpt-oss-bundle \
+    --repo-id OpenEvals/evals \
+    --max-samples 100
+```
+
+Resulting Space:
+
+<iframe
+	src="https://openevals-evals.static.hf.space"
+	frameborder="0"
+	width="850"
+	height="450"
+></iframe>
+
+9. Change model behaviour
+
+You can use any argument defined in inspect-ai's API.
+
+```bash
+lighteval eval hf-inference-providers/openai/gpt-oss-20b aime25 --temperature 0.1
+```
+
+10. Use model-args to use any inference provider specific argument.
+
+```bash
+lighteval eval google/gemini-2.5-pro aime25 --model-args location=us-east5
+```
+
+```bash
+lighteval eval openai/gpt-4o gpqa:diamond --model-args service_tier=flex,client_timeout=1200
+```
+
+
+LightEval prints a per-model results table:
+
+```
+Completed all tasks in 'lighteval-logs' successfully
+
+|                 Model                 |gpqa|gpqa:diamond|
+|---------------------------------------|---:|-----------:|
+|vllm/HuggingFaceTB/SmolLM-135M-Instruct|0.01|        0.01|
+
+results saved to lighteval-logs
+run "inspect view --log-dir lighteval-logs" to view the results
+```
