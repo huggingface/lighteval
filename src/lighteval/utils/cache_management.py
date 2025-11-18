@@ -116,7 +116,7 @@ class SampleCache:
                 # last 3 are task_name/task_hash/file_name.parquet, so we take -3 and -2
                 sanitized_task_name, task_hash = cache_file.parts[-3:-1]
                 # Reconstruct original task name by replacing underscores with pipes
-                # This works because task names use "|" as separators and we sanitize by replacing "|" with "_"
+                # This works because task names use "|" as separators and we sanitize by replacing "|" with "__"
                 task_name = sanitized_task_name.replace("__", "|")
                 sampling_method = SamplingMethod[cache_file.stem]  # removes the file extension
                 task_id = TaskID(task_name, task_hash, sampling_method)
