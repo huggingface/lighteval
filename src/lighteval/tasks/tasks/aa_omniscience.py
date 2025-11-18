@@ -29,7 +29,7 @@ import re
 import numpy as np
 from inspect_ai.dataset import Sample
 from inspect_ai.model import get_model
-from inspect_ai.scorer import Metric, SampleScore, Score, Target, metric, scorer
+from inspect_ai.scorer import Metric, SampleScore, Score, Target, metric, scorer, stderr
 from inspect_ai.solver import TaskState, generate
 
 from lighteval.metrics.metrics import Metrics
@@ -197,11 +197,10 @@ def omniscience_index() -> Metric:
     return metric
 
 
-@scorer(metrics=[omniscience_index(), accuracy(), hallucination_rate()])
+@scorer(metrics=[omniscience_index(), accuracy(), hallucination_rate(), stderr()])
 def aa_omniscience_scorer(ignore_case: bool = True):
-    grader_model = get_model("hf-inference-providers/openai/gpt-oss-20b")
-
     async def score(state: TaskState, target: Target):
+        grader_model = get_model("hf-inference-providers/openai/gpt-oss-20b")
         answer = state.output.completion
         target = target.text
 
