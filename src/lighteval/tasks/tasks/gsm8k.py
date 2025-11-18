@@ -21,9 +21,9 @@ https://arxiv.org/abs/2110.14168
 from inspect_ai.dataset import Sample
 from inspect_ai.solver import generate, prompt_template
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics, math_scorer
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
 
 
 # setup for problem + instructions for providing answer
@@ -55,9 +55,18 @@ def sample_to_fewshot(sample):
     return f"{sample.input}\n\nReasoning:\n" + f"{sample.metadata['reasoning']}\n\n" + f"ANSWER: {sample.target}"
 
 
+def gsm8k_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"Question: {line['question']}\nAnswer:",
+        choices=[f" {line['answer']}"],
+        gold_index=0,
+    )
+
+
 gsm8k = LightevalTaskConfig(
     name="gsm8k",
-    prompt_function=prompt.gsm8k,
+    prompt_function=gsm8k_prompt,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
     solver=[prompt_template(MATH_PROMPT_TEMPLATE), generate(cache=True)],

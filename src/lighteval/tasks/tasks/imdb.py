@@ -19,14 +19,35 @@ paper:
 https://aclanthology.org/P11-1015/
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def imdb_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"Passage: {line['input']}\nSentiment: ",
+        choices=["Positive", "Negative"],
+        gold_index=["Positive", "Negative"].index(line["reference"]),
+    )
+
+
+def imdb_contrastset_prompt(line, task_name: str = None):
+    if line["contrast_input"] is None or line["contrast_references"] is None:
+        return imdb(line)
+
+    return Doc(
+        task_name=task_name,
+        query=f"Passage: {line['contrast_inputs']}\nSentiment: ",
+        choices=["Positive", "Negative"],
+        gold_index=["Positive", "Negative"].index(line["contrast_references"]),
+    )
 
 
 imdb = LightevalTaskConfig(
     name="imdb",
-    prompt_function=prompt.imdb,
+    prompt_function=imdb_prompt,
     hf_repo="lighteval/IMDB_helm",
     hf_subset="default",
     hf_avail_splits=["train", "test"],
@@ -44,7 +65,7 @@ imdb = LightevalTaskConfig(
 
 imdb_contrastset = LightevalTaskConfig(
     name="imdb:contrastset",
-    prompt_function=prompt.imdb_contrastset,
+    prompt_function=imdb_contrastset_prompt,
     hf_repo="lighteval/IMDB_helm",
     hf_subset="default",
     hf_avail_splits=["test"],

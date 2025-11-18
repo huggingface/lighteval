@@ -22,14 +22,27 @@ paper:
 https://arxiv.org/abs/2007.08124
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def logiqa_prompt(line, task_name: str = None):
+    query = f"Passage: {line['context']}\nQuestion: {line['question']}\nChoices:\n"
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(["A", "B", "C", "D"], line["options"])])
+    query += "Answer:"
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=[f" {c}" for c in line["options"]],
+        gold_index=["a", "b", "c", "d"].index(line["label"]),
+    )
 
 
 logiqa = LightevalTaskConfig(
     name="logiqa",
-    prompt_function=prompt.logiqa,
+    prompt_function=logiqa_prompt,
     hf_repo="lighteval/logiqa_harness",
     hf_subset="logiqa",
     hf_avail_splits=["train", "validation", "test"],

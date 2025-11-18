@@ -23,14 +23,32 @@ paper:
 https://arxiv.org/abs/1811.00937
 """
 
-import lighteval.tasks.default_prompts as prompt
+from string import ascii_uppercase
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def commonsenseqa_prompt(line, task_name: str = None):
+    query = f"The following are multiple choice questions (with answers) about common sense.\nQuestion: {line['question']}\n"
+    query += "".join(
+        [f"{key}. {choice}\n" for key, choice in zip(ascii_uppercase, [f" {c}" for c in line["choices"]["text"]])]
+    )
+    query += "Answer:"
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=list(ascii_uppercase)[: len(line["choices"]["text"])],
+        gold_index=list(ascii_uppercase).index(line["answerKey"].strip()),
+        instruction="The following are multiple choice questions (with answers) about common sense.\n",
+    )
 
 
 commonsenseqa = LightevalTaskConfig(
     name="commonsenseqa",
-    prompt_function=prompt.commonsense_qa,
+    prompt_function=commonsenseqa_prompt,
     hf_repo="tau/commonsense_qa",
     hf_subset="default",
     hf_avail_splits=["train", "test", "validation"],

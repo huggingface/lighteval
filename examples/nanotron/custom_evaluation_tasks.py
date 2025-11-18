@@ -28,14 +28,21 @@ This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then i
 """
 
 import re
+from string import ascii_uppercase
 from typing import List, Tuple
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import LogProbCharNorm, helm_normalizer, math_normalizer
-from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
+from lighteval.tasks.tasks.arc import arc_prompt
+from lighteval.tasks.tasks.gsm8k import gsm8k_prompt
+from lighteval.tasks.tasks.math import math_prompt
+from lighteval.tasks.tasks.openbookqa import openbookqa_prompt
+from lighteval.tasks.tasks.piqa import piqa_prompt
+from lighteval.tasks.tasks.quac import quac_prompt
+from lighteval.tasks.tasks.triviaqa import triviaqa_prompt
+from lighteval.tasks.tasks.winogrande import winogrande_prompt
 
 
 _TASKS_STRINGS: List[Tuple[LightevalTaskConfig, str]] = []
@@ -48,7 +55,7 @@ def commonsense_qa_prompt(line, task_name: str = None):
         task_name=task_name,
         query=line["question"],
         choices=[f" {c}" for c in line["choices"]["text"]],
-        gold_index=LETTER_INDICES.index(line["answerKey"].strip()),
+        gold_index=ascii_uppercase.index(line["answerKey"].strip()),
         instruction="",
     )
 
@@ -99,7 +106,7 @@ COMMON_SENSE_REASONING_TASKS = [
     ),
     LightevalTaskConfig(
         name="winogrande",
-        prompt_function=prompt.winogrande,
+        prompt_function=winogrande_prompt,
         hf_repo="winogrande",
         hf_subset="winogrande_xl",
         metrics=[
@@ -112,7 +119,7 @@ COMMON_SENSE_REASONING_TASKS = [
     ),
     LightevalTaskConfig(
         name="piqa",
-        prompt_function=prompt.piqa_harness,
+        prompt_function=piqa_prompt,
         hf_repo="piqa",
         hf_subset="plain_text",
         metrics=[
@@ -139,7 +146,7 @@ COMMON_SENSE_REASONING_TASKS = [
     ),
     LightevalTaskConfig(
         name="openbookqa",
-        prompt_function=prompt.openbookqa,
+        prompt_function=openbookqa_prompt,
         hf_repo="openbookqa",
         hf_subset="main",
         metrics=[
@@ -152,7 +159,7 @@ COMMON_SENSE_REASONING_TASKS = [
     ),
     LightevalTaskConfig(
         name="arc:easy",
-        prompt_function=prompt.arc,
+        prompt_function=arc_prompt,
         hf_repo="ai2_arc",
         hf_subset="ARC-Easy",
         evaluation_splits=["test"],
@@ -167,7 +174,7 @@ COMMON_SENSE_REASONING_TASKS = [
     ),
     LightevalTaskConfig(
         name="arc:challenge",
-        prompt_function=prompt.arc,
+        prompt_function=arc_prompt,
         hf_repo="ai2_arc",
         hf_subset="ARC-Challenge",
         evaluation_splits=["test"],
@@ -216,7 +223,7 @@ def natural_questions_prompt(line, task_name: str = None):
 WORLD_KNOWLEDGE_TASKS = [
     LightevalTaskConfig(
         name="trivia_qa",
-        prompt_function=prompt.triviaqa,
+        prompt_function=triviaqa_prompt,
         hf_repo="trivia_qa",
         hf_subset="rc.nocontext",
         metrics=[
@@ -266,7 +273,7 @@ READING_COMP_TASKS = [
     ),
     LightevalTaskConfig(
         name="quac",
-        prompt_function=prompt.quac,
+        prompt_function=quac_prompt,
         hf_repo="lighteval/quac_helm",
         hf_subset="deault",
         metrics=[
@@ -290,7 +297,7 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
     def __init__(
         self,
         name,
-        prompt_function=prompt.math,
+        prompt_function=math_prompt,
         hf_repo="DigitalLearningGmbH/MATH-lighteval",
         hf_subset=None,
         metrics=[
@@ -300,7 +307,6 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
         evaluation_splits=["test"],
         few_shots_split=None,
         few_shots_select=None,
-        suite=["custom"],
         generation_size=40,
         stop_sequence=None,
     ):
@@ -314,7 +320,6 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
             evaluation_splits=evaluation_splits,
             few_shots_split=few_shots_split,
             few_shots_select=few_shots_select,
-            suite=suite,
             generation_size=generation_size,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
         )
@@ -331,7 +336,7 @@ MATH_TASKS = [
 ]
 GSM8K = LightevalTaskConfig(
     name="gsm8k",
-    prompt_function=prompt.gsm8k,
+    prompt_function=gsm8k_prompt,
     hf_repo="gsm8k",
     hf_subset="main",
     hf_avail_splits=["train", "test"],
@@ -354,10 +359,10 @@ def mmlu_harness(line, task_name: str = None):
     topic = line["subject"]
     prompt = f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n"
     prompt += line["question"] + "\n"
-    prompt += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, line["choices"])])
+    prompt += "".join([f"{key}. {choice}\n" for key, choice in zip(ascii_uppercase, line["choices"])])
     prompt += "Answer:"
 
-    gold_ix = LETTER_INDICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
+    gold_ix = ascii_uppercase.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
     "__few_shots" in line and line["__few_shots"] is True  # We are adding few shots
 
     return Doc(
@@ -401,7 +406,6 @@ class CustomMMLUEvaluationTask(LightevalTaskConfig):
         evaluation_splits=["test"],
         few_shots_split="dev",
         few_shots_select=None,
-        suite=None,
         generation_size=-1,
         stop_sequence=None,
     ):
@@ -415,7 +419,6 @@ class CustomMMLUEvaluationTask(LightevalTaskConfig):
             evaluation_splits=evaluation_splits,
             few_shots_split=few_shots_split,
             few_shots_select=few_shots_select,
-            suite=suite,
             generation_size=generation_size,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
         )
@@ -512,7 +515,6 @@ class CustomBBHEvaluationTask(LightevalTaskConfig):
         evaluation_splits=["train"],
         few_shots_split="train",
         few_shots_select=None,
-        suite=None,
         generation_size=4,
         stop_sequence=None,
     ):
@@ -526,7 +528,6 @@ class CustomBBHEvaluationTask(LightevalTaskConfig):
             evaluation_splits=evaluation_splits,
             few_shots_split=few_shots_split,
             few_shots_select=few_shots_select,
-            suite=suite,
             generation_size=generation_size,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
         )
@@ -596,7 +597,7 @@ def agi_eval_prompt(line, task_name: str = None):
     prompt += line["question"] + "\n" + "\n".join(cleaned_options) + "\n"
     prompt += "Answer: "
 
-    choices = LETTER_INDICES[: len(line["options"])]
+    choices = ascii_uppercase[: len(line["options"])]
 
     output = Doc(
         query=prompt,
@@ -605,7 +606,7 @@ def agi_eval_prompt(line, task_name: str = None):
 
     if line["label"]:
         output.choices = choices
-        output.gold_index = LETTER_INDICES.index(line["label"].strip())
+        output.gold_index = ascii_uppercase.index(line["label"].strip())
     else:
         output.choices = [line["answer"]]
         output.gold_index = 0
@@ -622,7 +623,7 @@ def agi_eval_prompt_no_letters(line, task_name: str = None):
     output = Doc(
         query=line["question"],
         choices=cleaned_options,
-        gold_index=LETTER_INDICES.index(line["label"].strip()),
+        gold_index=ascii_uppercase.index(line["label"].strip()),
         instruction="",
     )
 
@@ -646,7 +647,6 @@ class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
         evaluation_splits=["train"],
         few_shots_split="validation",
         few_shots_select=None,
-        suite=None,
         generation_size=-1,
         stop_sequence=None,
     ):
@@ -660,7 +660,6 @@ class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
             evaluation_splits=evaluation_splits,
             few_shots_split=few_shots_split,
             few_shots_select=few_shots_select,
-            suite=suite,
             generation_size=generation_size,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
         )

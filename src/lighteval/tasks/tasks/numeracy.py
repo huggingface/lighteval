@@ -17,14 +17,25 @@ math, reasoning
 paper:
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+numeracy_vars_names = ["x", "y", "z"]
+
+
+def numeracy_prompt(line, task_name: str = None):
+    vars = ""
+    for ix, value in enumerate(line["vars"]):
+        vars += f"{numeracy_vars_names[ix]} {value}, "
+    vars += numeracy_vars_names[ix + 1]
+    return Doc(task_name=task_name, query=f"{line['equation']}, {vars}", gold_index=0, choices=[str(line["output"])])
 
 
 numeracy_linear_example = LightevalTaskConfig(
     name="numeracy:linear_example",
-    prompt_function=prompt.numeracy,
+    prompt_function=numeracy_prompt,
     hf_repo="lighteval/numeracy",
     hf_subset="linear_example",
     hf_avail_splits=["train", "test"],
@@ -39,7 +50,7 @@ numeracy_linear_example = LightevalTaskConfig(
 
 numeracy_linear_standard = LightevalTaskConfig(
     name="numeracy:linear_standard",
-    prompt_function=prompt.numeracy,
+    prompt_function=numeracy_prompt,
     hf_repo="lighteval/numeracy",
     hf_subset="linear_standard",
     hf_avail_splits=["train", "test"],
@@ -54,7 +65,7 @@ numeracy_linear_standard = LightevalTaskConfig(
 
 numeracy_parabola_example = LightevalTaskConfig(
     name="numeracy:parabola_example",
-    prompt_function=prompt.numeracy,
+    prompt_function=numeracy_prompt,
     hf_repo="lighteval/numeracy",
     hf_subset="parabola_example",
     hf_avail_splits=["train", "test"],
@@ -69,7 +80,7 @@ numeracy_parabola_example = LightevalTaskConfig(
 
 numeracy_parabola_standard = LightevalTaskConfig(
     name="numeracy:parabola_standard",
-    prompt_function=prompt.numeracy,
+    prompt_function=numeracy_prompt,
     hf_repo="lighteval/numeracy",
     hf_subset="parabola_standard",
     hf_avail_splits=["train", "test"],
@@ -84,7 +95,7 @@ numeracy_parabola_standard = LightevalTaskConfig(
 
 numeracy_paraboloid_example = LightevalTaskConfig(
     name="numeracy:paraboloid_example",
-    prompt_function=prompt.numeracy,
+    prompt_function=numeracy_prompt,
     hf_repo="lighteval/numeracy",
     hf_subset="paraboloid_example",
     hf_avail_splits=["train", "test"],
@@ -99,7 +110,7 @@ numeracy_paraboloid_example = LightevalTaskConfig(
 
 numeracy_paraboloid_standard = LightevalTaskConfig(
     name="numeracy:paraboloid_standard",
-    prompt_function=prompt.numeracy,
+    prompt_function=numeracy_prompt,
     hf_repo="lighteval/numeracy",
     hf_subset="paraboloid_standard",
     hf_avail_splits=["train", "test"],
@@ -114,7 +125,7 @@ numeracy_paraboloid_standard = LightevalTaskConfig(
 
 numeracy_plane_example = LightevalTaskConfig(
     name="numeracy:plane_example",
-    prompt_function=prompt.numeracy,
+    prompt_function=numeracy_prompt,
     hf_repo="lighteval/numeracy",
     hf_subset="plane_example",
     hf_avail_splits=["train", "test"],
@@ -129,7 +140,7 @@ numeracy_plane_example = LightevalTaskConfig(
 
 numeracy_plane_standard = LightevalTaskConfig(
     name="numeracy:plane_standard",
-    prompt_function=prompt.numeracy,
+    prompt_function=numeracy_prompt,
     hf_repo="lighteval/numeracy",
     hf_subset="plane_standard",
     hf_avail_splits=["train", "test"],

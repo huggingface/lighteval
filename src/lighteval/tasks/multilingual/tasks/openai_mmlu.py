@@ -19,12 +19,12 @@ paper:
 """
 
 from functools import partial
+from string import ascii_uppercase
 
 from lighteval.metrics.dynamic_metrics import (
     LogLikelihoodAccMetric,
 )
 from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm
-from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation
 from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
@@ -105,7 +105,7 @@ TASKS_TABLE = [
             lambda line: {
                 "question": line["Question"],
                 "choices": [line["A"], line["B"], line["C"], line["D"]],
-                "gold_idx": LETTER_INDICES.index(line["Answer"]),
+                "gold_idx": ascii_uppercase.index(line["Answer"]),
             },
             formulation=formulation,
         ),

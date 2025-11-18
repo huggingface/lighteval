@@ -18,9 +18,33 @@ paper:
 https://arxiv.org/abs/2406.04127
 """
 
-import lighteval.tasks.default_prompts as prompt
+from string import ascii_uppercase as LETTERS
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def __mmlu_redux_2_prompt(line, topic, task_name: str = None):
+    query = f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n"
+    query += line["question"] + "\n"
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTERS, line["choices"])])
+    query += "Answer: "
+    gold_ix = line["answer"] if isinstance(line["answer"], int) else int(line["answer"])
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=list(LETTERS)[: len(line["choices"])],
+        gold_index=gold_ix,
+        instruction=f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n",
+    )
+
+
+def mmlu_redux_2_prompt(topic):
+    def _fn(line, task_name: str = None):
+        return __mmlu_redux_2_prompt(line, topic, task_name)
+
+    return _fn
 
 
 _MMLU_REDUX_2_SUBSETS = [
@@ -87,7 +111,7 @@ _MMLU_REDUX_2_SUBSETS = [
 TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"mmlu_redux_2:{subset}",
-        prompt_function=lambda line, task_name=None, s=subset: prompt.mmlu_redux_2(line, s, task_name),
+        prompt_function=mmlu_redux_2_prompt(subset),
         hf_repo="edinburgh-dawg/mmlu-redux-2.0",
         hf_subset=subset,
         hf_avail_splits=["test"],

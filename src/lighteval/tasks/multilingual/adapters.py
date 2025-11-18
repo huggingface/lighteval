@@ -22,11 +22,11 @@
 
 import os
 import re
+from string import ascii_uppercase
 
 import numpy as np
 from langcodes import standardize_tag
 
-from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.multilingual.utils.adapters_utils import (
     extract_answers_from_string,
     multichoice_join,
@@ -46,7 +46,7 @@ WHITESPACES = " \t\n\r\f\v"
 
 
 def get_m3exam_adapter(lang: Language, line: dict) -> MCQInput | None:
-    letter_indices = "๑๒๓๔๕" if lang == "th" else LETTER_INDICES
+    letter_indices = "๑๒๓๔๕" if lang == "th" else ascii_uppercase
     is_number_based = line["answer_text"].isdigit()
     clean_options = [M3_EXAM_ANSWER_PREFIX_RE.sub("", c) for c in line["options"]]
     gold_idx = int(line["answer_text"]) - 1 if is_number_based else letter_indices.index(line["answer_text"].upper())
@@ -63,7 +63,7 @@ def get_m3exam_adapter(lang: Language, line: dict) -> MCQInput | None:
 
 
 def thai_exams_adapter(line: dict) -> MCQInput | None:
-    pos_letters = [letter.lower() for letter in LETTER_INDICES[:5]]
+    pos_letters = [letter.lower() for letter in ascii_uppercase[:5]]
 
     letter_to_choices = {letter: line[letter] for letter in pos_letters if letter in line}
     if any(opt.strip() == "" for opt in letter_to_choices.values()):
@@ -117,7 +117,7 @@ def ceval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQIn
     parts = line["question"].rsplit("____", maxsplit=1)
     cleaned_question = parts[0].rstrip(WHITESPACES)
     possible_answers_part = parts[1].lstrip(PUNCT + WHITESPACES).rstrip()
-    gold_index = LETTER_INDICES.index(line["answer"])
+    gold_index = ascii_uppercase.index(line["answer"])
 
     # We only attempt to extract answers if the answers are a chinese numbers
     answer_prefixes = [answer.replace("和", "").strip() for answer in choices]
@@ -296,5 +296,5 @@ def enem_adapter(lang: Language, line: dict) -> MCQInput | None:
     return {
         "question": question,
         "choices": line["alternatives"],
-        "gold_idx": LETTER_INDICES.index(line["label"]),
+        "gold_idx": ascii_uppercase.index(line["label"]),
     }

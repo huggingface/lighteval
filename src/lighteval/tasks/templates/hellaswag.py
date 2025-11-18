@@ -20,11 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import re
 from typing import Callable
 
 from typing_extensions import NotRequired, TypedDict
 
-from lighteval.tasks.default_prompts import hellaswag_preprocess
 from lighteval.tasks.templates.continuation import get_continuation_prompt_function
 from lighteval.tasks.templates.multichoice import create_adapter_from_dict
 from lighteval.tasks.templates.utils.formatting_utils import (
@@ -40,6 +40,26 @@ from lighteval.utils.language import Language
 
 # NLI Cause/Effect (Copa)
 HELLASWAG_QUERY = "{activity_label}{ctx}"
+
+
+def hellaswag_preprocess(
+    text: str,
+    wikihow_artifacts: list[str] = [" [title]"],
+    truncate_dots: bool = False,
+    strip_text: bool = False,
+    dot_replacement: str = ". ",
+):
+    """Comes from LM Eval Harness"""
+    # NOTE: Brackets are artifacts of the WikiHow dataset portion of HellaSwag.
+    for wikihow_artifact in wikihow_artifacts:
+        text = text.replace(wikihow_artifact, dot_replacement)
+    text = re.sub("\\[.*?\\]", "", text)
+    text = text.replace("  ", " ")
+    if truncate_dots:
+        text = text.replace(r"\.+", r"\.")
+    if strip_text:
+        text = text.strip()
+    return text
 
 
 class HellaswagInput(TypedDict):

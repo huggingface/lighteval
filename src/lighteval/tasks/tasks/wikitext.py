@@ -21,14 +21,53 @@ paper:
 https://arxiv.org/abs/1609.07843
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def wikitext_prompt(line, task_name: str = None):  # perplexity metric
+    def wikitext_detokenizer(cur_string):
+        import re
+
+        cur_string = cur_string.replace("s '", "s'")
+        cur_string = re.sub(r"/' [0-9]/", r"/'[0-9]/", cur_string)
+        cur_string = cur_string.replace(" @-@ ", "-")
+        cur_string = cur_string.replace(" @,@ ", ",")
+        cur_string = cur_string.replace(" @.@ ", ".")
+        cur_string = cur_string.replace(" : ", ": ")
+        cur_string = cur_string.replace(" ; ", "; ")
+        cur_string = cur_string.replace(" . ", ". ")
+        cur_string = cur_string.replace(" ! ", "! ")
+        cur_string = cur_string.replace(" ? ", "? ")
+        cur_string = cur_string.replace(" , ", ", ")
+        cur_string = re.sub(r"\(\s*([^\)]*?)\s*\)", r"(\1)", cur_string)
+        cur_string = re.sub(r"\[\s*([^\]]*?)\s*\]", r"[\1]", cur_string)
+        cur_string = re.sub(r"{\s*([^}]*?)\s*}", r"{\1}", cur_string)
+        cur_string = re.sub(r"\"\s*([^\"]*?)\s*\"", r'"\1"', cur_string)
+        cur_string = re.sub(r"'\s*([^']*?)\s*'", r"'\1'", cur_string)
+        cur_string = cur_string.replace("= = = =", "====")
+        cur_string = cur_string.replace("= = =", "===")
+        cur_string = cur_string.replace("= =", "==")
+        cur_string = cur_string.replace(" " + chr(176) + " ", chr(176))
+        cur_string = cur_string.replace(" \n", "\n")
+        cur_string = cur_string.replace("\n ", "\n")
+        cur_string = cur_string.replace(" N ", " 1 ")
+        cur_string = cur_string.replace(" 's", "'s")
+        return cur_string
+
+    return Doc(
+        task_name=task_name,
+        query=wikitext_detokenizer(line["page"]),
+        original_query=line["page"],
+        choices=None,
+        gold_index=None,
+    )
 
 
 wikitext_103_document_level = LightevalTaskConfig(
     name="wikitext:103:document_level",
-    prompt_function=prompt.wikitext_helm,
+    prompt_function=wikitext_prompt,
     hf_repo="EleutherAI/wikitext_document_level",
     hf_subset="wikitext-103-raw-v1",
     hf_avail_splits=["train", "test"],

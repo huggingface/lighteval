@@ -22,14 +22,23 @@ paper:
 https://arxiv.org/abs/1906.04701
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def headqa_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"Question: {line['qtext']}\nAnswer:",
+        choices=[f" {answer['atext']}" for answer in line["answers"]],
+        gold_index=int(line["ra"]) - 1,
+    )
 
 
 headqa_en = LightevalTaskConfig(
     name="headqa:en",
-    prompt_function=prompt.headqa,
+    prompt_function=headqa_prompt,
     hf_repo="lighteval/headqa_harness",
     hf_subset="en",
     hf_avail_splits=["train", "test", "validation"],
@@ -47,7 +56,7 @@ headqa_en = LightevalTaskConfig(
 
 headqa_es = LightevalTaskConfig(
     name="headqa:es",
-    prompt_function=prompt.headqa,
+    prompt_function=headqa_prompt,
     hf_repo="lighteval/headqa_harness",
     hf_subset="es",
     hf_avail_splits=["train", "test", "validation"],

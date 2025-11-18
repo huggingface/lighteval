@@ -18,14 +18,24 @@ paper:
 https://ieeexplore.ieee.org/document/9458712
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def entity_data_imputation_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"What is the missing value?\n{line['text']}\nAnswer:",
+        choices=[line["gold"]],
+        gold_index=0,
+        instruction="What is the missing value?\n",
+    )
 
 
 entity_data_imputation_Buy = LightevalTaskConfig(
     name="entity_data_imputation:Buy",
-    prompt_function=prompt.entity_data_imputation,
+    prompt_function=entity_data_imputation_prompt,
     hf_repo="lighteval/Buy",
     hf_subset="default",
     hf_avail_splits=["train", "test", "valid"],
@@ -43,7 +53,7 @@ entity_data_imputation_Buy = LightevalTaskConfig(
 
 entity_data_imputation_Restaurant = LightevalTaskConfig(
     name="entity_data_imputation:Restaurant",
-    prompt_function=prompt.entity_data_imputation,
+    prompt_function=entity_data_imputation_prompt,
     hf_repo="lighteval/Restaurant",
     hf_subset="default",
     hf_avail_splits=["train"],

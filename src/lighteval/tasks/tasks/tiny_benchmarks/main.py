@@ -29,7 +29,6 @@ import numpy as np
 import requests
 from scipy.optimize import minimize
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import CorpusLevelMetricGrouping
 from lighteval.metrics.metrics_corpus import CorpusLevelComputation
 from lighteval.metrics.metrics_sample import ExactMatches, LoglikelihoodAcc, SampleLevelComputation
@@ -37,6 +36,12 @@ from lighteval.metrics.normalizations import gsm8k_normalizer
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.tasks.tasks.arc import arc_prompt
+from lighteval.tasks.tasks.gsm8k import gsm8k_prompt
+from lighteval.tasks.tasks.hellaswag import hellaswag_prompt
+from lighteval.tasks.tasks.mmlu import mmlu_prompt
+from lighteval.tasks.tasks.truthfulqa import truthful_qa_multiple_choice_prompt
+from lighteval.tasks.tasks.winogrande import winogrande_prompt
 
 
 # Utility functions
@@ -177,12 +182,13 @@ class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
 
 
 # TASK CREATION
+
 task_params = [
     {
         "name": "winogrande",
         "dataset": "tinyBenchmarks/tinyWinogrande",
         "subset": "winogrande_xl",
-        "prompt": prompt.winogrande,
+        "prompt": winogrande_prompt,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -190,7 +196,7 @@ task_params = [
         "name": "arc",
         "dataset": "tinyBenchmarks/tinyAI2_arc",
         "subset": "ARC-Challenge",
-        "prompt": prompt.arc,
+        "prompt": arc_prompt,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -198,7 +204,7 @@ task_params = [
         "name": "hellaswag",
         "dataset": "tinyBenchmarks/tinyHellaswag",
         "subset": "default",
-        "prompt": prompt.hellaswag_harness,
+        "prompt": hellaswag_prompt,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -206,7 +212,7 @@ task_params = [
         "name": "mmlu",
         "dataset": "tinyBenchmarks/tinyMMLU",
         "subset": "all",
-        "prompt": prompt.mmlu_harness,
+        "prompt": mmlu_prompt,
         "splits": ["validation", "dev", "test"],
         "evaluation_split": ["test"],
     },
@@ -214,7 +220,7 @@ task_params = [
         "name": "truthfulqa",
         "dataset": "tinyBenchmarks/tinyTruthfulQA",
         "subset": "multiple_choice",
-        "prompt": prompt.truthful_qa_multiple_choice,
+        "prompt": truthful_qa_multiple_choice_prompt,
         "splits": ["validation"],
         "evaluation_split": ["validation"],
     },
@@ -222,7 +228,7 @@ task_params = [
         "name": "gsm8k",
         "dataset": "tinyBenchmarks/tinyGSM8k",
         "subset": "main",
-        "prompt": prompt.gsm8k,
+        "prompt": gsm8k_prompt,
         "splits": ["train", "test"],
         "evaluation_split": ["test"],
     },

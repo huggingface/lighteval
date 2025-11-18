@@ -19,6 +19,7 @@ https://arxiv.org/abs/2407.21783
 """
 
 from functools import partial
+from string import ascii_uppercase
 
 from langcodes import standardize_tag
 
@@ -26,7 +27,6 @@ from lighteval.metrics.dynamic_metrics import (
     LogLikelihoodAccMetric,
 )
 from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm
-from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation
 from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
@@ -107,7 +107,7 @@ TASKS_TABLE = [
             lambda line: {
                 "question": line["input_question"],
                 "choices": [v for _, v in sorted(line["input_choice_list"].items(), key=lambda x: x[0])],
-                "gold_idx": LETTER_INDICES.index(line["input_correct_responses"][0]),
+                "gold_idx": ascii_uppercase.index(line["input_correct_responses"][0]),
             },
             formulation=formulation,
         ),

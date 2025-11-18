@@ -18,14 +18,23 @@ paper:
 https://arxiv.org/abs/1903.04561
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def civil_comments_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"Passage: {line['text']}\nIs the passage above toxic?\nAnswer: ",
+        choices=[str(line["gold"])],
+        gold_index=0,
+    )
 
 
 civil_comments = LightevalTaskConfig(
     name="civil_comments",
-    prompt_function=prompt.civil_comments,
+    prompt_function=civil_comments_prompt,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="all",
     hf_avail_splits=["train", "test"],
@@ -40,7 +49,7 @@ civil_comments = LightevalTaskConfig(
 
 civil_comments_LGBTQ = LightevalTaskConfig(
     name="civil_comments:LGBTQ",
-    prompt_function=prompt.civil_comments,
+    prompt_function=civil_comments_prompt,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="LGBTQ",
     hf_avail_splits=["train", "test"],
@@ -55,7 +64,7 @@ civil_comments_LGBTQ = LightevalTaskConfig(
 
 civil_comments_black = LightevalTaskConfig(
     name="civil_comments:black",
-    prompt_function=prompt.civil_comments,
+    prompt_function=civil_comments_prompt,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="black",
     hf_avail_splits=["train", "test"],
@@ -70,7 +79,7 @@ civil_comments_black = LightevalTaskConfig(
 
 civil_comments_christian = LightevalTaskConfig(
     name="civil_comments:christian",
-    prompt_function=prompt.civil_comments,
+    prompt_function=civil_comments_prompt,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="christian",
     hf_avail_splits=["train", "test"],
@@ -85,7 +94,7 @@ civil_comments_christian = LightevalTaskConfig(
 
 civil_comments_female = LightevalTaskConfig(
     name="civil_comments:female",
-    prompt_function=prompt.civil_comments,
+    prompt_function=civil_comments_prompt,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="female",
     hf_avail_splits=["train", "test"],
@@ -100,7 +109,7 @@ civil_comments_female = LightevalTaskConfig(
 
 civil_comments_male = LightevalTaskConfig(
     name="civil_comments:male",
-    prompt_function=prompt.civil_comments,
+    prompt_function=civil_comments_prompt,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="male",
     hf_avail_splits=["train", "test"],
@@ -115,7 +124,7 @@ civil_comments_male = LightevalTaskConfig(
 
 civil_comments_muslim = LightevalTaskConfig(
     name="civil_comments:muslim",
-    prompt_function=prompt.civil_comments,
+    prompt_function=civil_comments_prompt,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="muslim",
     hf_avail_splits=["train", "test"],
@@ -130,7 +139,7 @@ civil_comments_muslim = LightevalTaskConfig(
 
 civil_comments_other_religions = LightevalTaskConfig(
     name="civil_comments:other_religions",
-    prompt_function=prompt.civil_comments,
+    prompt_function=civil_comments_prompt,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="other_religions",
     hf_avail_splits=["train", "test"],
@@ -145,7 +154,7 @@ civil_comments_other_religions = LightevalTaskConfig(
 
 civil_comments_white = LightevalTaskConfig(
     name="civil_comments:white",
-    prompt_function=prompt.civil_comments,
+    prompt_function=civil_comments_prompt,
     hf_repo="lighteval/civil_comments_helm",
     hf_subset="white",
     hf_avail_splits=["train", "test"],

@@ -18,14 +18,24 @@ paper:
 https://aclanthology.org/2020.findings-emnlp.301/
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def real_toxicity_prompts_prompt(line, task_name: str = None):
+    # Some variants store text under 'prompt' -> 'text'; handle both flat and nested
+    text = (
+        line["prompt"]["text"]
+        if isinstance(line.get("prompt"), dict) and "text" in line["prompt"]
+        else line.get("text", "")
+    )
+    return Doc(task_name=task_name, query=text, choices=None, gold_index=None)
 
 
 real_toxicity_prompts = LightevalTaskConfig(
     name="real_toxicity_prompts",
-    prompt_function=prompt.real_toxicity_prompts,
+    prompt_function=real_toxicity_prompts_prompt,
     hf_repo="allenai/real-toxicity-prompts",
     hf_subset="default",
     hf_avail_splits=["train"],

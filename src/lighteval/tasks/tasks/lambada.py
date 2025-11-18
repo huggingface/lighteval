@@ -21,14 +21,37 @@ paper:
 https://arxiv.org/abs/1606.06031
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+lambada_cloze_query_suffix = " ____. ->"
+
+
+def lambada_cloze_prompt(line, task_name: str = None):
+    query, choice = line["text"].rsplit(" ", 1)
+    return Doc(
+        task_name=task_name,
+        query=f"{query}{lambada_cloze_query_suffix}",
+        gold_index=0,
+        choices=[f" {choice}"],
+    )
+
+
+def lambada_prompt(line, task_name: str = None):
+    query, choice = line["text"].rsplit(" ", 1)
+    return Doc(
+        task_name=task_name,
+        query=query,
+        gold_index=0,
+        choices=[f" {choice}"],
+    )
 
 
 lambada_standard = LightevalTaskConfig(
     name="lambada:standard",
-    prompt_function=prompt.lambada,
+    prompt_function=lambada_prompt,
     hf_repo="cimec/lambada",
     hf_subset="plain_text",
     hf_avail_splits=["train", "test", "validation"],
@@ -44,7 +67,7 @@ lambada_standard = LightevalTaskConfig(
 
 lambada_standard_cloze = LightevalTaskConfig(
     name="lambada:standard_cloze",
-    prompt_function=prompt.lambada_cloze,
+    prompt_function=lambada_cloze_prompt,
     hf_repo="cimec/lambada",
     hf_subset="plain_text",
     hf_avail_splits=["train", "test", "validation"],

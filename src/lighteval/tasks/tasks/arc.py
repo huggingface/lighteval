@@ -22,14 +22,23 @@ paper:
 https://arxiv.org/abs/1803.05457
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def arc_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"Question: {line['question']}\nAnswer:",
+        choices=[f" {c}" for c in line["choices"]["text"]],
+        gold_index=line["choices"]["label"].index(line["answerKey"]),
+    )
 
 
 arc_challenge = LightevalTaskConfig(
     name="arc:challenge",
-    prompt_function=prompt.arc,
+    prompt_function=arc_prompt,
     hf_repo="allenai/ai2_arc",
     hf_subset="ARC-Challenge",
     hf_avail_splits=["train", "test"],
@@ -46,7 +55,7 @@ arc_challenge = LightevalTaskConfig(
 
 arc_easy = LightevalTaskConfig(
     name="arc:easy",
-    prompt_function=prompt.arc,
+    prompt_function=arc_prompt,
     hf_repo="allenai/ai2_arc",
     hf_subset="ARC-Easy",
     hf_avail_splits=["train", "validation", "test"],

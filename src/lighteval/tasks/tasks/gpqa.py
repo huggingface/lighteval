@@ -30,9 +30,9 @@ from inspect_ai.dataset import Sample
 from inspect_ai.scorer import choice
 from inspect_ai.solver import multiple_choice
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
 
 
 def record_to_sample(record):
@@ -50,9 +50,61 @@ def sample_to_fewshot(sample):
     return f"{sample.input}\n\n" + f"ANSWER: {sample.target}"
 
 
+def gpqa_prompt(line, task_name: str = None):
+    GPQA_QUERY_TEMPLATE = """
+Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.
+
+{Question}
+
+A) {A}
+B) {B}
+C) {C}
+D) {D}
+""".strip()
+    gold_index = random.randint(0, 3)
+    choices = [line["Incorrect Answer 1"], line["Incorrect Answer 2"], line["Incorrect Answer 3"]]
+    choices.insert(gold_index, line["Correct Answer"])
+
+    query = GPQA_QUERY_TEMPLATE.format(
+        A=choices[0], B=choices[1], C=choices[2], D=choices[3], Question=line["Question"]
+    )
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=list(ascii_uppercase)[: len(choices)],
+        gold_index=gold_index,
+        instruction=query,
+    )
+
+
+def gpqa_instruct_prompt(line, task_name: str = None):
+    gold_index = random.randint(0, 3)
+    choices = [line["Incorrect Answer 1"], line["Incorrect Answer 2"], line["Incorrect Answer 3"]]
+    choices.insert(gold_index, line["Correct Answer"])
+    instruction = "Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering."
+    query_template = "{Instruction}\n\n{Question}\n\nA) {A}\nB) {B}\nC) {C}\nD) {D}"
+    query = query_template.format(
+        A=choices[0].strip(),
+        B=choices[1].strip(),
+        C=choices[2].strip(),
+        D=choices[3].strip(),
+        Question=line["Question"].strip(),
+        Instruction=instruction,
+    )
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=list(ascii_uppercase)[: len(choices)],
+        gold_index=gold_index,
+        instruction=instruction,
+    )
+
+
 gpqa = LightevalTaskConfig(
     name="gpqa:mc",
-    prompt_function=prompt.gpqa,
+    prompt_function=gpqa_prompt,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
     solver=[multiple_choice(cache=True)],
@@ -71,7 +123,7 @@ gpqa = LightevalTaskConfig(
 
 gpqa_diamond_instruct = LightevalTaskConfig(
     name="gpqa:diamond",
-    prompt_function=prompt.gpqa_instruct,
+    prompt_function=gpqa_instruct_prompt,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
     solver=[multiple_choice(cache=True)],
@@ -90,7 +142,7 @@ gpqa_diamond_instruct = LightevalTaskConfig(
 
 gpqa_extended_instruct = LightevalTaskConfig(
     name="gpqa:extended",
-    prompt_function=prompt.gpqa_instruct,
+    prompt_function=gpqa_instruct_prompt,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
     solver=[multiple_choice(cache=True)],
@@ -109,7 +161,7 @@ gpqa_extended_instruct = LightevalTaskConfig(
 
 gpqa_main_instruct = LightevalTaskConfig(
     name="gpqa:main",
-    prompt_function=prompt.gpqa_instruct,
+    prompt_function=gpqa_instruct_prompt,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
     solver=[multiple_choice(cache=True)],
