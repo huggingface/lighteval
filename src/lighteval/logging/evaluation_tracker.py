@@ -481,7 +481,7 @@ class EvaluationTracker:
 
             # subfile have this general format:
             # `2023-09-03T10-57-04.203304/details_harness|hendrycksTest-us_foreign_policy|5_2023-09-03T10-57-04.203304.parquet`
-            # or with sanitized names: `2023-09-03T10-57-04.203304/details_harness_hendrycksTest-us_foreign_policy_5_2023-09-03T10-57-04.203304.parquet`
+            # or with sanitized names: `2023-09-03T10-57-04.203304/details_harness_hendrycksTest-us_foreign_policy__5_2023-09-03T10-57-04.203304.parquet`
             # in the iso date, the `:` are replaced by `-` because windows does not allow `:` in their filenames
             sanitized_task_name = (
                 details_file_regex.match(os.path.basename(sub_file)).group("task_name")  # type: ignore
