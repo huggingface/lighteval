@@ -19,14 +19,23 @@ paper:
 https://arxiv.org/abs/1604.01696
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def storycloze_prompt(line, task_name: str = None):
+    context = "\n".join(
+        [line["input_sentence_1"], line["input_sentence_2"], line["input_sentence_3"], line["input_sentence_4"]]
+    )
+    choices = [line["sentence_quiz1"], line["sentence_quiz2"]]
+    gold = int(line["answer_right_ending"]) - 1
+    return Doc(task_name=task_name, query=context + "\n", choices=choices, gold_index=gold)
 
 
 storycloze_2016 = LightevalTaskConfig(
     name="storycloze:2016",
-    prompt_function=prompt.storycloze,
+    prompt_function=storycloze_prompt,
     hf_repo="MoE-UNC/story_cloze",
     hf_subset="2016",
     hf_avail_splits=["validation"],
@@ -42,7 +51,7 @@ storycloze_2016 = LightevalTaskConfig(
 
 storycloze_2018 = LightevalTaskConfig(
     name="storycloze:2018",
-    prompt_function=prompt.storycloze,
+    prompt_function=storycloze_prompt,
     hf_repo="MoE-UNC/story_cloze",
     hf_subset="2018",
     hf_avail_splits=["validation"],

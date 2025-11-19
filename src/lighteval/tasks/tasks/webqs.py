@@ -21,14 +21,31 @@ paper:
 https://aclanthology.org/D13-1160.pdf
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def webqs_prompt(line, task_name: str = None):
+    def _remove_prefixes(aliases):
+        aliases.sort()
+        ret = [aliases[0]]
+        for alias in aliases[1:]:
+            if not alias.startswith(ret[-1]):
+                ret.append(alias)
+        return ret
+
+    return Doc(
+        task_name=task_name,
+        query=f"Question: {line['question']}\nAnswer:",
+        gold_index=0,
+        choices=[[f" {c}" for c in _remove_prefixes(line["answers"])]],
+    )
 
 
 webqs = LightevalTaskConfig(
     name="webqs",
-    prompt_function=prompt.webqs,
+    prompt_function=webqs_prompt,
     hf_repo="stanfordnlp/web_questions",
     hf_subset="default",
     hf_avail_splits=["train", "test"],

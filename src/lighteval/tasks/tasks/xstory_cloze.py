@@ -19,14 +19,23 @@ multilingual, narrative, reasoning
 paper:
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def storycloze_prompt(line, task_name: str = None):
+    context = "\n".join(
+        [line["input_sentence_1"], line["input_sentence_2"], line["input_sentence_3"], line["input_sentence_4"]]
+    )
+    choices = [line["sentence_quiz1"], line["sentence_quiz2"]]
+    gold = int(line["answer_right_ending"]) - 1
+    return Doc(task_name=task_name, query=context + "\n", choices=choices, gold_index=gold)
 
 
 xstory_cloze_en = LightevalTaskConfig(
     name="xstory_cloze:en",
-    prompt_function=prompt.storycloze,
+    prompt_function=storycloze_prompt,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="en",
     hf_avail_splits=["training", "eval"],
@@ -41,7 +50,7 @@ xstory_cloze_en = LightevalTaskConfig(
 
 xstory_cloze_ru = LightevalTaskConfig(
     name="xstory_cloze:ru",
-    prompt_function=prompt.storycloze,
+    prompt_function=storycloze_prompt,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="ru",
     hf_avail_splits=["training", "eval"],
@@ -56,7 +65,7 @@ xstory_cloze_ru = LightevalTaskConfig(
 
 xstory_cloze_zh = LightevalTaskConfig(
     name="xstory_cloze:zh",
-    prompt_function=prompt.storycloze,
+    prompt_function=storycloze_prompt,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="zh",
     hf_avail_splits=["training", "eval"],
@@ -71,7 +80,7 @@ xstory_cloze_zh = LightevalTaskConfig(
 
 xstory_cloze_es = LightevalTaskConfig(
     name="xstory_cloze:es",
-    prompt_function=prompt.storycloze,
+    prompt_function=storycloze_prompt,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="es",
     hf_avail_splits=["training", "eval"],
@@ -86,7 +95,7 @@ xstory_cloze_es = LightevalTaskConfig(
 
 xstory_cloze_ar = LightevalTaskConfig(
     name="xstory_cloze:ar",
-    prompt_function=prompt.storycloze,
+    prompt_function=storycloze_prompt,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="ar",
     hf_avail_splits=["training", "eval"],
@@ -101,7 +110,7 @@ xstory_cloze_ar = LightevalTaskConfig(
 
 xstory_cloze_hi = LightevalTaskConfig(
     name="xstory_cloze:hi",
-    prompt_function=prompt.storycloze,
+    prompt_function=storycloze_prompt,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="hi",
     hf_avail_splits=["training", "eval"],
@@ -116,7 +125,7 @@ xstory_cloze_hi = LightevalTaskConfig(
 
 xstory_cloze_id = LightevalTaskConfig(
     name="xstory_cloze:id",
-    prompt_function=prompt.storycloze,
+    prompt_function=storycloze_prompt,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="id",
     hf_avail_splits=["training", "eval"],
@@ -131,7 +140,7 @@ xstory_cloze_id = LightevalTaskConfig(
 
 xstory_cloze_te = LightevalTaskConfig(
     name="xstory_cloze:te",
-    prompt_function=prompt.storycloze,
+    prompt_function=storycloze_prompt,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="te",
     hf_avail_splits=["training", "eval"],
@@ -146,7 +155,7 @@ xstory_cloze_te = LightevalTaskConfig(
 
 xstory_cloze_sw = LightevalTaskConfig(
     name="xstory_cloze:sw",
-    prompt_function=prompt.storycloze,
+    prompt_function=storycloze_prompt,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="sw",
     hf_avail_splits=["training", "eval"],
@@ -161,7 +170,7 @@ xstory_cloze_sw = LightevalTaskConfig(
 
 xstory_cloze_eu = LightevalTaskConfig(
     name="xstory_cloze:eu",
-    prompt_function=prompt.storycloze,
+    prompt_function=storycloze_prompt,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="eu",
     hf_avail_splits=["training", "eval"],
@@ -176,7 +185,7 @@ xstory_cloze_eu = LightevalTaskConfig(
 
 xstory_cloze_my = LightevalTaskConfig(
     name="xstory_cloze:my",
-    prompt_function=prompt.storycloze,
+    prompt_function=storycloze_prompt,
     hf_repo="juletxara/xstory_cloze",
     hf_subset="my",
     hf_avail_splits=["training", "eval"],

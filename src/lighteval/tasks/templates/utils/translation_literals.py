@@ -21,8 +21,8 @@
 # SOFTWARE.
 
 from dataclasses import dataclass, field
+from string import ascii_uppercase
 
-from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.utils.language import Language
 
 
@@ -60,7 +60,7 @@ class TranslationLiterals:
     semicolon: str = ";"
 
     # Indices
-    indices: list[str] = field(default_factory=lambda: LETTER_INDICES)
+    indices: list[str] = field(default_factory=lambda: ascii_uppercase)
 
     def __getattribute__(self, name: str) -> str:
         value = super().__getattribute__(name)

@@ -18,14 +18,17 @@ math, reasoning
 
 paper:
 https://arxiv.org/abs/2402.19255
+
+starred:
+true
 """
 
 from inspect_ai.dataset import Sample
 from inspect_ai.solver import generate, prompt_template
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics, math_scorer
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
 
 
 # setup for problem + instructions for providing answer
@@ -56,9 +59,20 @@ def sample_to_fewshot(sample):
     return f"{sample.input}\n\nReasoning:\n" + f"{sample.metadata['reasoning']}\n\n" + f"ANSWER: {sample.target}"
 
 
+def gsm_plus_prompt(line, task_name: str = None):
+    if line["perturbation_type"] == "critical thinking":
+        return None
+    return Doc(
+        task_name=task_name,
+        query=f"Question: {line['question']}\n\nAnswer:",
+        choices=[line["answer"]],
+        gold_index=0,
+    )
+
+
 gsm_plus = LightevalTaskConfig(
     name="gsm_plus",
-    prompt_function=prompt.gsm_plus,
+    prompt_function=gsm_plus_prompt,
     sample_fields=record_to_sample,
     sample_to_fewshot=sample_to_fewshot,
     solver=[prompt_template(MATH_PROMPT_TEMPLATE), generate(cache=True)],

@@ -19,6 +19,9 @@ general-knowledge, knowledge, multiple-choice
 
 paper:
 https://arxiv.org/abs/2406.01574
+
+starred:
+true
 """
 
 from string import ascii_uppercase

@@ -20,6 +20,9 @@ general-knowledge, reasoning, qa
 
 paper:
 https://mixeval.github.io/
+
+starred:
+true
 """
 
 import logging

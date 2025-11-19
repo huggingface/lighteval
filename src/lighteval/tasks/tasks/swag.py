@@ -25,14 +25,24 @@ paper:
 https://arxiv.org/abs/1808.05326
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def swag_prompt(line, task_name: str = None):
+    choices = [line["ending0"], line["ending1"], line["ending2"], line["ending3"]]
+    return Doc(
+        task_name=task_name,
+        query=line["startphrase"],
+        choices=choices,
+        gold_index=int(line["label"]),
+    )
 
 
 swag = LightevalTaskConfig(
     name="swag",
-    prompt_function=prompt.swag,
+    prompt_function=swag_prompt,
     hf_repo="allenai/swag",
     hf_subset="regular",
     hf_avail_splits=["train", "validation"],

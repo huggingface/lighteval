@@ -17,15 +17,24 @@ paper:
 https://arxiv.org/abs/2305.20050
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import math_normalizer
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def math_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"Question: {line['problem']}\nAnswer:",
+        choices=[f" {line['solution']}"],
+        gold_index=0,
+    )
 
 
 math_algebra = LightevalTaskConfig(
     name="math:algebra",
-    prompt_function=prompt.math,
+    prompt_function=math_prompt,
     hf_repo="DigitalLearningGmbH/MATH-lighteval",
     hf_subset="algebra",
     hf_avail_splits=["train", "test"],
@@ -49,7 +58,7 @@ math_algebra = LightevalTaskConfig(
 
 math_counting_and_probability = LightevalTaskConfig(
     name="math:counting_and_probability",
-    prompt_function=prompt.math,
+    prompt_function=math_prompt,
     hf_repo="DigitalLearningGmbH/MATH-lighteval",
     hf_subset="counting_and_probability",
     hf_avail_splits=["train", "test"],
@@ -73,7 +82,7 @@ math_counting_and_probability = LightevalTaskConfig(
 
 math_geometry = LightevalTaskConfig(
     name="math:geometry",
-    prompt_function=prompt.math,
+    prompt_function=math_prompt,
     hf_repo="DigitalLearningGmbH/MATH-lighteval",
     hf_subset="geometry",
     hf_avail_splits=["train", "test"],
@@ -97,7 +106,7 @@ math_geometry = LightevalTaskConfig(
 
 math_intermediate_algebra = LightevalTaskConfig(
     name="math:intermediate_algebra",
-    prompt_function=prompt.math,
+    prompt_function=math_prompt,
     hf_repo="DigitalLearningGmbH/MATH-lighteval",
     hf_subset="intermediate_algebra",
     hf_avail_splits=["train", "test"],
@@ -121,7 +130,7 @@ math_intermediate_algebra = LightevalTaskConfig(
 
 math_number_theory = LightevalTaskConfig(
     name="math:number_theory",
-    prompt_function=prompt.math,
+    prompt_function=math_prompt,
     hf_repo="DigitalLearningGmbH/MATH-lighteval",
     hf_subset="number_theory",
     hf_avail_splits=["train", "test"],
@@ -145,7 +154,7 @@ math_number_theory = LightevalTaskConfig(
 
 math_prealgebra = LightevalTaskConfig(
     name="math:prealgebra",
-    prompt_function=prompt.math,
+    prompt_function=math_prompt,
     hf_repo="DigitalLearningGmbH/MATH-lighteval",
     hf_subset="prealgebra",
     hf_avail_splits=["train", "test"],
@@ -169,7 +178,7 @@ math_prealgebra = LightevalTaskConfig(
 
 math_precalculus = LightevalTaskConfig(
     name="math:precalculus",
-    prompt_function=prompt.math,
+    prompt_function=math_prompt,
     hf_repo="DigitalLearningGmbH/MATH-lighteval",
     hf_subset="precalculus",
     hf_avail_splits=["train", "test"],

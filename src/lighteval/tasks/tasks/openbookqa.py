@@ -22,14 +22,32 @@ paper:
 https://arxiv.org/abs/1809.02789
 """
 
-import lighteval.tasks.default_prompts as prompt
+from string import ascii_uppercase
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def openbookqa_prompt(line, task_name: str = None):
+    query = "The following are multiple choice questions (with answers) about common sense.\n"
+    query += f"Question: {line['question_stem']}\n"
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(ascii_uppercase, line["choices"]["text"])])
+    query += "Answer: "
+
+    gold_ix = ["A", "B", "C", "D", "E"].index(line["answerKey"].strip())
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=list(ascii_uppercase[: len(line["choices"]["text"])]),
+        gold_index=gold_ix,
+        instruction="The following are multiple choice questions (with answers) about common sense.\n",
+    )
 
 
 openbookqa = LightevalTaskConfig(
     name="openbookqa",
-    prompt_function=prompt.openbookqa_helm,
+    prompt_function=openbookqa_prompt,
     hf_repo="allenai/openbookqa",
     hf_subset="main",
     hf_avail_splits=["train", "test", "validation"],

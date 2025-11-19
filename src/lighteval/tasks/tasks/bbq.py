@@ -19,14 +19,28 @@ paper:
 https://arxiv.org/abs/2110.08193
 """
 
-import lighteval.tasks.default_prompts as prompt
+from string import ascii_uppercase
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def bbq_prompt(line, task_name: str = None):
+    query = f"The following are multiple choice questions (with answers).\nPassage: {line['context']}\nQuestion: {line['question']}"
+    query += "".join([f"\n{key}. {choice}" for key, choice in zip(ascii_uppercase, line["choices"])])
+    query += "\nAnswer:"
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=list(ascii_uppercase)[: len(line["choices"])],
+        gold_index=int(line["gold_index"]),
+    )
 
 
 bbq = LightevalTaskConfig(
     name="bbq",
-    prompt_function=prompt.bbq,
+    prompt_function=bbq_prompt,
     hf_repo="lighteval/bbq_helm",
     hf_subset="all",
     hf_avail_splits=["train", "test"],
@@ -41,7 +55,7 @@ bbq = LightevalTaskConfig(
 
 bbq_Age = LightevalTaskConfig(
     name="bbq:Age",
-    prompt_function=prompt.bbq,
+    prompt_function=bbq_prompt,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Age",
     hf_avail_splits=["train", "test"],
@@ -56,7 +70,7 @@ bbq_Age = LightevalTaskConfig(
 
 bbq_Disability_status = LightevalTaskConfig(
     name="bbq:Disability_status",
-    prompt_function=prompt.bbq,
+    prompt_function=bbq_prompt,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Disability_status",
     hf_avail_splits=["train", "test"],
@@ -71,7 +85,7 @@ bbq_Disability_status = LightevalTaskConfig(
 
 bbq_Gender_identity = LightevalTaskConfig(
     name="bbq:Gender_identity",
-    prompt_function=prompt.bbq,
+    prompt_function=bbq_prompt,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Gender_identity",
     hf_avail_splits=["train", "test"],
@@ -86,7 +100,7 @@ bbq_Gender_identity = LightevalTaskConfig(
 
 bbq_Nationality = LightevalTaskConfig(
     name="bbq:Nationality",
-    prompt_function=prompt.bbq,
+    prompt_function=bbq_prompt,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Nationality",
     hf_avail_splits=["train", "test"],
@@ -101,7 +115,7 @@ bbq_Nationality = LightevalTaskConfig(
 
 bbq_Physical_appearance = LightevalTaskConfig(
     name="bbq:Physical_appearance",
-    prompt_function=prompt.bbq,
+    prompt_function=bbq_prompt,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Physical_appearance",
     hf_avail_splits=["train", "test"],
@@ -116,7 +130,7 @@ bbq_Physical_appearance = LightevalTaskConfig(
 
 bbq_Race_ethnicity = LightevalTaskConfig(
     name="bbq:Race_ethnicity",
-    prompt_function=prompt.bbq,
+    prompt_function=bbq_prompt,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Race_ethnicity",
     hf_avail_splits=["train", "test"],
@@ -131,7 +145,7 @@ bbq_Race_ethnicity = LightevalTaskConfig(
 
 bbq_Race_x_SES = LightevalTaskConfig(
     name="bbq:Race_x_SES",
-    prompt_function=prompt.bbq,
+    prompt_function=bbq_prompt,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Race_x_SES",
     hf_avail_splits=["train", "test"],
@@ -146,7 +160,7 @@ bbq_Race_x_SES = LightevalTaskConfig(
 
 bbq_Race_x_gender = LightevalTaskConfig(
     name="bbq:Race_x_gender",
-    prompt_function=prompt.bbq,
+    prompt_function=bbq_prompt,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Race_x_gender",
     hf_avail_splits=["train", "test"],
@@ -161,7 +175,7 @@ bbq_Race_x_gender = LightevalTaskConfig(
 
 bbq_Religion = LightevalTaskConfig(
     name="bbq:Religion",
-    prompt_function=prompt.bbq,
+    prompt_function=bbq_prompt,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Religion",
     hf_avail_splits=["train", "test"],
@@ -176,7 +190,7 @@ bbq_Religion = LightevalTaskConfig(
 
 bbq_SES = LightevalTaskConfig(
     name="bbq:SES",
-    prompt_function=prompt.bbq,
+    prompt_function=bbq_prompt,
     hf_repo="lighteval/bbq_helm",
     hf_subset="SES",
     hf_avail_splits=["train", "test"],
@@ -191,7 +205,7 @@ bbq_SES = LightevalTaskConfig(
 
 bbq_Sexual_orientation = LightevalTaskConfig(
     name="bbq:Sexual_orientation",
-    prompt_function=prompt.bbq,
+    prompt_function=bbq_prompt,
     hf_repo="lighteval/bbq_helm",
     hf_subset="Sexual_orientation",
     hf_avail_splits=["train", "test"],

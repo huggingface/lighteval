@@ -17,16 +17,33 @@ factuality, general-knowledge, qa
 
 paper:
 https://openai.com/index/introducing-simpleqa/
+
+starred:
+true
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def simpleqa_prompt(line, task_name: str = None):
+    query = f"Question: {line['question']}\n"
+    query += "".join(
+        [f"\n{key}. {choice}" for key, choice in zip(["A", "B", "C", "D", "E", "F"], line["choices"]["text"])]
+    )
+    query += "\nAnswer:"
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=line["choices"]["text"],
+        gold_index=line["choices"]["label"].index(line["answerKey"]),
+    )
 
 
 simpleqa = LightevalTaskConfig(
     name="simpleqa",
-    prompt_function=prompt.simpleqa,
+    prompt_function=simpleqa_prompt,
     hf_repo="lighteval/SimpleQA",
     hf_subset="default",
     hf_avail_splits=["test"],

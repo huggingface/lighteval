@@ -16,6 +16,9 @@ instruction-following
 
 paper:
 https://arxiv.org/abs/2507.02833
+
+starred:
+true
 """
 
 import numpy as np
@@ -168,7 +171,7 @@ ifbench_multiturn = LightevalTaskConfig(
     name="ifbench_multiturn",
     prompt_function=ifbench_prompt,
     hf_repo="allenai/IFBench_multi-turn",
-    hf_subset="default",
+    hf_subset="ifbench_constraints",
     metrics=[ifbench_metrics],
     hf_avail_splits=["test"],
     evaluation_splits=["test"],

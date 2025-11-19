@@ -19,14 +19,34 @@ https://arxiv.org/abs/2210.13448
 https://arxiv.org/abs/2210.13448
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def legal_summarization_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"###\nArticle:{line['text']}\n\nSummarize the above article in 3 sentences.\n",
+        choices=[str(line["summary"])],
+        gold_index=0,
+        specific={"text": line["text"]},
+    )
+
+
+def multilexsum_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"###\nArticle: {line['article']}\n\nSummarize the above article in 2 sentences.\n",
+        gold_index=0,
+        choices=[line["summary"]],
+        specific={"text": line["article"]},
+    )
 
 
 legal_summarization_billsum = LightevalTaskConfig(
     name="legal_summarization:billsum",
-    prompt_function=prompt.legal_summarization,
+    prompt_function=legal_summarization_prompt,
     hf_repo="lighteval/legal_summarization",
     hf_subset="BillSum",
     hf_avail_splits=["train", "test"],
@@ -49,7 +69,7 @@ legal_summarization_billsum = LightevalTaskConfig(
 
 legal_summarization_eurlexsum = LightevalTaskConfig(
     name="legal_summarization:eurlexsum",
-    prompt_function=prompt.legal_summarization,
+    prompt_function=legal_summarization_prompt,
     hf_repo="lighteval/legal_summarization",
     hf_subset="EurLexSum",
     hf_avail_splits=["train", "test", "validation"],
@@ -72,7 +92,7 @@ legal_summarization_eurlexsum = LightevalTaskConfig(
 
 legal_summarization_multilexsum = LightevalTaskConfig(
     name="legal_summarization:multilexsum",
-    prompt_function=prompt.multilexsum,
+    prompt_function=multilexsum_prompt,
     hf_repo="lighteval/legal_summarization",
     hf_subset="MultiLexSum",
     hf_avail_splits=["train", "test", "validation"],

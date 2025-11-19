@@ -19,14 +19,18 @@ paper:
 https://huggingface.co/datasets/lighteval/GPT3_unscramble
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def unscramble_prompt(line, task_name: str = None):
+    return Doc(task_name=task_name, query=line["context"], gold_index=0, choices=[line["completion"]])
 
 
 unscramble_anagrams1 = LightevalTaskConfig(
     name="unscramble:anagrams1",
-    prompt_function=prompt.unscramble,
+    prompt_function=unscramble_prompt,
     hf_repo="lighteval/GPT3_unscramble",
     hf_subset="default",
     hf_avail_splits=["mid_word_1_anagrams"],
@@ -41,7 +45,7 @@ unscramble_anagrams1 = LightevalTaskConfig(
 
 unscramble_anagrams2 = LightevalTaskConfig(
     name="unscramble:anagrams2",
-    prompt_function=prompt.unscramble,
+    prompt_function=unscramble_prompt,
     hf_repo="lighteval/GPT3_unscramble",
     hf_subset="default",
     hf_avail_splits=["mid_word_2_anagrams"],
@@ -56,7 +60,7 @@ unscramble_anagrams2 = LightevalTaskConfig(
 
 unscramble_cycle_letters = LightevalTaskConfig(
     name="unscramble:cycle_letters",
-    prompt_function=prompt.unscramble,
+    prompt_function=unscramble_prompt,
     hf_repo="lighteval/GPT3_unscramble",
     hf_subset="default",
     hf_avail_splits=["cycle_letters_in_word"],
@@ -71,7 +75,7 @@ unscramble_cycle_letters = LightevalTaskConfig(
 
 unscramble_random_insertion = LightevalTaskConfig(
     name="unscramble:random_insertion",
-    prompt_function=prompt.unscramble,
+    prompt_function=unscramble_prompt,
     hf_repo="lighteval/GPT3_unscramble",
     hf_subset="default",
     hf_avail_splits=["random_insertion_in_word"],
@@ -86,7 +90,7 @@ unscramble_random_insertion = LightevalTaskConfig(
 
 unscramble_reversed_words = LightevalTaskConfig(
     name="unscramble:reversed_words",
-    prompt_function=prompt.unscramble,
+    prompt_function=unscramble_prompt,
     hf_repo="lighteval/GPT3_unscramble",
     hf_subset="default",
     hf_avail_splits=["reversed_words"],

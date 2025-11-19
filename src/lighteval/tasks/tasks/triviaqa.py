@@ -22,14 +22,38 @@ paper:
 https://arxiv.org/abs/1705.03551
 """
 
-import lighteval.tasks.default_prompts as prompt
+import string
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def triviaqa_prompt(line, task_name: str = None):
+    def _remove_prefixes(aliases):
+        aliases.sort()
+        ret = [aliases[0]]
+        for alias in aliases[1:]:
+            if not alias.startswith(ret[-1]):
+                ret.append(alias)
+        return ret
+
+    list_of_candidates = [
+        alias.lower().translate(str.maketrans("", "", string.punctuation))
+        for alias in _remove_prefixes(line["answer"]["aliases"])
+    ]
+
+    return Doc(
+        task_name=task_name,
+        query=f"Question: {line['question']}\nAnswer:",
+        gold_index=0,
+        choices=[list_of_candidates],
+    )
 
 
 triviaqa = LightevalTaskConfig(
     name="triviaqa",
-    prompt_function=prompt.triviaqa,
+    prompt_function=triviaqa_prompt,
     hf_repo="mandarjoshi/trivia_qa",
     hf_subset="rc.nocontext",
     hf_avail_splits=["train", "test", "validation"],

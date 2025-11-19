@@ -19,6 +19,9 @@ qa, reasoning, general-knowledge
 
 paper:
 https://arxiv.org/abs/2501.14249
+
+starred:
+true
 """
 
 import logging

@@ -22,14 +22,25 @@ paper:
 https://arxiv.org/abs/1707.06209
 """
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
+
+
+def sciq_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"{line['support']}\nQuestion: {line['question']}\nAnswer:".strip(),
+        choices=[
+            f" {c}" for c in [line["distractor1"], line["distractor2"], line["distractor3"], line["correct_answer"]]
+        ],
+        gold_index=3,
+    )
 
 
 sciq = LightevalTaskConfig(
     name="sciq",
-    prompt_function=prompt.sciq,
+    prompt_function=sciq_prompt,
     hf_repo="allenai/sciq",
     hf_subset="default",
     hf_avail_splits=["train", "validation", "test"],
