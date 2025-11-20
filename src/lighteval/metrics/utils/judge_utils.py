@@ -158,10 +158,16 @@ Just return the letter "A" or "B", with no other text.
 
 
 def process_judge_response_tvdmi(response: str) -> int:
-    if response == "A":
-        return 1  # SAME
-    elif response == "B":
-        return 0  # DIFFERENT
+    # Normalize
+    if response is None:
+        return 0
+
+    cleaned = response.strip().lower()
+
+    if cleaned == "a":
+        return 1
+    elif cleaned == "b":
+        return 0
     else:
         logger.warning(f"Unknown response from TVD-MI judge: {response!r}")
         return 0
