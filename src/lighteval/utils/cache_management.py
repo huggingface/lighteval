@@ -102,9 +102,6 @@ def cached(sampling_method: None | SamplingMethod = None):  # noqa: C901
 
         @functools.wraps(model_call)
         async def async_wrapper(self, docs: List[Doc], *args, **kwargs):
-            if isinstance(docs, Doc):
-                docs = [docs]
-
             results = [None] * len(docs)
             with diskcache.Cache(self.config.cache_dir) as cache:
                 uncached_docs = []
