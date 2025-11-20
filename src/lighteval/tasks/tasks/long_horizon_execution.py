@@ -27,6 +27,7 @@ starred:
 true
 """
 
+import functools
 import re
 
 from inspect_ai.dataset import Sample
@@ -38,23 +39,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def _build_prompt_and_target(record):
-    """
-    Helper function to extract common logic for building prompt and target.
-    Processes the record and returns prompt, target, and metadata.
-
-    Returns:
-        tuple: (prompt: str, target_str: str, metadata: dict)
-    """
-    input_keys = record["input"]
-    input_values = record["values"]
-    expected_output = record["output"]
-
-    dictionary = dict(zip(input_keys, input_values))
-    dict_str = str(dictionary)
-    keys_str = str(input_keys)
-
-    prompt = f"""You are an AI assistant. I will provide you with a dictionary and then give you a list of keys.
+PROMPT_TEMPLATE = """You are an AI assistant. I will provide you with a dictionary and then give you a list of keys.
 Your task is to calculate the running cumulative sum (starting from 0) by adding the value associated with each key in order.
 
 For each key in the list, you need to:
@@ -78,6 +63,58 @@ IMPORTANT:
 
 Your answer:"""
 
+
+def _build_prompt_and_target(record, prompt_length=32768):
+    """
+    Helper function to extract common logic for building prompt and target.
+    Uses binary search to find the maximum number of items that fit within prompt_length.
+    Processes the record and returns prompt, target, and metadata.
+
+    Returns:
+        tuple: (prompt: str, target_str: str, metadata: dict)
+    """
+    input_keys = record["input"]
+    input_values = record["values"]
+    expected_output = record["output"]
+
+    def build_prompt_for_n(n):
+        """Build a prompt with the first n items."""
+        if n == 0:
+            return None
+        keys_n = input_keys[:n]
+        values_n = input_values[:n]
+        dictionary_n = dict(zip(keys_n, values_n))
+        dict_str = str(dictionary_n)
+        keys_str = str(keys_n)
+        return PROMPT_TEMPLATE.format(dict_str=dict_str, keys_str=keys_str)
+
+    # Binary search to find maximum n that fits within prompt_length
+    left, right = 0, len(input_keys)
+    max_n = 0
+
+    while left <= right:
+        mid = (left + right) // 2
+        prompt = build_prompt_for_n(mid)
+
+        if prompt is None:
+            break
+
+        if len(prompt) <= prompt_length:
+            max_n = mid
+            left = mid + 1
+        else:
+            right = mid - 1
+
+    # Use the maximum n that fits
+    input_keys = input_keys[:max_n]
+    input_values = input_values[:max_n]
+    expected_output = expected_output[:max_n]
+
+    dictionary = dict(zip(input_keys, input_values))
+    dict_str = str(dictionary)
+    keys_str = str(input_keys)
+    prompt = PROMPT_TEMPLATE.format(dict_str=dict_str, keys_str=keys_str)
+
     target_str = ",".join(map(str, expected_output))
 
     metadata = {
@@ -91,12 +128,12 @@ Your answer:"""
     return prompt, target_str, metadata
 
 
-def long_horizon_execution_prompt_function(line, task_name: str = None):
+def long_horizon_execution_prompt_function(line, prompt_length=32768, task_name: str = None):
     """
     Prompt function for non-inspect-ai backend.
     Converts dataset record to Doc object.
     """
-    prompt, target_str, _ = _build_prompt_and_target(line)
+    prompt, target_str, _ = _build_prompt_and_target(line, prompt_length=prompt_length)
 
     return Doc(
         task_name=task_name,
@@ -107,11 +144,11 @@ def long_horizon_execution_prompt_function(line, task_name: str = None):
     )
 
 
-def record_to_sample(record):
+def record_to_sample(record, prompt_length=32768):
     """
     Converts dataset record to inspect-ai Sample object.
     """
-    prompt, target_str, metadata = _build_prompt_and_target(record)
+    prompt, target_str, metadata = _build_prompt_and_target(record, prompt_length=prompt_length)
 
     return Sample(
         input=prompt,
@@ -160,17 +197,25 @@ def long_horizon_execution_scorer():
     return score
 
 
-long_horizon_execution = LightevalTaskConfig(
-    name="long_horizon_execution",
-    prompt_function=long_horizon_execution_prompt_function,
-    sample_fields=record_to_sample,
-    solver=[generate(cache=True)],
-    scorer=long_horizon_execution_scorer(),
-    hf_repo="arvindh75/Long-Horizon-Execution",
-    hf_subset="default",
-    evaluation_splits=("test",),
-    generation_size=32768,
-    metrics=[Metrics.exact_match],
-)
+TASKS_TABLE = []
+CONTEXT_SIZES = [1024, 2048, 4096, 8192, 16384, 32768, 65536]
 
-TASKS_TABLE = [long_horizon_execution]
+for context_size in CONTEXT_SIZES:
+    task_name = f"long_horizon_execution:{context_size}"
+    prompt_fn = functools.partial(long_horizon_execution_prompt_function, prompt_length=context_size)
+    sample_fn = functools.partial(record_to_sample, prompt_length=context_size)
+
+    task = LightevalTaskConfig(
+        name=task_name,
+        prompt_function=prompt_fn,
+        sample_fields=sample_fn,
+        solver=[generate(cache=True)],
+        scorer=long_horizon_execution_scorer(),
+        hf_repo="arvindh75/Long-Horizon-Execution",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        generation_size=context_size,
+        metrics=[Metrics.exact_match],
+    )
+
+    TASKS_TABLE.append(task)
