@@ -60,7 +60,7 @@ class LightevalTaskConfig:
             name as input.
         hf_repo (str): HuggingFace Hub repository path containing the evaluation dataset.
         hf_subset (str): Dataset subset/configuration name to use for this task.
-        metrics (ListLike[Metric]): List of metrics to compute for this task.
+        metrics (ListLike[Metric | Metrics]): List of metrics or metric enums to compute for this task.
 
     Dataset Configuration:
         hf_revision (str | None, optional): Specific dataset revision to use.
@@ -112,7 +112,7 @@ class LightevalTaskConfig:
     ]  # The prompt function should be used to map a line in the dataset to a Sample
     hf_repo: str
     hf_subset: str
-    metrics: ListLike[Metric]  # List of metric , should be configurable
+    metrics: ListLike[Metric | Metrics]  # Accept both Metric objects and Metrics enums
 
     # Inspect AI compatible parameters
     solver: None = None
