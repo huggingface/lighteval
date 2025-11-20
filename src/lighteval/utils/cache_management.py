@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 import asyncio
-import dataclasses
 import functools
 import hashlib
 import json
@@ -31,26 +30,17 @@ from typing import Callable, List
 
 import diskcache
 
+from lighteval.logging.evaluation_tracker import EnhancedJSONEncoder
 from lighteval.tasks.requests import Doc, SamplingMethod
 
 
 logger = logging.getLogger(__name__)
 
 
-def default_json_encoder(obj):
-    """returns a string representation for objects not serializable by default json code"""
-    if dataclasses.is_dataclass(obj):  # is dataclass instance
-        return dataclasses.asdict(obj)
-    elif hasattr(obj, "model_dump"):  # is pydantic BaseModel
-        return obj.model_dump()
-    else:
-        raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
-
-
 def hash_request(doc: Doc, **kwargs) -> str:
     """Create a hash for a request based on the doc and additional parameters."""
     return hashlib.sha256(
-        json.dumps({"doc": doc, "kwargs": kwargs}, sort_keys=True, default=default_json_encoder).encode()
+        json.dumps({"doc": doc, "kwargs": kwargs}, sort_keys=True, cls=EnhancedJSONEncoder).encode()
     ).hexdigest()
 
 
@@ -70,30 +60,29 @@ def cached(sampling_method: None | SamplingMethod = None):  # noqa: C901
         Callable: A decorator function that wraps the original function with caching functionality
     """
 
-    def decorator(sampler: Callable):  # noqa: C901
-        @functools.wraps(sampler)
-        def sync_wrapper(self, docs: Doc | List[Doc], *args, **kwargs):
-            if isinstance(docs, Doc):
-                docs = [docs]
-
+    def decorator(model_call: Callable):  # noqa: C901
+        @functools.wraps(model_call)
+        def sync_wrapper(self, docs: List[Doc], *args, **kwargs):
             results = [None] * len(docs)
             with diskcache.Cache(self.config.cache_dir) as cache:
                 uncached_docs = []
                 uncached_idxs = []
+                cache_hits, cache_misses = 0, 0
 
                 for idx, doc in enumerate(docs):
                     key = hash_request(
                         doc, sampling_method=sampling_method, config=self.config, args=args, kwargs=kwargs
                     )
                     if key in cache:
-                        logger.info("Cache hit")
+                        cache_hits += 1
                         results[idx] = cache[key]["response"]
                     else:
-                        logger.info("Cache miss")
+                        cache_misses += 1
                         uncached_docs.append(doc)
                         uncached_idxs.append(idx)
 
-                uncached_responses = sampler(self, uncached_docs, *args, **kwargs)
+                logger.info(f"Cache hits: {cache_hits}, Cache misses: {cache_misses}")
+                uncached_responses = model_call(self, uncached_docs, *args, **kwargs)
 
                 for idx, doc, res in zip(uncached_idxs, uncached_docs, uncached_responses):
                     key = hash_request(
@@ -111,8 +100,8 @@ def cached(sampling_method: None | SamplingMethod = None):  # noqa: C901
 
             return results
 
-        @functools.wraps(sampler)
-        async def async_wrapper(self, docs: Doc | List[Doc], *args, **kwargs):
+        @functools.wraps(model_call)
+        async def async_wrapper(self, docs: List[Doc], *args, **kwargs):
             if isinstance(docs, Doc):
                 docs = [docs]
 
@@ -120,20 +109,22 @@ def cached(sampling_method: None | SamplingMethod = None):  # noqa: C901
             with diskcache.Cache(self.config.cache_dir) as cache:
                 uncached_docs = []
                 uncached_idxs = []
+                cache_hits, cache_misses = 0, 0
 
                 for idx, doc in enumerate(docs):
                     key = hash_request(
                         doc, sampling_method=sampling_method, config=self.config, args=args, kwargs=kwargs
                     )
                     if key in cache:
-                        logger.info("Cache hit")
+                        cache_hits += 1
                         results[idx] = cache[key]["response"]
                     else:
-                        logger.info("Cache miss")
+                        cache_misses += 1
                         uncached_docs.append(doc)
                         uncached_idxs.append(idx)
 
-                uncached_responses = await sampler(self, uncached_docs, *args, **kwargs)
+                logger.info(f"Cache hits: {cache_hits}, Cache misses: {cache_misses}")
+                uncached_responses = await model_call(self, uncached_docs, *args, **kwargs)
 
                 for idx, doc, res in zip(uncached_idxs, uncached_docs, uncached_responses):
                     key = hash_request(
@@ -151,6 +142,6 @@ def cached(sampling_method: None | SamplingMethod = None):  # noqa: C901
 
             return results
 
-        return sync_wrapper if not asyncio.iscoroutinefunction(sampler) else async_wrapper
+        return sync_wrapper if not asyncio.iscoroutinefunction(model_call) else async_wrapper
 
     return decorator
