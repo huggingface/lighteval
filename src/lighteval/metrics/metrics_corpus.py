@@ -192,3 +192,22 @@ class CorpusLevelPerplexityMetric(CorpusLevelComputation):
             return math.exp(-sum(logprobs) / sum(weights))
         if self.metric_type == "bits_per_byte":
             return -sum(logprobs) / sum(weights) * 1 / math.log(2)
+
+
+class CorpusLevelTVDMI:
+    def __call__(self, items):
+        # items: list of dicts returned by JudgeLLMTVDMI.compute
+        labels = np.array([it["label"] for it in items])
+        preds = np.array([it["pred"] for it in items])
+
+        pos = labels == 1
+        neg = ~pos
+
+        if pos.sum() == 0 or neg.sum() == 0:
+            return {"tvd_mi": float("nan")}
+
+        tpr = (preds[pos] == 1).mean()
+        tnr = (preds[neg] == 0).mean()
+        tvd_mi = tpr + tnr - 1.0
+
+        return {"tvd_mi": float(tvd_mi)}
