@@ -16,7 +16,8 @@ kyrgyz
 tags:
 knowledge, reading-comprehension, common-sense, reasoning, math, truthfulness
 
-paper: https://ieeexplore.ieee.org/document/11206960
+paper:
+https://ieeexplore.ieee.org/document/11206960
 """
 
 from functools import partial
@@ -29,8 +30,8 @@ from lighteval.tasks.requests import Doc
 
 
 
-LETTER_INDICES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
-
+import string
+LETTER_INDICES = string.ascii_uppercase
 
 # ============================================
 # ====== MMLU TASKS ==========================
