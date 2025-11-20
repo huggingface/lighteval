@@ -107,7 +107,9 @@ class CorpusLevelF1Score(CorpusLevelComputation):
         for i in range(self.num_classes):
             f1s.append(
                 sklearn.metrics.f1_score(
-                    y_true=[g == i for g in golds], y_pred=[p == i for p in preds], average=self.average
+                    y_true=[g == i for g in golds],
+                    y_pred=[p == i for p in preds],
+                    average=self.average,
                 )
             )
         return float(np.mean(f1s))
