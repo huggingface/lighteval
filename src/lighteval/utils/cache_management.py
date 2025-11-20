@@ -32,6 +32,7 @@ import diskcache
 
 from lighteval.logging.evaluation_tracker import EnhancedJSONEncoder
 from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
@@ -63,6 +64,7 @@ def cached(sampling_method: None | SamplingMethod = None):  # noqa: C901
     def decorator(model_call: Callable):  # noqa: C901
         @functools.wraps(model_call)
         def sync_wrapper(self, docs: List[Doc], *args, **kwargs):
+            docs = as_list(docs)
             results = [None] * len(docs)
             with diskcache.Cache(self.config.cache_dir) as cache:
                 uncached_docs = []
@@ -102,6 +104,7 @@ def cached(sampling_method: None | SamplingMethod = None):  # noqa: C901
 
         @functools.wraps(model_call)
         async def async_wrapper(self, docs: List[Doc], *args, **kwargs):
+            docs = as_list(docs)
             results = [None] * len(docs)
             with diskcache.Cache(self.config.cache_dir) as cache:
                 uncached_docs = []
