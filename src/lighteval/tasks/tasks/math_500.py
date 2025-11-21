@@ -22,25 +22,37 @@ starred:
 true
 """
 
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import model_graded_fact
+from inspect_ai.solver import generate, prompt_template
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def math_500_prompt(line, task_name: str = None):
-    MATH_QUERY_TEMPLATE = """
+MATH_QUERY_TEMPLATE = """
 Solve the following problem. The final line of your response MUST be of the following format:
 "ANSWER: $ANSWER" (without quotes) where $ANSWER is the final answer. Think step by step before answering.
 
-{Question}
+{prompt}
 """.strip()
-    query = MATH_QUERY_TEMPLATE.format(Question=line["problem"])
+
+
+def math_500_prompt(line, task_name: str = None):
+    query = MATH_QUERY_TEMPLATE.format(prompt=line["problem"])
     return Doc(
         task_name=task_name,
         query=query,
         choices=[f"ANSWER: {line['solution']}"],
         gold_index=0,
     )
+
+
+def record_to_sample(record):
+    query = record["problem"]
+    target = record["answer"]
+    return Sample(input=query, target=target)
 
 
 math_500 = LightevalTaskConfig(
@@ -57,6 +69,9 @@ math_500 = LightevalTaskConfig(
         Metrics.pass_at_k_math(sample_params={"k": 1, "n": 1}),
     ],
     version=2,
+    sample_fields=record_to_sample,
+    solver=[prompt_template(MATH_QUERY_TEMPLATE), generate(cache=True)],
+    scorer=model_graded_fact(),
 )
 
 TASKS_TABLE = [

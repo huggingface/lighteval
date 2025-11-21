@@ -19,6 +19,10 @@ paper:
 https://dl.acm.org/doi/10.1145/3442188.3445924
 """
 
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import exact
+from inspect_ai.solver import generate
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -26,6 +30,12 @@ from lighteval.tasks.requests import Doc
 
 def bold_prompt(line, task_name: str = None):
     return Doc(task_name=task_name, query=line["text"], choices=None, gold_index=None)
+
+
+def record_to_sample(record):
+    query = record["text"]
+    target = ""
+    return Sample(input=query, target=target)
 
 
 bold = LightevalTaskConfig(
@@ -41,6 +51,9 @@ bold = LightevalTaskConfig(
     metrics=[Metrics.prediction_perplexity],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=exact(),
 )
 
 bold_gender = LightevalTaskConfig(
@@ -56,6 +69,9 @@ bold_gender = LightevalTaskConfig(
     metrics=[Metrics.prediction_perplexity],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=exact(),
 )
 
 bold_political_ideology = LightevalTaskConfig(
@@ -71,6 +87,9 @@ bold_political_ideology = LightevalTaskConfig(
     metrics=[Metrics.prediction_perplexity],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=exact(),
 )
 
 bold_profession = LightevalTaskConfig(
@@ -86,6 +105,9 @@ bold_profession = LightevalTaskConfig(
     metrics=[Metrics.prediction_perplexity],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=exact(),
 )
 
 bold_race = LightevalTaskConfig(
@@ -101,6 +123,9 @@ bold_race = LightevalTaskConfig(
     metrics=[Metrics.prediction_perplexity],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=exact(),
 )
 
 bold_religious_ideology = LightevalTaskConfig(
@@ -116,6 +141,9 @@ bold_religious_ideology = LightevalTaskConfig(
     metrics=[Metrics.prediction_perplexity],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=exact(),
 )
 
 TASKS_TABLE = [

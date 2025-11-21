@@ -17,7 +17,10 @@ math, reasoning
 paper:
 """
 
-from lighteval.metrics.metrics import Metrics
+from inspect_ai.dataset import Sample
+from inspect_ai.solver import generate
+
+from lighteval.metrics.metrics import Metrics, math_scorer
 from lighteval.metrics.normalizations import math_normalizer
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -32,9 +35,16 @@ def aimo_prompt(line, task_name: str = None):
     )
 
 
+def record_to_sample(record):
+    return Sample(input=record["problem"], target=str(record["answer"]))
+
+
 task = LightevalTaskConfig(
     name="aimo_progress_prize_1",
     prompt_function=aimo_prompt,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=math_scorer(),
     hf_subset="",
     hf_repo="lighteval/aimo_progress_prize_1",
     hf_avail_splits=["train"],

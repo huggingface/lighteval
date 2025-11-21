@@ -22,12 +22,10 @@ true
 """
 
 import numpy as np
-from aenum import extend_enum
 from inspect_ai.dataset import Sample
 from inspect_ai.scorer import Score, Target, accuracy, scorer, stderr
 from inspect_ai.solver import TaskState, generate
 
-from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.metrics_sample import SampleLevelComputation
 from lighteval.metrics.utils.metric_utils import (
     SampleLevelMetricGrouping,
@@ -186,5 +184,3 @@ ifbench_multiturn = LightevalTaskConfig(
 )
 
 TASKS_TABLE = [ifbench_test, ifbench_multiturn]
-
-extend_enum(Metrics, "ifbench_metric", ifbench_metrics)

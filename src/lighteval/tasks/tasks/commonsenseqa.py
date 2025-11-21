@@ -25,6 +25,10 @@ https://arxiv.org/abs/1811.00937
 
 from string import ascii_uppercase
 
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import choice
+from inspect_ai.solver import multiple_choice
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -46,6 +50,13 @@ def commonsenseqa_prompt(line, task_name: str = None):
     )
 
 
+def record_to_sample(record):
+    query = record["question"]
+    choices = record["choices"]["text"]
+    target = record["answerKey"]
+    return Sample(input=query, target=target, choices=choices)
+
+
 commonsenseqa = LightevalTaskConfig(
     name="commonsenseqa",
     prompt_function=commonsenseqa_prompt,
@@ -59,6 +70,9 @@ commonsenseqa = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 TASKS_TABLE = [

@@ -19,13 +19,23 @@ paper:
 https://arxiv.org/abs/2005.14165
 """
 
-from lighteval.metrics.metrics import Metrics
+from inspect_ai.dataset import Sample
+from inspect_ai.solver import generate
+
+from lighteval.metrics.metrics import Metrics, math_scorer
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
+# TODO: convert dataset to parquet
+
+
 def arithmetic_prompt(line, task_name: str = None):
     return Doc(task_name=task_name, query=line["context"], choices=[line["completion"]], gold_index=[0])
+
+
+def record_to_sample(record):
+    return Sample(input=record["context"], target=record["completion"])
 
 
 arithmetic_1dc = LightevalTaskConfig(
@@ -41,6 +51,9 @@ arithmetic_1dc = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=math_scorer(),
 )
 
 arithmetic_2da = LightevalTaskConfig(
@@ -56,6 +69,9 @@ arithmetic_2da = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=math_scorer(),
 )
 
 arithmetic_2dm = LightevalTaskConfig(
@@ -71,6 +87,9 @@ arithmetic_2dm = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=math_scorer(),
 )
 
 arithmetic_2ds = LightevalTaskConfig(
@@ -86,6 +105,9 @@ arithmetic_2ds = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=math_scorer(),
 )
 
 arithmetic_3da = LightevalTaskConfig(
@@ -101,6 +123,9 @@ arithmetic_3da = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=math_scorer(),
 )
 
 arithmetic_3ds = LightevalTaskConfig(
@@ -116,6 +141,9 @@ arithmetic_3ds = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=math_scorer(),
 )
 
 arithmetic_4da = LightevalTaskConfig(
@@ -131,6 +159,9 @@ arithmetic_4da = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=math_scorer(),
 )
 
 arithmetic_4ds = LightevalTaskConfig(
@@ -146,6 +177,9 @@ arithmetic_4ds = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=math_scorer(),
 )
 
 arithmetic_5da = LightevalTaskConfig(
@@ -161,6 +195,9 @@ arithmetic_5da = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=math_scorer(),
 )
 
 arithmetic_5ds = LightevalTaskConfig(
@@ -176,6 +213,9 @@ arithmetic_5ds = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=math_scorer(),
 )
 
 TASKS_TABLE = [

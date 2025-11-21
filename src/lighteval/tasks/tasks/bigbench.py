@@ -19,6 +19,12 @@ paper:
 https://arxiv.org/abs/2206.04615
 """
 
+from string import ascii_uppercase
+
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import choice
+from inspect_ai.solver import multiple_choice
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -83,6 +89,13 @@ def bigbench_prompt(line, task_name: str = None):
     return Doc(task_name=task_name, query=line["inputs"], choices=choices, gold_index=gold_index)
 
 
+def record_to_sample(record):
+    query = record["inputs"]
+    choices = record["multiple_choice_targets"]
+    target = ascii_uppercase[record["multiple_choice_scores"].index(1)]
+    return Sample(input=query, target=target, choices=choices)
+
+
 abstract_narrative_understanding = LightevalTaskConfig(
     name="bigbench:abstract_narrative_understanding",
     prompt_function=bigbench_prompt,
@@ -96,6 +109,9 @@ abstract_narrative_understanding = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 anachronisms = LightevalTaskConfig(
@@ -111,6 +127,9 @@ anachronisms = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 analogical_similarity = LightevalTaskConfig(
@@ -126,6 +145,9 @@ analogical_similarity = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 analytic_entailment = LightevalTaskConfig(
@@ -141,6 +163,9 @@ analytic_entailment = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 arithmetic_bb = LightevalTaskConfig(
@@ -171,6 +196,9 @@ ascii_word_recognition = LightevalTaskConfig(
     metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 authorship_verification = LightevalTaskConfig(
@@ -186,6 +214,9 @@ authorship_verification = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 auto_categorization = LightevalTaskConfig(
@@ -231,6 +262,9 @@ bbq_lite_json = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 bridging_anaphora_resolution_barqa = LightevalTaskConfig(
@@ -246,6 +280,9 @@ bridging_anaphora_resolution_barqa = LightevalTaskConfig(
     metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 causal_judgment = LightevalTaskConfig(
@@ -261,6 +298,9 @@ causal_judgment = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 cause_and_effect = LightevalTaskConfig(
@@ -276,6 +316,9 @@ cause_and_effect = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 checkmate_in_one = LightevalTaskConfig(
@@ -336,6 +379,9 @@ cifar10_classification = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 code_line_description = LightevalTaskConfig(
@@ -351,6 +397,9 @@ code_line_description = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 codenames = LightevalTaskConfig(
@@ -401,6 +450,9 @@ common_morpheme = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 conceptual_combinations = LightevalTaskConfig(
@@ -416,6 +468,9 @@ conceptual_combinations = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 conlang_translation = LightevalTaskConfig(
@@ -461,6 +516,9 @@ crash_blossom = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 crass_ai = LightevalTaskConfig(
@@ -476,6 +534,9 @@ crass_ai = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 cryobiology_spanish = LightevalTaskConfig(
@@ -491,6 +552,9 @@ cryobiology_spanish = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 cryptonite = LightevalTaskConfig(
@@ -521,6 +585,9 @@ cs_algorithms = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 dark_humor_detection = LightevalTaskConfig(
@@ -536,6 +603,9 @@ dark_humor_detection = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 date_understanding = LightevalTaskConfig(
@@ -551,6 +621,9 @@ date_understanding = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 disambiguation_qa = LightevalTaskConfig(
@@ -566,6 +639,9 @@ disambiguation_qa = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 discourse_marker_prediction = LightevalTaskConfig(
@@ -581,6 +657,9 @@ discourse_marker_prediction = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 disfl_qa = LightevalTaskConfig(
@@ -611,6 +690,9 @@ dyck_languages = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 elementary_math_qa = LightevalTaskConfig(
@@ -626,6 +708,9 @@ elementary_math_qa = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 emoji_movie = LightevalTaskConfig(
@@ -661,6 +746,9 @@ emojis_emotion_prediction = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 empirical_judgments = LightevalTaskConfig(
@@ -676,6 +764,9 @@ empirical_judgments = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 english_proverbs = LightevalTaskConfig(
@@ -691,6 +782,9 @@ english_proverbs = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 english_russian_proverbs = LightevalTaskConfig(
@@ -706,6 +800,9 @@ english_russian_proverbs = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 entailed_polarity = LightevalTaskConfig(
@@ -856,6 +953,9 @@ gem = LightevalTaskConfig(
     metrics=[Metrics.bleu, Metrics.rouge_t5],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 gender_inclusive_sentences_german = LightevalTaskConfig(
@@ -871,6 +971,9 @@ gender_inclusive_sentences_german = LightevalTaskConfig(
     metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 general_knowledge = LightevalTaskConfig(
@@ -886,6 +989,9 @@ general_knowledge = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 geometric_shapes = LightevalTaskConfig(
@@ -1266,6 +1372,9 @@ linguistic_mappings = LightevalTaskConfig(
     metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 linguistics_puzzles = LightevalTaskConfig(
@@ -1296,6 +1405,9 @@ logic_grid_puzzle = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 logical_args = LightevalTaskConfig(
@@ -1386,6 +1498,9 @@ matrixshapes = LightevalTaskConfig(
     metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 metaphor_boolean = LightevalTaskConfig(
@@ -1491,6 +1606,9 @@ modified_arithmetic = LightevalTaskConfig(
     metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 moral_permissibility = LightevalTaskConfig(
@@ -1551,6 +1669,9 @@ mult_data_wrangling = LightevalTaskConfig(
     metrics=[Metrics.exact_match(sample_params={"strip_strings": False})],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 navigate = LightevalTaskConfig(
@@ -1566,6 +1687,9 @@ navigate = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 nonsense_words_grammar = LightevalTaskConfig(
@@ -2071,6 +2195,9 @@ similarities_abstraction = LightevalTaskConfig(
     metrics=[Metrics.bleu, Metrics.rouge_t5, Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 simp_turing_concept = LightevalTaskConfig(
@@ -2221,6 +2348,9 @@ social_support = LightevalTaskConfig(
     metrics=[Metrics.f1_score_macro],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 sports_understanding = LightevalTaskConfig(
@@ -2416,6 +2546,9 @@ topical_chat = LightevalTaskConfig(
     metrics=[Metrics.bleu, Metrics.rouge_t5, Metrics.loglikelihood_acc, Metrics.bleurt],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 tracking_shuffled_objects = LightevalTaskConfig(

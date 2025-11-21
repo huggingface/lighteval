@@ -19,9 +19,16 @@ paper:
 https://arxiv.org/abs/2004.06561
 """
 
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import model_graded_fact
+from inspect_ai.solver import generate, system_message
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
+
+
+PROMPT = "Generate a response given a patient's questions and concerns."
 
 
 def covid_dialogue_prompt(line, task_name: str = None):
@@ -32,6 +39,12 @@ def covid_dialogue_prompt(line, task_name: str = None):
         gold_index=0,
         instruction="Generate a response given a patient's questions and concerns.\n",
     )
+
+
+def record_to_sample(record):
+    query = record["query"]
+    target = record["answer"]
+    return Sample(input=query, target=target)
 
 
 covid_dialogue = LightevalTaskConfig(
@@ -47,6 +60,9 @@ covid_dialogue = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[system_message(PROMPT), generate(cache=True)],
+    scorer=model_graded_fact(),
 )
 
 TASKS_TABLE = [

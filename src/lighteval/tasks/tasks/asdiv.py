@@ -19,7 +19,10 @@ paper:
 https://arxiv.org/abs/2410.12853
 """
 
-from lighteval.metrics.metrics import Metrics
+from inspect_ai.dataset import Sample
+from inspect_ai.solver import generate
+
+from lighteval.metrics.metrics import Metrics, math_scorer
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
@@ -31,6 +34,12 @@ def asdiv_prompt(line, task_name: str = None):
         choices=line["answer"].split(" (")[0],
         gold_index=[0],
     )
+
+
+def record_to_sample(record):
+    query = f"{record['body']}\n{record['question']}"
+    target = record["answer"].split(" (")[0]
+    return Sample(input=query, target=target)
 
 
 asdiv = LightevalTaskConfig(
@@ -46,6 +55,9 @@ asdiv = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=math_scorer(),
 )
 
 TASKS_TABLE = [asdiv]

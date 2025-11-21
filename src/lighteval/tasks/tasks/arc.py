@@ -22,6 +22,10 @@ paper:
 https://arxiv.org/abs/1803.05457
 """
 
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import choice
+from inspect_ai.solver import multiple_choice
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -34,6 +38,14 @@ def arc_prompt(line, task_name: str = None):
         choices=[f" {c}" for c in line["choices"]["text"]],
         gold_index=line["choices"]["label"].index(line["answerKey"]),
     )
+
+
+def record_to_sample(record):
+    query = record["question"].strip()
+    target = record["answerKey"]
+    choices = record["choices"]["text"]
+
+    return Sample(input=query, target=target, choices=choices)
 
 
 arc_challenge = LightevalTaskConfig(
@@ -51,6 +63,9 @@ arc_challenge = LightevalTaskConfig(
     ],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 arc_easy = LightevalTaskConfig(
@@ -68,6 +83,9 @@ arc_easy = LightevalTaskConfig(
     ],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 TASKS_TABLE = [arc_challenge, arc_easy]
