@@ -22,6 +22,9 @@ math, reasoning
 
 paper:
 https://maa.org/aime-thresholds-are-available/
+
+starred:
+true
 """
 
 from textwrap import dedent

@@ -16,6 +16,9 @@ instruction-following
 
 paper:
 https://arxiv.org/abs/2507.02833
+
+starred:
+true
 """
 
 import numpy as np

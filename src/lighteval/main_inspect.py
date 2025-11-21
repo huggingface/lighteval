@@ -30,6 +30,7 @@ from huggingface_hub import HfApi
 from inspect_ai import Epochs, Task, task
 from inspect_ai import eval_set as inspect_ai_eval_set
 from inspect_ai.dataset import hf_dataset
+from inspect_ai.log import bundle_log_dir
 from inspect_ai.scorer import exact
 from inspect_ai.solver import generate, system_message
 from pytablewriter import MarkdownTableWriter
@@ -522,6 +523,13 @@ def eval(  # noqa C901
         print(f'run "inspect view --log-dir {log_dir}" to view the results')
     else:
         print("run 'inspect view' to view the results")
+
+
+def bundle(log_dir: str, output_dir: str, overwrite: bool = True, repo_id: str | None = None, public: bool = False):
+    bundle_log_dir(log_dir=log_dir, output_dir=output_dir, overwrite=overwrite)
+
+    if repo_id is not None:
+        push_to_hub(output_dir, repo_id, public=public)
 
 
 if __name__ == "__main__":
