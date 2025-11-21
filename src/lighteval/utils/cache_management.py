@@ -210,6 +210,8 @@ class SampleCache:
 
     def get_sampling_method(self, sample: dict) -> str:
         if len(sample.get("logprobs", [])) > 0:
+            if len(sample.get("text", [])) == 0:
+                return SamplingMethod.PERPLEXITY
             return SamplingMethod.LOGPROBS
         if len(sample.get("text", [])) > 0:
             return SamplingMethod.GENERATIVE
@@ -269,7 +271,10 @@ class SampleCache:
         return docs_not_cached, set(tasks_with_cached_samples)
 
     def get_samples_from_cache(
-        self, docs: List[Doc], task_ids: List[TaskID] | set[TaskID], sampling_method: SamplingMethod
+        self,
+        docs: List[Doc],
+        task_ids: List[TaskID] | set[TaskID],
+        sampling_method: SamplingMethod,
     ) -> List[dict | ModelResponse]:
         """Get cached samples for the given docs.
         Warning: Assumes all docs and task_names provided are stored in cache, will fail otherwise.
