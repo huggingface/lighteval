@@ -156,7 +156,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 task = LightevalTaskConfig(
     name="my_custom_task",
     metric=[my_custom_metric],  # Use your custom metric here
-    prompt_function=my_prompt_function,
+ prompt_function=my_prompt_function,
     hf_repo="my_dataset",
     evaluation_splits=["test"]
 )
