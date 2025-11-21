@@ -210,7 +210,7 @@ mixeval_freeform_easy = LightevalTaskConfig(
     generation_size=100,
     stop_sequence=[],  # no stop sequence, will use eot token
     version="0.1",
-    sample_fields=record_to_sample_freeform,  
+    sample_fields=record_to_sample_freeform,
     solver=[generate(cache=True)],
     scorer=model_graded_fact(),
 )
