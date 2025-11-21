@@ -1,0 +1,87 @@
+name: PR Style Bot
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  run-style-bot:
+    if: >
+      contains(github.event.comment.body, '@bot /style') &&
+      github.event.issue.pull_request != null
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Extract PR details
+        id: pr_info
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNumber = context.payload.issue.number;
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            // We capture both the branch ref and the "full_name" of the head repo
+            // so that we can check out the correct repository & branch (including forks).
+            core.setOutput("prNumber", prNumber);
+            core.setOutput("headRef", pr.head.ref);
+            core.setOutput("headRepoFullName", pr.head.repo.full_name);
+      - name: Check out PR branch
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ steps.pr_info.outputs.headRepoFullName }}
+          ref: ${{ steps.pr_info.outputs.headRef }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+
+      - name: Install dependencies
+        run: pip install .[quality]
+
+      - name: Apply style fixes
+        run: |
+          ruff format .
+          ruff check --fix .
+
+      - name: Commit and push changes
+        id: commit_and_push
+        env:
+          HEADREPOFULLNAME: ${{ steps.pr_info.outputs.headRepoFullName }}
+          HEADREF: ${{ steps.pr_info.outputs.headRef }}
+          PRNUMBER: ${{ steps.pr_info.outputs.prNumber }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ env.HEADREPOFULLNAME }}.git"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "Apply style fixes"
+            git push origin HEAD:${{ env.HEADREF }}
+            echo "changes_pushed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes_pushed=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Comment on PR
+        if: steps.commit_and_push.outputs.changes_pushed == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNumber = ${{ steps.pr_info.outputs.prNumber }};
+            const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: `Style fixes have been applied. [View the workflow run here](${runUrl}).`
+            });
