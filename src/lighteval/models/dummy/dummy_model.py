@@ -29,7 +29,7 @@ from transformers.models.auto.tokenization_auto import AutoTokenizer
 from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.cache_management import SampleCache, cached
+from lighteval.utils.cache_management import cached
 
 
 class DummyModelConfig(ModelConfig):
@@ -69,9 +69,6 @@ class DummyModel(LightevalModel):
         self.config = config
         self._random = random.Random(self.config.seed)
         self._tokenizer = None
-
-        # Initialize cache for tokenization and predictions
-        self._cache = SampleCache(config)
 
     @property
     def tokenizer(self):
