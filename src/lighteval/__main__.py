@@ -71,7 +71,7 @@ app.command(rich_help_panel="Evaluation Backends")(lighteval.main_vllm.vllm)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_custom.custom)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_sglang.sglang)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_inspect.eval)
-app.command(rich_help_panel="EvaluationUtils")(lighteval.main_inspect.bundle)  
+app.command(rich_help_panel="EvaluationUtils")(lighteval.main_inspect.bundle)
 app.add_typer(
     lighteval.main_endpoint.app,
     name="endpoint",
