@@ -65,7 +65,7 @@ jobs:
 
       - name: Run ruff format --check
         run: |
-          ruff format --check .
+          ruff format .
           ruff check --fix .
       - name: Commit and push changes
         id: commit_and_push
