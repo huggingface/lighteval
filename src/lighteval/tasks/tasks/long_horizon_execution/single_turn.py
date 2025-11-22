@@ -53,7 +53,7 @@ def single_turn_record_to_sample(record, prompt_length=32768):
     )
 
 
-@scorer(metrics={"accuracy": [accuracy(), stderr()]})
+@scorer(metrics=[accuracy(), stderr()])
 def single_turn_scorer():
     """
     Scorer for single-turn evaluation.
