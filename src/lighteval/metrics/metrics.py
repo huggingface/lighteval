@@ -35,6 +35,7 @@ from lighteval.metrics.metrics_corpus import (
     CorpusLevelF1Score,
     CorpusLevelPerplexityMetric,
     CorpusLevelTranslationMetric,
+    CorpusLevelTVDMI,
     MatthewsCorrCoef,
 )
 from lighteval.metrics.metrics_sample import (
@@ -51,13 +52,18 @@ from lighteval.metrics.metrics_sample import (
     Faithfulness,
     GPassAtK,
     JudgeLLMSimpleQA,
+    JudgeLLMTVDMI,
     LoglikelihoodAcc,
     MajAtN,
     PassAtK,
     Recall,
     StringDistance,
 )
-from lighteval.metrics.normalizations import bigbench_normalizer, remove_braces, remove_braces_and_strip
+from lighteval.metrics.normalizations import (
+    bigbench_normalizer,
+    remove_braces,
+    remove_braces_and_strip,
+)
 from lighteval.metrics.sample_preparator import (
     GenerativePreparator,
     LoglikelihoodPreparator,
@@ -84,7 +90,10 @@ from lighteval.utils.language import Language
 @scorer(metrics=[accuracy()])
 def math_scorer():
     gold_extraction_target = (ExprExtractionConfig(),)
-    pred_extraction_target = (ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0))
+    pred_extraction_target = (
+        ExprExtractionConfig(),
+        LatexExtractionConfig(boxed_match_priority=0),
+    )
     language = Language.ENGLISH
     fallback_mode = "first_match"
     extraction_mode = "first_match"
@@ -95,10 +104,18 @@ def math_scorer():
 
     async def score(state: TaskState, target: Target):
         extracted_predictions = extract_target_from_pred(
-            state.output.completion, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
+            state.output.completion,
+            pred_extraction_regexes,
+            fallback_mode,
+            extraction_mode,
+            timeout_seconds,
         )
         extracted_gold = extract_target_from_pred(
-            target.text, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
+            target.text,
+            gold_extraction_regexes,
+            fallback_mode,
+            extraction_mode,
+            timeout_seconds,
         )
         return Score(
             # Correct or Incorrect, used by inspect-ai backend
@@ -128,10 +145,18 @@ def multichoice_scorer():
 
     async def score(state: TaskState, target: Target):
         extracted_predictions = extract_target_from_pred(
-            state.output.completion, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
+            state.output.completion,
+            pred_extraction_regexes,
+            fallback_mode,
+            extraction_mode,
+            timeout_seconds,
         )
         extracted_gold = extract_target_from_pred(
-            target.text, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
+            target.text,
+            gold_extraction_regexes,
+            fallback_mode,
+            extraction_mode,
+            timeout_seconds,
         )
         return Score(
             # Correct or Incorrect, used by inspect-ai backend
@@ -163,8 +188,14 @@ class Metrics(Enum):
         sample_level_fn=AvgAtN(
             sample_scoring_function=MultilingualExtractiveMatchMetric(
                 language=Language.ENGLISH,
-                gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
+                gold_extraction_target=[
+                    ExprExtractionConfig(),
+                    LatexExtractionConfig(),
+                ],
+                pred_extraction_target=[
+                    ExprExtractionConfig(),
+                    LatexExtractionConfig(),
+                ],
                 precision=6,
             ),
         ),
@@ -176,8 +207,16 @@ class Metrics(Enum):
         metric_name=["BERTScore-P", "BERTScore-R", "BERTScore-F"],
         sample_level_fn=BertScore(normalize_gold=remove_braces, normalize_pred=remove_braces_and_strip),
         category=SamplingMethod.GENERATIVE,
-        corpus_level_fn={"BERTScore-P": np.mean, "BERTScore-R": np.mean, "BERTScore-F": np.mean},
-        higher_is_better={"BERTScore-P": True, "BERTScore-R": True, "BERTScore-F": True},
+        corpus_level_fn={
+            "BERTScore-P": np.mean,
+            "BERTScore-R": np.mean,
+            "BERTScore-F": np.mean,
+        },
+        higher_is_better={
+            "BERTScore-P": True,
+            "BERTScore-R": True,
+            "BERTScore-F": True,
+        },
     )
     bits_per_byte = CorpusLevelMetric(
         metric_name="bits_per_byte",
@@ -237,13 +276,30 @@ class Metrics(Enum):
         higher_is_better=True,
     )
     copyright = SampleLevelMetricGrouping(
-        metric_name=["longest_common_prefix_length", "edit_distance", "edit_similarity"],
+        metric_name=[
+            "longest_common_prefix_length",
+            "edit_distance",
+            "edit_similarity",
+        ],
         sample_level_fn=StringDistance(
-            metric_types=["longest_common_prefix_length", "edit_distance", "edit_similarity"], strip_prediction=True
+            metric_types=[
+                "longest_common_prefix_length",
+                "edit_distance",
+                "edit_similarity",
+            ],
+            strip_prediction=True,
         ),
         category=SamplingMethod.GENERATIVE,
-        corpus_level_fn={"longest_common_prefix_length": max, "edit_distance": min, "edit_similarity": max},
-        higher_is_better={"longest_common_prefix_length": True, "edit_distance": False, "edit_similarity": True},
+        corpus_level_fn={
+            "longest_common_prefix_length": max,
+            "edit_distance": min,
+            "edit_similarity": max,
+        },
+        higher_is_better={
+            "longest_common_prefix_length": True,
+            "edit_distance": False,
+            "edit_similarity": True,
+        },
     )
     drop = SampleLevelMetricGrouping(
         metric_name=["em", "f1"],
@@ -267,7 +323,10 @@ class Metrics(Enum):
             precision=5,
             gold_extraction_target=(ExprExtractionConfig(),),
             # Match boxed first before trying other regexes
-            pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+            pred_extraction_target=(
+                ExprExtractionConfig(),
+                LatexExtractionConfig(boxed_match_priority=0),
+            ),
             aggregation_function=max,
         ),
         category=SamplingMethod.GENERATIVE,
@@ -275,9 +334,15 @@ class Metrics(Enum):
         higher_is_better=True,
     )
     extractiveness = SampleLevelMetricGrouping(
-        metric_name=["summarization_coverage", "summarization_density", "summarization_compression"],
+        metric_name=[
+            "summarization_coverage",
+            "summarization_density",
+            "summarization_compression",
+        ],
         sample_level_fn=Extractiveness(
-            normalize_input=remove_braces, normalize_pred=remove_braces_and_strip, input_column="text"
+            normalize_input=remove_braces,
+            normalize_pred=remove_braces_and_strip,
+            input_column="text",
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn={
@@ -292,9 +357,16 @@ class Metrics(Enum):
         },
     )
     extractiveness_de = SampleLevelMetricGrouping(
-        metric_name=["summarization_coverage", "summarization_density", "summarization_compression"],
+        metric_name=[
+            "summarization_coverage",
+            "summarization_density",
+            "summarization_compression",
+        ],
         sample_level_fn=Extractiveness(
-            normalize_input=remove_braces, normalize_pred=remove_braces_and_strip, input_column="text", language="de"
+            normalize_input=remove_braces,
+            normalize_pred=remove_braces_and_strip,
+            input_column="text",
+            language="de",
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn={
@@ -309,9 +381,16 @@ class Metrics(Enum):
         },
     )
     extractiveness_fr = SampleLevelMetricGrouping(
-        metric_name=["summarization_coverage", "summarization_density", "summarization_compression"],
+        metric_name=[
+            "summarization_coverage",
+            "summarization_density",
+            "summarization_compression",
+        ],
         sample_level_fn=Extractiveness(
-            normalize_input=remove_braces, normalize_pred=remove_braces_and_strip, input_column="text", language="fr"
+            normalize_input=remove_braces,
+            normalize_pred=remove_braces_and_strip,
+            input_column="text",
+            language="fr",
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn={
@@ -326,9 +405,16 @@ class Metrics(Enum):
         },
     )
     extractiveness_it = SampleLevelMetricGrouping(
-        metric_name=["summarization_coverage", "summarization_density", "summarization_compression"],
+        metric_name=[
+            "summarization_coverage",
+            "summarization_density",
+            "summarization_compression",
+        ],
         sample_level_fn=Extractiveness(
-            normalize_input=remove_braces, normalize_pred=remove_braces_and_strip, input_column="text", language="it"
+            normalize_input=remove_braces,
+            normalize_pred=remove_braces_and_strip,
+            input_column="text",
+            language="it",
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn={
@@ -366,7 +452,9 @@ class Metrics(Enum):
     faithfulness = SampleLevelMetric(
         metric_name="summac",
         sample_level_fn=Faithfulness(
-            normalize_input=remove_braces, normalize_pred=remove_braces_and_strip, input_column="text"
+            normalize_input=remove_braces,
+            normalize_pred=remove_braces_and_strip,
+            input_column="text",
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -390,7 +478,10 @@ class Metrics(Enum):
                 precision=5,
                 gold_extraction_target=(ExprExtractionConfig(),),
                 # Match boxed first before trying other regexes
-                pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+                pred_extraction_target=(
+                    ExprExtractionConfig(),
+                    LatexExtractionConfig(boxed_match_priority=0),
+                ),
                 aggregation_function=max,
             ),
         ),
@@ -409,7 +500,10 @@ class Metrics(Enum):
                 precision=5,
                 gold_extraction_target=(LatexExtractionConfig(),),
                 # Match boxed first before trying other regexes
-                pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+                pred_extraction_target=(
+                    ExprExtractionConfig(),
+                    LatexExtractionConfig(boxed_match_priority=0),
+                ),
                 aggregation_function=max,
             ),
         ),
@@ -473,8 +567,14 @@ class Metrics(Enum):
             # Extracting mathematical expressions and latex expressions
             sample_scoring_function=MultilingualExtractiveMatchMetric(
                 language=Language.ENGLISH,
-                gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
+                gold_extraction_target=[
+                    ExprExtractionConfig(),
+                    LatexExtractionConfig(),
+                ],
+                pred_extraction_target=[
+                    ExprExtractionConfig(),
+                    LatexExtractionConfig(),
+                ],
                 precision=6,
             ),
         ),
@@ -519,8 +619,18 @@ class Metrics(Enum):
             normalize_pred=bigbench_normalizer,
         ),
         category=SamplingMethod.GENERATIVE,
-        corpus_level_fn={"rouge1": np.mean, "rouge2": np.mean, "rougeL": np.mean, "rougeLsum": np.mean},
-        higher_is_better={"rouge1": True, "rouge2": True, "rougeL": True, "rougeLsum": True},
+        corpus_level_fn={
+            "rouge1": np.mean,
+            "rouge2": np.mean,
+            "rougeL": np.mean,
+            "rougeLsum": np.mean,
+        },
+        higher_is_better={
+            "rouge1": True,
+            "rouge2": True,
+            "rougeL": True,
+            "rougeLsum": True,
+        },
     )
     rouge1 = SampleLevelMetric(
         metric_name="rouge1",
@@ -593,10 +703,16 @@ class Metrics(Enum):
         sample_level_fn=MultilingualExtractiveMatchMetric(
             language=Language.ENGLISH,
             gold_extraction_target=[
-                IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=True)
+                IndicesExtractionConfig(
+                    prefix_for_extraction="NativeLetters",
+                    try_extract_without_anchor=True,
+                )
             ],
             pred_extraction_target=[
-                IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=True)
+                IndicesExtractionConfig(
+                    prefix_for_extraction="NativeLetters",
+                    try_extract_without_anchor=True,
+                )
             ],
             precision=6,
         ),
@@ -610,16 +726,29 @@ class Metrics(Enum):
             sample_scoring_function=MultilingualExtractiveMatchMetric(
                 language=Language.ENGLISH,
                 gold_extraction_target=[
-                    IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=True)
+                    IndicesExtractionConfig(
+                        prefix_for_extraction="NativeLetters",
+                        try_extract_without_anchor=True,
+                    )
                 ],
                 pred_extraction_target=[
-                    IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=True)
+                    IndicesExtractionConfig(
+                        prefix_for_extraction="NativeLetters",
+                        try_extract_without_anchor=True,
+                    )
                 ],
                 precision=6,
             ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    tvd_mi = CorpusLevelMetric(
+        metric_name="tvd_mi",
+        sample_level_fn=JudgeLLMTVDMI(),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=CorpusLevelTVDMI(),
         higher_is_better=True,
     )
 
