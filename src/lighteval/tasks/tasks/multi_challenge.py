@@ -6,16 +6,18 @@ dataset:
 nmayorga7/multichallenge
 
 abstract:
-MultiChallenge is a realistic multi-turn conversation evaluation benchmark challenging
-to frontier LLMs. It identifies four categories of challenges in multi-turn conversations
-that require accurate instruction-following, context allocation, and in-context reasoning
-simultaneously. All frontier models achieve less than 50% accuracy on MultiChallenge.
+MultiChallenge evaluates large language models (LLMs) on their ability to
+conduct multi-turn conversations with human users.
+The model is given a target question belonging to one or
+more axes (categories) and must provide a free-form answer.
+The evaluation uses a secondary judge model to determine if the
+answer satisfies the pass criteria for that question.
 
 languages:
 english
 
 tags:
-conversational, generation, multi-turn, instruction-following
+conversational, generation
 
 paper:
 https://arxiv.org/abs/2501.17399
