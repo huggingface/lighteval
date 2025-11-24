@@ -643,7 +643,11 @@ class BertScore(SampleLevelComputation):
             logger.warning("The first metric computation step might be a bit longer as we need to download the model.")
             # We only initialize on first compute
             self.bert_scorer = BERTScorer(
-                model_type="microsoft/deberta-large-mnli", lang="en", rescale_with_baseline=True, num_layers=9
+                model_type="microsoft/deberta-large-mnli",
+                lang="en",
+                rescale_with_baseline=True,
+                num_layers=9,
+                tokenizer_max_len=512,
             )
         golds = as_list(golds)
         predictions = as_list(predictions)
