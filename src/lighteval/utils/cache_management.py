@@ -63,7 +63,7 @@ def cached(sampling_method: None | SamplingMethod = None):  # noqa: C901
 
     def decorator(model_call: Callable):  # noqa: C901
         @functools.wraps(model_call)
-        def sync_wrapper(self, docs: List[Doc], *args, **kwargs):
+        def sync_wrapper(self, docs: Doc | List[Doc], *args, **kwargs):
             docs = as_list(docs)
             results = [None] * len(docs)
             with diskcache.Cache(self.config.cache_dir) as cache:
@@ -103,7 +103,7 @@ def cached(sampling_method: None | SamplingMethod = None):  # noqa: C901
             return results
 
         @functools.wraps(model_call)
-        async def async_wrapper(self, docs: List[Doc], *args, **kwargs):
+        async def async_wrapper(self, docs: Doc | List[Doc], *args, **kwargs):
             docs = as_list(docs)
             results = [None] * len(docs)
             with diskcache.Cache(self.config.cache_dir) as cache:
