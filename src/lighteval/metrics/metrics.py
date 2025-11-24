@@ -58,6 +58,7 @@ from lighteval.metrics.metrics_sample import (
     PassAtK,
     Recall,
     StringDistance,
+    process_judge_response_tvdmi,
 )
 from lighteval.metrics.normalizations import (
     bigbench_normalizer,
@@ -163,6 +164,45 @@ def multichoice_scorer():
             value="C" if extracted_predictions == extracted_gold else "I",
             explanation=state.output.completion,
             answer=str(extracted_predictions),
+        )
+
+    return score
+
+
+@scorer(metrics=[accuracy(), stderr()])
+def tvd_mi_scorer():
+    """
+    Inspect-compatible scorer for TVD-MI pair classification.
+    """
+
+    def _normalize_gold(label: str) -> int | None:
+        if not isinstance(label, str):
+            return None
+        s = label.strip().upper()
+        if s in {"A", "SAME", "POSITIVE", "1"}:
+            return 1
+        if s in {"B", "DIFFERENT", "NEGATIVE", "0"}:
+            return 0
+        return None
+
+    async def score(state: TaskState, target: Target) -> Score:
+        raw_pred = state.output.completion
+        # Interpretation mapping logic
+        pred_val = process_judge_response_tvdmi(raw_pred)
+
+        try:
+            pred_label = int(pred_val)
+        except Exception:
+            pred_label = None
+
+        gold_label = _normalize_gold(str(target.text))
+
+        correct = pred_label is not None and gold_label is not None and pred_label == gold_label
+        # Correct or Incorrect, used by inspect-ai backend
+        return Score(
+            value="C" if correct else "I",
+            explanation=raw_pred,
+            answer=str(pred_label),
         )
 
     return score

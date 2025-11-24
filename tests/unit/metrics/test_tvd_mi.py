@@ -1,8 +1,10 @@
+import asyncio
 import math
 from dataclasses import dataclass
 
 import pytest
 
+from lighteval.metrics.metrics import tvd_mi_scorer
 from lighteval.metrics.metrics_corpus import CorpusLevelTVDMI
 from lighteval.metrics.metrics_sample import JudgeLLMTVDMI
 from lighteval.metrics.utils.judge_utils import (
@@ -138,3 +140,46 @@ def test_judge_tvdmi_compute(monkeypatch):
     # Check extra fields exist (names match your short_judge_name)
     assert any(k.startswith("user_prompt_") for k in metrics[0].keys())
     assert any(k.startswith("judgement_") for k in metrics[0].keys())
+
+
+# ---- Inspect-compatible scorer tests ----
+
+
+class _DummyOutput:
+    def __init__(self, completion: str):
+        self.completion = completion
+
+
+class _DummyState:
+    def __init__(self, completion: str):
+        self.output = _DummyOutput(completion)
+
+
+class _DummyTarget:
+    def __init__(self, text: str):
+        self.text = text
+
+
+def test_tvd_mi_scorer_matches_label_A():
+    """The inspect-ai tvd_mi_scorer should mark matching 'A' labels as correct."""
+    scorer_fn = tvd_mi_scorer()
+
+    state = _DummyState("A")  # model/judge output
+    target = _DummyTarget("A")  # gold label
+
+    score = asyncio.run(scorer_fn(state, target))
+
+    assert score.value == "C"
+    assert score.answer == "1"  # normalized positive class
+
+
+def test_tvd_mi_scorer_mismatch_is_incorrect():
+    """Mismatched A/B labels should be scored as incorrect."""
+    scorer_fn = tvd_mi_scorer()
+
+    state = _DummyState("B")  # model says DIFFERENT
+    target = _DummyTarget("A")  # gold SAME
+
+    score = asyncio.run(scorer_fn(state, target))
+
+    assert score.value == "I"
