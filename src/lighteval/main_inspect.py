@@ -28,6 +28,7 @@ from typing import Literal
 import requests
 from huggingface_hub import HfApi
 from inspect_ai import Epochs, Task, task
+from inspect_ai import eval as inspect_ai_eval
 from inspect_ai import eval_set as inspect_ai_eval_set
 from inspect_ai.dataset import hf_dataset
 from inspect_ai.log import bundle_log_dir
@@ -37,6 +38,7 @@ from pytablewriter import MarkdownTableWriter
 from typer import Argument, Option
 from typing_extensions import Annotated
 
+from lighteval.from_hub import create_task_function
 from lighteval.models.abstract_model import InspectAIModelConfig
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
@@ -518,6 +520,12 @@ def eval(  # noqa C901
         print(f'run "inspect view --log-dir {log_dir}" to view the results')
     else:
         print("run 'inspect view' to view the results")
+
+
+def from_hub(model: str, repo_id: str, limit: int = 100, revision: str = "main"):
+    task = create_task_function(repo_id, revision)
+    model = "hf-inference-providers/meta-llama/Llama-3.1-8B-Instruct"
+    inspect_ai_eval(tasks=[task], model=model, limit=100)
 
 
 def bundle(log_dir: str, output_dir: str, overwrite: bool = True, repo_id: str | None = None, public: bool = False):
