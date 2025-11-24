@@ -533,12 +533,36 @@ def bundle(log_dir: str, output_dir: str, overwrite: bool = True, repo_id: str |
 
 
 if __name__ == "__main__":
-    task = "lighteval|gsm8k|5,lighteval|gsm8k|1,lighteval|gsm8k|0"
-    task = "lighteval|agieval|0"
-    task = "lighteval|hle|0"
-    task = "lighteval|ifeval|0"
-    task = "lighteval|gpqa|0"
-    task = "lighteval|ifbench_test|0"
-    task = "lighteval|mmlu_pro|0"
+    tasks = [
+        "gsm8k",
+        "agieval",
+        "hle",
+        "ifeval",
+        "gpqa",
+        "ifbench_test",
+        "mmlu_pro",
+        "mixeval",
+        "aimo",
+        "anli",
+        "arc",
+        "arithmetic",
+        "asdiv",
+        "babi_qa",
+        "bbq",
+        "bigbench",
+        "bigbench_hard",
+        "blimp",
+        "bold",
+        "boolq",
+        "civil_comments",
+        "commonsenseqa",
+        "covid_dialog",
+        "dyck_language",
+        "math_500",
+        "musr",
+        "olympiad_bench",
+        "simpleqa",
+        "tiny_benchmarks",
+    ]
     model = "hf-inference-providers/meta-llama/Llama-3.1-8B-Instruct:nebius"
     eval(models=[model], tasks=task)
