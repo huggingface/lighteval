@@ -186,7 +186,7 @@ If you're adding a **new feature**, please *open an issue first*.
 If you open a PR, don't forget to **run the styling**!
 
 ```bash
-pip install -e .[dev]
+pip install -e ".[dev]"
 pre-commit install
 pre-commit run --all-files
 ```
