@@ -17,18 +17,16 @@ languages:
 english
 
 tags:
-conversational, generation
+conversational, generation, instruction-following
 
 paper:
 https://arxiv.org/abs/2501.17399
 """
 
-import re
-
 from inspect_ai.dataset import Sample
-from inspect_ai.model import get_model
-from inspect_ai.scorer import Score, Target, accuracy, scorer, stderr
-from inspect_ai.solver import TaskState, generate
+from inspect_ai.model._chat_message import ChatMessageAssistant, ChatMessageUser
+from inspect_ai.scorer import Score, Target, accuracy, model_graded_fact, scorer, stderr
+from inspect_ai.solver import Generate, TaskState, generate, solver
 
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -39,12 +37,12 @@ The criteria will always be YES/NO evaluation.
 
 The model response is as follows:
 <MODEL_RESPONSE>
-{}
+{answer}
 </MODEL_RESPONSE>
 
 The criteria that the model response must meet is as follows. Be VERY STRICT!:
 <CRITERIA>
-{}
+{criterion}
 </CRITERIA>
 
 Print your reasoning followed by your verdict, either "YES" or "NO"."""
@@ -80,69 +78,80 @@ def multi_challenge_prompt(line, task_name: str = None):
     )
 
 
+base_scorer = model_graded_fact(
+    template=JUDGE_PROMPT,
+    grade_pattern=r"\b(YES|NO)\b",
+    model="openai/gpt-4o-2024-08-06",
+)
+
+
 @scorer(metrics=[accuracy(), stderr()])
 def multi_challenge_scorer():
     async def score(state: TaskState, target: Target):
-        response = state.output.completion
+        score = await base_scorer(state, target)
+        judge_verdict = score.value.upper() if score.value else None
 
-        target_question = target.text
+        if not judge_verdict or judge_verdict not in ["YES", "NO"]:
+            return Score(
+                value="I",
+                answer=score.answer,
+                explanation=f"Could not extract valid verdict from judge output: {score.explanation}",
+            )
+
         pass_criteria = state.metadata.get("pass_criteria", "YES")
+        passed = judge_verdict == pass_criteria
 
-        if not target_question:
-            return Score(
-                value="I",
-                answer=response,
-                explanation="Target question not found.",
-            )
-
-        try:
-            judge_model = get_model("openai/gpt-4o-2024-08-06")
-            judge_prompt = JUDGE_PROMPT.format(response, target_question)
-
-            judge_result = await judge_model.generate(judge_prompt)
-            judge_output = judge_result.completion
-
-            verdict_match = re.search(r"\b(YES|NO)\b", judge_output, re.IGNORECASE)
-
-            if not verdict_match:
-                return Score(
-                    value="I",
-                    answer=response,
-                    explanation=f"Could not extract verdict from judge output: {judge_output}.",
-                )
-
-            judge_verdict = verdict_match.group(1).upper()
-            passed = judge_verdict == pass_criteria
-
-            return Score(
-                value="C" if passed else "I",
-                answer=response,
-                explanation=f"Judge verdict: {judge_verdict}, Expected: {pass_criteria}, Response: {response}.",
-            )
-
-        except Exception as e:
-            return Score(
-                value="I",
-                answer=response,
-                explanation=f"Error during judge evaluation: {str(e)}.",
-            )
+        return Score(
+            value="C" if passed else "I",
+            answer=score.answer,
+            explanation=score.explanation,
+        )
 
     return score
+
+
+@solver
+def conversation_solver():
+    """Solver that builds conversation history from metadata."""
+
+    async def solve(state: TaskState, generate: Generate):
+        conversation = state.metadata.get("conversation", [])
+
+        state.messages = []
+
+        for msg in conversation:
+            role = msg["role"].lower()
+            content = msg["content"]
+
+            if role == "user":
+                state.messages.append(ChatMessageUser(content=content))
+            elif role == "assistant":
+                state.messages.append(ChatMessageAssistant(content=content))
+
+        return state
+
+    return solve
 
 
 def record_to_sample(record: dict) -> Sample:
     """Convert dataset record to inspect-ai Sample object."""
     conversation = record["CONVERSATION"]
-    formatted_conv = format_conversation(conversation)
+
+    last_msg = None
+    for msg in reversed(conversation):
+        if msg["role"] == "user":
+            last_msg = msg["content"]
+            break
 
     return Sample(
-        input=formatted_conv,
+        input=last_msg or "",
         target=record["TARGET_QUESTION"],
         metadata={
             "question_id": record["QUESTION_ID"],
             "axis": record["AXIS"],
             "pass_criteria": record["PASS_CRITERIA"],
             "conversation": conversation,
+            "length": len(conversation),
         },
     )
 
@@ -161,7 +170,7 @@ multi_challenge = LightevalTaskConfig(
     version=0,
     sample_fields=record_to_sample,
     metrics=[],  # Metrics are defined in the scorer decorator for inspect-ai tasks
-    solver=[generate(cache=True)],
+    solver=[conversation_solver(), generate(cache=True)],
     scorer=multi_challenge_scorer(),
 )
 
