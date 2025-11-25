@@ -9,8 +9,9 @@ import functools
 import re
 
 from inspect_ai.dataset import Sample
+from inspect_ai.model import ChatMessageUser, ModelOutput
 from inspect_ai.scorer import Score, Target, accuracy, scorer, stderr
-from inspect_ai.solver import TaskState, generate
+from inspect_ai.solver import Generate, TaskState, generate, solver
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -66,68 +67,66 @@ def _extract_response_content(response):
     return str(response)
 
 
-async def _process_single_turn(state, turn_chunk, config):
+async def _process_single_turn(state, turn_chunk, generate):
     """Process a single turn: add user message, get model response, add assistant message."""
     keys_str = ", ".join(turn_chunk)
     followup_prompt = PROMPT_TEMPLATE_MULTI_FOLLOWUP.format(keys_str=keys_str)
-    state.messages.append({"role": "user", "content": followup_prompt})
+    state.messages.append(ChatMessageUser(content=followup_prompt))
 
-    response = await state.model.generate(messages=state.messages, config=config)
-    turn_response = _extract_response_content(response)
+    # generate() takes the state and returns updated state with assistant message added
+    updated_state = await generate(state)
+    turn_response = _extract_response_content(updated_state.output.completion if updated_state.output else "")
 
-    state.messages.append({"role": "assistant", "content": turn_response})
-    return turn_response
+    return updated_state, turn_response
 
 
-async def multi_turn_solver(state: TaskState):
+@solver
+def multi_turn_solver():
     """
-    Custom solver for multi-turn evaluation.
+    Solver for multi-turn evaluation.
     Loops through turns, calling the model for each turn while maintaining conversation history.
     This implements offline evaluation: all turns are called, then evaluation happens.
     """
-    from inspect_ai.model import GenerateConfig, ModelOutput
 
-    turn_chunks = state.metadata.get("turn_chunks", [])
+    async def solve(state: TaskState, generate: Generate):
+        turn_chunks = state.metadata.get("turn_chunks", [])
 
-    if not turn_chunks or len(turn_chunks) == 0:
-        return state
+        if not turn_chunks or len(turn_chunks) == 0:
+            return state
 
-    # Initialize messages
-    if not hasattr(state, "messages") or state.messages is None:
-        state.messages = []
+        # Initialize messages
+        if not hasattr(state, "messages") or state.messages is None:
+            state.messages = []
 
-    if not state.messages:
-        state.messages.append({"role": "user", "content": state.input})
+        if not state.messages:
+            state.messages.append(ChatMessageUser(content=state.input))
 
-    all_turn_outputs = []
-
-    # Process all turns
-    if hasattr(state, "model") and state.model is not None:
-        config = GenerateConfig()
+        all_turn_outputs = []
 
         # Process first turn (already in messages as initial prompt)
-        response = await state.model.generate(messages=state.messages, config=config)
-        turn_response = _extract_response_content(response)
+        updated_state = await generate(state)
+        turn_response = _extract_response_content(updated_state.output.completion if updated_state.output else "")
         all_turn_outputs.append(turn_response)
-        state.messages.append({"role": "assistant", "content": turn_response})
+
+        state = updated_state
 
         # Process remaining turns
         for turn_idx in range(1, len(turn_chunks)):
-            if not hasattr(state, "model") or state.model is None:
-                break
-            turn_response = await _process_single_turn(state, turn_chunks[turn_idx], config)
+            state, turn_response = await _process_single_turn(state, turn_chunks[turn_idx], generate)
             all_turn_outputs.append(turn_response)
 
-    state.metadata["all_turn_outputs"] = all_turn_outputs
+        state.metadata["all_turn_outputs"] = all_turn_outputs
 
-    # Set final output
-    if all_turn_outputs:
-        if hasattr(state, "output") and state.output is not None:
-            state.output.completion = all_turn_outputs[-1]
-        else:
-            state.output = ModelOutput(completion=all_turn_outputs[-1])
+        # Set final output
+        if all_turn_outputs:
+            if hasattr(state, "output") and state.output is not None:
+                state.output.completion = all_turn_outputs[-1]
+            else:
+                state.output = ModelOutput(completion=all_turn_outputs[-1])
 
-    return state
+        return state
+
+    return solve
 
 
 @scorer(metrics={"turn_accuracy": [accuracy(), stderr()], "fractional_accuracy": [accuracy(), stderr()]})
@@ -200,7 +199,7 @@ def create_multi_turn_tasks():
 
     for context_size in CONTEXT_SIZES:
         for k in TURN_COMPLEXITIES:
-            task_name = f"long_horizon_execution:multi:{context_size}:k{k}"
+            task_name = f"long_horizon_execution_multi_k{k}:{context_size}"
             prompt_fn = functools.partial(multi_turn_prompt_function, prompt_length=context_size, k=k)
             sample_fn = functools.partial(multi_turn_record_to_sample, prompt_length=context_size, k=k)
 
@@ -208,7 +207,7 @@ def create_multi_turn_tasks():
                 name=task_name,
                 prompt_function=prompt_fn,
                 sample_fields=sample_fn,
-                solver=[multi_turn_solver, generate(cache=True)],
+                solver=[multi_turn_solver(), generate(cache=True)],
                 scorer=multi_turn_scorer(),
                 hf_repo="arvindh75/Long-Horizon-Execution",
                 hf_subset="default",
