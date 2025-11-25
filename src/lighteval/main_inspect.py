@@ -53,6 +53,11 @@ def get_inspect_ai_task(
     name = lighteval_task_config.name
     sample_fields = lighteval_task_config.sample_fields
 
+    if sample_fields is None:
+        raise ValueError(
+            f"Task {name} is not supported by inspect_ai yet. You can either define it or use a different backend, `lighteval --help`"
+        )
+
     dataset_repo = lighteval_task_config.hf_repo
     dataset_subset = lighteval_task_config.hf_subset
     dataset_split = lighteval_task_config.evaluation_splits[0]
@@ -528,12 +533,36 @@ def bundle(log_dir: str, output_dir: str, overwrite: bool = True, repo_id: str |
 
 
 if __name__ == "__main__":
-    task = "lighteval|gsm8k|5,lighteval|gsm8k|1,lighteval|gsm8k|0"
-    task = "lighteval|agieval|0"
-    task = "lighteval|hle|0"
-    task = "lighteval|ifeval|0"
-    task = "lighteval|gpqa|0"
-    task = "lighteval|ifbench_test|0"
-    task = "lighteval|mmlu_pro|0"
+    tasks = [
+        "gsm8k",
+        "agieval",
+        "hle",
+        "ifeval",
+        "gpqa",
+        "ifbench_test",
+        "mmlu_pro",
+        "mixeval",
+        "aimo",
+        "anli",
+        "arc",
+        "arithmetic",
+        "asdiv",
+        "babi_qa",
+        "bbq",
+        "bigbench",
+        "bigbench_hard",
+        "blimp",
+        "bold",
+        "boolq",
+        "civil_comments",
+        "commonsenseqa",
+        "covid_dialog",
+        "dyck_language",
+        "math_500",
+        "musr",
+        "olympiad_bench",
+        "simpleqa",
+        "tiny_benchmarks",
+    ]
     model = "hf-inference-providers/meta-llama/Llama-3.1-8B-Instruct:nebius"
     eval(models=[model], tasks=task)

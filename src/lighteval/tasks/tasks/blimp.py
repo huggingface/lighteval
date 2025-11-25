@@ -27,6 +27,9 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
+# TODO: Convert to inspect-ai
+
+
 def blimp_prompt(line, task_name: str = None):
     return Doc(task_name=task_name, query="", choices=[line["sentence_good"], line["sentence_bad"]], gold_index=0)
 
