@@ -2,7 +2,7 @@
 
 Browse and inspect tasks available in LightEval.
 <iframe
-	src="https://openevals-benchmark-finder.hf.space"
+	src="https://openevals-open-benchmark-index.hf.space"
 	frameborder="0"
 	width="850"
 	height="450"
@@ -14,6 +14,18 @@ List all tasks:
 
 ```bash
 lighteval tasks list
+```
+
+Extract tasks details:
+
+```bash
+lighteval tasks dump
+```
+
+Store the tasks details in a JSON file:
+
+```bash
+lighteval tasks dump > tasks.json
 ```
 
 ### Inspect specific tasks
