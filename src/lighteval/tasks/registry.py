@@ -410,34 +410,48 @@ class Registry:
 
         # Get all tasks and filter by requested suites
         all_tasks = list(self._task_registry.keys())
-        tasks_names = [task for task in all_tasks if task.split("|")[0] in requested_suites]
-
-        # Ensure all requested suites are present (even if empty)
-        suites_in_registry = {name.split("|")[0] for name in tasks_names}
-        for suite in requested_suites:
-            if suite not in suites_in_registry:
-                # We add a dummy task to make sure the suite is printed
-                tasks_names.append(f"{suite}|")
-
-        tasks_names.sort()
+        non_suite_tasks, tasks_on_suite = self._group_tasks(all_tasks, requested_suites)
 
         print(f"Displaying tasks for suites: {', '.join(requested_suites)}")
         print("=" * 60)
 
-        for suite, g in groupby(tasks_names, lambda x: x.split("|")[0]):
+        for suite, g in groupby(tasks_on_suite, lambda x: x.split("|")[0]):
             tasks_in_suite = [name for name in g if name.split("|")[1]]  # Filter out dummy tasks
             tasks_in_suite.sort()
 
-            print(f"\n- {suite}:")
+            print(f"\n* {suite}:")
             if not tasks_in_suite:
                 print("  (no tasks in this suite)")
             else:
                 for task_name in tasks_in_suite:
                     print(f"  - {task_name}")
 
+        print("\n* Non suite tasks:")
+        for task_name in non_suite_tasks:
+            print(f"  - {task_name}")
         # Print summary
-        total_tasks = len([t for t in tasks_names if t.split("|")[1]])
+        total_tasks = len(tasks_on_suite) + len(non_suite_tasks)
         print(f"\nTotal tasks displayed: {total_tasks}")
+
+    def _group_tasks(self, all_tasks: list[str], requested_suites: list[str]) -> tuple[list[str], list[str]]:
+        non_suite_tasks = []
+        tasks_on_suite = []
+        for task in all_tasks:
+            if task.split("|")[0] in requested_suites:
+                tasks_on_suite.append(task)
+            else:
+                non_suite_tasks.append(task)
+
+        # Ensure all requested suites are present (even if empty)
+        suites_in_registry = {name.split("|")[0] for name in tasks_on_suite}
+        for suite in requested_suites:
+            if suite not in suites_in_registry:
+                # We add a dummy task to make sure the suite is printed
+                tasks_on_suite.append(f"{suite}|")
+
+        tasks_on_suite.sort()
+
+        return non_suite_tasks, tasks_on_suite
 
     def get_tasks_dump(self) -> list[dict]:  # noqa: C901
         """Get all task names, metadata, and docstrings as a Python object.
