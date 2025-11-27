@@ -26,6 +26,9 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
+# TODO: clean dataset and convert to inspect-ai
+
+
 def babi_qa_prompt(line, task_name: str = None):
     def process_path(path: str) -> str:
         steps = path.split(",")

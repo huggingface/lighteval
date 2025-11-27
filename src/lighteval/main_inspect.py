@@ -30,6 +30,7 @@ from huggingface_hub import HfApi
 from inspect_ai import Epochs, Task, task
 from inspect_ai import eval_set as inspect_ai_eval_set
 from inspect_ai.dataset import hf_dataset
+from inspect_ai.log import bundle_log_dir
 from inspect_ai.scorer import exact
 from inspect_ai.solver import generate, system_message
 from pytablewriter import MarkdownTableWriter
@@ -51,6 +52,11 @@ def get_inspect_ai_task(
 ) -> Task:
     name = lighteval_task_config.name
     sample_fields = lighteval_task_config.sample_fields
+
+    if sample_fields is None:
+        raise ValueError(
+            f"Task {name} is not supported by inspect_ai yet. You can either define it or use a different backend, `lighteval --help`"
+        )
 
     dataset_repo = lighteval_task_config.hf_repo
     dataset_subset = lighteval_task_config.hf_subset
@@ -519,13 +525,44 @@ def eval(  # noqa C901
         print("run 'inspect view' to view the results")
 
 
+def bundle(log_dir: str, output_dir: str, overwrite: bool = True, repo_id: str | None = None, public: bool = False):
+    bundle_log_dir(log_dir=log_dir, output_dir=output_dir, overwrite=overwrite)
+
+    if repo_id is not None:
+        push_to_hub(output_dir, repo_id, public=public)
+
+
 if __name__ == "__main__":
-    task = "lighteval|gsm8k|5,lighteval|gsm8k|1,lighteval|gsm8k|0"
-    task = "lighteval|agieval|0"
-    task = "lighteval|hle|0"
-    task = "lighteval|ifeval|0"
-    task = "lighteval|gpqa|0"
-    task = "lighteval|ifbench_test|0"
-    task = "lighteval|mmlu_pro|0"
+    tasks = [
+        "gsm8k",
+        "agieval",
+        "hle",
+        "ifeval",
+        "gpqa",
+        "ifbench_test",
+        "mmlu_pro",
+        "mixeval",
+        "aimo",
+        "anli",
+        "arc",
+        "arithmetic",
+        "asdiv",
+        "babi_qa",
+        "bbq",
+        "bigbench",
+        "bigbench_hard",
+        "blimp",
+        "bold",
+        "boolq",
+        "civil_comments",
+        "commonsenseqa",
+        "covid_dialog",
+        "dyck_language",
+        "math_500",
+        "musr",
+        "olympiad_bench",
+        "simpleqa",
+        "tiny_benchmarks",
+    ]
     model = "hf-inference-providers/meta-llama/Llama-3.1-8B-Instruct:nebius"
     eval(models=[model], tasks=task)

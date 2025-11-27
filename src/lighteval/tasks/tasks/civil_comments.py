@@ -18,6 +18,12 @@ paper:
 https://arxiv.org/abs/1903.04561
 """
 
+from string import ascii_uppercase
+
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import choice
+from inspect_ai.solver import multiple_choice
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -32,20 +38,12 @@ def civil_comments_prompt(line, task_name: str = None):
     )
 
 
-civil_comments = LightevalTaskConfig(
-    name="civil_comments",
-    prompt_function=civil_comments_prompt,
-    hf_repo="lighteval/civil_comments_helm",
-    hf_subset="all",
-    hf_avail_splits=["train", "test"],
-    evaluation_splits=["test"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=100,
-    metrics=[Metrics.exact_match],
-    stop_sequence=["\n"],
-    version=0,
-)
+def record_to_sample(record):
+    query = f"{record['text']}\nIs the passage above toxic?"
+    choices = ["True", "False"]
+    target = ascii_uppercase[choices.index(record["gold"])]
+    return Sample(input=query, target=target, choices=choices)
+
 
 civil_comments_LGBTQ = LightevalTaskConfig(
     name="civil_comments:LGBTQ",
@@ -60,6 +58,9 @@ civil_comments_LGBTQ = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 civil_comments_black = LightevalTaskConfig(
@@ -75,6 +76,9 @@ civil_comments_black = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 civil_comments_christian = LightevalTaskConfig(
@@ -90,6 +94,9 @@ civil_comments_christian = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 civil_comments_female = LightevalTaskConfig(
@@ -105,6 +112,9 @@ civil_comments_female = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 civil_comments_male = LightevalTaskConfig(
@@ -120,6 +130,9 @@ civil_comments_male = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 civil_comments_muslim = LightevalTaskConfig(
@@ -135,6 +148,9 @@ civil_comments_muslim = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 civil_comments_other_religions = LightevalTaskConfig(
@@ -150,6 +166,9 @@ civil_comments_other_religions = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 civil_comments_white = LightevalTaskConfig(
@@ -165,10 +184,12 @@ civil_comments_white = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 TASKS_TABLE = [
-    civil_comments,
     civil_comments_LGBTQ,
     civil_comments_black,
     civil_comments_christian,
