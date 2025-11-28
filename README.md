@@ -124,7 +124,7 @@ Lighteval offers the following entry points for model evaluation:
 Did not find what you need ? You can always make your custom model API by following [this guide](https://huggingface.co/docs/lighteval/main/en/evaluating-a-custom-model)
 - `lighteval custom`: Evaluate custom models (can be anything)
 
-Here's a **quick command** to evaluate using the *Accelerate backend*:
+Here's a **quick command** to evaluate using a remote inference service:
 
 ```shell
 lighteval eval "hf-inference-providers/openai/gpt-oss-20b" gpqa:diamond
