@@ -57,7 +57,7 @@ TASKS_TABLE = [
         ),
         hf_repo="jon-tow/okapi_hellaswag",
         hf_subset=standardize_tag(lang.value),
-        hf_revision="96ed8e0dfc6172dad1d3df338d7b8ba6c1ff9d83",
+        hf_revision="fb6b5f2b48a6348ae2a9467a6714c3a054fa8d85",
         evaluation_splits=["validation"],
         hf_avail_splits=["validation"],
         metrics=get_metrics_for_formulation(
