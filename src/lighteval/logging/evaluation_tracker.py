@@ -305,7 +305,7 @@ class EvaluationTracker:
             org = org_model_parts[0] if len(org_model_parts) >= 2 else ""
             model = org_model_parts[1] if len(org_model_parts) >= 2 else org_model_parts[0]
             output_dir = self.output_dir
-            output_dir_results = Path(self.results_path_template.format(output_dir=output_dir, org=org, model=model))
+            output_dir_results = Path(self.results_path_template.format(output_dir=output_dir, org=org, model=model)) / "results"
         else:
             output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name.strip("/")
         self.fs.mkdirs(output_dir_results, exist_ok=True)
@@ -315,7 +315,16 @@ class EvaluationTracker:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
     def _get_details_sub_folder(self, date_id: str):
-        output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name.strip("/")
+        if self.results_path_template is not None:
+            org_model_parts = self.general_config_logger.model_name.split("/")
+            org = org_model_parts[0] if len(org_model_parts) >= 2 else ""
+            model = org_model_parts[1] if len(org_model_parts) >= 2 else org_model_parts[0]
+            output_dir = self.output_dir
+            output_dir_details = Path(self.results_path_template.format(output_dir=output_dir, org=org, model=model)) / "details"
+            return output_dir_details
+        else:
+            output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name.strip("/")
+
         if date_id in ["first", "last"]:
             # Get all folders in output_dir_details
             if not self.fs.exists(output_dir_details):
@@ -334,7 +343,8 @@ class EvaluationTracker:
     def load_details_datasets(self, date_id: str, task_names: list[str]) -> dict[str, Dataset]:
         output_dir_details_sub_folder = self._get_details_sub_folder(date_id)
         logger.info(f"Loading details from {output_dir_details_sub_folder}")
-        date_id = output_dir_details_sub_folder.name  # Overwrite date_id in case of latest
+        if self.results_path_template is None:
+            date_id = output_dir_details_sub_folder.name  # Overwrite date_id in case of latest
         details_datasets = {}
         for file in self.fs.glob(str(output_dir_details_sub_folder / f"details_*_{date_id}.parquet")):
             task_name = Path(file).stem.replace("details_", "").replace(f"_{date_id}", "")
