@@ -118,7 +118,6 @@ class SGLangModelConfig(ModelConfig):
         ```
     """
 
-    model_name: str
     load_format: str = "auto"
     dtype: str = "auto"
     tp_size: PositiveInt = 1  # how many GPUs to use for tensor parallelism
