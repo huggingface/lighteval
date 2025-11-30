@@ -3,7 +3,7 @@ name:
 Kyrgyz Evals
 
 dataset:
-TTimur/kyrgyzMMLU, TTimur/kyrgyzRC, TTimur/hellaswag_kg, 
+TTimur/kyrgyzMMLU, TTimur/kyrgyzRC, TTimur/hellaswag_kg,
 TTimur/winogrande_kg, TTimur/truthfulqa_kg, TTimur/gsm8k_kg, TTimur/boolq_kg
 
 abstract:
@@ -20,17 +20,15 @@ paper:
 https://ieeexplore.ieee.org/document/11206960
 """
 
+import string
 from functools import partial
 
-from lighteval.metrics.dynamic_metrics import LogLikelihoodAccMetric
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import LogProbCharNorm, LogProbTokenNorm
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-
-import string
 LETTER_INDICES = string.ascii_uppercase
 
 # ============================================
@@ -57,29 +55,23 @@ def kyrgyz_mmlu_prompt(line: dict, task_name: str = None) -> Doc:
     """
     question = line["Суроо (KG)"]
     correct_answer = str(line["Туура жооп"])
-    
-    choices = [line['А (KG)'], line['Б (KG)'], line['В (KG)'], line['Г (KG)'], line['Д (KG)']]
+
+    choices = [line["А (KG)"], line["Б (KG)"], line["В (KG)"], line["Г (KG)"], line["Д (KG)"]]
     choices = [c.strip() for c in choices if c]
-    
-    letter_to_index = {
-        'а': 0,
-        'б': 1,
-        'в': 2,
-        'г': 3,
-        'д': 4
-    }
+
+    letter_to_index = {"а": 0, "б": 1, "в": 2, "г": 3, "д": 4}
     gold_index = letter_to_index.get(correct_answer.lower(), 0)
-    
+
     instruction = "Сиз билимиңизге жана жөндөмүңүзгө жараша суроолорго жооп берген AIсыз. Сизге суроо жана 2-5 жооп варианты берилет, туура жооптун НОМЕРИН (индексин) гана кайтарышыңыз керек.\n\n"
-    
+
     query = f"{instruction}Суроо: {question}\n\nСунушталган жооптор:\n"
-    
+
     for i, choice in enumerate(choices):
         if choice:
             query += f"{i}. {choice}\n"
-    
+
     query += "\n\nТуура жоопту тандаңыз:"
-    
+
     return Doc(
         task_name=task_name,
         query=query,
@@ -110,10 +102,7 @@ class CustomKyrgyzMMLUTask(LightevalTaskConfig):
         )
 
 
-MMLU_TASKS = [
-    CustomKyrgyzMMLUTask(name=f"kyrgyz_evals:{subset}", hf_subset=subset)
-    for subset in MMLU_SUBSETS
-]
+MMLU_TASKS = [CustomKyrgyzMMLUTask(name=f"kyrgyz_evals:{subset}", hf_subset=subset) for subset in MMLU_SUBSETS]
 
 
 # ============================================
@@ -133,31 +122,31 @@ def kyrgyz_rc_prompt(line: dict, task_name: str = None) -> Doc:
     """
     Creates a prompt for Reading Comprehension tasks in Kyrgyz.
     """
-    text = line['Текст (KG)']
+    text = line["Текст (KG)"]
     question = line["Суроо (KG)"]
     correct_answer = str(line["Туура жооп"])
-    
-    choices = [line['А (KG)'], line['Б (KG)'], line['В (KG)'], line['Г (KG)']]
+
+    choices = [line["А (KG)"], line["Б (KG)"], line["В (KG)"], line["Г (KG)"]]
     choices = [c.strip() for c in choices if c]
-    
+
     letter_to_index = {
-        'а': 0,
-        'б': 1,
-        'в': 2,
-        'г': 3,
+        "а": 0,
+        "б": 1,
+        "в": 2,
+        "г": 3,
     }
     gold_index = letter_to_index.get(correct_answer.lower(), 0)
-    
+
     instruction = "Сизге бир темага байланыштуу бир нече үзүндү текст берилген. Бардык үзүндүлөрдү кунт коюп окуп, андан кийин төмөндөгү суроолорго жооп бериңиздер. Суроо менен 2-4 жооп варианты берилет, туура жооптун НОМЕРИН (индексин) гана кайтарышыңыз керек.\n\n"
-    
+
     query = f"{instruction}Текст: {text}\n\nСуроо: {question}\n\nСунушталган жооптор:\n"
-    
+
     for i, choice in enumerate(choices):
         if choice:
             query += f"{i}. {choice}\n"
-    
+
     query += "\n\nТуура жоопту тандаңыз:"
-    
+
     return Doc(
         task_name=task_name,
         query=query,
@@ -189,31 +178,31 @@ class CustomKyrgyzRCTask(LightevalTaskConfig):
         )
 
 
-RC_TASKS = [
-    CustomKyrgyzRCTask(name=f"kyrgyz_evals:{subset}", hf_subset=subset)
-    for subset in RC_SUBSETS
-]
+RC_TASKS = [CustomKyrgyzRCTask(name=f"kyrgyz_evals:{subset}", hf_subset=subset) for subset in RC_SUBSETS]
 
 
 # ============================================
 # ====== HELLASWAG TASK ======================
 # ============================================
 
+
 def kyrgyz_hellaswag_prompt(line: dict, task_name: str = None) -> Doc:
     """
     Creates a prompt for HellaSwag tasks in Kyrgyz.
     """
-    ctx_a_kg = line['ctx_a_kg'] if line['ctx_a_kg'] else '.'
-    ctx_b_kg = line['ctx_b_kg'].capitalize() if line['ctx_b_kg'] else '.'
-    
-    instruction = "Төмөндө жалпы түшүнүккө (common sense) байланыштуу бир нече тандоо суроолору (жооптору менен) берилген.\n\n"
-    
+    ctx_a_kg = line["ctx_a_kg"] if line["ctx_a_kg"] else "."
+    ctx_b_kg = line["ctx_b_kg"].capitalize() if line["ctx_b_kg"] else "."
+
+    instruction = (
+        "Төмөндө жалпы түшүнүккө (common sense) байланыштуу бир нече тандоо суроолору (жооптору менен) берилген.\n\n"
+    )
+
     query = f"{instruction}Суроо: {line['activity_label_kg']}: {ctx_a_kg} {ctx_b_kg}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, line["endings_kg"])])
     query += "Туура жоопту тандаңыз:"
-    
+
     gold_ix = int(line["label"]) if line["label"] != "" else -1
-    
+
     return Doc(
         task_name=task_name,
         query=query,
@@ -246,13 +235,14 @@ HELLASWAG_TASK = LightevalTaskConfig(
 # ====== WINOGRANDE TASK =====================
 # ============================================
 
+
 def kyrgyz_winogrande_prompt(line: dict, task_name: str = None) -> Doc:
     """
     Creates a prompt for Winogrande tasks in Kyrgyz.
     """
     query, end_of_target = line["sentence_kg"].split("_")
     end_of_target = end_of_target.strip()
-    
+
     return Doc(
         task_name=task_name,
         query=query,
@@ -282,15 +272,16 @@ WINOGRANDE_TASK = LightevalTaskConfig(
 # ====== TRUTHFULQA TASK =====================
 # ============================================
 
+
 def kyrgyz_truthful_qa_prompt(line: dict, task_name: str = None) -> Doc:
     """
     Creates a prompt for TruthfulQA tasks in Kyrgyz.
     """
     import ast
-    
+
     mc1 = line.get("mc1_targets_kg", "{}")
     mc2 = line.get("mc2_targets_kg", "{}")
-    
+
     if isinstance(mc1, str):
         try:
             mc1 = ast.literal_eval(mc1)
@@ -298,7 +289,7 @@ def kyrgyz_truthful_qa_prompt(line: dict, task_name: str = None) -> Doc:
             mc1 = {"choices": [], "labels": []}
     else:
         mc1 = {"choices": [], "labels": []}
-        
+
     if isinstance(mc2, str):
         try:
             mc2 = ast.literal_eval(mc2)
@@ -306,10 +297,10 @@ def kyrgyz_truthful_qa_prompt(line: dict, task_name: str = None) -> Doc:
             mc2 = {"choices": [], "labels": []}
     else:
         mc2 = {"choices": [], "labels": []}
-    
+
     choices = [f" {c}" for c in mc1.get("choices", [])] + [f" {c}" for c in mc2.get("choices", [])]
     labels = mc1.get("labels", []) + mc2.get("labels", [])
-    
+
     return Doc(
         task_name=task_name,
         query=f"Суроо: {line['Question_kg']}\nЖооп:",
@@ -338,6 +329,7 @@ TRUTHFULQA_TASK = LightevalTaskConfig(
 # ============================================
 # ====== GSM8K TASK ==========================
 # ============================================
+
 
 def kyrgyz_gsm8k_prompt(line: dict, task_name: str = None) -> Doc:
     """
@@ -374,12 +366,13 @@ GSM8K_TASK = LightevalTaskConfig(
 # ====== BOOLQ TASK ==========================
 # ============================================
 
+
 def kyrgyz_boolq_prompt(line: dict, task_name: str = None) -> Doc:
     """
     Creates a prompt for BoolQ tasks in Kyrgyz.
     """
     question = line["question_kg"][:-1] if line["question_kg"][-2:] == "??" else line["question_kg"]
-    
+
     return Doc(
         task_name=task_name,
         query=f"Текст: {line['passage_kg']}\nСуроо: {question}\nЖооп:",
@@ -411,9 +404,9 @@ BOOLQ_TASK = LightevalTaskConfig(
 # ============================================
 
 TASKS_TABLE = (
-    MMLU_TASKS +
-    RC_TASKS +
-    [
+    MMLU_TASKS
+    + RC_TASKS
+    + [
         HELLASWAG_TASK,
         WINOGRANDE_TASK,
         TRUTHFULQA_TASK,
