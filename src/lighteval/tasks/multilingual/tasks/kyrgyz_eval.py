@@ -20,6 +20,7 @@ paper:
 https://ieeexplore.ieee.org/document/11206960
 """
 
+import json
 import string
 from functools import partial
 
@@ -188,27 +189,51 @@ RC_TASKS = [CustomKyrgyzRCTask(name=f"kyrgyz_evals:{subset}", hf_subset=subset) 
 
 def kyrgyz_hellaswag_prompt(line: dict, task_name: str = None) -> Doc:
     """
-    Creates a prompt for HellaSwag tasks in Kyrgyz.
+    Hellaswag-style multiple-choice prompt.
+
+    The Kyrgyz dataset provides:
+      - ctx_a_kg, ctx_b_kg: context pieces
+      - activity_label_kg: short description
+      - endings_kg: list of 4 full candidate endings (strings)
+      - label: correct ending index in [0, 3]
     """
+    import ast
+
     ctx_a_kg = line["ctx_a_kg"] if line["ctx_a_kg"] else "."
     ctx_b_kg = line["ctx_b_kg"].capitalize() if line["ctx_b_kg"] else "."
 
-    instruction = (
+    endings_kg = line.get("endings_kg")
+
+    if isinstance(endings_kg, str):
+        try:
+            # Try JSON first
+            endings_kg = json.loads(endings_kg)
+        except Exception:
+            try:
+                endings_kg = ast.literal_eval(endings_kg)
+            except Exception:
+                endings_kg = [endings_kg]
+
+    if not isinstance(endings_kg, list):
+        endings_kg = [str(endings_kg)]
+
+    endings_kg = endings_kg[:4]
+
+    query = (
         "Төмөндө жалпы түшүнүккө (common sense) байланыштуу бир нече тандоо суроолору (жооптору менен) берилген.\n\n"
     )
+    query += f"Суроо: {line['activity_label_kg']}: {ctx_a_kg} {ctx_b_kg}\n"
+    query += "".join([f"{letter}. {choice}\n" for letter, choice in zip(LETTER_INDICES, endings_kg)])
+    query += "Туура жоопту тандаңыз: "
 
-    query = f"{instruction}Суроо: {line['activity_label_kg']}: {ctx_a_kg} {ctx_b_kg}\n"
-    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, line["endings_kg"])])
-    query += "Туура жоопту тандаңыз:"
-
-    gold_ix = int(line["label"]) if line["label"] != "" else -1
+    gold_ix = int(line["label"]) if line.get("label", "") != "" else -1
 
     return Doc(
         task_name=task_name,
         query=query,
-        choices=[" " + i for i in LETTER_INDICES[: len(line["endings_kg"])]],
+        choices=[f" {letter}" for letter in LETTER_INDICES[: len(endings_kg)]],
         gold_index=gold_ix,
-        instruction=instruction,
+        instruction="Төмөндө жалпы түшүнүккө (common sense) байланыштуу бир нече тандоо суроолору (жооптору менен) берилген.\n\n",
     )
 
 
