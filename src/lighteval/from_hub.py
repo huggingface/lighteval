@@ -8,23 +8,29 @@ from inspect_ai.dataset import FieldSpec, Sample, hf_dataset
 
 
 def record_to_sample(record, field_spec: dict):
-    """Convert a dataset record to a Sample based on field_spec."""
+    """
+    Used for multiple choice tasks because we often need to convert numeric
+    labels to letters for the target.
+    """
     input_text = record[field_spec["input"]]
 
-    # Handle target - convert numeric labels to letters for multiple choice
-    target_letter = ascii_uppercase[record[field_spec["target"]]]
+    target = record[field_spec["target"]]
+    if isinstance(target, int):
+        target = ascii_uppercase[target]
 
-    # Get choices if specified
-    choices_list = None
-    if "choices" in field_spec:
-        choices_list = [record[choice_field] for choice_field in field_spec["choices"]]
+    choices_list = record[field_spec["choices"]]
+
+    metadata = field_spec.get("metadata", None)
+
+    if metadata:
+        metadata = {name: record[name] for name in metadata}
 
     sample_kwargs = {
         "input": input_text,
-        "target": target_letter,
+        "target": target,
+        "choices": choices_list,
+        "metadata": metadata,
     }
-    if choices_list:
-        sample_kwargs["choices"] = choices_list
 
     return Sample(**sample_kwargs)
 
@@ -35,28 +41,20 @@ def load_dataset(repo_id: str, revision: str = "main", task_config: dict = None)
     split = task_config.get("splits", "test")
     field_spec = task_config["field_spec"]
 
-    # Use custom function if choices are specified (for multiple choice with label conversion)
     if "choices" in field_spec:
-        dataset = hf_dataset(
-            path=repo_id,
-            revision=revision,
-            name=subset,
-            split=split,
-            sample_fields=lambda record: record_to_sample(record, field_spec),
-        )
+
+        def sample_fields(record):
+            return record_to_sample(record, field_spec)
     else:
-        # For non-multiple-choice, use FieldSpec
-        dataset = hf_dataset(
-            path=repo_id,
-            revision=revision,
-            name=subset,
-            split=split,
-            sample_fields=FieldSpec(
-                input=field_spec["input"],
-                target=field_spec["target"],
-                metadata=field_spec.get("metadata", []),
-            ),
-        )
+        sample_fields = FieldSpec(**field_spec)
+
+    dataset = hf_dataset(
+        path=repo_id,
+        revision=revision,
+        name=subset,
+        split=split,
+        sample_fields=sample_fields,
+    )
 
     return dataset
 
