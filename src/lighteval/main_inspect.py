@@ -522,10 +522,10 @@ def eval(  # noqa C901
         print("run 'inspect view' to view the results")
 
 
-def from_hub(model: str, repo_id: str, limit: int = 100, revision: str = "main"):
+def from_hub(repo_id: str, models: list[str], limit: int = 100, revision: str = "main"):
     task = create_task_function(repo_id, revision)
-    model = "hf-inference-providers/meta-llama/Llama-3.1-8B-Instruct"
-    inspect_ai_eval(tasks=[task], model=model, limit=100)
+
+    inspect_ai_eval(tasks=task, model=models, limit=limit)
 
 
 def bundle(log_dir: str, output_dir: str, overwrite: bool = True, repo_id: str | None = None, public: bool = False):
