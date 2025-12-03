@@ -565,4 +565,4 @@ if __name__ == "__main__":
         "tiny_benchmarks",
     ]
     model = "hf-inference-providers/meta-llama/Llama-3.1-8B-Instruct:nebius"
-    eval(models=[model], tasks=task)
+    eval(models=[model], tasks=tasks[0])
