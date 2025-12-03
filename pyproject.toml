@@ -1,137 +1,63 @@
-# Code style
-[tool.ruff]
-line-length = 119
 
-[tool.ruff.lint]
-# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
-# Never enforce `E501` (line length violations).
-ignore = ["E501", "D100", "D101", "D102", "D103", "D104", "D415", "D105", "DOC501", "DOC201", "CPY001"]
-select = ["C", "E", "F", "I", "W", "CPY", "D417", "DOC"]
-preview = true
+on:
+  issue_comment:
+    types: [created]
 
-[tool.ruff.lint.pydocstyle]
-convention = "google"
+permissions:
+  contents: write
+  pull-requests: write
 
-[tool.ruff.lint.isort]
-lines-after-imports = 2
-known-first-party = ["lighteval"]
+jobs:
+  run-style-bot:
+    if: >
+      contains(github.event.comment.body, '@bot /style') &&
+      github.event.issue.pull_request != null
 
-[tool.ruff.format]
-quote-style = "double" # Like Black, use double quotes for strings.
-indent-style = "space" # Like Black, indent with spaces, rather than tabs.
-skip-magic-trailing-comma = false # Like Black, respect magic trailing commas.
-line-ending = "auto" # Like Black, automatically detect the appropriate line ending.
+    runs-on: ubuntu-latest
 
-# Building package
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+    steps:
+      - name: Extract PR details
+        id: pr_info
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNumber = context.payload.issue.number;
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
 
-[tool.setuptools.packages.find]
-where = ["src"]
+            // We capture both the branch ref and the "full_name" of the head repo
+            // so that we can check out the correct repository & branch (including forks).
+            core.setOutput("prNumber", prNumber);
+            core.setOutput("headRef", pr.head.ref);
+            core.setOutput("headRepoFullName", pr.head.repo.full_name);
+      - name: Check out PR branch
+        uses: actions/checkout@v3
+        env:
+          HEADREPOFULLNAME: ${{ steps.pr_info.outputs.headRepoFullName }}
+          HEADREF: ${{ steps.pr_info.outputs.headRef }}
+        with:
+          # Instead of checking out the base repo, use the contributor's repo name
+          repository: ${{ env.HEADREPOFULLNAME }}
+          ref: ${{ env.HEADREF }}
+          # You may need fetch-depth: 0 for being able to push
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-[tool.setuptools.package-data]
-lighteval = ["py.typed"]
+      - name: Debug
+        env:
+          HEADREPOFULLNAME: ${{ steps.pr_info.outputs.headRepoFullName }}
+          HEADREF: ${{ steps.pr_info.outputs.headRef }}
+          PRNUMBER: ${{ steps.pr_info.outputs.prNumber }}
+        run: |
+          echo "PR number: ${{ env.PRNUMBER }}"
+          echo "Head Ref: ${{ env.HEADREF }}"
+          echo "Head Repo Full Name: ${{ env.HEADREPOFULLNAME }}"
 
-[project]
-name = "lighteval"
-version = "0.13.1.dev0"
-authors = [
-  { name="Nathan Habib", email="nathan.habib@huggingface.com" },
-  { name="Clémentine Fourrier", email="clementine@huggingface.com" },
-  { name="Thomas Wolf", email="thom@huggingface.com" },
-]
-maintainers = [
-  { name="Nathan Habib", email="nathan.habib@huggingface.com" },
-  { name="Clémentine Fourrier", email="clementine@huggingface.com" },
-]
-description = "A lightweight and configurable evaluation package"
-readme = "README.md"
-requires-python = ">=3.10"
-license = {text = "MIT License"}
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "Programming Language :: Python :: 3.10",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
-keywords = ["evaluation", "nlp", "llm"]
-dependencies = [
-    # Base dependencies
-    "transformers>=4.54.0",
-    "inspect-ai>=0.3.140",
-    "openai",
-    "accelerate",
-    "huggingface_hub[hf_xet]>=0.30.2",
-    "torch>=2.0,<3.0",
-    "GitPython>=3.1.41", # for logging
-    "datasets>=4.0.0",
-    "pydantic",
-    "numpy>=2",  # pinned to avoid incompatibilities
-    "hf-xet>=1.1.8",  # pinned to avoid failing test suite
-    # Prettiness
-    "typer>=0.20.0",
-    "termcolor==2.3.0",
-    "pytablewriter",
-    "rich",
-    "colorlog",
-    # Extension of metrics
-    "aenum==3.1.15",
-    # Base metrics
-    "nltk==3.9.1",
-    "scikit-learn",
-    "sacrebleu",
-    "rouge_score==0.1.2",
-    "sentencepiece>=0.1.99",
-    "protobuf",
-    "pycountry",
-    "fsspec>=2023.12.2",
-    "httpx>=0.27.2",
-    "latex2sympy2_extended==1.0.6",
-    "langcodes",
-]
-
-[project.optional-dependencies]
-litellm = ["litellm[caching]>=1.66.0", "diskcache"]
-tgi = ["text-generation>=0.7.0"]
-optimum = ["optimum==1.12.0"]
-quantization = ["bitsandbytes>=0.41.0", "auto-gptq>=0.4.2"]
-adapters = ["peft==0.3.0"]
-nanotron = [
-  "nanotron",
-  "tensorboardX"
-]
-tensorboardX = ["tensorboardX"]
-vllm = ["vllm>=0.10.0,<0.10.2", "ray", "more_itertools"]
-sglang = ["sglang"]
-quality = ["ruff>=v0.11.0","pre-commit"]
-tests = ["pytest>=7.4.0","deepdiff","pip>=25.2"]
-dev = ["lighteval[accelerate,quality,tests,multilingual,math,extended_tasks,vllm]"]
-docs = ["hf-doc-builder", "watchdog"]
-extended_tasks = [
-  "langdetect", # ifeval
-  "openai>1.87", # llm as a judge using openai models
-  "tiktoken",
-  "emoji", "spacy", "syllapy",  # ifbench
-  "evaluate", # slr_bench
-]
-s3 = ["s3fs"]
-multilingual = [
-    "stanza",
-    "spacy[ja,ko,th]>=3.8.0",
-    "jieba", # for chinese tokenizer
-    "pyvi", # for vietnamese tokenizer
-]
-math = ["latex2sympy2_extended==1.0.6"]
-wandb = ["wandb"]
-trackio = ["trackio"]
-
-[project.urls]
-Homepage = "https://github.com/huggingface/lighteval"
-Issues = "https://github.com/huggingface/lighteval/issues"
-# Documentation = ""
-# Changelog = "https://github.com/huggingface/lighteval/blob/master/CHANGELOG.md"
-
-[project.scripts]
-lighteval = "lighteval.__main__:app"
+      - name: Set up Python
+        uses: actions/setup-python@v4
+      - name: Install dependencies
+        run: |
+          pip install .[quality]
