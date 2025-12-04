@@ -15,6 +15,7 @@ def record_to_sample(record, field_spec: dict):
     input_text = record[field_spec["input"]]
 
     target = record[field_spec["target"]]
+
     if isinstance(target, int):
         target = ascii_uppercase[target]
 
