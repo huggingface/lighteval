@@ -28,7 +28,6 @@ from typing import Literal
 import requests
 from huggingface_hub import HfApi
 from inspect_ai import Epochs, Task, task
-from inspect_ai import eval as inspect_ai_eval
 from inspect_ai import eval_set as inspect_ai_eval_set
 from inspect_ai.dataset import hf_dataset
 from inspect_ai.log import bundle_log_dir
@@ -215,6 +214,7 @@ def eval(  # noqa C901
     models: Annotated[list[str], Argument(help="Models to evaluate")],
     tasks: Annotated[str, Argument(help="Tasks to evaluate")],
     # model arguments
+    revision: Annotated[str, Option(help="Revision of the benchmark repo on the hub")] = "main",
     model_base_url: Annotated[
         str | None,
         Option(
@@ -430,15 +430,23 @@ def eval(  # noqa C901
         ),
     ] = False,
 ):
+    from huggingface_hub import HfApi
+
     from lighteval.tasks.registry import Registry
 
-    registry = Registry(tasks=tasks, custom_tasks=None, load_multilingual=False)
-    task_configs = registry.task_to_configs
-    inspect_ai_tasks = []
+    if "/" in tasks:
+        api = HfApi()
+        print(f"Loading tasks from dataset repository {tasks}...")
+        api.repo_info(repo_id=tasks, repo_type="dataset", revision=revision)
+        inspect_ai_tasks = create_task_function(tasks, revision)
+    else:
+        registry = Registry(tasks=tasks, custom_tasks=None, load_multilingual=False)
+        task_configs = registry.task_to_configs
+        inspect_ai_tasks = []
 
-    for task_name, task_configs in task_configs.items():
-        for task_config in task_configs:
-            inspect_ai_tasks.append(get_inspect_ai_task(task_config, epochs=epochs, epochs_reducer=epochs_reducer))
+        for task_name, task_configs in task_configs.items():
+            for task_config in task_configs:
+                inspect_ai_tasks.append(get_inspect_ai_task(task_config, epochs=epochs, epochs_reducer=epochs_reducer))
 
     if model_args is not None:
         model_args = InspectAIModelConfig._parse_args(model_args)
@@ -520,12 +528,6 @@ def eval(  # noqa C901
         print(f'run "inspect view --log-dir {log_dir}" to view the results')
     else:
         print("run 'inspect view' to view the results")
-
-
-def from_hub(repo_id: str, models: list[str], limit: int = 100, revision: str = "main"):
-    task = create_task_function(repo_id, revision)
-
-    inspect_ai_eval(tasks=task, model=models, limit=limit)
 
 
 def bundle(log_dir: str, output_dir: str, overwrite: bool = True, repo_id: str | None = None, public: bool = False):

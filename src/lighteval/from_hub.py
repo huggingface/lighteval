@@ -14,12 +14,22 @@ def record_to_sample(record, field_spec: dict):
     """
     input_text = record[field_spec["input"]]
 
-    target = record[field_spec["target"]]
+    target = field_spec["target"]
+
+    if target in ascii_uppercase:
+        target = target
+    else:
+        target = record[field_spec["target"]]
 
     if isinstance(target, int):
         target = ascii_uppercase[target]
 
-    choices_list = record[field_spec["choices"]]
+    choices = field_spec["choices"]
+
+    if isinstance(choices, list):
+        choices_list = [record[choice] for choice in choices]
+    else:
+        choices_list = record[choices]
 
     metadata = field_spec.get("metadata", None)
 
