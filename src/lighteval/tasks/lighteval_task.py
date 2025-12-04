@@ -59,7 +59,8 @@ class LightevalTaskConfig:
             row to Doc objects for evaluation. Takes a dataset row dict and task
             name as input.
         hf_repo (str): HuggingFace Hub repository path containing the evaluation dataset.
-        hf_data_files (str): Data files to load.
+        hf_data_files (str | Sequence[str] | Mapping[str, str | Sequence[str]] | None):
+            Data files to load. Same as `data_files` argument of `datasets.load_dataset`.
         hf_subset (str): Dataset subset/configuration name to use for this task.
         metrics (ListLike[Metric | Metrics]): List of metrics or metric enums to compute for this task.
 
