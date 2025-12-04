@@ -67,6 +67,9 @@ def load_dataset(repo_id: str, revision: str = "main", task_config: dict = None)
         sample_fields=sample_fields,
     )
 
+    if task_config.get("shuffle_choices", False):
+        dataset.shuffle_choices()
+
     return dataset
 
 
