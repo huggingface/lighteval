@@ -39,8 +39,8 @@ def bbeh_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=query,
-        choices="",
-        gold_index=line["target"],
+        choices=line["target"],
+        gold_index=0,
         instruction="",
     )
 
@@ -48,9 +48,8 @@ def bbeh_prompt(line, task_name: str = None):
 def record_to_sample(record):
     query = f"{record['input']}"
     target = record["target"]
-    choices = ""
 
-    return Sample(input=query, target=target, choices=choices)
+    return Sample(input=query, target=target)
 
 
 COMMON_TASK_ARGS = {
