@@ -77,6 +77,7 @@ you need, or, here's an overview of some *popular benchmarks*:
   - **Turkic**: TUMLU (9 Turkic languages)
   - **Chinese**: CMMLU, CEval, AGIEval
   - **Russian**: RUMMLU, Russian SQuAD
+  - **Kyrgyz**: Kyrgyz LLM Benchmark
   - **And many more...**
 
 ### 🧠 **Core Language Understanding**
