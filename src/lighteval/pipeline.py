@@ -308,6 +308,8 @@ class Pipeline:
                     model_outputs = await self.model.loglikelihood(docs)
                     outputs[sampling_method] = model_outputs
 
+        self.model.cleanup()
+
         return outputs
 
     def _run_model_sync(self):
@@ -327,6 +329,8 @@ class Pipeline:
                     model_outputs = self.model.loglikelihood_rolling(docs)
                     outputs[sampling_method] = model_outputs
 
+        self.model.cleanup()
+
         return outputs
 
     def _run_model(self):
@@ -338,9 +342,6 @@ class Pipeline:
             outputs = asyncio.run(self._run_model_async())
         else:
             outputs = self._run_model_sync()
-
-        # Cleaning up the model before running metrics
-        self.model.cleanup()
 
         return outputs
 
