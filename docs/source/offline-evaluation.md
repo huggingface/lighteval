@@ -1,7 +1,7 @@
 # Offline evaluation using local data files
 
 If you are prototyping a task based on files that are not yet hosted on the
-Hub, you can take advantage of the `hf_data_files` argument to point Lighteval
+Hub, you can take advantage of the `hf_data_files` argument to point lighteval
 at local JSON/CSV resources. This makes it easy to evaluate datasets that live
 in your repo or that are generated on the fly.
 
