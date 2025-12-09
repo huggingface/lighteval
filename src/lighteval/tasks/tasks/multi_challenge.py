@@ -21,6 +21,9 @@ conversational, generation, instruction-following
 
 paper:
 https://arxiv.org/abs/2501.17399
+
+starred:
+true
 """
 
 from inspect_ai.dataset import Sample
@@ -30,6 +33,9 @@ from inspect_ai.solver import Generate, TaskState, generate, solver
 
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
+
+
+# NOTE: ChatMessageAssistant and ChatMessageUser are imported from a private module.
 
 
 JUDGE_PROMPT = """You are tasked with evaluating a model response to see if it meets a specific criteria.
@@ -48,45 +54,24 @@ The criteria that the model response must meet is as follows. Be VERY STRICT!:
 Print your reasoning followed by your verdict, either "YES" or "NO"."""
 
 
-def format_conversation(conversation: list[dict]) -> str:
-    """Format conversation messages into a single string for model input."""
-    formatted_messages = []
-    for msg in conversation:
-        role = msg["role"].upper()
-        content = msg["content"]
-        formatted_messages.append(f"{role}:\n{content}")
-
-    return "\n\n".join(formatted_messages)
-
-
 def multi_challenge_prompt(line, task_name: str = None):
-    """Convert dataset to Doc object"""
-
-    conversation = line["CONVERSATION"]
-    formatted_conv = format_conversation(conversation)
+    """Stub prompt function for inspect-ai-only task (not used by inspect-ai backend)."""
     return Doc(
         task_name=task_name,
-        query=formatted_conv,
-        instruction=None,
-        specific={
-            "question_id": line["QUESTION_ID"],
-            "axis": line["AXIS"],
-            "target_question": line["TARGET_QUESTION"],
-            "pass_criteria": line["PASS_CRITERIA"],
-            "conversation": conversation,
-        },
+        query="",
+        choices=[],
+        gold_index=0,
     )
-
-
-base_scorer = model_graded_fact(
-    template=JUDGE_PROMPT,
-    grade_pattern=r"\b(YES|NO)\b",
-    model="openai/gpt-4o-2024-08-06",
-)
 
 
 @scorer(metrics=[accuracy(), stderr()])
 def multi_challenge_scorer():
+    base_scorer = model_graded_fact(
+        template=JUDGE_PROMPT,
+        grade_pattern=r"\b(YES|NO)\b",
+        model="openai/gpt-4o-2024-08-06",
+    )
+
     async def score(state: TaskState, target: Target):
         score = await base_scorer(state, target)
         judge_verdict = score.value.upper() if score.value else None
@@ -98,7 +83,14 @@ def multi_challenge_scorer():
                 explanation=f"Could not extract valid verdict from judge output: {score.explanation}",
             )
 
-        pass_criteria = state.metadata.get("pass_criteria", "YES")
+        pass_criteria = state.metadata.get("pass_criteria", "")
+        if pass_criteria not in ["YES", "NO"]:
+            return Score(
+                value="I",
+                answer=score.answer,
+                explanation=f"Invalid pass criteria: {pass_criteria}",
+            )
+
         passed = judge_verdict == pass_criteria
 
         return Score(
@@ -117,7 +109,8 @@ def conversation_solver():
     async def solve(state: TaskState, generate: Generate):
         conversation = state.metadata.get("conversation", [])
 
-        state.messages = []
+        if not hasattr(state, "messages") or state.messages is None:
+            state.messages = []
 
         for msg in conversation:
             role = msg["role"].lower()
@@ -127,6 +120,8 @@ def conversation_solver():
                 state.messages.append(ChatMessageUser(content=content))
             elif role == "assistant":
                 state.messages.append(ChatMessageAssistant(content=content))
+            else:
+                raise ValueError(f"Unsupported role: {role} in conversation.")
 
         return state
 
