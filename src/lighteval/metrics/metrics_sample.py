@@ -1149,9 +1149,16 @@ class JudgeLLMTVDMI(JudgeLLM):
     def compute(self, responses: list[ModelResponse], docs: list[Doc], **kwargs) -> list:
         # For TVD-MI, the evaluated model is the judge; the “responses” from
         # base models are already baked into docs as response_a / response_b.
-        questions = [d.response_a for d in docs]
-        answers = [d.response_b for d in docs]
-        labels = [int(d.pair_label) for d in docs]
+        def _get(d, k):
+            return (
+                getattr(d, k, None)
+                if getattr(d, k, None) is not None
+                else (d.specific.get(k) if getattr(d, "specific", None) else None)
+            )
+
+        questions = [_get(d, "response_a") for d in docs]
+        answers = [_get(d, "response_b") for d in docs]
+        labels = [int(_get(d, "pair_label")) for d in docs]
 
         options = [None] * len(docs)
         golds = [None] * len(docs)
