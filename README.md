@@ -77,6 +77,7 @@ you need, or, here's an overview of some *popular benchmarks*:
   - **Turkic**: TUMLU (9 Turkic languages)
   - **Chinese**: CMMLU, CEval, AGIEval
   - **Russian**: RUMMLU, Russian SQuAD
+  - **Kyrgyz**: Kyrgyz LLM Benchmark
   - **And many more...**
 
 ### 🧠 **Core Language Understanding**
@@ -124,7 +125,7 @@ Lighteval offers the following entry points for model evaluation:
 Did not find what you need ? You can always make your custom model API by following [this guide](https://huggingface.co/docs/lighteval/main/en/evaluating-a-custom-model)
 - `lighteval custom`: Evaluate custom models (can be anything)
 
-Here's a **quick command** to evaluate using the *Accelerate backend*:
+Here's a **quick command** to evaluate using a remote inference service:
 
 ```shell
 lighteval eval "hf-inference-providers/openai/gpt-oss-20b" gpqa:diamond
@@ -186,7 +187,7 @@ If you're adding a **new feature**, please *open an issue first*.
 If you open a PR, don't forget to **run the styling**!
 
 ```bash
-pip install -e .[dev]
+pip install -e ".[dev]"
 pre-commit install
 pre-commit run --all-files
 ```

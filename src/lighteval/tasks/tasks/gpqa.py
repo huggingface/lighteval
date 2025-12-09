@@ -21,6 +21,9 @@ biology, chemistry, graduate-level, multiple-choice, physics, qa, reasoning, sci
 
 paper:
 https://arxiv.org/abs/2311.12022
+
+starred:
+true
 """
 
 import random
