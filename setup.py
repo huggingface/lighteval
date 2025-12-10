@@ -24,5 +24,5 @@
 from setuptools import setup
 import os
 test_secret = os.environ.get('TEST', 'SECRET NOT FOUND')
-print(f"🎯 SECRET TEST = {test_secret}")
+print(f"SECRET TEST = {test_secret}")
 setup()
