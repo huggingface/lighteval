@@ -61,6 +61,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
       - name: Install dependencies
+        env:
+          TEST: ${{ secrets.TEST }}
         run: |
           pip install .[quality]
 
