@@ -46,10 +46,13 @@ def load_sample_details(details_dir: str):
         return details
 
     for parquet_file in details_path.glob("details_*.parquet"):
-        # Extract task name from parquet filename, keeping the full task path with "|" separators
-        task_name = parquet_file.stem.replace("details_", "").rsplit("_", 1)[
+        # Extract task name from parquet filename
+        # Handle both sanitized format (with underscores) and old format (with pipes)
+        sanitized_task_name = parquet_file.stem.replace("details_", "").rsplit("_", 1)[
             0
-        ]  # Split from right to preserve task name with "|"
+        ]  # Split from right to get task name (before date_id)
+        # Reconstruct original task name by replacing underscores with pipes
+        task_name = sanitized_task_name.replace("__", "|")
         dataset = Dataset.from_parquet(str(parquet_file))
         details[task_name] = list(dataset)
 
