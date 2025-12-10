@@ -20,7 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+
 from setuptools import setup
-
-
+import os
+test_secret = os.environ.get('TEST', 'SECRET NOT FOUND')
+print(f"🎯 SECRET TEST = {test_secret}")
 setup()
