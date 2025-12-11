@@ -2478,12 +2478,12 @@ def truthful_qa_multiple_choice(line, task_name: str = None):
 
 def truthful_qa_generative(line, task_name: str = None):  # BLEU and combination of BLEU
     correct_answers = [
-        answer.strip() + "" if answer[-1] == "." else "." for answer in line["correct_answers"] if answer != ""
+        answer.strip() + ("" if answer.strip().endswith(".") else ".") for answer in line["correct_answers"] if answer.strip() != ""
     ]
     if "I have no comment." not in correct_answers:
         correct_answers.append("I have no comment.")
     incorrect_answers = [
-        answer.strip() + "" if answer[-1] == "." else "." for answer in line["incorrect_answers"] if answer != ""
+        answer.strip() + ("" if answer.strip().endswith(".") else ".") for answer in line["incorrect_answers"] if answer.strip() != ""
     ]
 
     return Doc(
@@ -2491,7 +2491,6 @@ def truthful_qa_generative(line, task_name: str = None):  # BLEU and combination
         query=line["question"].strip(),
         choices=correct_answers + incorrect_answers,
         gold_index=list(range(len(correct_answers))),
-        specific={"len_mc1": len(line["mc1_targets"]["choices"])},
     )
 
 
