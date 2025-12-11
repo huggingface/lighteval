@@ -26,7 +26,8 @@ line-ending = "auto" # Like Black, automatically detect the appropriate line end
 [build-system]
 requires = ["setuptools>=61.0"]
 # build-backend = "setuptools.build_meta"
-build-backend = "setuptools.build_meta:__legacy__"
+build-backend = "build"
+# build-backend = "setuptools.build_meta:__legacy__"
 
 [tool.setuptools.packages.find]
 where = ["src"]
