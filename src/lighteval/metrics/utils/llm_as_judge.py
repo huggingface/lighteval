@@ -37,7 +37,6 @@ from tqdm.asyncio import tqdm_asyncio
 from lighteval.utils.imports import raise_if_package_not_available
 from lighteval.utils.utils import as_list
 
-
 logging.getLogger("openai").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -94,7 +93,9 @@ class JudgeLM:
         model: str,
         templates: Callable,
         process_judge_response: Callable,
-        judge_backend: Literal["litellm", "openai", "transformers", "tgi", "vllm", "inference-providers"],
+        judge_backend: Literal[
+            "litellm", "openai", "transformers", "tgi", "vllm", "inference-providers"
+        ],
         url: str | None = None,
         api_key: str | None = None,
         max_tokens: int | None = None,
@@ -144,7 +145,9 @@ class JudgeLM:
 
         # Validate that hf_provider is specified when using inference-providers backend
         if self.backend == "inference-providers" and self.hf_provider is None:
-            raise ValueError("When using 'inference-providers' as backend, you must specify an 'hf_provider'")
+            raise ValueError(
+                "When using 'inference-providers' as backend, you must specify an 'hf_provider'"
+            )
 
     def __lazy_load_client(self):  # noqa: C901
         match self.backend:
@@ -156,7 +159,8 @@ class JudgeLM:
                     from openai import OpenAI
 
                     self.client = OpenAI(
-                        api_key=self.api_key if self.url is None else None, base_url=self.url if self.url else None
+                        api_key=self.api_key if self.url is None else None,
+                        base_url=self.url if self.url else None,
                     )
                 return self.__call_api_parallel
 
@@ -170,18 +174,29 @@ class JudgeLM:
                     from vllm import LLM, SamplingParams
                     from vllm.transformers_utils.tokenizer import get_tokenizer
 
-                    self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=self.max_tokens)
+                    self.sampling_params = SamplingParams(
+                        temperature=0.8, top_p=0.95, max_tokens=self.max_tokens
+                    )
                     self.tokenizer = get_tokenizer(self.model, tokenizer_mode="auto")
-                    self.pipe = LLM(model=self.model, gpu_memory_utilization=0.8, dtype="float16")
+                    self.pipe = LLM(
+                        model=self.model, gpu_memory_utilization=0.8, dtype="float16"
+                    )
                 return self.__call_vllm
 
             case "transformers":
                 if self.pipe is None:
                     import torch
-                    from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+                    from transformers import (
+                        AutoModelForCausalLM,
+                        AutoTokenizer,
+                        pipeline,
+                    )
 
                     transformers_model = AutoModelForCausalLM.from_pretrained(
-                        self.model, torch_dtype=torch.float16, trust_remote_code=False, device_map="cuda"
+                        self.model,
+                        torch_dtype=torch.float16,
+                        trust_remote_code=False,
+                        device_map="cuda",
                     )
                     tokenizer = AutoTokenizer.from_pretrained(self.model)
                     self.pipe = pipeline(
@@ -195,7 +210,9 @@ class JudgeLM:
             case "inference-providers":
                 from huggingface_hub import AsyncInferenceClient
 
-                self.client = AsyncInferenceClient(token=self.api_key, base_url=self.url, provider=self.hf_provider)
+                self.client = AsyncInferenceClient(
+                    token=self.api_key, base_url=self.url, provider=self.hf_provider
+                )
                 return self.__call_hf_inference_async
 
             case _:
@@ -227,7 +244,9 @@ class JudgeLM:
 
         # Ensure all lists have the same length
         if len(set(list_lengths)) > 1:
-            raise ValueError("All lists in the input dictionary must have the same length")
+            raise ValueError(
+                "All lists in the input dictionary must have the same length"
+            )
 
         # Get the length of the lists
         n = list_lengths[0] if list_lengths else 0
@@ -269,7 +288,13 @@ class JudgeLM:
 
         return scores, prompts, responses
 
-    def evaluate_answer(self, question: str, answer: str, options: list[str] | None = None, gold: str | None = None):
+    def evaluate_answer(
+        self,
+        question: str,
+        answer: str,
+        options: list[str] | None = None,
+        gold: str | None = None,
+    ):
         """Evaluates an answer using either Transformers or OpenAI API.
 
         Args:
@@ -283,7 +308,9 @@ class JudgeLM:
         """
         # lazy loading of the pipeline
         judge_function = self.__lazy_load_client()
-        prompt = self.template(question=question, options=options, answer=answer, gold=gold)
+        prompt = self.template(
+            question=question, options=options, answer=answer, gold=gold
+        )
         response = judge_function(prompt)
         score = self.process_judge_response(response)
 
@@ -296,7 +323,11 @@ class JudgeLM:
 
     def __call_vllm(self, prompt):
         tokenized = [self.tokenizer.apply_chat_template(p) for p in prompt]
-        output = self.pipe.generate(prompt_token_ids=tokenized, sampling_params=self.sampling_params, use_tqdm=True)
+        output = self.pipe.generate(
+            prompt_token_ids=tokenized,
+            sampling_params=self.sampling_params,
+            use_tqdm=True,
+        )
         outputs = [output.outputs[0].text for output in output]
         return outputs
 
@@ -317,8 +348,13 @@ class JudgeLM:
                 try:
                     max_new_tokens = self.max_tokens
 
-                    is_reasoning_model = "o1" in self.model or "o3" in self.model or "R1" in self.model
-                    if is_reasoning_model and self.backend_options.increase_max_tokens_for_reasoning:
+                    is_reasoning_model = (
+                        "o1" in self.model or "o3" in self.model or "R1" in self.model
+                    )
+                    if (
+                        is_reasoning_model
+                        and self.backend_options.increase_max_tokens_for_reasoning
+                    ):
                         max_new_tokens = min(max_new_tokens * 10, 32000)
 
                     kwargs = {
@@ -338,7 +374,9 @@ class JudgeLM:
                         text = response.choices[0].message.content
                         if not text or text == error_message:
                             # Just return an error response if the second attempt fails too
-                            logger.error(f"Failed to get response from the API for prompt: {prompt}")
+                            logger.error(
+                                f"Failed to get response from the API for prompt: {prompt}"
+                            )
                             return error_message
                     return text
                 except Exception as e:
@@ -352,7 +390,9 @@ class JudgeLM:
                 results.append(entry)
 
         if None in results:
-            raise ValueError("Some entries are not annotated due to errors in annotate_p, please inspect and retry.")
+            raise ValueError(
+                "Some entries are not annotated due to errors in annotate_p, please inspect and retry."
+            )
 
         return results
 
@@ -360,7 +400,9 @@ class JudgeLM:
         async def run_all() -> list[str]:
             """Wrap inference call into function"""
             tasks = (self.__call_hf_inference(prompt) for prompt in prompts)
-            return await tqdm_asyncio.gather(*tasks, desc="HF inference", total=len(prompts))
+            return await tqdm_asyncio.gather(
+                *tasks, desc="HF inference", total=len(prompts)
+            )
 
         try:
             loop = asyncio.get_running_loop()
@@ -397,11 +439,15 @@ class JudgeLM:
     def __call_api_parallel(self, prompts):
         results = []
         with ThreadPoolExecutor(10) as executor:
-            for entry in tqdm(executor.map(self.__call_api, prompts), total=len(prompts)):
+            for entry in tqdm(
+                executor.map(self.__call_api, prompts), total=len(prompts)
+            ):
                 results.append(entry)
 
         if None in results:
-            raise ValueError("Some entries are not annotated due to errors in annotate_p, please inspect and retry.")
+            raise ValueError(
+                "Some entries are not annotated due to errors in annotate_p, please inspect and retry."
+            )
 
         return results
 
@@ -409,15 +455,15 @@ class JudgeLM:
         for _ in range(self.API_MAX_RETRY):
             try:
                 # Base model
-                response = self.client.beta.chat.completions.parse(
+                response = self.client.responses.create(
                     model=self.model,
-                    messages=as_list(prompt),
+                    input=prompt,
                     response_format=self.response_format,
                     max_tokens=self.max_tokens,
                     temperature=0.0,
                     n=1,
                 )
-                answer = response.choices[0].message.parsed
+                answer = response.output_text
                 return answer
             except TypeError:
                 try:
