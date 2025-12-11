@@ -437,7 +437,9 @@ class JudgeLM:
         raise Exception("Failed to get response from the HF API")
 
     def __call_api_parallel(self, prompts):
+
         results = []
+
         with ThreadPoolExecutor(10) as executor:
             for entry in tqdm(
                 executor.map(self.__call_api, prompts), total=len(prompts)
@@ -458,10 +460,7 @@ class JudgeLM:
                 response = self.client.responses.create(
                     model=self.model,
                     input=prompt,
-                    response_format=self.response_format,
-                    max_tokens=self.max_tokens,
-                    temperature=0.0,
-                    n=1,
+                    max_output_tokens=self.max_tokens,
                 )
                 answer = response.output_text
                 return answer
