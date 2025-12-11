@@ -126,7 +126,7 @@ def simpleqa(line, task_name: str = None):
     gold_index = 0
 
     return Doc(
-        task_name=task_name, query=query, choices=choices, gold_index=gold_index, specific={**eval(line["metadata"])}
+        task_name=task_name, query=query, choices=choices, gold_index=gold_index, specific=line["metadata"]
     )
 
 
