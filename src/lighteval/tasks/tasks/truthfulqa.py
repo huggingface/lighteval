@@ -34,7 +34,7 @@ truthfulqa_gen = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=200,
-    metrics=[Metrics.exact_match],
+    metrics=[Metrics.bleu_1, Metrics.bleu_4],
     stop_sequence=["\n"],
     version=0,
 )
