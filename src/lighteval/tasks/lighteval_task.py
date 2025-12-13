@@ -24,7 +24,7 @@ import functools
 import logging
 import random
 from dataclasses import asdict, dataclass, field
-from typing import Callable
+from typing import Callable, Mapping, Sequence
 
 from datasets import DatasetDict, load_dataset
 from huggingface_hub import TextGenerationInputGrammarType
@@ -59,6 +59,8 @@ class LightevalTaskConfig:
             row to Doc objects for evaluation. Takes a dataset row dict and task
             name as input.
         hf_repo (str): HuggingFace Hub repository path containing the evaluation dataset.
+        hf_data_files (str | Sequence[str] | Mapping[str, str | Sequence[str]] | None):
+            Data files to load. Same as `data_files` argument of `datasets.load_dataset`.
         hf_subset (str): Dataset subset/configuration name to use for this task.
         metrics (ListLike[Metric | Metrics]): List of metrics or metric enums to compute for this task.
 
@@ -113,6 +115,7 @@ class LightevalTaskConfig:
     hf_repo: str
     hf_subset: str
     metrics: ListLike[Metric | Metrics]  # Accept both Metric objects and Metrics enums
+    hf_data_files: str | Sequence[str] | Mapping[str, str | Sequence[str]] | None = None
 
     # Inspect AI compatible parameters
     solver: None = None
@@ -219,6 +222,7 @@ class LightevalTask:
 
         # Dataset info
         self.dataset_path = config.hf_repo
+        self.data_files = config.hf_data_files
         self.dataset_config_name = config.hf_subset
         self.dataset_revision = config.hf_revision
         self.dataset_filter = config.hf_filter
@@ -454,6 +458,7 @@ class LightevalTask:
             path=task.dataset_path,
             name=task.dataset_config_name,
             revision=task.dataset_revision,
+            data_files=task.data_files,
         )
 
         if task.dataset_filter is not None:
