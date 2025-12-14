@@ -4,10 +4,12 @@ Based on original implementation:
 https://github.com/scicode-bench/SciCode
 """
 
+import platform
+import resource
 import shutil
 import subprocess
 import tempfile
-import time
+import uuid
 from pathlib import Path
 
 from inspect_ai.scorer import Metric, Score, Target, mean, metric, scorer
@@ -38,20 +40,40 @@ def run_script(script_path: Path) -> int:
     """Run test script and return exit code.
 
     0 = pass, 1 = fail, 2 = timeout
+
+    Note: Resource limits are applied to restrict memory usage (4GB max).
     """
+    maximum_memory_bytes = 4 * 1024 * 1024 * 1024  # 4GB
+
+    def set_resource_limits():
+        """Set resource limits in the child process before execution."""
+        resource.setrlimit(resource.RLIMIT_AS, (maximum_memory_bytes, maximum_memory_bytes))
+        resource.setrlimit(resource.RLIMIT_DATA, (maximum_memory_bytes, maximum_memory_bytes))
+        if platform.system() != "Darwin":
+            resource.setrlimit(resource.RLIMIT_STACK, (maximum_memory_bytes, maximum_memory_bytes))
+
+    preexec_fn = set_resource_limits if platform.system() != "Windows" else None
+
+    process = None
     try:
-        subprocess.run(
+        process = subprocess.Popen(
             ["python", str(script_path)],
-            check=True,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=1800,  # 30 minutes like original
+            preexec_fn=preexec_fn,
         )
-        return 0
-    except subprocess.CalledProcessError:
+        stdout, stderr = process.communicate(timeout=1800)  # 30 minutes like original
+        if process.returncode == 0:
+            return 0
         return 1
     except subprocess.TimeoutExpired:
+        if process is not None:
+            process.kill()
+            process.wait()
         return 2
+    except Exception:
+        return 1
 
 
 def _get_initial_score(sub_steps: list) -> Score | None:
@@ -179,8 +201,9 @@ def scicode_scorer():
         if error_score is not None:
             return error_score
 
-        tmp_dir = Path(tempfile.mkdtemp(prefix=f"scicode_test_{time.time()}_"))
+        tmp_dir: Path | None = None
         try:
+            tmp_dir = Path(tempfile.mkdtemp(prefix=f"scicode_test_{uuid.uuid4().hex}_"))
             for idx in range(len(sub_steps)):
                 if should_skip_step(problem_id, idx):
                     continue
@@ -218,7 +241,7 @@ def scicode_scorer():
             )
 
         finally:
-            if tmp_dir.exists():
+            if tmp_dir is not None and tmp_dir.exists():
                 shutil.rmtree(tmp_dir)
 
     return score

@@ -32,10 +32,10 @@ from inspect_ai.dataset import Sample
 
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.tasks.tasks.scicode.parse import extract_function_name
 from lighteval.tasks.tasks.scicode.prompts import prepare_scicode_prompt
 from lighteval.tasks.tasks.scicode.scorer import scicode_scorer
 from lighteval.tasks.tasks.scicode.solver import scicode_solver
+from lighteval.tasks.tasks.scicode.utils import _extract_first_step_metadata
 
 
 def scicode_prompt(line: dict[str, Any], task_name: str = "scicode") -> Doc:
@@ -44,15 +44,9 @@ def scicode_prompt(line: dict[str, Any], task_name: str = "scicode") -> Doc:
     For multi-step evaluation, this returns the first step's prompt.
     The solver will handle subsequent steps.
     """
-    if not line.get("sub_steps") or len(line["sub_steps"]) == 0:
-        raise ValueError("No sub-steps found in problem data")
-
-    step_data = line["sub_steps"][0]
+    step_metadata = _extract_first_step_metadata(line)
+    step_data = step_metadata["step_data"]
     query = prepare_scicode_prompt(step_data, line, with_background=False)
-
-    test_cases = step_data.get("test_cases", [])
-    function_header = step_data.get("function_header", "")
-    fn_name = extract_function_name(function_header) if function_header else None
 
     return Doc(
         task_name=task_name,
@@ -60,10 +54,10 @@ def scicode_prompt(line: dict[str, Any], task_name: str = "scicode") -> Doc:
         choices=[""],
         gold_index=0,
         specific={
-            "test_cases": test_cases,
-            "function_header": function_header,
-            "fn_name": fn_name,
-            "step_number": step_data.get("step_number"),
+            "test_cases": step_metadata["test_cases"],
+            "function_header": step_metadata["function_header"],
+            "fn_name": step_metadata["fn_name"],
+            "step_number": step_metadata["step_number"],
             "problem_id": line.get("problem_id"),
             "required_dependencies": line.get("required_dependencies", ""),
         },
@@ -75,21 +69,16 @@ def record_to_sample(record: dict[str, Any]) -> Sample:
 
     Includes ALL sub_steps in metadata for multi-step processing.
     """
-    if not record.get("sub_steps") or len(record["sub_steps"]) == 0:
-        raise ValueError("No sub-steps found in problem data")
+    step_metadata = _extract_first_step_metadata(record)
+    step_data = step_metadata["step_data"]
 
     metadata = dict(record)
-
-    step_data = record["sub_steps"][0]
-    function_header = step_data.get("function_header", "")
-    fn_name = extract_function_name(function_header) if function_header else None
-
     metadata.update(
         {
-            "test_cases": step_data.get("test_cases", []),
-            "function_header": function_header,
-            "fn_name": fn_name,
-            "step_number": step_data.get("step_number"),
+            "test_cases": step_metadata["test_cases"],
+            "function_header": step_metadata["function_header"],
+            "fn_name": step_metadata["fn_name"],
+            "step_number": step_metadata["step_number"],
         }
     )
 

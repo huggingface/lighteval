@@ -36,7 +36,11 @@ Example:
 def prepare_scicode_prompt(
     step_data: dict[str, Any], problem_data: dict[str, Any], with_background: bool = False
 ) -> str:
-    """Prepare prompt for a SciCode sub-step following the official template structure."""
+    """Prepare prompt for the first SciCode sub-step (no previous steps).
+
+    This function is used for initial prompt generation before the solver runs.
+    For subsequent steps with previous context, use generate_prompt_with_steps() instead.
+    """
     next_step_parts = [step_data["step_description_prompt"]]
 
     if with_background and step_data.get("step_background"):

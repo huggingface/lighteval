@@ -30,7 +30,7 @@ def extract_function_name(function_header: str) -> str:
 def get_function_from_code(code_string: str, function_name: str) -> str:
     """Extract specific function/class from code using AST."""
     if code_string is None:
-        return None
+        return ""
     try:
         tree = ast.parse(code_string)
         for node in ast.walk(tree):
@@ -91,13 +91,12 @@ def _process_hdf5_dict(group: h5py.Group) -> dict:
 
 def _process_hdf5_datagroup(group: h5py.Group):
     """Process an h5py Group, handling special cases (list, sparse_matrix) or dict."""
-    for key in group.keys():
-        if key == "list":
-            return _process_hdf5_list(group[key])
-        if key == "sparse_matrix":
-            return _process_hdf5_sparse_matrix(group[key])
-        else:
-            return _process_hdf5_dict(group)
+    if "list" in group:
+        return _process_hdf5_list(group["list"])
+    elif "sparse_matrix" in group:
+        return _process_hdf5_sparse_matrix(group["sparse_matrix"])
+    else:
+        return _process_hdf5_dict(group)
 
 
 def extract_targets(step_id: str, num_tests: int, h5py_file: str | Path) -> tuple:

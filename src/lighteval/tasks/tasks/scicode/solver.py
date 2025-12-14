@@ -29,7 +29,7 @@ def should_skip_step(problem_id: str, step_idx: int) -> bool:
 
 
 @solver
-def scicode_solver(**params: dict[str, Any]):
+def scicode_solver(**params: Any):
     """Custom solver that processes all sub-steps sequentially."""
 
     async def solve(state: TaskState, generate_fn: Generate) -> TaskState:

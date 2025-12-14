@@ -70,7 +70,7 @@ dependencies = [
     "pydantic",
     "numpy>=2",  # pinned to avoid incompatibilities
     "hf-xet>=1.1.8",  # pinned to avoid failing test suite
-    "scipy>=1.0.0",  # for sparse matrix handling specific to scicode benchmark
+    "scipy>=1.7.0",  # for sparse matrix handling specific to scicode benchmark
     "typer>=0.20.0",
     "termcolor==2.3.0",
     "pytablewriter",

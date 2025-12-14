@@ -6,6 +6,7 @@ https://github.com/scicode-bench/SciCode
 
 import re
 from pathlib import Path
+from typing import Any
 
 
 def extract_python_script(response: str) -> str:
@@ -20,6 +21,28 @@ def extract_python_script(response: str) -> str:
 
     python_script = re.sub(r"^\s*(import .*|from .*\s+import\s+.*)", "", python_script, flags=re.MULTILINE)
     return python_script
+
+
+def _extract_first_step_metadata(record: dict[str, Any]) -> dict[str, Any]:
+    """Extract and validate metadata from the first step of a record."""
+    if not record.get("sub_steps") or len(record["sub_steps"]) == 0:
+        raise ValueError("No sub-steps found in problem data")
+
+    step_data = record["sub_steps"][0]
+    function_header = step_data.get("function_header", "")
+
+    # Import here to avoid circular dependency
+    from lighteval.tasks.tasks.scicode.parse import extract_function_name
+
+    fn_name = extract_function_name(function_header) if function_header else None
+
+    return {
+        "step_data": step_data,
+        "test_cases": step_data.get("test_cases", []),
+        "function_header": function_header,
+        "fn_name": fn_name,
+        "step_number": step_data.get("step_number"),
+    }
 
 
 def get_h5py_file_path() -> Path:
@@ -44,5 +67,9 @@ def get_h5py_file_path() -> Path:
         if local_path.exists():
             return local_path
         raise FileNotFoundError(
-            f"Could not download test_data.h5 from {repo_id}. Please ensure it's available or place it at {local_path}"
+            f"""
+            Could not download test_data.h5 from {repo_id}.
+            Please ensure it's available or place it at {local_path}.
+            Error: {str(e)}
+            """
         ) from e
