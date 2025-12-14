@@ -126,7 +126,9 @@ def _find_max_items_for_multi_turn(input_keys, input_values, prompt_length, k):
         keys_str = ", ".join(first_turn_keys)
 
         return PROMPT_TEMPLATE_MULTI_START.format(
-            dict_str=dict_str, keys_str=keys_str, k=k, num_keys=len(first_turn_keys)
+            dict_str=dict_str,
+            keys_str=keys_str,
+            k=k,
         )
 
     return _binary_search_max_items(input_keys, build_initial_prompt_for_n, prompt_length, min_items=k)
@@ -169,7 +171,6 @@ def _build_multi_turn_prompts(record, prompt_length=32768, k=1):
     """
     input_keys = record["input"]
     input_values = record["values"]
-    expected_output = record["output"]
 
     # Handle empty input case
     if len(input_keys) == 0:
@@ -181,21 +182,17 @@ def _build_multi_turn_prompts(record, prompt_length=32768, k=1):
     # Use the maximum n that fits
     input_keys = input_keys[:max_n]
     input_values = input_values[:max_n]
-    expected_output = expected_output[:max_n]
 
-    turn_chunks, value_chunks, expected_per_turn = _chunk_and_calculate_expected(input_keys, input_values, k)
+    turn_chunks, _, expected_per_turn = _chunk_and_calculate_expected(input_keys, input_values, k)
 
     dictionary = dict(zip(input_keys, input_values))
     dict_str = str(dictionary)
 
     first_turn_keys_str = ", ".join(turn_chunks[0])
-    initial_prompt = PROMPT_TEMPLATE_MULTI_START.format(
-        dict_str=dict_str, keys_str=first_turn_keys_str, k=k, num_keys=len(turn_chunks[0])
-    )
+    initial_prompt = PROMPT_TEMPLATE_MULTI_START.format(dict_str=dict_str, keys_str=first_turn_keys_str, k=k)
 
     metadata = {
         "turn_chunks": turn_chunks,
-        "value_chunks": value_chunks,
         "expected_per_turn": expected_per_turn,
         "dictionary": dictionary,
         "k": k,

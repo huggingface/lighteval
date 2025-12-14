@@ -67,14 +67,14 @@ def _extract_response_content(response):
     return str(response)
 
 
-async def _process_single_turn(state, turn_chunk, generate):
+async def _process_single_turn(state, turn_chunk, generate_fn):
     """Process a single turn: add user message, get model response, add assistant message."""
     keys_str = ", ".join(turn_chunk)
     followup_prompt = PROMPT_TEMPLATE_MULTI_FOLLOWUP.format(keys_str=keys_str)
     state.messages.append(ChatMessageUser(content=followup_prompt))
 
-    # generate() takes the state and returns updated state with assistant message added
-    updated_state = await generate(state)
+    # generate_fn() takes the state and returns updated state with assistant message added
+    updated_state = await generate_fn(state)
     turn_response = _extract_response_content(updated_state.output.completion if updated_state.output else "")
 
     return updated_state, turn_response
@@ -91,7 +91,7 @@ def multi_turn_solver():
     async def solve(state: TaskState, generate: Generate):
         turn_chunks = state.metadata.get("turn_chunks", [])
 
-        if not turn_chunks or len(turn_chunks) == 0:
+        if not turn_chunks:
             return state
 
         # Initialize messages
@@ -129,7 +129,7 @@ def multi_turn_solver():
     return solve
 
 
-@scorer(metrics={"turn_accuracy": [accuracy(), stderr()], "fractional_accuracy": [accuracy(), stderr()]})
+@scorer(metrics={"fractional_accuracy": [accuracy(), stderr()]})
 def multi_turn_scorer():
     """
     Scorer for multi-turn Long Horizon Execution task.
@@ -143,11 +143,15 @@ def multi_turn_scorer():
         expected_per_turn = state.metadata.get("expected_per_turn", [])
 
         if not all_turn_outputs:
-            return Score(value=0.0, answer="", explanation="No turn outputs found in state.metadata")
+            return Score(
+                value={"fractional_accuracy": 0.0},
+                answer="",
+                explanation="No turn outputs found in state.metadata",
+            )
 
         if len(all_turn_outputs) != len(expected_per_turn):
             return Score(
-                value=0.0,
+                value={"fractional_accuracy": 0.0},
                 answer="",
                 explanation=f"Mismatch: {len(all_turn_outputs)} outputs vs {len(expected_per_turn)} expected turns",
             )
@@ -155,7 +159,7 @@ def multi_turn_scorer():
         parsed_outputs = []
         answer_pattern = re.compile(r"<answer>(.*?)</answer>", re.DOTALL)
 
-        for turn_idx, turn_output in enumerate(all_turn_outputs):
+        for turn_output in all_turn_outputs:
             match = answer_pattern.search(turn_output)
             if match:
                 try:
@@ -177,12 +181,7 @@ def multi_turn_scorer():
         fractional_accuracy = correct_turns / len(expected_per_turn) if expected_per_turn else 0.0
 
         return Score(
-            value={
-                "turn_accuracy": fractional_accuracy,
-                "fractional_accuracy": fractional_accuracy,
-                "correct_turns": correct_turns,
-                "total_turns": len(expected_per_turn),
-            },
+            value={"fractional_accuracy": fractional_accuracy},
             answer=str(parsed_outputs),
             explanation=f"Correct {correct_turns}/{len(expected_per_turn)} turns. Details: {turn_results}",
         )

@@ -44,35 +44,9 @@ from inspect_ai.solver import TaskState, generate
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.tasks.tasks.long_horizon_execution.constants import CONTEXT_SIZES
+from lighteval.tasks.tasks.long_horizon_execution.constants import CONTEXT_SIZES, PROMPT_TEMPLATE_SINGLE
 from lighteval.tasks.tasks.long_horizon_execution.multi_turn import create_multi_turn_tasks
 from lighteval.tasks.tasks.long_horizon_execution.utils import _build_prompt_and_target
-
-
-# Single-turn prompt template
-PROMPT_TEMPLATE_SINGLE = """You are an AI assistant. I will provide you with a dictionary and then give you a list of keys.
-Your task is to calculate the final cumulative sum after processing all keys in order.
-
-For each key in the list, you need to:
-1. Look up the value in the dictionary
-2. Add it to the running sum
-3. After processing all keys, output the final cumulative sum
-
-Dictionary to use:
-{dict_str}
-
-Keys to process in order:
-{keys_str}
-
-Your task: Process all keys in order and calculate the final cumulative sum after processing all {num_keys} keys.
-
-IMPORTANT:
-- Output your answer as a single integer value inside <answer></answer> tags
-- Do not include any other text outside the answer tags
-- Format: <answer>final_sum</answer>
-- Example: If the final cumulative sum is 42, output: <answer>42</answer>
-
-Your answer:"""
 
 
 def single_turn_prompt_function(line, prompt_length=32768, task_name: str = None):

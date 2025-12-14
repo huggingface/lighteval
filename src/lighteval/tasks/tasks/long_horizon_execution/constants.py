@@ -28,7 +28,7 @@ Your answer:"""
 
 PROMPT_TEMPLATE_MULTI_START = """You are an AI assistant. I will provide you with a dictionary and then give you keys in groups of {k}.
 Your task is to keep a running total (starting from 0) by adding the values associated with the keys I provide.
-In each turn, I'll provide {k} keys (comma-separated).
+In each turn, I'll provide {k} key(s) (comma-separated).
 Respond with the current running sum, enclosed in <answer> tags.
 
 Dictionary to maintain:
