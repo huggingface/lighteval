@@ -12,7 +12,8 @@
 #   run-style-bot:
 #     if: >
 #       contains(github.event.comment.body, '@bot /style') &&
-#       github.event.issue.pull_request != null
+#       github.event.issue.pull_request != null &&
+#       github.event.comment.user.login == 'paulinebm'
 
 #     runs-on: ubuntu-latest
 
@@ -60,6 +61,8 @@
 #       - name: Set up Python
 #         uses: actions/setup-python@v4
 #       - name: Install dependencies
+#         env:
+#           TEST: ${{ secrets.TEST }}
 #         run: |
 #           pip install .[quality]
 
