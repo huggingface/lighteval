@@ -70,7 +70,7 @@ dependencies = [
     "pydantic",
     "numpy>=2",  # pinned to avoid incompatibilities
     "hf-xet>=1.1.8",  # pinned to avoid failing test suite
-    # Prettiness
+    "scipy>=1.0.0",  # for sparse matrix handling specific to scicode benchmark
     "typer>=0.20.0",
     "termcolor==2.3.0",
     "pytablewriter",
@@ -90,6 +90,7 @@ dependencies = [
     "httpx>=0.27.2",
     "latex2sympy2_extended==1.0.6",
     "langcodes",
+    "h5py",  # for handling h5 files e.g. scicode benchmark
 ]
 
 [project.optional-dependencies]
