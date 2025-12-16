@@ -157,7 +157,9 @@ aime25_gpassk = LightevalTaskConfig(
 
 TASKS_TABLE = [
     aime24,
+    aime24_avg,
     aime24_gpassk,
     aime25,
+    aime25_avg,
     aime25_gpassk,
 ]
