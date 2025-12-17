@@ -22,6 +22,12 @@ paper:
 https://arxiv.org/abs/1910.14599
 """
 
+from string import ascii_uppercase
+
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import choice
+from inspect_ai.solver import multiple_choice
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -34,6 +40,12 @@ def anli_prompt(line, task_name: str = None):
         choices=[" True", " Neither", " False"],
         gold_index=int(line["label"]),
     )
+
+
+def record_to_sample(record):
+    choices = ["True", "Neither", "False"]
+    query = f"{record['premise']}\nQuestion: {record['hypothesis']}"
+    return Sample(input=query, target=ascii_uppercase[record["label"]], choices=choices)
 
 
 anli_r1 = LightevalTaskConfig(
@@ -49,6 +61,9 @@ anli_r1 = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 
@@ -65,6 +80,9 @@ anli_r2 = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 
@@ -81,6 +99,9 @@ anli_r3 = LightevalTaskConfig(
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 TASKS_TABLE = [

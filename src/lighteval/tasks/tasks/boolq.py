@@ -18,6 +18,12 @@ paper:
 https://arxiv.org/abs/1905.11946
 """
 
+from string import ascii_uppercase
+
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import choice
+from inspect_ai.solver import multiple_choice
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -48,6 +54,24 @@ def boolq_contrastset_prompt(line, task_name: str = None):
     ][0]
 
 
+def record_to_sample(record):
+    choices = ["Yes", "No"]
+    query = f"{record['passage']}\n{record['question']}"
+    target = ascii_uppercase[choices.index(record["answer"])]
+    return Sample(input=query, target=target, choices=choices)
+
+
+def record_to_sample_contrastset(record):
+    if record["contrast_inputs"] in [None, ""]:
+        return record_to_sample(record)
+
+    choices = ["Yes", "No"]
+    query = f"{record['contrast_inputs']['passage']}\n{record['contrast_inputs']['question']}"
+    target = ascii_uppercase[choices.index(record["answer"])]
+
+    return Sample(input=query, target=target, choices=choices)
+
+
 boolq = LightevalTaskConfig(
     name="boolq",
     prompt_function=boolq_prompt,
@@ -63,6 +87,9 @@ boolq = LightevalTaskConfig(
     ],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 
@@ -81,6 +108,9 @@ boolq_contrastset = LightevalTaskConfig(
     ],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample_contrastset,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 TASKS_TABLE = [
