@@ -147,8 +147,6 @@ your_tasks = [
     LightevalTaskConfig(
         # Name of your evaluation
         name=f"evalname_{language.value}_{formulation.name.lower()}",
-        # The evaluation is community contributed
-        suite=["community"],
         # This will automatically get the correct metrics for your chosen formulation
         metric=get_metrics_for_formulation(
             formulation,

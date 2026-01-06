@@ -66,6 +66,9 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 STARTING_BATCH_SIZE = 512
 
+# Thread local param
+torch.set_grad_enabled(False)
+
 
 class TransformersModelConfig(ModelConfig):
     """Configuration class for HuggingFace Transformers models.
@@ -218,12 +221,6 @@ class TransformersModel(LightevalModel):
         if config.model_parallel is False and self.config.dtype not in ["4bit", "8bit"]:
             logger.info(f"Using Data Parallelism, putting model on device {self._device}")
             self.model = self.model.to(self._device)
-        if config.compile:
-            try:
-                logger.info("Compiling the model")
-                self.model.model.compile()
-            except AttributeError as e:
-                logger.warning("Could not compile the model because: ", e)
 
         self.model_name = _simplify_name(config.model_name)
 
@@ -410,7 +407,7 @@ class TransformersModel(LightevalModel):
         )
         # model.to(self.device)
         model.eval()
-        torch.set_grad_enabled(False)
+
         if self.continuous_batching:
             generation_config = GenerationConfig(
                 **self.generation_config_dict,
@@ -468,13 +465,16 @@ class TransformersModel(LightevalModel):
             return self.config.max_length
 
         # Try to get the sequence length from the model config.
+        text_model_config = self.transformers_config.get_text_config()
+
         seqlen_config_attrs = ("n_positions", "max_position_embeddings", "n_ctx")
         for attr in seqlen_config_attrs:
-            if hasattr(self.transformers_config, attr):
-                return getattr(self.transformers_config, attr)
+            if hasattr(text_model_config, attr):
+                return getattr(text_model_config, attr)
 
         logger.warning(
-            "No max_length attribute found in the model config. Using the default max sequence length setting {2048}. It is recomended to set max_length through the model args"
+            "No max_length attribute found in the model config. Using the default max sequence length setting `2048`. "
+            "It is recommended to set max_length trough the model args: max_length=..."
         )
 
         return 2048
@@ -494,9 +494,6 @@ class TransformersModel(LightevalModel):
                 continuation = continuation.lstrip()
         return continuation
 
-    def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
-        return self.model(inputs).logits
-
     def _get_batch_size(self, max_input_length: int, override_bs: int | None, starting_batch_size: int = 512) -> int:
         if override_bs is not None:
             return override_bs
@@ -506,10 +503,18 @@ class TransformersModel(LightevalModel):
             starting_batch_size=starting_batch_size
         )  # if OOM, then halves batch_size and tries again
         def forward_batch(batch_size):
-            test_batch = torch.ones(
-                (batch_size + int(0.1 * batch_size), max_input_length), device=self.device
-            ).long()  # We add 10% for marging :)
-            F.log_softmax(self._model_call(test_batch).float(), dim=-1).cpu()
+            fake_batch, fake_output = None, None
+            with torch.no_grad():
+                try:
+                    fake_batch = torch.ones((batch_size, max_input_length), device=self.device).int()
+                    fake_output = F.log_softmax(self.model(fake_batch).logits, dim=-1).cpu()
+                except Exception as e:
+                    for fake_item in [fake_batch, fake_output]:
+                        if fake_item is not None:
+                            fake_item.detach()
+                            del fake_item
+
+                    raise e
             return batch_size
 
         batch_size = forward_batch()
@@ -642,10 +647,14 @@ class TransformersModel(LightevalModel):
             position=0,
             disable=self.disable_tqdm,
         ):
-            if split[0].generation_size is None:
+            if self.generation_config_dict.get("max_new_tokens", None) is not None:
+                # The user forces a specific generation size
+                max_context_continuation_size_allowed = self.generation_config_dict["max_new_tokens"]
+            elif split[0].generation_size is None:
                 # No constraints on the generation size: max length allowed is the max model context
                 max_context_continuation_size_allowed = self.max_length
             else:
+                # The task forces a specific generation size
                 context = self.prompt_manager.prepare_prompt(split[0])
                 tokenized_context = self.tokenizer(context)
 
@@ -950,7 +959,7 @@ class TransformersModel(LightevalModel):
                     max_context=None,  # computed as model max length in the function
                 )
 
-                model_output = self._model_call(prepared_batch.input_ids)
+                model_output = self.model(prepared_batch.input_ids).logits
                 logits = F.log_softmax(model_output, dim=-1)  # [batch, sequence_length, vocab]
 
                 flat_index = 0

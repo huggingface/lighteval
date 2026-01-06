@@ -20,15 +20,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.tasks.gpqa import gpqa_instruct_prompt
+from lighteval.tasks.tasks.gsm8k import gsm8k_prompt
 
 
 gsm8k_test = LightevalTaskConfig(
-    name="gsm8k",
-    suite=["test"],
-    prompt_function=prompt.gsm8k,
+    name="gsm8k_test",
+    prompt_function=gsm8k_prompt,
     hf_repo="gsm8k",
     hf_subset="main",
     hf_avail_splits=["train", "test"],
@@ -42,9 +42,8 @@ gsm8k_test = LightevalTaskConfig(
 )
 
 gpqa_diamond_test = LightevalTaskConfig(
-    name="gpqa:diamond",
-    suite=["test"],
-    prompt_function=prompt.gpqa_instruct,
+    name="gpqa:diamond_test",
+    prompt_function=gpqa_instruct_prompt,
     hf_repo="Idavidrein/gpqa",
     hf_subset="gpqa_diamond",
     hf_avail_splits=["train"],

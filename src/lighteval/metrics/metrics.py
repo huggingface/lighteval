@@ -25,6 +25,8 @@ from copy import deepcopy
 
 import numpy as np
 from aenum import Enum
+from inspect_ai.scorer import Score, Target, accuracy, scorer, stderr
+from inspect_ai.solver import TaskState
 
 from lighteval.metrics.dynamic_metrics import MultilingualExtractiveMatchMetric
 from lighteval.metrics.harness_compatibility.drop import DropMetrics
@@ -41,7 +43,7 @@ from lighteval.metrics.metrics_sample import (
     MRR,
     ROUGE,
     AccGoldLikelihood,
-    AvgAtK,
+    AvgAtN,
     BertScore,
     ExactMatches,
     Extractiveness,
@@ -50,7 +52,7 @@ from lighteval.metrics.metrics_sample import (
     GPassAtK,
     JudgeLLMSimpleQA,
     LoglikelihoodAcc,
-    MajAtK,
+    MajAtN,
     PassAtK,
     Recall,
     StringDistance,
@@ -66,6 +68,8 @@ from lighteval.metrics.utils.extractive_match_utils import (
     ExprExtractionConfig,
     IndicesExtractionConfig,
     LatexExtractionConfig,
+    extract_target_from_pred,
+    get_extraction_regexes_inspect,
 )
 from lighteval.metrics.utils.metric_utils import (
     CorpusLevelMetric,
@@ -77,6 +81,68 @@ from lighteval.metrics.utils.metric_utils import (
 from lighteval.utils.language import Language
 
 
+@scorer(metrics=[accuracy()])
+def math_scorer():
+    gold_extraction_target = (ExprExtractionConfig(),)
+    pred_extraction_target = (ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0))
+    language = Language.ENGLISH
+    fallback_mode = "first_match"
+    extraction_mode = "first_match"
+    timeout_seconds = 5
+
+    gold_extraction_regexes = get_extraction_regexes_inspect(gold_extraction_target, language, len_choices=1)
+    pred_extraction_regexes = get_extraction_regexes_inspect(pred_extraction_target, language, len_choices=1)
+
+    async def score(state: TaskState, target: Target):
+        extracted_predictions = extract_target_from_pred(
+            state.output.completion, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
+        )
+        extracted_gold = extract_target_from_pred(
+            target.text, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
+        )
+        return Score(
+            # Correct or Incorrect, used by inspect-ai backend
+            value="C" if extracted_predictions == extracted_gold else "I",
+            explanation=state.output.completion,
+            answer=str(extracted_predictions),
+        )
+
+    return score
+
+
+@scorer(metrics=[accuracy(), stderr()])
+def multichoice_scorer():
+    language = Language.ENGLISH
+    gold_extraction_target = (
+        IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=True),
+    )
+    pred_extraction_target = (
+        IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=True),
+    )
+    fallback_mode = "first_match"
+    extraction_mode = "first_match"
+    timeout_seconds = 5
+
+    gold_extraction_regexes = get_extraction_regexes_inspect(gold_extraction_target, language)
+    pred_extraction_regexes = get_extraction_regexes_inspect(pred_extraction_target, language)
+
+    async def score(state: TaskState, target: Target):
+        extracted_predictions = extract_target_from_pred(
+            state.output.completion, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
+        )
+        extracted_gold = extract_target_from_pred(
+            target.text, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
+        )
+        return Score(
+            # Correct or Incorrect, used by inspect-ai backend
+            value="C" if extracted_predictions == extracted_gold else "I",
+            explanation=state.output.completion,
+            answer=str(extracted_predictions),
+        )
+
+    return score
+
+
 class Metrics(Enum):
     acc_golds_likelihood = SampleLevelMetric(  # todo: we need a better name for this!
         metric_name="acc",
@@ -85,16 +151,16 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    avg_at_k = SampleLevelMetric(
-        metric_name="avg@k",
-        sample_level_fn=AvgAtK(strip_strings=True),
+    avg_at_n = SampleLevelMetric(
+        metric_name="avg@n",
+        sample_level_fn=AvgAtN(strip_strings=True),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    avg_at_k_math = SampleLevelMetric(
-        metric_name="avg@k",
-        sample_level_fn=AvgAtK(
+    avg_at_n_math = SampleLevelMetric(
+        metric_name="avg@n",
+        sample_level_fn=AvgAtN(
             sample_scoring_function=MultilingualExtractiveMatchMetric(
                 language=Language.ENGLISH,
                 gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
@@ -365,9 +431,9 @@ class Metrics(Enum):
         corpus_level_fn=CorpusLevelF1Score(None),
         higher_is_better=True,
     )
-    maj_at_k = SampleLevelMetric(
-        metric_name="maj@k",
-        sample_level_fn=MajAtK(),
+    maj_at_n = SampleLevelMetric(
+        metric_name="maj@n",
+        sample_level_fn=MajAtN(),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,

@@ -21,8 +21,8 @@
 # SOFTWARE.
 
 from dataclasses import dataclass, field
+from string import ascii_uppercase
 
-from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.utils.language import Language
 
 
@@ -60,7 +60,7 @@ class TranslationLiterals:
     semicolon: str = ";"
 
     # Indices
-    indices: list[str] = field(default_factory=lambda: LETTER_INDICES)
+    indices: list[str] = field(default_factory=lambda: ascii_uppercase)
 
     def __getattribute__(self, name: str) -> str:
         value = super().__getattribute__(name)
@@ -183,7 +183,30 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         indices=["А", "Б", "В", "Г", "Д", "Е"],
     ),
     Language.BEMBA: TranslationLiterals(language=Language.BEMBA),
-    Language.BENGALI: TranslationLiterals(language=Language.BENGALI, question_word="প্রশ্ন"),
+    Language.BENGALI: TranslationLiterals(
+        language=Language.BENGALI,
+        question_word="প্রশ্ন",
+        answer="উত্তর",
+        confirmation_word="তাই না",
+        yes="হ্যাঁ",
+        no="না",
+        also="সাথে",
+        cause_word="কারণ",
+        effect_word="অতএব",
+        true="সত্য",
+        false="মিথ্যা",
+        neither="ন তাই, ন তাই না",
+        full_stop="।",
+        comma=",",
+        question_mark="?",
+        exclamation_mark="!",
+        word_space=" ",
+        sentence_space=" ",
+        colon=":",
+        indices=["ক", "খ", "গ", "ঘ", "ঙ", "চ"],
+        or_word="বা",
+        and_word="এবং",
+    ),
     Language.BHOJPURI: TranslationLiterals(language=Language.BHOJPURI),
     Language.BIHARI: TranslationLiterals(language=Language.BIHARI),  # Deprecated
     Language.BOSNIAN: TranslationLiterals(language=Language.BOSNIAN),
@@ -544,7 +567,30 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         semicolon="·",
     ),
     Language.GUARANI: TranslationLiterals(language=Language.GUARANI),
-    Language.GUJARATI: TranslationLiterals(language=Language.GUJARATI),
+    Language.GUJARATI: TranslationLiterals(
+        language=Language.GUJARATI,
+        question_word="પ્રશ્ન",
+        answer="જવાબ",
+        confirmation_word="ખરું ને",
+        yes="હા",
+        no="ના",
+        also="અને",
+        cause_word="કારણ કે",
+        effect_word="તેથી",
+        true="સાચું",
+        false="ખોટું",
+        neither="ન તો આ, ન તે",
+        or_word="અથવા",
+        and_word="અને",
+        full_stop="।",
+        comma=",",
+        question_mark="?",
+        exclamation_mark="!",
+        word_space=" ",
+        sentence_space=" ",
+        colon=":",
+        indices=["અ", "આ", "ઇ", "ઈ", "ઉ", "ઊ"],
+    ),
     Language.HAITIAN: TranslationLiterals(
         # From https://github.com/EleutherAI/lm-evaluation-harness/blob/0845b588303f1f59af98dd1c5bdbd78a9e75a1e2/lm_eval/tasks/xcopa/utils.py
         language=Language.HAITIAN,
@@ -859,7 +905,29 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         colon=":",
         semicolon=";",
     ),
-    Language.PUNJABI: TranslationLiterals(language=Language.PUNJABI),
+    Language.PUNJABI: TranslationLiterals(
+        language=Language.PUNJABI,
+        question_word="ਸਵਾਲ",
+        answer="ਜਵਾਬ",
+        confirmation_word="ਹਾਂ ਨਾ",
+        yes="ਹਾਂ",
+        no="ਨਹੀਂ",
+        also="ਨਾਲ ਹੀ",
+        cause_word="ਕਿਉਂਕਿ",
+        effect_word="ਇਸ ਲਈ",
+        true="ਸੱਚ",
+        false="ਝੂਠ",
+        neither="ਨਾ ਤਾਂ, ਨਾ",
+        full_stop="।",
+        comma=",",
+        question_mark="?",
+        exclamation_mark="!",
+        word_space=" ",
+        sentence_space=" ",
+        colon=":",
+        or_word="ਜਾਂ",
+        and_word="ਅਤੇ",
+    ),
     Language.QUECHUA: TranslationLiterals(
         # From https://github.com/EleutherAI/lm-evaluation-harness/blob/0845b588303f1f59af98dd1c5bdbd78a9e75a1e2/lm_eval/tasks/xcopa/utils.py
         language=Language.QUECHUA,
@@ -1102,10 +1170,27 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
     Language.TAJIK: TranslationLiterals(language=Language.TAJIK),
     Language.TAMASHEQ: TranslationLiterals(language=Language.TAMASHEQ),
     Language.TAMIL: TranslationLiterals(
-        # From https://github.com/EleutherAI/lm-evaluation-harness/blob/0845b588303f1f59af98dd1c5bdbd78a9e75a1e2/lm_eval/tasks/xcopa/utils.py
         language=Language.TAMIL,
-        cause_word="காரணமாக",
+        question_word="கேள்வி",
+        answer="பதில்",
+        confirmation_word="இல்லையா",
+        yes="ஆம்",
+        no="இல்லை",
+        also="மேலும்",
+        cause_word="ஏனெனில்",
         effect_word="எனவே",
+        true="உண்மை",
+        false="பொய்",
+        neither="இல்லை, இல்லை",
+        full_stop="।",
+        comma=",",
+        question_mark="?",
+        exclamation_mark="!",
+        word_space=" ",
+        sentence_space=" ",
+        colon=":",
+        or_word="அல்லது",
+        and_word="மற்றும்",
     ),
     Language.TATAR: TranslationLiterals(
         language=Language.TATAR,

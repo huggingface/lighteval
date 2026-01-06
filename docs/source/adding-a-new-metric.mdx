@@ -58,7 +58,7 @@ boolean.
 
 ```python
 def custom_metric(doc: Doc, model_response: ModelResponse) -> bool:
-    response = model_response.text[0]
+    response = model_response.final_text[0]
     return response == doc.choices[doc.gold_index]
 ```
 
@@ -68,7 +68,7 @@ If you want to return multiple metrics per sample, you need to return a dictiona
 
 ```python
 def custom_metric(doc: Doc, model_response: ModelResponse) -> dict:
-    response = model_response.text[0]
+    response = model_response.final_text[0]
     return {"accuracy": response == doc.choices[doc.gold_index], "other_metric": 0.5}
 ```
 
@@ -146,7 +146,7 @@ path_to_your_file` when launching it after adding it to the task config.
 ```bash
 lighteval accelerate \
     "model_name=openai-community/gpt2" \
-    "leaderboard|truthfulqa:mc|0" \
+    "truthfulqa:mc" \
     --custom-tasks path_to_your_metric_file.py
 ```
 
@@ -155,7 +155,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 task = LightevalTaskConfig(
     name="my_custom_task",
-    suite=["community"],
     metric=[my_custom_metric],  # Use your custom metric here
     prompt_function=my_prompt_function,
     hf_repo="my_dataset",
