@@ -19,14 +19,19 @@ paper:
 https://arxiv.org/abs/2402.14008
 """
 
-import numpy as np
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import Score, Target, accuracy, scorer, stderr
+from inspect_ai.solver import TaskState, generate
 
 from lighteval.metrics.dynamic_metrics import (
     ExprExtractionConfig,
     LatexExtractionConfig,
-    MultilingualExtractiveMatchMetric,
 )
-from lighteval.metrics.metrics import SampleLevelMetric, SamplingMethod
+from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.utils.extractive_match_utils import (
+    extract_target_from_pred,
+    get_extraction_regexes_inspect,
+)
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.utils.language import Language
@@ -91,6 +96,97 @@ def get_answer_type_text(answer_type, is_chinese, multiple_answer):
                             f"The problem has multiple answers, with the answers in order being {answer_text}. "
                         )
     return full_answer_text
+
+
+def create_record_to_sample(subset: str):
+    """Create a record_to_sample function for a specific subset."""
+    is_theorem_proving = "TP" in subset
+
+    def record_to_sample(record):
+        is_math = "Math" in record["subject"]
+        subject = "Math" if is_math else "Physics"
+        is_chinese = record["language"] == "Chinese"
+        unit = record.get("unit")
+        is_multiple_answer = record["is_multiple_answer"]
+
+        if is_chinese:
+            subject_content = "数学" if is_math else "物理"
+            if is_theorem_proving:
+                instruction = f"以下是中国{subject_content}竞赛中的证明题。请根据题目的要求，运用逻辑推理及常用定理证明题目中的命题。证明过程中使用的变量和公式请使用LaTeX格式表示。"
+            else:
+                answer_type_text = get_answer_type_text(
+                    record["answer_type"], is_chinese=True, multiple_answer=is_multiple_answer
+                )
+                if is_multiple_answer:
+                    multiple_answer_text = "\\boxed{用英文逗号连接的多个答案}"
+                else:
+                    multiple_answer_text = "\\boxed{答案}"
+                unit_text = ""
+                if unit:
+                    multiple_answer_text += "(单位)"
+                    unit_text = "，注意答案的单位不要放在\\boxed{}中"
+                instruction = f'以下是中国{subject_content}竞赛中的解答题{answer_type_text}。请根据题目的要求和所提供的信息计算得出答案。解答过程和结果中使用的变量和公式请使用LaTeX格式表示。请在最后以"所以最终答案是{multiple_answer_text}。"显式给出结果{unit_text}。'
+        else:
+            if is_theorem_proving:
+                instruction = f"The following is a theorem proving problem from an International {subject} competition. Please use logical reasoning and common theorems to prove the proposition in the problem according to the given requirements. Please use LaTeX format to represent the variables and formulas used in the proof."
+            else:
+                if is_multiple_answer:
+                    multiple_answer_text = "\\boxed{multiple answers connected with commas}"
+                else:
+                    multiple_answer_text = "\\boxed{answer}"
+                unit_text = ""
+                if unit:
+                    multiple_answer_text += "(unit)"
+                    unit_text = ", note that the unit of the answer should not be included in \\boxed{}"
+
+                answer_type_text = get_answer_type_text(
+                    record["answer_type"], is_chinese=False, multiple_answer=is_multiple_answer
+                )
+
+                instruction = f'The following is an open-ended problem from an International {subject} competition. {answer_type_text}Please calculate the answer according to the given requirements and the information provided. Please use LaTeX format to represent the variables and formulas used in the solution process and results. Please end your solution with "So the final answer is {multiple_answer_text}." and give the result explicitly{unit_text}.'
+
+        query = instruction + "\n" + record["question"]
+
+        return Sample(
+            input=query,
+            target=record["final_answer"],
+            metadata={
+                "language": record["language"],
+                "subject": record["subject"],
+                "answer_type": record["answer_type"],
+                "is_multiple_answer": record["is_multiple_answer"],
+                "unit": record.get("unit"),
+            },
+        )
+
+    return record_to_sample
+
+
+@scorer(metrics=[accuracy(), stderr()])
+def olympiad_bench_scorer(language: Language = Language.ENGLISH):
+    gold_extraction_target = (ExprExtractionConfig(), LatexExtractionConfig())
+    pred_extraction_target = (ExprExtractionConfig(), LatexExtractionConfig())
+    fallback_mode = "first_match"
+    extraction_mode = "first_match"
+    timeout_seconds = 5
+
+    gold_extraction_regexes = get_extraction_regexes_inspect(gold_extraction_target, language, len_choices=1)
+    pred_extraction_regexes = get_extraction_regexes_inspect(pred_extraction_target, language, len_choices=1)
+
+    async def score(state: TaskState, target: Target):
+        extracted_predictions = extract_target_from_pred(
+            state.output.completion, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
+        )
+        extracted_gold = extract_target_from_pred(
+            target.text, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds
+        )
+        return Score(
+            value="C" if extracted_predictions == extracted_gold else "I",
+            explanation=state.output.completion,
+            answer=str(extracted_predictions),
+        )
+
+    return score
 
 
 # Very specific task where there are no precise outputs but instead we test if the format obeys rules
@@ -199,24 +295,13 @@ available_subsets = [
 
 olympiad_bench_subsets = set(olympiad_bench_subsets).intersection(available_subsets)
 
-extraction_targets = [ExprExtractionConfig(), LatexExtractionConfig()]
-
-metric = SampleLevelMetric(
-    metric_name="extractive_match",
-    sample_level_fn=MultilingualExtractiveMatchMetric(
-        language=Language.ENGLISH,
-        gold_extraction_target=extraction_targets,
-        pred_extraction_target=extraction_targets,
-        precision=6,
-    ),
-    category=SamplingMethod.GENERATIVE,
-    corpus_level_fn=np.mean,
-    higher_is_better=True,
-)
-
 task_configs = []
 
 for subset in olympiad_bench_subsets:
+    # Determine language from subset name (en or zh)
+    is_chinese = "_zh_" in subset
+    language = Language.CHINESE if is_chinese else Language.ENGLISH
+
     # We create the task config
     task_configs.append(
         LightevalTaskConfig(
@@ -224,7 +309,10 @@ for subset in olympiad_bench_subsets:
             prompt_function=olympiad_bench_prompt,
             hf_repo="Hothan/OlympiadBench",
             hf_subset=subset,
-            metrics=[metric],
+            metrics=[Metrics.exact_match],
+            sample_fields=create_record_to_sample(subset),
+            solver=[generate(cache=True)],
+            scorer=olympiad_bench_scorer(language=language),
             hf_avail_splits=["train"],
             evaluation_splits=["train"],
             few_shots_split="train",

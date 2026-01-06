@@ -21,6 +21,10 @@ https://arxiv.org/abs/2110.08193
 
 from string import ascii_uppercase
 
+from inspect_ai.dataset import Sample
+from inspect_ai.scorer import choice
+from inspect_ai.solver import multiple_choice
+
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -38,6 +42,13 @@ def bbq_prompt(line, task_name: str = None):
     )
 
 
+def record_to_sample(record):
+    query = f"{record['context']}\n{record['question']}"
+    choices = record["choices"]
+    target = ascii_uppercase[record["gold_index"]]
+    return Sample(input=query, target=target, choices=choices)
+
+
 bbq = LightevalTaskConfig(
     name="bbq",
     prompt_function=bbq_prompt,
@@ -51,6 +62,9 @@ bbq = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 bbq_Age = LightevalTaskConfig(
@@ -66,6 +80,9 @@ bbq_Age = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 bbq_Disability_status = LightevalTaskConfig(
@@ -81,6 +98,9 @@ bbq_Disability_status = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 bbq_Gender_identity = LightevalTaskConfig(
@@ -96,6 +116,9 @@ bbq_Gender_identity = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 bbq_Nationality = LightevalTaskConfig(
@@ -111,6 +134,9 @@ bbq_Nationality = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 bbq_Physical_appearance = LightevalTaskConfig(
@@ -126,6 +152,9 @@ bbq_Physical_appearance = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 bbq_Race_ethnicity = LightevalTaskConfig(
@@ -141,6 +170,9 @@ bbq_Race_ethnicity = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 bbq_Race_x_SES = LightevalTaskConfig(
@@ -156,6 +188,9 @@ bbq_Race_x_SES = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 bbq_Race_x_gender = LightevalTaskConfig(
@@ -171,6 +206,9 @@ bbq_Race_x_gender = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 bbq_Religion = LightevalTaskConfig(
@@ -186,6 +224,9 @@ bbq_Religion = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 bbq_SES = LightevalTaskConfig(
@@ -201,6 +242,9 @@ bbq_SES = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 bbq_Sexual_orientation = LightevalTaskConfig(
@@ -216,6 +260,9 @@ bbq_Sexual_orientation = LightevalTaskConfig(
     metrics=[Metrics.exact_match],
     stop_sequence=["\n"],
     version=0,
+    sample_fields=record_to_sample,
+    solver=[multiple_choice(cache=True)],
+    scorer=choice(),
 )
 
 TASKS_TABLE = [
