@@ -326,6 +326,7 @@ class JudgeLM:
                         "messages": prompt,
                         "n": 1,
                         "caching": True,
+                        "response_format": self.response_format,
                     }
                     if max_new_tokens is not None:
                         kwargs["max_tokens"] = (max_new_tokens,)
