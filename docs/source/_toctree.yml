@@ -17,6 +17,8 @@
     title: Use the Python API
   - local: adding-a-custom-task
     title: Add a custom task
+  - local: offline-evaluation
+    title: Offline evaluation
   - local: adding-a-new-metric
     title: Add a custom metric
   - local: evaluating-a-custom-model
