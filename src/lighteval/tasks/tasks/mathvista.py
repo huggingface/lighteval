@@ -51,7 +51,8 @@ from PIL import Image
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-code insperied by: https://github.com/UKGovernmentBEIS/inspect_evals/blob/main/src/inspect_evals/mathvista/mathvista.py
+
+# code insperied by: https://github.com/UKGovernmentBEIS/inspect_evals/blob/main/src/inspect_evals/mathvista/mathvista.py
 
 logger = logging.getLogger(__name__)
 
