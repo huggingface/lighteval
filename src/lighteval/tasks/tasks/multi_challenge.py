@@ -29,10 +29,9 @@ true
 from inspect_ai.dataset import Sample
 from inspect_ai.model._chat_message import ChatMessageAssistant, ChatMessageUser
 from inspect_ai.scorer import Score, Target, accuracy, model_graded_fact, scorer, stderr
-from inspect_ai.solver import Generate, TaskState, generate, solver
+from inspect_ai.solver import TaskState, generate
 
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
 
 
 # NOTE: ChatMessageAssistant and ChatMessageUser are imported from a private module.
@@ -54,22 +53,11 @@ The criteria that the model response must meet is as follows. Be VERY STRICT!:
 Print your reasoning followed by your verdict, either "YES" or "NO"."""
 
 
-def multi_challenge_prompt(line, task_name: str = None):
-    """Stub prompt function for inspect-ai-only task (not used by inspect-ai backend)."""
-    return Doc(
-        task_name=task_name,
-        query="",
-        choices=[],
-        gold_index=0,
-    )
-
-
 @scorer(metrics=[accuracy(), stderr()])
 def multi_challenge_scorer():
     base_scorer = model_graded_fact(
         template=JUDGE_PROMPT,
         grade_pattern=r"\b(YES|NO)\b",
-        model="openai/gpt-4o-2024-08-06",
     )
 
     async def score(state: TaskState, target: Target):
@@ -102,44 +90,18 @@ def multi_challenge_scorer():
     return score
 
 
-@solver
-def conversation_solver():
-    """Solver that builds conversation history from metadata."""
-
-    async def solve(state: TaskState, generate: Generate):
-        conversation = state.metadata.get("conversation", [])
-
-        if not hasattr(state, "messages") or state.messages is None:
-            state.messages = []
-
-        for msg in conversation:
-            role = msg["role"].lower()
-            content = msg["content"]
-
-            if role == "user":
-                state.messages.append(ChatMessageUser(content=content))
-            elif role == "assistant":
-                state.messages.append(ChatMessageAssistant(content=content))
-            else:
-                raise ValueError(f"Unsupported role: {role} in conversation.")
-
-        return state
-
-    return solve
-
-
 def record_to_sample(record: dict) -> Sample:
     """Convert dataset record to inspect-ai Sample object."""
     conversation = record["CONVERSATION"]
-
-    last_msg = None
-    for msg in reversed(conversation):
+    messages = []
+    for msg in conversation:
         if msg["role"] == "user":
-            last_msg = msg["content"]
-            break
+            messages.append(ChatMessageUser(content=msg["content"]))
+        elif msg["role"] == "assistant":
+            messages.append(ChatMessageAssistant(content=msg["content"]))
 
     return Sample(
-        input=last_msg or "",
+        input=messages,
         target=record["TARGET_QUESTION"],
         metadata={
             "question_id": record["QUESTION_ID"],
@@ -153,7 +115,7 @@ def record_to_sample(record: dict) -> Sample:
 
 multi_challenge = LightevalTaskConfig(
     name="multi_challenge",
-    prompt_function=multi_challenge_prompt,
+    prompt_function=lambda line, task_name: line,
     hf_repo="nmayorga7/multichallenge",
     hf_subset="default",
     hf_avail_splits=["train"],
@@ -163,9 +125,9 @@ multi_challenge = LightevalTaskConfig(
     generation_size=2048,
     stop_sequence=[],
     version=0,
-    sample_fields=record_to_sample,
     metrics=[],  # Metrics are defined in the scorer decorator for inspect-ai tasks
-    solver=[conversation_solver(), generate(cache=True)],
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
     scorer=multi_challenge_scorer(),
 )
 
