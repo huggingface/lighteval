@@ -70,6 +70,7 @@ dependencies = [
     "pydantic",
     "numpy>=2",  # pinned to avoid incompatibilities
     "hf-xet>=1.1.8",  # pinned to avoid failing test suite
+    "Pillow>=10.0.0",  # for image processing in tasks like mathvista
     # Prettiness
     "typer>=0.20.0",
     "termcolor==2.3.0",
