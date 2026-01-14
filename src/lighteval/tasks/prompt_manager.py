@@ -206,7 +206,7 @@ class FewShotSampler:
 
         if few_shots_select not in ALLOWED_SELECTIONS:
             raise ValueError(
-                f"few_shots_select must be one of f{','.join(ALLOWED_SELECTIONS[:-1])} or {ALLOWED_SELECTIONS[-1]}, not {few_shots_select}"
+                f"few_shots_select must be one of {','.join(ALLOWED_SELECTIONS[:-1])} or {ALLOWED_SELECTIONS[-1]}, not {few_shots_select}"
             )
 
         self.few_shots_select = FewShotSelection[few_shots_select]
