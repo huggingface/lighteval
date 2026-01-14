@@ -21,8 +21,8 @@ https://arxiv.org/abs/2502.19187
 """
 
 from inspect_ai.dataset import Sample
-from inspect_ai.scorer import choice
-from inspect_ai.solver import multiple_choice
+from inspect_ai.scorer import answer
+from inspect_ai.solver import generate, system_message
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -52,6 +52,11 @@ def record_to_sample(record):
     return Sample(input=query, target=target)
 
 
+SYSTEM_MESSAGE = """Submit your answer in the following format:
+ANSWER: {your answer}
+"""
+
+
 COMMON_TASK_ARGS = {
     "prompt_function": bbeh_prompt,
     "hf_repo": "jgyasu/bbeh",
@@ -64,8 +69,8 @@ COMMON_TASK_ARGS = {
     "stop_sequence": ["</s>", "Q=", "\n\n"],
     "version": 0,
     "sample_fields": record_to_sample,
-    "solver": [multiple_choice(cache=True)],
-    "scorer": choice(),
+    "solver": [system_message(SYSTEM_MESSAGE), generate(cache=True)],
+    "scorer": answer(pattern="line"),
 }
 
 boardgame_qa = LightevalTaskConfig(
