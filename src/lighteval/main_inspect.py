@@ -492,7 +492,6 @@ def eval(  # noqa C901
         internal_tools=internal_tools,
         bundle_dir=bundle_dir,
         bundle_overwrite=bundle_overwrite,
-        log_level="debug",
     )
 
     if not success:
