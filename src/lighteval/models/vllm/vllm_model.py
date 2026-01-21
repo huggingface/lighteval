@@ -48,6 +48,7 @@ if is_package_available("vllm"):
     import ray
     from more_itertools import distribute
     from vllm import LLM, RequestOutput, SamplingParams
+    from vllm.inputs.data import TokensPrompt
     from vllm.distributed.parallel_state import (
         destroy_distributed_environment,
         destroy_model_parallel,
@@ -291,7 +292,7 @@ class VLLMModel(LightevalModel):
         # Inferring from the tokenizer will cause vllm to bug for models with mismatches between model
         # config and tk config, like mistralai/Mistral-7B-v0.1
         if self._max_length is None:
-            self._max_length = model.llm_engine.model_config.max_seq_len_to_capture
+            self._max_length = model.llm_engine.model_config.max_model_len
 
         return model
 
@@ -455,7 +456,7 @@ class VLLMModel(LightevalModel):
             ]
         else:
             outputs = self.model.generate(
-                prompt_token_ids=inputs,
+                prompts=[TokensPrompt(prompt_token_ids=input) for input in inputs],
                 sampling_params=sampling_params,
                 use_tqdm=True,
             )
