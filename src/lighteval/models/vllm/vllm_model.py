@@ -53,6 +53,7 @@ if is_package_available("vllm"):
         destroy_model_parallel,
     )
     from vllm.transformers_utils.tokenizer import get_tokenizer
+    from vllm.lora.request import LoRARequest
     from vllm.v1.engine.async_llm import AsyncEngineArgs, AsyncLLM
 
     logging.getLogger("vllm").propagate = True
@@ -124,6 +125,7 @@ class VLLMModelConfig(ModelConfig):
             Maximum number of sequences per iteration. Controls batch size at prefill stage. Defaults to 128.
         max_num_batched_tokens (PositiveInt):
             Maximum number of tokens per batch. Defaults to 2048.
+        lora_path (str | None): path to loara modules
         subfolder (str | None):
             Subfolder within the model repository. Defaults to None.
         is_async (bool):
@@ -177,6 +179,7 @@ class VLLMModelConfig(ModelConfig):
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
     max_num_seqs: PositiveInt = 128  # maximum number of sequences per iteration; This variable and `max_num_batched_tokens` effectively control the batch size at prefill stage. See https://github.com/vllm-project/vllm/issues/2492 for detailed explaination.
     max_num_batched_tokens: PositiveInt = 2048  # maximum number of tokens per batch
+    lora_path: str | None = None  # path to the LoRA modules
     subfolder: str | None = None
     is_async: bool = False  # Whether to use the async version or sync version of the model
     override_chat_template: bool = None
@@ -213,6 +216,12 @@ class VLLMModel(LightevalModel):
         self.precision = config.dtype
 
         self.pairwise_tokenization = config.pairwise_tokenization
+        
+        # enable LoRA if lora_path is provided
+        if config.lora_path is not None:
+            self.lora_request = LoRARequest("default", 1, config.lora_path)
+        else:
+            self.lora_request = None
 
         self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer, config.system_prompt)
 
@@ -260,6 +269,8 @@ class VLLMModel(LightevalModel):
             "pipeline_parallel_size": config.pipeline_parallel_size,
             "max_model_len": self._max_length,
             "swap_space": 4,
+            "seed": int(config.seed),
+            "enable_lora": config.lora_path is not None,
             "seed": int(config.seed),
             "max_num_seqs": int(config.max_num_seqs),
             "max_num_batched_tokens": int(config.max_num_batched_tokens),
@@ -433,11 +444,13 @@ class VLLMModel(LightevalModel):
             sampling_params.detokenize = False
 
         if self.data_parallel_size > 1:
-
             @ray.remote(num_gpus=self.tensor_parallel_size)
             def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
                 llm = LLM(**model_args)
-                return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
+                if self.lora_request is not None:
+                    return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params, lora_request=self.lora_request)
+                else:
+                    return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
 
             # dispatch requests to all self.data_parallel_size workers, in interleaved fashion
             # interleaved important to balance context lengths across workers
@@ -454,11 +467,19 @@ class VLLMModel(LightevalModel):
                 if x is not None
             ]
         else:
-            outputs = self.model.generate(
-                prompt_token_ids=inputs,
-                sampling_params=sampling_params,
-                use_tqdm=True,
-            )
+            if self.lora_request is not None:
+                outputs = self.model.generate(
+                    prompt_token_ids=inputs,
+                    sampling_params=sampling_params,
+                    lora_request=self.lora_request,
+                    use_tqdm=True,
+                )
+            else:
+                outputs = self.model.generate(
+                    prompt_token_ids=inputs,
+                    sampling_params=sampling_params,
+                    use_tqdm=True,
+                )
 
         return outputs
 
