@@ -315,3 +315,17 @@ def remove_reasoning_tags(text: str, tag_pairs: list[tuple[str, str]]) -> str:
                 break
 
     return result
+
+
+def sanitize_filename(name: str) -> str:
+    """Sanitizes a filename by replacing forbidden characters.
+
+    Replaces characters that are not allowed in filenames on various operating systems:
+    - Windows: < > : " / \\ | ? *
+    - Linux/Mac: / and \0
+    """
+    forbidden_chars = ["|", ":", "/", "\\", "<", ">", '"', "?", "*"]
+    sanitized = name
+    for char in forbidden_chars:
+        sanitized = sanitized.replace(char, "__")
+    return sanitized
