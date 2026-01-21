@@ -144,7 +144,6 @@ class TransformersModelConfig(ModelConfig):
         (bitsandbytes for 4-bit/8-bit quantization).
     """
 
-    model_name: str
     tokenizer: str | None = None
     subfolder: str | None = None
     revision: str = "main"
@@ -231,7 +230,10 @@ class TransformersModel(LightevalModel):
             model_size = -1
 
         self.prompt_manager = PromptManager(
-            use_chat_template=self.use_chat_template, tokenizer=self.tokenizer, system_prompt=config.system_prompt
+            use_chat_template=self.use_chat_template,
+            tokenizer=self.tokenizer,
+            system_prompt=config.system_prompt,
+            chat_template_parameters=config.chat_template_parameters,
         )
 
         # Initialize cache for tokenization and predictions

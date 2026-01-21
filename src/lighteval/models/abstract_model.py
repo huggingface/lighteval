@@ -30,7 +30,7 @@ import yaml
 from pydantic import BaseModel
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
 
-from lighteval.models.model_input import GenerationParameters
+from lighteval.models.model_input import ChatTemplateParameters, GenerationParameters
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
 
@@ -51,6 +51,9 @@ class ModelConfig(BaseModel, extra="forbid"):
         generation_parameters (GenerationParameters):
             Configuration parameters that control text generation behavior, including
             temperature, top_p, max_new_tokens, etc. Defaults to empty GenerationParameters.
+        chat_template_parameters (ChatTemplateParameters):
+            Configuration parameters that control chat template behavior, including
+            reasoning_effort, enable_thinking, etc. Defaults to empty ChatTemplateParameters.
         system_prompt (str | None):
             Optional system prompt to be used with chat models. This prompt sets the
             behavior and context for the model during evaluation.
@@ -85,6 +88,7 @@ class ModelConfig(BaseModel, extra="forbid"):
     model_name: str = None
 
     generation_parameters: GenerationParameters = GenerationParameters()
+    chat_template_parameters: ChatTemplateParameters = ChatTemplateParameters()
     system_prompt: str | None = None
     cache_dir: str = "~/.cache/huggingface/lighteval"
 
@@ -128,7 +132,7 @@ class ModelConfig(BaseModel, extra="forbid"):
                 'model': {'model_name': 'gpt2', 'generation_parameters': {'temperature': 0.7, 'top_p': 0.9},
             }
 
-            >>> parse_args("model_name=gpt2,use_cache,generation_parameters={temperature:0.7}")
+            >>> parse_args("model_name=gpt2,use_cache,generation_parameters={temperature:0.7},chat_template_parameters={reasoning_effort:low}")
             {
                 'model': {'model_name': 'gpt2', 'use_cache': True, 'generation_parameters': {'temperature': 0.7}},
             }

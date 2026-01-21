@@ -153,7 +153,6 @@ class VLLMModelConfig(ModelConfig):
         ```
     """
 
-    model_name: str
     tokenizer: str | None = None
     revision: str = "main"  # revision of the model
     dtype: str = "bfloat16"
