@@ -49,7 +49,7 @@ from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.cache_management import SampleCache, cached
+from lighteval.utils.cache_management import cached
 
 
 logger = logging.getLogger(__name__)
@@ -267,9 +267,6 @@ class InferenceEndpointModel(LightevalModel):
         )
         self.generation_parameters = config.generation_parameters
         self.generation_config = self.generation_parameters.to_tgi_ie_dict()
-
-        # Initialize cache for tokenization and predictions
-        self._cache = SampleCache(config)
 
     def _create_endpoint(  # noqa: C901
         self, config: InferenceEndpointModelConfig | ServerlessEndpointModelConfig

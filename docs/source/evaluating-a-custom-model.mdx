@@ -16,15 +16,12 @@ Here's a basic example:
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.cache_management import SampleCache, cached
+from lighteval.utils.cache_management import cached
 
 class MyCustomModel(LightevalModel):
     def __init__(self, config):
         super().__init__(config)
         # Initialize your model here...
-
-        # Enable caching (recommended)
-        self._cache = SampleCache(config)
 
     @cached(SamplingMethod.GENERATIVE)
     def greedy_until(self, docs: List[Doc]) -> List[ModelResponse]:
@@ -168,7 +165,7 @@ To enable caching in your custom model:
 
 ### Step 1: Import Caching Components
 ```python
-from lighteval.utils.cache_management import SampleCache, cached
+from lighteval.utils.cache_management import cached
 ```
 
 ### Step 2: Initialize Cache in Constructor
@@ -176,7 +173,6 @@ from lighteval.utils.cache_management import SampleCache, cached
 def __init__(self, config):
     super().__init__(config)
     # Your initialization code...
-    self._cache = SampleCache(config)
 ```
 
 3. Add cache decorators to your prediction methods:

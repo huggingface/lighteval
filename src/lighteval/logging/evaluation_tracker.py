@@ -72,6 +72,8 @@ class EnhancedJSONEncoder(json.JSONEncoder):
                     return o.__dict__
                 except Exception:
                     return str(o)
+        if hasattr(o, "model_dump"):  # is pydantic BaseModel
+            return o.model_dump()
         if callable(o):
             if hasattr(o, "__name__"):
                 return o.__name__
