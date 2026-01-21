@@ -544,6 +544,7 @@ class AsyncVLLMModel(VLLMModel):
     is_async = True
 
     def cleanup(self):
+        self.model.shutdown()
         gc.collect()
         destroy_distributed_environment()
         torch.cuda.empty_cache()
@@ -627,7 +628,6 @@ class AsyncVLLMModel(VLLMModel):
         results = await asyncio.gather(*processed_requests)
         return results
 
-    @cached(SamplingMethod.GENERATIVE)
     async def greedy_until(
         self,
         docs: list[Doc],
@@ -661,7 +661,6 @@ class AsyncVLLMModel(VLLMModel):
 
         return results
 
-    @cached(SamplingMethod.LOGPROBS)
     async def loglikelihood(
         self,
         docs: list[Doc],
