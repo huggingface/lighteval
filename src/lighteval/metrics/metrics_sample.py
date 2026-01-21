@@ -51,7 +51,12 @@ from lighteval.metrics.normalizations import (
     remove_braces,
     remove_braces_and_strip,
 )
-from lighteval.metrics.utils.judge_utils import get_judge_prompt_simpleqa, process_judge_response_simpleqa
+from lighteval.metrics.utils.judge_utils import (
+    get_judge_prompt_simpleqa,
+    get_judge_prompt_tvdmi,
+    process_judge_response_simpleqa,
+    process_judge_response_tvdmi,
+)
 from lighteval.metrics.utils.llm_as_judge import JudgeLM
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
@@ -643,7 +648,10 @@ class BertScore(SampleLevelComputation):
             logger.warning("The first metric computation step might be a bit longer as we need to download the model.")
             # We only initialize on first compute
             self.bert_scorer = BERTScorer(
-                model_type="microsoft/deberta-large-mnli", lang="en", rescale_with_baseline=True, num_layers=9
+                model_type="microsoft/deberta-large-mnli",
+                lang="en",
+                rescale_with_baseline=True,
+                num_layers=9,
             )
         golds = as_list(golds)
         predictions = as_list(predictions)
@@ -655,7 +663,11 @@ class BertScore(SampleLevelComputation):
             predictions = [self.normalize_pred(p) for p in predictions]
 
         p, r, f = self.bert_scorer.score(predictions, golds)
-        return {"BERTScore-P": p[0].item(), "BERTScore-R": r[0].item(), "BERTScore-F": f[0].item()}
+        return {
+            "BERTScore-P": p[0].item(),
+            "BERTScore-R": r[0].item(),
+            "BERTScore-F": f[0].item(),
+        }
 
 
 class Extractiveness(SampleLevelComputation):
@@ -856,7 +868,11 @@ class StringDistance(SampleLevelComputation):
             metric_types (list[str] | str): Can be one or any of `longest_common_prefix_length`, `edit_distance` or `edit_similarity`.
             strip_prediction (bool, optional): Whether to strip the prediction. Defaults to True.
         """
-        allowed_values = ["longest_common_prefix_length", "edit_distance", "edit_similarity"]
+        allowed_values = [
+            "longest_common_prefix_length",
+            "edit_distance",
+            "edit_similarity",
+        ]
         metric_types = as_list(metric_types)
         if any(metric_type not in allowed_values for metric_type in metric_types):
             raise ValueError(
@@ -864,7 +880,11 @@ class StringDistance(SampleLevelComputation):
             )
         self.metric_types = metric_types
         self.strip_prediction = strip_prediction
-        self.sample_aggregations = {"longest_common_prefix_length": max, "edit_distance": min, "edit_similarity": max}
+        self.sample_aggregations = {
+            "longest_common_prefix_length": max,
+            "edit_distance": min,
+            "edit_similarity": max,
+        }
 
     def compute(self, doc: Doc, model_response: ModelResponse, **kwargs):
         """Computes all the requested metrics on the golds and prediction.
@@ -940,7 +960,13 @@ class StringDistance(SampleLevelComputation):
 
 
 class JudgeLLM(SampleLevelComputation):
-    available_models_openai = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-4o-2024-08-06"]
+    available_models_openai = [
+        "gpt-3.5-turbo",
+        "gpt-4o",
+        "gpt-4-turbo",
+        "gpt-4",
+        "gpt-4o-2024-08-06",
+    ]
 
     def __init__(
         self,
@@ -1064,10 +1090,14 @@ class JudgeLLMMTBench(JudgeLLM):
         query_context_2 = {"query": questions[1], "context": predictions[0]}
 
         score_turn_1, message_turn_1, judgement_turn_1 = self.judge.evaluate_answer(
-            question=json.dumps(query_context_1, indent=2), answer=predictions[0], gold=golds[0] if golds else None
+            question=json.dumps(query_context_1, indent=2),
+            answer=predictions[0],
+            gold=golds[0] if golds else None,
         )
         score_turn_2, message_turn_2, judgement_turn_2 = self.judge.evaluate_answer(
-            question=json.dumps(query_context_2, indent=2), answer=predictions[1], gold=golds[1] if golds else None
+            question=json.dumps(query_context_2, indent=2),
+            answer=predictions[1],
+            gold=golds[1] if golds else None,
         )
 
         return {
@@ -1105,6 +1135,50 @@ class JudgeLLMMixEval(JudgeLLM):
         return metrics
 
 
+class JudgeLLMTVDMI(JudgeLLM):
+    def __init__(self):
+        super().__init__(
+            judge_model_name="gpt-4o-2024-08-06",
+            template=get_judge_prompt_tvdmi,
+            process_judge_response=process_judge_response_tvdmi,
+            judge_backend="openai",
+            short_judge_name="gpt4o",
+        )
+
+    def compute(self, responses: list[ModelResponse], docs: list[Doc], **kwargs) -> list:
+        # For TVD-MI, the evaluated model is the judge; the “responses” from
+        # base models are already baked into docs as response_a / response_b.
+        def _get(d, k):
+            return (
+                getattr(d, k, None)
+                if getattr(d, k, None) is not None
+                else (d.specific.get(k) if getattr(d, "specific", None) else None)
+            )
+
+        questions = [_get(d, "response_a") for d in docs]
+        answers = [_get(d, "response_b") for d in docs]
+        labels = [int(_get(d, "pair_label")) for d in docs]
+
+        options = [None] * len(docs)
+        golds = [None] * len(docs)
+
+        scores, prompts, judge_responses = self.judge.evaluate_answer_batch(questions, answers, options, golds)
+
+        metrics = []
+        for i in range(len(docs)):
+            pred = scores[i]  # already 0/1 from process_judge_response_tvdmi
+            metrics.append(
+                {
+                    "label": labels[i],
+                    "pred": pred,
+                    f"user_prompt_{self.short_judge_name}": prompts[i],
+                    f"judgement_{self.short_judge_name}": judge_responses[i],
+                }
+            )
+
+        return metrics
+
+
 class SamplingMetric:
     """All sampling metrics we have defined below use the same set of normalization parameters and same behavior for the default sample_scoring_function.
     This class just holds the normalization and applies it to all samples passed to preprocess, then uses the default sample function if not provided.
@@ -1114,7 +1188,7 @@ class SamplingMetric:
         self,
         normalize: Callable | str | None = None,
         strip_strings: bool = False,
-        sample_scoring_function: Callable[[Doc, ModelResponse], float] | str | None = None,
+        sample_scoring_function: (Callable[[Doc, ModelResponse], float] | str | None) = None,
     ):
         if isinstance(normalize, str):
             import lighteval.metrics.normalizations
