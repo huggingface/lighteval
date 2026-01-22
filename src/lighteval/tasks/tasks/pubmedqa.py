@@ -18,7 +18,10 @@ paper:
 https://pubmedqa.github.io/
 """
 
-from lighteval.metrics.metrics import Metrics
+import numpy as np
+
+from lighteval.metrics.metrics_sample import ExactMatches
+from lighteval.metrics.utils.metric_utils import SampleLevelMetric, SamplingMethod
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
@@ -32,6 +35,14 @@ def pubmed_qa_prompt(line, task_name: str = None):
     )
 
 
+exact_match_case_insensitive = SampleLevelMetric(
+    metric_name="em_ci",
+    sample_level_fn=ExactMatches(strip_strings=True, normalize_gold=str.lower, normalize_pred=str.lower),
+    category=SamplingMethod.GENERATIVE,
+    corpus_level_fn=np.mean,
+    higher_is_better=True,
+)
+
 pubmedqa = LightevalTaskConfig(
     name="pubmedqa",
     prompt_function=pubmed_qa_prompt,
@@ -43,7 +54,7 @@ pubmedqa = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=1,
     metrics=[
-        Metrics.exact_match,
+        exact_match_case_insensitive,
     ],
     stop_sequence=["\n"],
     version=0,
