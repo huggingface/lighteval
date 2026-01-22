@@ -121,7 +121,14 @@ class SummaCImager:
 
         self.max_doc_sents = max_doc_sents
         self.max_input_length = 500
-        self.device = device
+        self.max_input_length = 500
+        if device == "cuda" and not torch.cuda.is_available():
+            if torch.backends.mps.is_available():
+                self.device = "mps"
+            else:
+                self.device = "cpu"
+        else:
+            self.device = device
         self.cache = {}
         self.model = None  # Lazy loader
 
@@ -215,7 +222,7 @@ class SummaCImager:
             else:
                 batch_prems = [b["premise"] for b in batch]
                 batch_hypos = [b["hypothesis"] for b in batch]
-                batch_tokens = self.tokenizer.batch_encode_plus(
+                batch_tokens = self.tokenizer(
                     list(zip(batch_prems, batch_hypos)),
                     padding=True,
                     truncation=True,
