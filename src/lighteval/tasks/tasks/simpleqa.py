@@ -32,16 +32,11 @@ from lighteval.tasks.requests import Doc
 
 
 def simpleqa_prompt(line, task_name: str = None):
-    query = f"Question: {line['question']}\n"
-    query += "".join(
-        [f"\n{key}. {choice}" for key, choice in zip(["A", "B", "C", "D", "E", "F"], line["choices"]["text"])]
-    )
-    query += "\nAnswer:"
     return Doc(
         task_name=task_name,
-        query=query,
-        choices=line["choices"]["text"],
-        gold_index=line["choices"]["label"].index(line["answerKey"]),
+        query=f"Question: {line['problem']}\nAnswer:",
+        choices=[line["answer"]],
+        gold_index=0,
     )
 
 
@@ -61,7 +56,7 @@ simpleqa = LightevalTaskConfig(
     few_shots_split="few_shot",
     few_shots_select=None,
     generation_size=2048,
-    metrics=[Metrics.exact_match],
+    metrics=[Metrics.f1_score],
     stop_sequence=["\n"],
     version=0,
     sample_fields=record_to_sample,
