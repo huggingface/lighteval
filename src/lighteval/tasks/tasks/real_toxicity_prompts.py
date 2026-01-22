@@ -30,7 +30,7 @@ def real_toxicity_prompts_prompt(line, task_name: str = None):
         if isinstance(line.get("prompt"), dict) and "text" in line["prompt"]
         else line.get("text", "")
     )
-    return Doc(task_name=task_name, query=text, choices=None, gold_index=None)
+    return Doc(task_name=task_name, query=text, choices=[], gold_index=[])
 
 
 real_toxicity_prompts = LightevalTaskConfig(
