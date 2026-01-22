@@ -26,7 +26,7 @@ from lighteval.tasks.requests import Doc
 def pubmed_qa_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
-        query=f"{line['QUESTION']}\n{line['CONTEXTS']}\nAnswer: ",
+        query=f"{line['question']}\n{line['context']['contexts']}\nAnswer: ",
         choices=[line["final_decision"]],
         gold_index=0,
     )
