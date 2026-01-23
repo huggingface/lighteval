@@ -20,7 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dataclasses import dataclass
+import logging
+from dataclasses import dataclass, replace
 from typing import Optional, Protocol
 
 from lighteval.data import GenerativeTaskDataset
@@ -28,6 +29,9 @@ from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.cache_management import SampleCache, cached
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -76,8 +80,26 @@ class GeneratorProtocol(Protocol):
     """Protocol defining the interface for generation components in RAG systems.
 
     Any class implementing this protocol can be used as a generator in RAGAdapterModel.
-    This allows maximum flexibility - generators can be Transformers models, vLLM, TGI endpoints,
-    or any other text generation system.
+
+    **Required Method:**
+        - `generate()`: Must be implemented by all generators.
+
+    **Required Property:**
+        - `tokenizer`: Must be a property that returns a tokenizer object. This is required
+          by RAGAdapterModel for tokenization during evaluation. The tokenizer should support
+          the standard tokenizer interface (e.g., `encode()`, `decode()` methods).
+
+    **Optional Properties:**
+        - `add_special_tokens`: If present, should return a bool indicating whether to add
+          special tokens during tokenization. Defaults to True if not present.
+        - `max_length`: If present, should return the maximum sequence length supported
+          by the generator. Defaults to 4096 if not present.
+
+    **Optional Method:**
+        - `loglikelihood()`: If implemented, must match the `LightevalModel.loglikelihood` signature:
+          `loglikelihood(docs: list[Doc]) -> list[ModelResponse]`. This is used for logprob-based
+          evaluations (e.g., multiple choice tasks). If not implemented, RAGAdapterModel will
+          raise NotImplementedError when loglikelihood is called.
 
     Example implementations:
         - TransformersModel wrapped for generation
@@ -160,6 +182,24 @@ class ContextFormatter:
         context = "\n\n".join(context_parts)
         return f"{context}\n\n{query}"
 
+    @staticmethod
+    def format_context_question_t5(query: str, retrieved_docs: list[RetrievedDocument]) -> str:
+        """Format context with question first, then context (T5-friendly format).
+
+        This matches the current default behavior for backward compatibility.
+
+        Args:
+            query (str): The original query (may already include instruction).
+            retrieved_docs (list[RetrievedDocument]): Retrieved documents to include.
+
+        Returns:
+            str: Formatted prompt with question first, then context.
+        """
+        context_text = "\n\n".join([retrieved_doc.text.strip() for retrieved_doc in retrieved_docs])
+        if context_text:
+            return f"question: {query} context: {context_text}"
+        return f"question: {query}"
+
 
 class RAGAdapterModel(LightevalModel):
     """Base class for RAG (Retrieval-Augmented Generation) model adapters.
@@ -227,7 +267,7 @@ class RAGAdapterModel(LightevalModel):
             context_formatter (ContextFormatter, optional): Custom formatter. If None, uses
                 default separator-based formatting.
         """
-
+        super().__init__()
         self.config = config
         self.retriever = retriever
         self.generator = generator
@@ -235,17 +275,33 @@ class RAGAdapterModel(LightevalModel):
         self.include_retrieval_metadata = include_retrieval_metadata
         self.context_formatter = context_formatter or ContextFormatter()
 
+        if not hasattr(self.generator, "tokenizer"):
+            raise AttributeError(
+                "Generator must provide a tokenizer attribute. "
+                "The generator passed to RAGAdapterModel must have a 'tokenizer' attribute "
+                "for tokenization during evaluation. Either implement a tokenizer property "
+                "in your generator class or ensure your generator exposes a tokenizer attribute."
+            )
+
         try:
             self._cache = SampleCache(config)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to initialize cache: {e}. Continuing without cache.")
             self._cache = None
 
     @property
     def tokenizer(self):
-        """Return a tokenizer from the generator if available.
+        """Return a tokenizer from the generator.
+
+        The tokenizer is validated during initialization to ensure the generator
+        provides this attribute. This property assumes the tokenizer exists.
+
+        Returns:
+            The tokenizer from the generator.
 
         Raises:
             AttributeError: If the generator does not provide a tokenizer attribute.
+                This should not occur if initialization completed successfully.
         """
         if hasattr(self.generator, "tokenizer"):
             return self.generator.tokenizer
@@ -267,6 +323,25 @@ class RAGAdapterModel(LightevalModel):
         if hasattr(self.generator, "max_length"):
             return self.generator.max_length
         return 4096
+
+    def _build_retrieval_query(self, doc: Doc, retrieved_docs: list[RetrievedDocument]) -> str:
+        """Format the prompt by combining retrieved context with the query.
+
+        Uses the configured context_formatter to format the prompt. The default
+        formatter uses a T5-friendly format, but can be customized for other generators.
+
+        Args:
+            doc (Doc): The evaluation document containing the query.
+            retrieved_docs (list[RetrievedDocument]): Retrieved documents.
+
+        Returns:
+            str: Formatted prompt ready for generation.
+        """
+        retrieval_query = doc.query.strip()
+        if doc.instruction:
+            retrieval_query = f"{doc.instruction.strip()}\n\n{retrieval_query}"
+
+        return self.context_formatter.format_context_question_t5(retrieval_query, retrieved_docs)
 
     def _format_prompt_with_context(self, doc: Doc, retrieved_docs: list[RetrievedDocument]) -> str:
         """Format the prompt by combining retrieved context with the query.
@@ -299,10 +374,15 @@ class RAGAdapterModel(LightevalModel):
 
         for split in dataset.splits_iterator():
             for doc in split:
-                retrieved_docs = self.retriever.retrieve(doc.query, top_k=self.top_k)
+                retrieval_query = self._build_retrieval_query(doc)
+                retrieved_docs = self.retriever.retrieve(retrieval_query, top_k=self.top_k)
                 augmented_prompt = self._format_prompt_with_context(doc, retrieved_docs)
 
-                max_new_tokens = doc.generation_size or self.config.generation_parameters.max_new_tokens
+                generation_params = getattr(self.config, "generation_parameters", None)
+                config_max_new_tokens = (
+                    getattr(generation_params, "max_new_tokens", None) if generation_params is not None else None
+                )
+                max_new_tokens = doc.generation_size or config_max_new_tokens
                 stop_sequences = doc.stop_sequences or []
 
                 generated_text = self.generator.generate(
@@ -348,6 +428,9 @@ class RAGAdapterModel(LightevalModel):
         Note: This requires the generator to support loglikelihood computation.
         Most RAG systems focus on generative evaluation, so this may raise NotImplementedError.
 
+        The generator's `loglikelihood` method (if present) must accept `list[Doc]` and return
+        `list[ModelResponse]`, matching the `LightevalModel.loglikelihood` signature.
+
         Args:
             docs (list[Doc]): List of documents with context and continuation pairs.
 
@@ -356,22 +439,26 @@ class RAGAdapterModel(LightevalModel):
 
         Raises:
             NotImplementedError: If the generator doesn't support loglikelihood computation.
+            TypeError: If the generator's loglikelihood method has an incompatible signature.
         """
         if hasattr(self.generator, "loglikelihood"):
             augmented_docs = []
             for doc in docs:
-                retrieved_docs = self.retriever.retrieve(doc.query, top_k=self.top_k)
+                retrieval_query = self._build_retrieval_query(doc)
+                retrieved_docs = self.retriever.retrieve(retrieval_query, top_k=self.top_k)
                 augmented_prompt = self._format_prompt_with_context(doc, retrieved_docs)
 
-                augmented_doc = Doc(
-                    query=augmented_prompt,
-                    choices=doc.choices,
-                    gold_index=doc.gold_index,
-                    instruction=None,
-                )
+                augmented_doc = replace(doc, query=augmented_prompt)
                 augmented_docs.append(augmented_doc)
 
-            return self.generator.loglikelihood(augmented_docs)
+            try:
+                return self.generator.loglikelihood(augmented_docs)
+            except TypeError as e:
+                raise TypeError(
+                    f"Generator's loglikelihood method has an incompatible signature. "
+                    f"Expected: loglikelihood(docs: list[Doc]) -> list[ModelResponse]. "
+                    f"Error: {e}"
+                ) from e
 
         raise NotImplementedError(
             "loglikelihood() not supported. The generator must implement loglikelihood() "
