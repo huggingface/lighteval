@@ -84,10 +84,11 @@ class GeneratorProtocol(Protocol):
     **Required Method:**
         - `generate()`: Must be implemented by all generators.
 
-    **Required Property:**
-        - `tokenizer`: Must be a property that returns a tokenizer object. This is required
-          by RAGAdapterModel for tokenization during evaluation. The tokenizer should support
-          the standard tokenizer interface (e.g., `encode()`, `decode()` methods).
+    **Required Attribute or Property:**
+        - tokenizer`: Must be exposed as either an attribute or a read-only property that
+          returns a tokenizer object. This is required by RAGAdapterModel for tokenization
+          during evaluation. The tokenizer should support the standard tokenizer interface
+          (e.g., `encode()`, `decode()` methods).
 
     **Optional Properties:**
         - `add_special_tokens`: If present, should return a bool indicating whether to add
@@ -324,7 +325,24 @@ class RAGAdapterModel(LightevalModel):
             return self.generator.max_length
         return 4096
 
-    def _build_retrieval_query(self, doc: Doc, retrieved_docs: list[RetrievedDocument]) -> str:
+    def _build_retrieval_query(self, doc: Doc) -> str:
+        """Build the query string to use for retrieval, including instruction if present.
+
+        This method constructs the query that will be used to retrieve relevant documents.
+        It combines the instruction (if present) with the query text.
+
+        Args:
+            doc (Doc): The evaluation document containing the query and optional instruction.
+
+        Returns:
+            str: Query string for retrieval (instruction + query if instruction exists, otherwise just query).
+        """
+        retrieval_query = doc.query.strip()
+        if doc.instruction:
+            retrieval_query = f"{doc.instruction.strip()}\n\n{retrieval_query}"
+        return retrieval_query
+
+    def _format_prompt_with_context(self, doc: Doc, retrieved_docs: list[RetrievedDocument]) -> str:
         """Format the prompt by combining retrieved context with the query.
 
         Uses the configured context_formatter to format the prompt. The default
@@ -337,35 +355,11 @@ class RAGAdapterModel(LightevalModel):
         Returns:
             str: Formatted prompt ready for generation.
         """
-        retrieval_query = doc.query.strip()
-        if doc.instruction:
-            retrieval_query = f"{doc.instruction.strip()}\n\n{retrieval_query}"
-
-        return self.context_formatter.format_context_question_t5(retrieval_query, retrieved_docs)
-
-    def _format_prompt_with_context(self, doc: Doc, retrieved_docs: list[RetrievedDocument]) -> str:
-        """Format the prompt by combining retrieved context with the query.
-
-        Args:
-            doc (Doc): The evaluation document containing the query.
-            retrieved_docs (list[RetrievedDocument]): Retrieved documents.
-
-        Returns:
-            str: Formatted prompt ready for generation.
-        """
         query = doc.query.strip()
-
         if doc.instruction:
             query = f"{doc.instruction.strip()}\n\n{query}"
 
-        context_text = "\n\n".join([retrieved_doc.text.strip() for retrieved_doc in retrieved_docs])
-
-        if context_text:
-            formatted_prompt = f"question: {query} context: {context_text}"
-        else:
-            formatted_prompt = f"question: {query}"
-
-        return formatted_prompt
+        return self.context_formatter.format_context_question_t5(query, retrieved_docs)
 
     @cached(SamplingMethod.GENERATIVE)
     def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
@@ -373,9 +367,17 @@ class RAGAdapterModel(LightevalModel):
         results = []
 
         for split in dataset.splits_iterator():
-            for doc in split:
-                retrieval_query = self._build_retrieval_query(doc)
-                retrieved_docs = self.retriever.retrieve(retrieval_query, top_k=self.top_k)
+            split_docs = list(split)
+            retrieval_queries = [self._build_retrieval_query(doc) for doc in split_docs]
+
+            if hasattr(self.retriever, "batch_retrieve"):
+                batch_retrieved_docs = self.retriever.batch_retrieve(retrieval_queries, top_k=self.top_k)
+            else:
+                batch_retrieved_docs = [
+                    self.retriever.retrieve(retrieval_query, top_k=self.top_k) for retrieval_query in retrieval_queries
+                ]
+
+            for doc, retrieved_docs in zip(split_docs, batch_retrieved_docs):
                 augmented_prompt = self._format_prompt_with_context(doc, retrieved_docs)
 
                 generation_params = getattr(self.config, "generation_parameters", None)
@@ -443,9 +445,17 @@ class RAGAdapterModel(LightevalModel):
         """
         if hasattr(self.generator, "loglikelihood"):
             augmented_docs = []
-            for doc in docs:
-                retrieval_query = self._build_retrieval_query(doc)
-                retrieved_docs = self.retriever.retrieve(retrieval_query, top_k=self.top_k)
+            # Build all retrieval queries.
+            retrieval_queries = [self._build_retrieval_query(doc) for doc in docs]
+            # Perform retrieval in batch if the retriever supports it, otherwise fall back to per-query retrieval.
+            if hasattr(self.retriever, "batch_retrieve"):
+                batch_retrieved_docs = self.retriever.batch_retrieve(retrieval_queries, top_k=self.top_k)
+            else:
+                batch_retrieved_docs = [
+                    self.retriever.retrieve(retrieval_query, top_k=self.top_k) for retrieval_query in retrieval_queries
+                ]
+
+            for doc, retrieved_docs in zip(docs, batch_retrieved_docs):
                 augmented_prompt = self._format_prompt_with_context(doc, retrieved_docs)
 
                 augmented_doc = replace(doc, query=augmented_prompt)
