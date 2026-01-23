@@ -50,7 +50,7 @@ def truthful_qa_generative_prompt(line, task_name: str = None):
         task_name=task_name,
         query=line["question"].strip(),
         choices=correct_answers + incorrect_answers,
-        gold_index=list(range(len(correct_answers)))
+        gold_index=list(range(len(correct_answers))),
     )
 
 
