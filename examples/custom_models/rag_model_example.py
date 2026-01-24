@@ -51,9 +51,19 @@ class SimpleVectorRetriever(RetrieverProtocol):
 
     def retrieve(self, query: str, top_k: int = 5) -> list[RetrievedDocument]:
         query_embedding = self.model.encode([query], show_progress_bar=False)[0]
-        similarities = np.dot(self.embeddings, query_embedding) / (
-            np.linalg.norm(self.embeddings, axis=1) * np.linalg.norm(query_embedding)
-        )
+        doc_norms = np.linalg.norm(self.embeddings, axis=1)
+        query_norm = np.linalg.norm(query_embedding)
+
+        if query_norm == 0 or not np.any(doc_norms > 0):
+            similarities = np.zeros(len(self.documents), dtype=float)
+        else:
+            safe_doc_norms = doc_norms.copy()
+            zero_doc_mask = safe_doc_norms == 0
+            safe_doc_norms[zero_doc_mask] = 1.0
+
+            similarities = np.dot(self.embeddings, query_embedding) / (safe_doc_norms * query_norm)
+            similarities[zero_doc_mask] = 0.0
+
         top_indices = np.argsort(similarities)[::-1][:top_k]
         return [RetrievedDocument(text=self.documents[idx], score=float(similarities[idx])) for idx in top_indices]
 

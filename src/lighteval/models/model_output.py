@@ -129,7 +129,6 @@ class ModelResponse:
                     {"text": "Paris is the capital of France.", "score": 0.95},
                     {"text": "France is a country in Europe.", "score": 0.82}
                 ],
-                "retrieval_time_ms": 45.2
             }
         )
         ```

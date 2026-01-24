@@ -85,10 +85,11 @@ class GeneratorProtocol(Protocol):
         - `generate()`: Must be implemented by all generators.
 
     **Required Attribute or Property:**
-        - tokenizer`: Must be exposed as either an attribute or a read-only property that
+        - `tokenizer`: Must be exposed as either an attribute or a read-only property that
           returns a tokenizer object. This is required by RAGAdapterModel for tokenization
           during evaluation. The tokenizer should support the standard tokenizer interface
-          (e.g., `encode()`, `decode()` methods).
+          (e.g., `encode()`, `decode()` methods). An AttributeError will be raised if the tokenizer is
+          not found during runtime.
 
     **Optional Properties:**
         - `add_special_tokens`: If present, should return a bool indicating whether to add
@@ -224,6 +225,8 @@ class RAGAdapterModel(LightevalModel):
         context_formatter (ContextFormatter): Utility for formatting context with queries.
         top_k (int): Number of documents to retrieve per query. Defaults to 5.
         include_retrieval_metadata (bool): Whether to include retrieval info in ModelResponse.metadata.
+        retrieval_batch_size (int): Batch size for retrieval within splits to avoid memory issues.
+            Defaults to RETRIEVAL_BATCH_SIZE (128).
 
     Example:
         ```python
@@ -247,6 +250,8 @@ class RAGAdapterModel(LightevalModel):
         ```
     """
 
+    RETRIEVAL_BATCH_SIZE = 128
+
     def __init__(
         self,
         config: ModelConfig,
@@ -255,6 +260,7 @@ class RAGAdapterModel(LightevalModel):
         top_k: int = 5,
         include_retrieval_metadata: bool = True,
         context_formatter: Optional[ContextFormatter] = None,
+        retrieval_batch_size: Optional[int] = None,
     ):
         """Initialize the RAG adapter model.
 
@@ -267,6 +273,8 @@ class RAGAdapterModel(LightevalModel):
                 Defaults to True.
             context_formatter (ContextFormatter, optional): Custom formatter. If None, uses
                 default separator-based formatting.
+            retrieval_batch_size (int, optional): Batch size for retrieval within splits to avoid
+                memory issues. Defaults to RETRIEVAL_BATCH_SIZE (128). Set to None to use default.
         """
         super().__init__()
         self.config = config
@@ -275,6 +283,7 @@ class RAGAdapterModel(LightevalModel):
         self.top_k = top_k
         self.include_retrieval_metadata = include_retrieval_metadata
         self.context_formatter = context_formatter or ContextFormatter()
+        self.retrieval_batch_size = retrieval_batch_size or self.RETRIEVAL_BATCH_SIZE
 
         if not hasattr(self.generator, "tokenizer"):
             raise AttributeError(
@@ -299,17 +308,8 @@ class RAGAdapterModel(LightevalModel):
 
         Returns:
             The tokenizer from the generator.
-
-        Raises:
-            AttributeError: If the generator does not provide a tokenizer attribute.
-                This should not occur if initialization completed successfully.
         """
-        if hasattr(self.generator, "tokenizer"):
-            return self.generator.tokenizer
-        raise AttributeError(
-            "Generator must provide a tokenizer attribute. "
-            "Either implement tokenizer property in your generator or pass a tokenizer explicitly."
-        )
+        return self.generator.tokenizer
 
     @property
     def add_special_tokens(self) -> bool:
@@ -342,11 +342,38 @@ class RAGAdapterModel(LightevalModel):
             retrieval_query = f"{doc.instruction.strip()}\n\n{retrieval_query}"
         return retrieval_query
 
+    def _retrieve_batch(self, docs: list[Doc]) -> list[list[RetrievedDocument]]:
+        """Retrieve documents for a batch of queries.
+
+        This helper method handles batch retrieval, falling back to individual retrieval
+        if the retriever doesn't support batch_retrieve. This reduces code duplication
+        between greedy_until and loglikelihood methods.
+
+        Args:
+            docs (list[Doc]): List of documents to retrieve context for.
+
+        Returns:
+            list[list[RetrievedDocument]]: List of retrieved document lists, one per input doc.
+        """
+        retrieval_queries = [self._build_retrieval_query(doc) for doc in docs]
+
+        if hasattr(self.retriever, "batch_retrieve"):
+            batch_retrieved_docs = self.retriever.batch_retrieve(retrieval_queries, top_k=self.top_k)
+        else:
+            batch_retrieved_docs = [
+                self.retriever.retrieve(retrieval_query, top_k=self.top_k) for retrieval_query in retrieval_queries
+            ]
+
+        return batch_retrieved_docs
+
     def _format_prompt_with_context(self, doc: Doc, retrieved_docs: list[RetrievedDocument]) -> str:
         """Format the prompt by combining retrieved context with the query.
 
         Uses the configured context_formatter to format the prompt. The default
         formatter uses a T5-friendly format, but can be customized for other generators.
+
+        This method first checks for a generic `format_context_question` method on the
+        formatter, and falls back to `format_context_question_t5` for backward compatibility.
 
         Args:
             doc (Doc): The evaluation document containing the query.
@@ -359,7 +386,11 @@ class RAGAdapterModel(LightevalModel):
         if doc.instruction:
             query = f"{doc.instruction.strip()}\n\n{query}"
 
-        return self.context_formatter.format_context_question_t5(query, retrieved_docs)
+        formatter = self.context_formatter
+        if hasattr(formatter, "format_context_question"):
+            return formatter.format_context_question(query, retrieved_docs)
+
+        return formatter.format_context_question_t5(query, retrieved_docs)
 
     @cached(SamplingMethod.GENERATIVE)
     def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
@@ -368,59 +399,60 @@ class RAGAdapterModel(LightevalModel):
 
         for split in dataset.splits_iterator():
             split_docs = list(split)
-            retrieval_queries = [self._build_retrieval_query(doc) for doc in split_docs]
 
-            if hasattr(self.retriever, "batch_retrieve"):
-                batch_retrieved_docs = self.retriever.batch_retrieve(retrieval_queries, top_k=self.top_k)
-            else:
-                batch_retrieved_docs = [
-                    self.retriever.retrieve(retrieval_query, top_k=self.top_k) for retrieval_query in retrieval_queries
-                ]
+            for start_idx in range(0, len(split_docs), self.retrieval_batch_size):
+                batch_docs = split_docs[start_idx : start_idx + self.retrieval_batch_size]
+                batch_retrieved_docs = self._retrieve_batch(batch_docs)
 
-            for doc, retrieved_docs in zip(split_docs, batch_retrieved_docs):
-                augmented_prompt = self._format_prompt_with_context(doc, retrieved_docs)
+                for doc, retrieved_docs in zip(batch_docs, batch_retrieved_docs):
+                    augmented_prompt = self._format_prompt_with_context(doc, retrieved_docs)
 
-                generation_params = getattr(self.config, "generation_parameters", None)
-                config_max_new_tokens = (
-                    getattr(generation_params, "max_new_tokens", None) if generation_params is not None else None
-                )
-                max_new_tokens = doc.generation_size or config_max_new_tokens
-                stop_sequences = doc.stop_sequences or []
+                    generation_params = getattr(self.config, "generation_parameters", None)
+                    config_max_new_tokens = (
+                        getattr(generation_params, "max_new_tokens", None) if generation_params is not None else None
+                    )
+                    max_new_tokens = doc.generation_size or config_max_new_tokens
+                    stop_sequences = doc.stop_sequences or []
 
-                generated_text = self.generator.generate(
-                    prompt=augmented_prompt,
-                    max_new_tokens=max_new_tokens,
-                    stop_sequences=stop_sequences,
-                )
+                    generated_text = self.generator.generate(
+                        prompt=augmented_prompt,
+                        max_new_tokens=max_new_tokens,
+                        stop_sequences=stop_sequences,
+                    )
 
-                metadata = None
-                if self.include_retrieval_metadata:
-                    metadata = {
-                        "retrieved_docs": [
-                            {
-                                "text": retrieved_doc.text,
-                                "score": retrieved_doc.score,
-                                "metadata": retrieved_doc.metadata,
-                            }
-                            for retrieved_doc in retrieved_docs
-                        ],
-                        "num_retrieved": len(retrieved_docs),
-                    }
+                    metadata = None
+                    if self.include_retrieval_metadata:
+                        metadata = {
+                            "retrieved_docs": [
+                                {
+                                    "text": retrieved_doc.text,
+                                    "score": retrieved_doc.score,
+                                    "metadata": retrieved_doc.metadata,
+                                }
+                                for retrieved_doc in retrieved_docs
+                            ],
+                            "num_retrieved": len(retrieved_docs),
+                        }
 
-                encoded = self.tok_encode(augmented_prompt)
-                if isinstance(encoded, list):
-                    input_tokens = encoded
-                elif hasattr(encoded, "tolist"):
-                    input_tokens = encoded.tolist()
-                else:
-                    input_tokens = list(encoded) if encoded else []
+                    encoded = self.tok_encode(augmented_prompt)
+                    if encoded is None:
+                        input_tokens = []
+                    elif isinstance(encoded, list):
+                        input_tokens = encoded
+                    elif hasattr(encoded, "tolist"):
+                        input_tokens = encoded.tolist()
+                    else:
+                        try:
+                            input_tokens = list(encoded)
+                        except TypeError:
+                            input_tokens = []
 
-                response = ModelResponse(
-                    text=[generated_text],
-                    input_tokens=input_tokens,
-                    metadata=metadata,
-                )
-                results.append(response)
+                    response = ModelResponse(
+                        text=[generated_text],
+                        input_tokens=input_tokens,
+                        metadata=metadata,
+                    )
+                    results.append(response)
 
         return dataset.get_original_order(results)
 
@@ -445,21 +477,15 @@ class RAGAdapterModel(LightevalModel):
         """
         if hasattr(self.generator, "loglikelihood"):
             augmented_docs = []
-            # Build all retrieval queries.
-            retrieval_queries = [self._build_retrieval_query(doc) for doc in docs]
-            # Perform retrieval in batch if the retriever supports it, otherwise fall back to per-query retrieval.
-            if hasattr(self.retriever, "batch_retrieve"):
-                batch_retrieved_docs = self.retriever.batch_retrieve(retrieval_queries, top_k=self.top_k)
-            else:
-                batch_retrieved_docs = [
-                    self.retriever.retrieve(retrieval_query, top_k=self.top_k) for retrieval_query in retrieval_queries
-                ]
 
-            for doc, retrieved_docs in zip(docs, batch_retrieved_docs):
-                augmented_prompt = self._format_prompt_with_context(doc, retrieved_docs)
+            for start_idx in range(0, len(docs), self.retrieval_batch_size):
+                batch_docs = docs[start_idx : start_idx + self.retrieval_batch_size]
+                batch_retrieved_docs = self._retrieve_batch(batch_docs)
 
-                augmented_doc = replace(doc, query=augmented_prompt)
-                augmented_docs.append(augmented_doc)
+                for doc, retrieved_docs in zip(batch_docs, batch_retrieved_docs):
+                    augmented_prompt = self._format_prompt_with_context(doc, retrieved_docs)
+                    augmented_doc = replace(doc, query=augmented_prompt)
+                    augmented_docs.append(augmented_doc)
 
             try:
                 return self.generator.loglikelihood(augmented_docs)
