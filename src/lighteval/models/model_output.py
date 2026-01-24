@@ -70,6 +70,12 @@ class ModelResponse:
             Used for PMI (Pointwise Mutual Information) normalization.
             **Required for**: PMI metrics.
 
+        metadata (Optional[dict]):
+            Optional dictionary for storing additional metadata about the response.
+            Can include retrieval information (e.g., retrieved documents, retrieval scores),
+            timing information, or any other model-specific metadata.
+            **Used for**: Debugging, transparency, and analysis of system-level models.
+
     Usage Examples:
 
         **For generative tasks (text completion, summarization):**
@@ -112,10 +118,26 @@ class ModelResponse:
         )
         ```
 
+        **For RAG systems with retrieval metadata:**
+        ```python
+        response = ModelResponse(
+            text=["The answer is Paris."],
+            input_tokens=[1, 2, 3, 4],
+            output_tokens=[[5, 6, 7]],
+            metadata={
+                "retrieved_docs": [
+                    {"text": "Paris is the capital of France.", "score": 0.95},
+                    {"text": "France is a country in Europe.", "score": 0.82}
+                ],
+            }
+        )
+        ```
+
     Notes:
         - For most evaluation tasks, only a subset of attributes is required
         - The `text` attribute is the most commonly used for generative tasks
         - `logprobs` are essential for probability-based metrics like perplexity
+        - `metadata` is optional and can be used to store additional information
     """
 
     # Model inputs
@@ -137,6 +159,7 @@ class ModelResponse:
     # Other metadata
     truncated_tokens_count: int = 0  # How many tokens truncated
     padded_tokens_count: int = 0  # How many tokens of padding
+    metadata: dict | None = None  # Optional: retrieval info, timing, or other model-specific metadata
 
     @property
     def final_text(self) -> list[str]:
@@ -156,6 +179,7 @@ class ModelResponse:
             unconditioned_logprobs=[self.unconditioned_logprobs[index]] if self.unconditioned_logprobs else None,
             truncated_tokens_count=self.truncated_tokens_count,
             padded_tokens_count=self.padded_tokens_count,
+            metadata=self.metadata,
         )
 
 
