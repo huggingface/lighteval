@@ -951,29 +951,28 @@ class JudgeLLM(SampleLevelComputation):
         short_judge_name: str | None = None,
         response_format: BaseModel | None = None,
         url: str | None = None,
+        api_key: str | None = None,
         hf_provider: str | None = None,
         max_tokens: int | None = None,
         backend_options: dict | None = None,
     ) -> None:
         logger.debug(f"Initializing JudgeLLM with backend: {judge_backend}, model: {judge_model_name}")
 
-        api_key = None
-
         match judge_backend:
             case "openai":
                 if judge_model_name not in self.available_models_openai:
                     raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
-                api_key = os.getenv("OPENAI_API_KEY")
+                api_key = api_key or os.getenv("OPENAI_API_KEY")
                 logger.debug("Using OpenAI backend for llm as a judge metric")
 
             case "tgi":
-                api_key = os.getenv("HF_TOKEN")
+                api_key = api_key or os.getenv("HF_TOKEN")
                 if url is None:
                     url = "https://api-inference.huggingface.co/v1/"
                 logger.debug("Using TGI backend")
 
             case "inference-providers":
-                api_key = os.getenv("HF_TOKEN")
+                api_key = api_key or os.getenv("HF_TOKEN")
                 logger.debug("Using Hugging Face Inference backend")
 
             case "litellm":

@@ -63,3 +63,24 @@ def test_dataset_filter():
     filtered_docs = task.eval_docs()
     assert len(filtered_docs) == 1
     assert filtered_docs[0].query == "hi"
+
+
+def test_hf_data_files(tmp_path):
+    # create a small jsonl dataset
+    data_file = tmp_path / "data.jsonl"
+    src_docs = [f"document {i}" for i in range(3)]
+    data_file.write_text("\n".join([f'{{"text": "{doc}"}}' for doc in src_docs]))
+
+    cfg = LightevalTaskConfig(
+        name="test_data_files",
+        prompt_function=dummy_prompt_function,
+        hf_repo="json",
+        hf_subset="default",
+        metrics=[],
+        evaluation_splits=["train"],
+        hf_data_files=str(data_file),
+    )
+    task = LightevalTask(cfg)
+
+    eval_docs = task.eval_docs()
+    assert [doc.query for doc in eval_docs] == src_docs
