@@ -360,9 +360,9 @@ class Registry:
         """Print all the tasks in the task registry."""
 
         # Get all tasks
-        all_tasks = sorted(list(self._task_registry.keys()))
+        all_tasks = sorted(self._task_registry.keys())
 
-        print(f"Displaying tasks:")
+        print("Displaying tasks:")
         print("=" * 60)
 
         last_task = None
