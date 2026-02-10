@@ -88,27 +88,6 @@ logger = logging.getLogger(__name__)
 # Custom is for all the experiments you might want to do!
 
 # Core suites - always available without extra dependencies
-CORE_SUITES = [
-    "helm",
-    "bigbench",
-    "harness",
-    "leaderboard",
-    "lighteval",
-    "original",
-    "extended",
-    "custom",
-    "test",
-]
-
-# Optional suites - may require extra dependencies
-OPTIONAL_SUITES = [
-    "community",
-    "multilingual",
-]
-
-DEFAULT_SUITES = CORE_SUITES + OPTIONAL_SUITES
-
-
 class Registry:
     """The Registry class is used to manage the task registry and get task classes."""
 
@@ -379,65 +358,17 @@ class Registry:
         logger.info(f"Loaded {len(loaded_configs)} task configs in {time_end - time_start:.1f} seconds")
         return loaded_configs
 
-    def print_all_tasks(self, suites: str | None = None):
-        """Print all the tasks in the task registry.
+    def print_all_tasks(self):
+        """Print all the tasks in the task registry."""
+        all_tasks = sorted(self._task_registry.keys())
 
-        Args:
-            suites: Comma-separated list of suites to display. If None, shows core suites only.
-                   Use 'all' to show all available suites (core + optional).
-                   Special handling for 'multilingual' suite with dependency checking.
-        """
-        # Parse requested suites
-        if suites is None:
-            requested_suites = CORE_SUITES.copy()
-        else:
-            requested_suites = [s.strip() for s in suites.split(",")]
-
-            # Handle 'all' special case
-            if "all" in requested_suites:
-                requested_suites = DEFAULT_SUITES.copy()
-
-            # Check for multilingual dependencies if requested
-            if "multilingual" in requested_suites:
-                import importlib.util
-
-                if importlib.util.find_spec("langcodes") is None:
-                    logger.warning(
-                        "Multilingual tasks require additional dependencies (langcodes). "
-                        "Install them with: pip install langcodes"
-                    )
-                    requested_suites.remove("multilingual")
-
-        # Get all tasks and filter by requested suites
-        all_tasks = list(self._task_registry.keys())
-        tasks_names = [task for task in all_tasks if task.split("|")[0] in requested_suites]
-
-        # Ensure all requested suites are present (even if empty)
-        suites_in_registry = {name.split("|")[0] for name in tasks_names}
-        for suite in requested_suites:
-            if suite not in suites_in_registry:
-                # We add a dummy task to make sure the suite is printed
-                tasks_names.append(f"{suite}|")
-
-        tasks_names.sort()
-
-        print(f"Displaying tasks for suites: {', '.join(requested_suites)}")
+        print(f"Available tasks ({len(all_tasks)}):")
         print("=" * 60)
 
-        for suite, g in groupby(tasks_names, lambda x: x.split("|")[0]):
-            tasks_in_suite = [name for name in g if name.split("|")[1]]  # Filter out dummy tasks
-            tasks_in_suite.sort()
+        for task_name in all_tasks:
+            print(f"  - {task_name}")
 
-            print(f"\n- {suite}:")
-            if not tasks_in_suite:
-                print("  (no tasks in this suite)")
-            else:
-                for task_name in tasks_in_suite:
-                    print(f"  - {task_name}")
-
-        # Print summary
-        total_tasks = len([t for t in tasks_names if t.split("|")[1]])
-        print(f"\nTotal tasks displayed: {total_tasks}")
+        print(f"\nTotal tasks: {len(all_tasks)}")
 
     def get_tasks_dump(self) -> list[dict]:  # noqa: C901
         """Get all task names, metadata, and docstrings as a Python object.
