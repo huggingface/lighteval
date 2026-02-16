@@ -74,6 +74,7 @@ maime25_da = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
+    stop_sequence=[],
     metrics=[
         Metrics.pass_at_k_math(sample_params={"k": 1, "n": 1}),
         Metrics.avg_at_n_math(sample_params={"n": 1}),
@@ -92,6 +93,7 @@ maime25_da_avg = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
+    stop_sequence=[],
     metrics=[Metrics.avg_at_n_math(sample_params={"n": 64})],
     version=1,
 )
@@ -107,6 +109,7 @@ maime25_da_gpassk = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
+    stop_sequence=[],
     metrics=[Metrics.g_pass_at_k_math(sample_params={"k": 16, "n": 48})],
     version=1,
 )
@@ -125,6 +128,7 @@ maime25_fi = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
+    stop_sequence=[],
     metrics=[
         Metrics.pass_at_k_math(sample_params={"k": 1, "n": 1}),
         Metrics.avg_at_n_math(sample_params={"n": 1}),
@@ -143,6 +147,7 @@ maime25_fi_avg = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
+    stop_sequence=[],
     metrics=[Metrics.avg_at_n_math(sample_params={"n": 64})],
     version=1,
 )
@@ -158,6 +163,7 @@ maime25_fi_gpassk = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
+    stop_sequence=[],
     metrics=[Metrics.g_pass_at_k_math(sample_params={"k": 16, "n": 48})],
     version=1,
 )
