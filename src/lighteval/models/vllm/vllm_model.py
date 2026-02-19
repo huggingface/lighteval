@@ -27,7 +27,6 @@ import logging
 import os
 from typing import Coroutine, Optional
 
-import torch
 from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 from tqdm import tqdm
 
@@ -224,6 +223,16 @@ class VLLMModel(LightevalModel):
         return self._tokenizer
 
     def cleanup(self):
+        # Print memory before cleanup
+        try:
+            import torch
+
+            if torch.cuda.is_available():
+                allocated_before = torch.cuda.memory_allocated() / (1024**3)
+                print(f"\n[VLLMModel.cleanup] GPU memory before cleanup: {allocated_before:.2f} GiB")
+        except ImportError:
+            allocated_before = 0
+
         destroy_model_parallel()
         if self.model is not None:
             del self.model
@@ -231,6 +240,19 @@ class VLLMModel(LightevalModel):
         ray.shutdown()
         destroy_distributed_environment()
         torch.cuda.empty_cache()
+
+        # Print memory after cleanup
+        try:
+            import torch
+
+            if torch.cuda.is_available():
+                allocated_after = torch.cuda.memory_allocated() / (1024**3)
+                freed = allocated_before - allocated_after
+                print(
+                    f"[VLLMModel.cleanup] GPU memory after cleanup: {allocated_after:.2f} GiB (freed {freed:.2f} GiB)\n"
+                )
+        except ImportError:
+            pass
 
     @property
     def add_special_tokens(self):
@@ -544,11 +566,34 @@ class AsyncVLLMModel(VLLMModel):
     is_async = True
 
     def cleanup(self):
+        # Print memory before cleanup
+        try:
+            import torch
+
+            if torch.cuda.is_available():
+                allocated_before = torch.cuda.memory_allocated() / (1024**3)
+                print(f"\n[AsyncVLLMModel.cleanup] GPU memory before cleanup: {allocated_before:.2f} GiB")
+        except ImportError:
+            allocated_before = 0
+
         if self.model is not None:
             del self.model
         gc.collect()
         destroy_distributed_environment()
         torch.cuda.empty_cache()
+
+        # Print memory after cleanup
+        try:
+            import torch
+
+            if torch.cuda.is_available():
+                allocated_after = torch.cuda.memory_allocated() / (1024**3)
+                freed = allocated_before - allocated_after
+                print(
+                    f"[AsyncVLLMModel.cleanup] GPU memory after cleanup: {allocated_after:.2f} GiB (freed {freed:.2f} GiB)\n"
+                )
+        except ImportError:
+            pass
 
     def _create_auto_model(self, config: VLLMModelConfig):
         """Creates an instance of the async vllm model loaded from HF. Requires using the v1 of VLLM.

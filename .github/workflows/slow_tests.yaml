@@ -37,6 +37,8 @@ jobs:
       - name: Install the project
         run: uv sync --extra dev
 
+      - name: Install Python development headers
+        run: sudo apt-get update && sudo apt-get install -y python3.10-dev
 
       - name: run nvidia-smi
         run: nvidia-smi
