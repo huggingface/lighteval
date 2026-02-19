@@ -36,15 +36,23 @@ from lighteval.tasks.requests import Doc
 # Prompt template adapted from AIME task
 # Note: Uses English instructions for consistency with AIME
 MATH_PROMPT_TEMPLATE = dedent("""
-Solve the following math problem efficiently and clearly.  
-The last line of your response should be of the following format: 
-'Therefore, the final answer is: $\\boxed{{ANSWER}}$. I hope it is correct' 
-(without quotes) where ANSWER is just the final number or expression 
+Solve the following math problem efficiently and clearly.
+The last line of your response should be of the following format:
+'Therefore, the final answer is: $\\boxed{{ANSWER}}$. I hope it is correct'
+(without quotes) where ANSWER is just the final number or expression
 that solves the problem. Think step by step before answering.
 
 {prompt}
 """)
 
+
+# Sampling parameters for stochastic evaluation (avg@n, g_pass@k).
+# Following "Are Your LLMs Capable of Stable Reasoning?" (arXiv:2412.13147)
+# which uses temperature=1.0, top_p=0.8 with n=48, k=16 for g_pass@k.
+SAMPLING_SOLVER = [
+    prompt_template(MATH_PROMPT_TEMPLATE),
+    generate(temperature=1.0, top_p=0.8),
+]
 
 
 def record_to_sample(record):
@@ -86,6 +94,8 @@ maime25_da_avg = LightevalTaskConfig(
     name="maime25_avg:da",
     prompt_function=maime_prompt,
     sample_fields=record_to_sample,
+    solver=SAMPLING_SOLVER,
+    scorer=math_scorer(),
     hf_repo="LumiOpen/mAIME2025",
     hf_subset="da_combined",
     hf_avail_splits=["test"],
@@ -102,6 +112,8 @@ maime25_da_gpassk = LightevalTaskConfig(
     name="maime25_gpassk:da",
     prompt_function=maime_prompt,
     sample_fields=record_to_sample,
+    solver=SAMPLING_SOLVER,
+    scorer=math_scorer(),
     hf_repo="LumiOpen/mAIME2025",
     hf_subset="da_combined",
     hf_avail_splits=["test"],
@@ -140,6 +152,8 @@ maime25_fi_avg = LightevalTaskConfig(
     name="maime25_avg:fi",
     prompt_function=maime_prompt,
     sample_fields=record_to_sample,
+    solver=SAMPLING_SOLVER,
+    scorer=math_scorer(),
     hf_repo="LumiOpen/mAIME2025",
     hf_subset="fi_combined",
     hf_avail_splits=["test"],
@@ -156,6 +170,8 @@ maime25_fi_gpassk = LightevalTaskConfig(
     name="maime25_gpassk:fi",
     prompt_function=maime_prompt,
     sample_fields=record_to_sample,
+    solver=SAMPLING_SOLVER,
+    scorer=math_scorer(),
     hf_repo="LumiOpen/mAIME2025",
     hf_subset="fi_combined",
     hf_avail_splits=["test"],
