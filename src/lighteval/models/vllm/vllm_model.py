@@ -313,7 +313,7 @@ class VLLMModel(LightevalModel):
         # Inferring from the tokenizer will cause vllm to bug for models with mismatches between model
         # config and tk config, like mistralai/Mistral-7B-v0.1
         if self._max_length is None:
-            self._max_length = model.llm_engine.model_config.max_seq_len_to_capture
+            self._max_length = model.llm_engine.model_config.max_model_len
 
         return model
 
@@ -625,7 +625,7 @@ class AsyncVLLMModel(VLLMModel):
 
         # If the max_length can't get extracted from the config, it will be inferred from the model
         if self._max_length is None:
-            self._max_length = model.model_config.max_seq_len_to_capture
+            self._max_length = model.model_config.max_model_len
 
         return model
 
