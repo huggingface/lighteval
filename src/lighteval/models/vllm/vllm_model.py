@@ -450,7 +450,10 @@ class VLLMModel(LightevalModel):
                 )
         else:
             sampling_params.temperature = 0
-            sampling_params.prompt_logprobs = 1
+            # In vLLM v0.15+, prompt_logprobs dict only contains top-k tokens at each position
+            # Set to a large value to ensure we can look up the actual continuation token's logprob
+            # (vLLM internally caps this at vocab_size)
+            sampling_params.prompt_logprobs = 20
             sampling_params.max_tokens = 1
             sampling_params.detokenize = False
 
@@ -534,8 +537,17 @@ class VLLMModel(LightevalModel):
                     outputs_doc, tokenized_contexts_doc, tokenized_continuations_doc
                 ):
                     continuation_logprobs = []
-                    for token, logprobs in zip(continuation[::-1], output.prompt_logprobs[::-1]):
-                        continuation_logprobs.append(logprobs[token])
+                    for token, logprobs_at_position in zip(continuation[::-1], output.prompt_logprobs[::-1]):
+                        # In vLLM v0.15+, logprobs_at_position is a dict[int, Logprob]
+                        # It only contains top-k tokens at this position
+                        if logprobs_at_position is None or token not in logprobs_at_position:
+                            # This shouldn't happen with prompt_logprobs=20, but handle gracefully
+                            raise KeyError(
+                                f"Token {token} not found in logprobs at position. "
+                                f"Available tokens: {list(logprobs_at_position.keys()) if logprobs_at_position else 'None'}. "
+                                f"Try increasing sampling_params.prompt_logprobs value."
+                            )
+                        continuation_logprobs.append(logprobs_at_position[token])
 
                     bool_score = all(logprob.rank == 1 for logprob in continuation_logprobs)
                     continuation_logprobs = [logprob.logprob for logprob in continuation_logprobs]
