@@ -14,7 +14,7 @@ human-reviewed by native speakers to preserve mathematical accuracy and
 LaTeX formatting.
 
 languages:
-danish, finnish
+danish, finnish, slovak
 
 tags:
 math, multilingual, reasoning
@@ -184,6 +184,64 @@ maime25_fi_gpassk = LightevalTaskConfig(
     version=1,
 )
 
+# Slovak tasks
+maime25_sk = LightevalTaskConfig(
+    name="maime25:sk",
+    prompt_function=maime_prompt,
+    sample_fields=record_to_sample,
+    solver=[prompt_template(MATH_PROMPT_TEMPLATE), generate(cache=True)],
+    scorer=math_scorer(),
+    hf_repo="LumiOpen/mAIME2025",
+    hf_subset="sk_combined",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=None,
+    stop_sequence=[],
+    metrics=[
+        Metrics.pass_at_k_math(sample_params={"k": 1, "n": 1}),
+        Metrics.avg_at_n_math(sample_params={"n": 1}),
+    ],
+    version=1,
+)
+
+maime25_sk_avg = LightevalTaskConfig(
+    name="maime25_avg:sk",
+    prompt_function=maime_prompt,
+    sample_fields=record_to_sample,
+    solver=SAMPLING_SOLVER,
+    scorer=math_scorer(),
+    hf_repo="LumiOpen/mAIME2025",
+    hf_subset="sk_combined",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=None,
+    stop_sequence=[],
+    metrics=[Metrics.avg_at_n_math(sample_params={"n": 64})],
+    version=1,
+)
+
+maime25_sk_gpassk = LightevalTaskConfig(
+    name="maime25_gpassk:sk",
+    prompt_function=maime_prompt,
+    sample_fields=record_to_sample,
+    solver=SAMPLING_SOLVER,
+    scorer=math_scorer(),
+    hf_repo="LumiOpen/mAIME2025",
+    hf_subset="sk_combined",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=None,
+    stop_sequence=[],
+    metrics=[Metrics.g_pass_at_k_math(sample_params={"k": 16, "n": 48})],
+    version=1,
+)
+
 TASKS_TABLE = [
     maime25_da,
     maime25_da_avg,
@@ -191,4 +249,7 @@ TASKS_TABLE = [
     maime25_fi,
     maime25_fi_avg,
     maime25_fi_gpassk,
+    maime25_sk,
+    maime25_sk_avg,
+    maime25_sk_gpassk,
 ]
