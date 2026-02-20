@@ -40,8 +40,15 @@ jobs:
       - name: Install Python development headers
         run: sudo apt-get update && sudo apt-get install -y python3.10-dev
 
+      - name: Setup CUDA environment
+        run: |
+          echo "CUDA_HOME=/usr/local/cuda-12.4" >> $GITHUB_ENV
+          echo "/usr/local/cuda-12.4/bin" >> $GITHUB_PATH
+
       - name: run nvidia-smi
         run: nvidia-smi
 
       - name: Run tests
         run: uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/
+        env:
+          CUDA_HOME: /usr/local/cuda-12.4
