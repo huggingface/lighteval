@@ -296,7 +296,9 @@ class JudgeLM:
 
     def __call_vllm(self, prompt):
         tokenized = [self.tokenizer.apply_chat_template(p) for p in prompt]
-        output = self.pipe.generate(prompt_token_ids=tokenized, sampling_params=self.sampling_params, use_tqdm=True)
+        # Convert token IDs to TokensPrompt format for vLLM v0.15+
+        prompts = [{"prompt_token_ids": token_ids} for token_ids in tokenized]
+        output = self.pipe.generate(prompts=prompts, sampling_params=self.sampling_params, use_tqdm=True)
         outputs = [output.outputs[0].text for output in output]
         return outputs
 

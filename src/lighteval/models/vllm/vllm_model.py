@@ -459,7 +459,9 @@ class VLLMModel(LightevalModel):
             @ray.remote(num_gpus=self.tensor_parallel_size)
             def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
                 llm = LLM(**model_args)
-                return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
+                # Convert token IDs to TokensPrompt format for vLLM v0.15+
+                prompts = [{"prompt_token_ids": req} for req in requests]
+                return llm.generate(prompts=prompts, sampling_params=sampling_params)
 
             # dispatch requests to all self.data_parallel_size workers, in interleaved fashion
             # interleaved important to balance context lengths across workers
@@ -476,8 +478,10 @@ class VLLMModel(LightevalModel):
                 if x is not None
             ]
         else:
+            # Convert token IDs to TokensPrompt format for vLLM v0.15+
+            prompts = [{"prompt_token_ids": token_ids} for token_ids in inputs]
             outputs = self.model.generate(
-                prompt_token_ids=inputs,
+                prompts=prompts,
                 sampling_params=sampling_params,
                 use_tqdm=True,
             )
