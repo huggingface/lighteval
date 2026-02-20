@@ -49,6 +49,4 @@ jobs:
         run: nvidia-smi
 
       - name: Run tests
-        run: uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/
-        env:
-          CUDA_HOME: /usr/local/cuda-12.4
+        run: PATH="/usr/local/cuda-12.4/bin:$PATH" CUDA_HOME=/usr/local/cuda-12.4 uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/
