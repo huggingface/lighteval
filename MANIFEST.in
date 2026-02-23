@@ -1,2 +1,0 @@
-include src/lighteval/tasks/tasks_table.jsonl
-include src/lighteval/metrics/*.jsonl
