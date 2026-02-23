@@ -1,6 +1,0 @@
-model_parameters:
-  model_name: "HuggingFaceH4/zephyr-7b-beta" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True ...
-  revision: "main" # revision to use
-  dtype: "4bit"  # Specifying the model to be loaded in 4 bit uses BitsAndBytesConfig. The other option is to use "8bit" quantization.
-  compile: true
-  batch_size: 1 # batch size to use

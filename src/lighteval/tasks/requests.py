@@ -219,6 +219,14 @@ class Doc:
         gold_indices = as_list(self.gold_index)
         golds = []
         for gold_ix in gold_indices:
+            if not self.choices:
+                return golds
+            if gold_ix >= len(self.choices):
+                raise ValueError(
+                    f"gold_index {gold_ix} is out of range. "
+                    f"choices has only {len(self.choices)} items."
+
+                )
             golds.extend(as_list(self.choices[gold_ix]))
         return golds
 
