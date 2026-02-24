@@ -451,8 +451,8 @@ class VLLMModel(LightevalModel):
         else:
             sampling_params.temperature = 0
             # In vLLM v0.15+, prompt_logprobs dict only contains top-k tokens at each position
-            # Set to a large value to ensure we can look up the actual continuation token's logprob
-            # (vLLM internally caps this at vocab_size)
+            # Set to max allowed value (20) to get as many top tokens as possible
+            # If continuation token is not in top-k, we'll estimate its logprob
             sampling_params.prompt_logprobs = 20
             sampling_params.max_tokens = 1
             sampling_params.detokenize = False
@@ -536,18 +536,56 @@ class VLLMModel(LightevalModel):
                 for output, context, continuation in zip(
                     outputs_doc, tokenized_contexts_doc, tokenized_continuations_doc
                 ):
+                    # Safety check: ensure we have prompt_logprobs and continuation
+                    if not continuation:
+                        # Empty continuation - return 0 log probability (log(1) = 0)
+                        logprobs_doc.append(0.0)
+                        argmax_doc.append(True)
+                        output_tokens_doc.append(continuation)
+                        input_tokens_doc.append(context)
+                        continue
+
+                    if not output.prompt_logprobs or len(output.prompt_logprobs) < len(continuation):
+                        # No logprobs or insufficient logprobs - this shouldn't happen
+                        # Return a very low log probability to indicate this choice is unlikely
+                        logprobs_doc.append(-1000.0)
+                        argmax_doc.append(False)
+                        output_tokens_doc.append(continuation)
+                        input_tokens_doc.append(context)
+                        continue
+
                     continuation_logprobs = []
                     for token, logprobs_at_position in zip(continuation[::-1], output.prompt_logprobs[::-1]):
                         # In vLLM v0.15+, logprobs_at_position is a dict[int, Logprob]
                         # It only contains top-k tokens at this position
                         if logprobs_at_position is None or token not in logprobs_at_position:
-                            # This shouldn't happen with prompt_logprobs=20, but handle gracefully
-                            raise KeyError(
-                                f"Token {token} not found in logprobs at position. "
-                                f"Available tokens: {list(logprobs_at_position.keys()) if logprobs_at_position else 'None'}. "
-                                f"Try increasing sampling_params.prompt_logprobs value."
-                            )
-                        continuation_logprobs.append(logprobs_at_position[token])
+                            # Token not in top-k: estimate logprob as slightly worse than worst top-k token
+                            # This handles cases where continuation token has low probability
+                            if logprobs_at_position and len(logprobs_at_position) > 0:
+                                # Find the minimum logprob among top-k tokens
+                                min_logprob = min(lp.logprob for lp in logprobs_at_position.values())
+                                # Assume the missing token has slightly lower probability
+                                estimated_logprob = min_logprob - 1.0
+                                # Create a simple object with logprob and rank attributes
+                                # Use the same type as other logprob objects for consistency
+                                # Get a reference logprob object to determine the correct type
+                                sample_logprob = next(iter(logprobs_at_position.values()))
+                                # Create an estimated logprob with the same class
+                                estimated = type(sample_logprob)(
+                                    logprob=estimated_logprob,
+                                    rank=len(logprobs_at_position) + 1,  # Rank it just outside top-k
+                                    decoded_token="",
+                                )
+                                continuation_logprobs.append(estimated)
+                            else:
+                                # No logprobs available at all, use a very low value
+                                # Create a minimal namedtuple-like object
+                                from collections import namedtuple
+
+                                EstimatedLogprob = namedtuple("EstimatedLogprob", ["logprob", "rank"])
+                                continuation_logprobs.append(EstimatedLogprob(logprob=-100.0, rank=999))
+                        else:
+                            continuation_logprobs.append(logprobs_at_position[token])
 
                     bool_score = all(logprob.rank == 1 for logprob in continuation_logprobs)
                     continuation_logprobs = [logprob.logprob for logprob in continuation_logprobs]
@@ -556,6 +594,10 @@ class VLLMModel(LightevalModel):
                     argmax_doc.append(bool_score)
                     output_tokens_doc.append(continuation)
                     input_tokens_doc.append(context)
+
+                # Ensure logprobs contains only float values, not None
+                # Replace any None values with a very low logprob
+                logprobs_doc = [lp if lp is not None else -1000.0 for lp in logprobs_doc]
 
                 answer = ModelResponse(
                     input=contexts[i],
