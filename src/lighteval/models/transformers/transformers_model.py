@@ -239,32 +239,9 @@ class TransformersModel(LightevalModel):
 
     def cleanup(self):
         """Clean up operations if needed, such as closing an endpoint."""
-        # Print memory before cleanup
-        try:
-            import torch
-
-            if torch.cuda.is_available():
-                allocated_before = torch.cuda.memory_allocated() / (1024**3)
-                print(f"\n[TransformersModel.cleanup] GPU memory before cleanup: {allocated_before:.2f} GiB")
-        except ImportError:
-            allocated_before = 0
-
         del self.model
         del self._tokenizer
         torch.cuda.empty_cache()
-
-        # Print memory after cleanup
-        try:
-            import torch
-
-            if torch.cuda.is_available():
-                allocated_after = torch.cuda.memory_allocated() / (1024**3)
-                freed = allocated_before - allocated_after
-                print(
-                    f"[TransformersModel.cleanup] GPU memory after cleanup: {allocated_after:.2f} GiB (freed {freed:.2f} GiB)\n"
-                )
-        except ImportError:
-            pass
 
     @classmethod
     def from_model(
