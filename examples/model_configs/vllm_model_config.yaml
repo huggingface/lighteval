@@ -5,7 +5,7 @@ model_parameters:
   tensor_parallel_size: 1
   data_parallel_size: 1
   pipeline_parallel_size: 1
-  gpu_memory_utilization: 0.4
+  gpu_memory_utilization: 0.6
   max_model_length: null
   swap_space: 4
   seed: 42
