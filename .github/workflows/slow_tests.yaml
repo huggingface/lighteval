@@ -38,7 +38,7 @@ jobs:
         run: uv sync --extra dev
 
       - name: Install Python development headers
-        run: sudo apt-get update && sudo apt-get install -y python3.10-dev
+        run: sudo apt-get update && sudo apt-get install -y python3.12-dev
 
       - name: Cache CUDA Toolkit
         id: cache-cuda
