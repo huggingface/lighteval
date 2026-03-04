@@ -107,7 +107,8 @@ vllm = ["vllm>=0.11.0", "ray", "more_itertools"]
 sglang = ["sglang"]
 quality = ["ruff>=v0.11.0","pre-commit"]
 tests = ["pytest>=7.4.0","deepdiff","pip>=25.2"]
-dev = ["lighteval[accelerate,quality,tests,multilingual,math,extended_tasks,vllm]"]
+dev = ["lighteval[quality,tests]"]
+dev-gpu = ["lighteval[dev,multilingual,math,extended_tasks,vllm]"]
 docs = ["hf-doc-builder", "watchdog"]
 extended_tasks = [
   "langdetect", # ifeval
