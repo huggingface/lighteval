@@ -78,4 +78,4 @@ jobs:
         run: |
           export CUDA_HOME=/usr/local/cuda-12.8
           export PATH="/usr/local/cuda-12.8/bin:$PATH"
-          uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/
+          uv run pytest --disable-pytest-warnings --runslow -v -s tests/slow_tests/
