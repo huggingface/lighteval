@@ -167,9 +167,11 @@ TASKS_TABLE = [
         hf_subset="multilingual",
         # Weird bug in dataset
         hf_filter=partial(
-            lambda language, subject, line: line["answerKey"] != "@"
-            and line["info"]["language"] == LangCodeLanguage(standardize_tag(language.value)).language_name()
-            and line["info"]["subject"] == subject,
+            lambda language, subject, line: (
+                line["answerKey"] != "@"
+                and line["info"]["language"] == LangCodeLanguage(standardize_tag(language.value)).language_name()
+                and line["info"]["subject"] == subject
+            ),
             language,
             subject,
         ),
