@@ -6,7 +6,6 @@ on:
   workflow_dispatch:
 
 permissions:
-  issues: write
   contents: read
 
 jobs:
@@ -77,93 +76,4 @@ jobs:
           echo "Testing vLLM version: $VERSION"
 
       - name: Run tests
-        id: test
-        run: uv run pytest --disable-pytest-warnings --runslow -v -s tests/slow_tests/
-
-      - name: Upload test logs on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-logs-vllm-main-${{ github.run_number }}
-          path: |
-            **/*.log
-            pytest-*.xml
-          retention-days: 30
-
-      - name: Create or update issue on failure
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const date = new Date().toISOString().split('T')[0];
-            const vllmVersion = '${{ steps.vllm-info.outputs.version }}';
-            const runUrl = `${context.payload.repository.html_url}/actions/runs/${context.runId}`;
-
-            const body = `## vLLM Main Branch Tests Failed
-
-            **vLLM Version**: \`${vllmVersion}\`
-            **Tested**: ${new Date().toUTCString()}
-            **Workflow Run**: [#${context.runNumber}](${runUrl})
-            **Test Logs**: [Download artifacts](${runUrl})
-
-            ### Investigation Checklist
-            - [ ] Check if issue exists in [vllm repo](https://github.com/vllm-project/vllm/issues)
-            - [ ] Verify if it's a vllm regression or lighteval compatibility issue
-            - [ ] Test with stable vllm version to confirm
-            - [ ] Create upstream issue in vllm repo if needed
-
-            ---
-            *This is a non-blocking test to catch compatibility issues early.*`;
-
-            const issues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: 'vllm-main',
-              state: 'open'
-            });
-
-            if (issues.data.length === 0) {
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: `vLLM Main Branch Tests Failed - ${date}`,
-                body: body,
-                labels: ['vllm-main', 'automated-issue', 'tests']
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issues.data[0].number,
-                body: `## New Failure - ${date}\n\n${body}`
-              });
-            }
-
-      - name: Comment on success after previous failure
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const issues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: 'vllm-main',
-              state: 'open'
-            });
-
-            if (issues.data.length > 0) {
-              const vllmVersion = '${{ steps.vllm-info.outputs.version }}';
-              const runUrl = `${context.payload.repository.html_url}/actions/runs/${context.runId}`;
-
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issues.data[0].number,
-                body: `## ✅ Tests Passing - ${new Date().toISOString().split('T')[0]}
-
-            **vLLM Version**: \`${vllmVersion}\`
-            **Workflow Run**: [#${context.runNumber}](${runUrl})
-
-            Tests are now passing with the latest vllm main branch.`
-              });
-            }
+        run: uv run pytest --disable-pytest-warnings --runslow -v -s tests/slow_tests/test_vllm_model.py
