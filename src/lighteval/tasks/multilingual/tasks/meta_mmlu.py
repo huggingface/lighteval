@@ -114,8 +114,9 @@ TASKS_TABLE = [
         hf_repo="meta-llama/Meta-Llama-3.1-8B-Instruct-evals",
         hf_subset=f"Llama-3.1-8B-Instruct-evals__multilingual_mmlu_{standardize_tag(language.value)}__details",
         hf_filter=partial(
-            lambda language, subset, line: line["subtask_name"]
-            == f"mmlu_{standardize_tag(language.value)}_chat.{subset}",
+            lambda language, subset, line: (
+                line["subtask_name"] == f"mmlu_{standardize_tag(language.value)}_chat.{subset}"
+            ),
             language,
             subset,
         ),

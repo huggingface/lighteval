@@ -35,11 +35,47 @@ jobs:
           enable-cache: true
 
       - name: Install the project
-        run: uv sync --extra dev
+        run: uv sync --extra dev-gpu
 
+      - name: Install Python development headers
+        run: sudo apt-get update && sudo apt-get install -y python3.12-dev
+
+      - name: Cache CUDA Toolkit
+        id: cache-cuda
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/cuda-12.8
+          key: cuda-toolkit-12-8-${{ runner.os }}
+
+      - name: Install CUDA Toolkit
+        if: steps.cache-cuda.outputs.cache-hit != 'true'
+        run: |
+          # Add NVIDIA package repositories
+          wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+          sudo dpkg -i cuda-keyring_1.1-1_all.deb
+          sudo apt-get update
+          # Install CUDA toolkit 12.8 to match nvidia-cuda-runtime-cu12==12.8.90
+          sudo apt-get install -y cuda-toolkit-12-8
+
+      - name: Verify CUDA installation
+        run: |
+          ls -la /usr/local/cuda-12.8/bin/nvcc || echo "WARNING: nvcc not found at /usr/local/cuda-12.8/bin/nvcc"
+          if [ -f /usr/local/cuda-12.8/bin/nvcc ]; then
+            /usr/local/cuda-12.8/bin/nvcc --version
+          fi
+
+      - name: Setup CUDA environment
+        run: |
+          export CUDA_HOME=/usr/local/cuda-12.8
+          export PATH="/usr/local/cuda-12.8/bin:$PATH"
+          echo "CUDA_HOME=/usr/local/cuda-12.8" >> $GITHUB_ENV
+          echo "/usr/local/cuda-12.8/bin" >> $GITHUB_PATH
 
       - name: run nvidia-smi
         run: nvidia-smi
 
       - name: Run tests
-        run: uv run pytest --disable-pytest-warnings --runslow tests/slow_tests/
+        run: |
+          export CUDA_HOME=/usr/local/cuda-12.8
+          export PATH="/usr/local/cuda-12.8/bin:$PATH"
+          uv run pytest --disable-pytest-warnings --runslow -v -s tests/slow_tests/

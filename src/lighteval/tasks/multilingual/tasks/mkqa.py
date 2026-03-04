@@ -56,10 +56,12 @@ TASKS_TABLE = [
         hf_subset="mkqa",
         hf_revision="325131889721ae0ed885b76ecb8011369d75abad",
         hf_filter=partial(
-            lambda language, subset, line: line["answers"][
-                "zh_cn" if language == Language.CHINESE else standardize_tag(language.value)
-            ][0]["type"]
-            == MKQA_TASK_TO_ID[subset],
+            lambda language, subset, line: (
+                line["answers"]["zh_cn" if language == Language.CHINESE else standardize_tag(language.value)][0][
+                    "type"
+                ]
+                == MKQA_TASK_TO_ID[subset]
+            ),
             language,
             subset,
         ),

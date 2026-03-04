@@ -60,9 +60,9 @@ TASKS_TABLE = [
             relations=["entailment", "contradiction"],
             formulation=formulation,
         ),
-        hf_filter=lambda line: line["label"] in [0, 2]
-        and line["premise"] is not None
-        and line["hypothesis"] is not None,
+        hf_filter=lambda line: (
+            line["label"] in [0, 2] and line["premise"] is not None and line["hypothesis"] is not None
+        ),
         hf_repo=f"Harsit/xnli2.0_train_{LangCodeLanguage(standardize_tag(language.value)).language_name().lower()}",
         hf_subset="default",
         evaluation_splits=["train"],
