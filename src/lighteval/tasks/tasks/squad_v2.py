@@ -58,6 +58,7 @@ def squad_v2_prompt(line, task_name: str = None):
         f"Answer with a span from the context, or \"{UNANSWERABLE}\" if the question cannot be answered.\nAnswer:",
         choices=choices,
         gold_index=list(range(len(choices))),
+        specific={"text": line["context"]},
     )
 
 
@@ -70,7 +71,7 @@ squad_v2 = LightevalTaskConfig(
     few_shots_split="train",
     stop_sequence=["\n", "Question:", "question:"],
     generation_size=200,
-    metrics=[Metrics.exact_match, Metrics.f1_score],
+    metrics=[Metrics.exact_match, Metrics.f1_score, Metrics.faithfulness],
     version=2,
 )
 
