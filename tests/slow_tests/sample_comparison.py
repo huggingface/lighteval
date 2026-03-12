@@ -71,7 +71,7 @@ def _compare_model_responses(current, reference):
 
         # Special handling for logprobs field
         if field_name in ["input_tokens", "output_tokens"]:
-            # input and ouput tokens are lists of tensors, we need to convert
+            # input and output tokens are lists of tensors, we need to convert
             # them to plain lists
             current_val = _to_plain_list(current_val)
             reference_val = _to_plain_list(reference_val)
