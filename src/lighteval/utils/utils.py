@@ -249,24 +249,27 @@ def make_results_table(result_dict):
         # Returns markdown table with task, version, metric, value, ±, stderr columns
     """
     md_writer = MarkdownTableWriter()
-    md_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr"]
+    md_writer.headers = ["Task", "Version", "Metric", "Value", "Count", "", "Stderr"]
 
     values = []
+    task_sample_counts = result_dict.get("n_samples", {})
 
     for k in sorted(result_dict["results"].keys()):
         dic = result_dict["results"][k]
         version = result_dict["versions"][k] if k in result_dict["versions"] else ""
+        sample_count = task_sample_counts.get(k, "")
         for m, v in dic.items():
             if m.endswith("_stderr"):
                 continue
 
             if m + "_stderr" in dic:
                 se = dic[m + "_stderr"]
-                values.append([k, version, m, "%.4f" % v, "±", "%.4f" % se])
+                values.append([k, version, m, "%.4f" % v, sample_count, "±", "%.4f" % se])
             else:
-                values.append([k, version, m, "%.4f" % v, "", ""])
+                values.append([k, version, m, "%.4f" % v, sample_count, "", ""])
             k = ""
             version = ""
+            sample_count = ""
     md_writer.value_matrix = values
 
     return md_writer.dumps()

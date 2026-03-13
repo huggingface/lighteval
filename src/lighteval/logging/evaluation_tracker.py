@@ -212,10 +212,12 @@ class EvaluationTracker:
     def results(self):
         config_general = asdict(self.general_config_logger)
         config_general["model_config"] = config_general["model_config"].model_dump()
+        sample_counts = {task_name: len(task_details) for task_name, task_details in self.details_logger.details.items()}
         results = {
             "config_general": config_general,
             "results": self.metrics_logger.metric_aggregated,
             "versions": self.versions_logger.versions,
+            "n_samples": sample_counts,
             "config_tasks": self.task_config_logger.tasks_configs,
             "summary_tasks": self.details_logger.compiled_details,
             "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
@@ -368,10 +370,12 @@ class EvaluationTracker:
         Returns:
             dict: Dictionary containing all experiment information including config, results, versions, and summaries
         """
+        sample_counts = {task_name: len(task_details) for task_name, task_details in self.details_logger.details.items()}
         to_dump = {
             "config_general": asdict(self.general_config_logger),
             "results": self.metrics_logger.metric_aggregated,
             "versions": self.versions_logger.versions,
+            "n_samples": sample_counts,
             "config_tasks": self.task_config_logger.tasks_configs,
             "summary_tasks": self.details_logger.compiled_details,
             "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),

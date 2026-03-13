@@ -22,7 +22,7 @@
 
 import unittest
 
-from lighteval.utils.utils import remove_reasoning_tags
+from lighteval.utils.utils import make_results_table, remove_reasoning_tags
 
 
 class TestRemoveReasoningTags(unittest.TestCase):
@@ -61,3 +61,28 @@ class TestRemoveReasoningTags(unittest.TestCase):
         tag_pairs = [("<think>", "</think>")]
         result = remove_reasoning_tags(text, tag_pairs)
         self.assertEqual(result, "<think> Reasoning section. Answer section")
+
+
+class TestMakeResultsTable(unittest.TestCase):
+    def test_includes_count_column_when_n_samples_present(self):
+        result_dict = {
+            "results": {"community:ether0:loose:0": {"ether0_accuracy": 0.0, "ether0_accuracy_stderr": 0.0}},
+            "versions": {"community:ether0:loose:0": "0"},
+            "n_samples": {"community:ether0:loose:0": 10},
+        }
+
+        table = make_results_table(result_dict)
+
+        self.assertIn("|Task                    |Version|Metric         |Value|Count|", table)
+        self.assertIn("|community:ether0:loose:0|      0|ether0_accuracy|    0|   10|", table)
+
+    def test_keeps_count_blank_when_n_samples_missing(self):
+        result_dict = {
+            "results": {"task_a": {"accuracy": 0.5, "accuracy_stderr": 0.1}},
+            "versions": {"task_a": "1"},
+        }
+
+        table = make_results_table(result_dict)
+
+        self.assertIn("|Task  |Version|Metric  |Value|Count|", table)
+        self.assertIn("|task_a|      1|accuracy|  0.5|     |", table)
