@@ -355,9 +355,12 @@ FILIPINO_GLOBAL_MMLU_TASKS = [
         evaluation_splits=("test",),
         few_shots_split="dev",
         hf_filter=partial(
-            lambda subset, sensitivity_label, x: x["subject"].lower() == subset
-            and (
-                sensitivity_label == "ALL" or sensitivity_label in x["cultural_sensitivity_label"].replace("-", "UNK")
+            lambda subset, sensitivity_label, x: (
+                x["subject"].lower() == subset
+                and (
+                    sensitivity_label == "ALL"
+                    or sensitivity_label in x["cultural_sensitivity_label"].replace("-", "UNK")
+                )
             ),
             subset,
             sensitivity_label,

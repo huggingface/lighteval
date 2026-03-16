@@ -118,11 +118,14 @@ TASKS_TABLE = [
         evaluation_splits=("test",),
         few_shots_split="dev",
         hf_filter=partial(
-            lambda subset, sensitivity_label, x: x["subject"].lower() == subset
-            and (
-                sensitivity_label == "ALL" or sensitivity_label in x["cultural_sensitivity_label"].replace("-", "UNK")
-            )
-            and all(x[f"option_{opt}"] is not None and x[f"option_{opt}"].strip() for opt in "abcd"),
+            lambda subset, sensitivity_label, x: (
+                x["subject"].lower() == subset
+                and (
+                    sensitivity_label == "ALL"
+                    or sensitivity_label in x["cultural_sensitivity_label"].replace("-", "UNK")
+                )
+                and all(x[f"option_{opt}"] is not None and x[f"option_{opt}"].strip() for opt in "abcd")
+            ),
             subset,
             sensitivity_label,
         ),

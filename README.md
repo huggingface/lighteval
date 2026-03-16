@@ -187,7 +187,12 @@ If you're adding a **new feature**, please *open an issue first*.
 If you open a PR, don't forget to **run the styling**!
 
 ```bash
+# For basic development (code quality, tests)
 pip install -e ".[dev]"
+
+# Or for GPU/vllm development and slow tests
+pip install -e ".[dev-gpu]"
+
 pre-commit install
 pre-commit run --all-files
 ```
