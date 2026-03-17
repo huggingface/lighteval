@@ -1,3 +1,4 @@
+import importlib
 import importlib.metadata as importlib_metadata
 import logging
 import os
@@ -8,8 +9,6 @@ from typing import Literal, Optional
 import nltk
 import requests
 import torch
-from comet import download_model, load_from_checkpoint
-from gemba import get_gemba_scores
 from nltk import word_tokenize
 from nltk.translate import meteor_score
 from packaging import version
@@ -40,11 +39,37 @@ from lighteval.tasks.requests import Doc
 logger = logging.getLogger(__name__)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+# COMET (unbabel-comet) is temporarily unavailable in this task:
+# lighteval requires numpy>=2 while stable unbabel-comet releases require numpy<2.
+_DISABLED_COMET_METRICS = {"wmt22-comet-da", "xcomet_xl", "xcomet_xxl"}
+
 if device == "cuda":
     torch.backends.cudnn.benchmark = True
     torch.backends.cuda.matmul.allow_tf32 = True
     if torch.cuda.get_device_capability()[0] >= 7:
         torch.set_float32_matmul_precision("medium")
+
+
+def _load_comet():
+    try:
+        module = importlib.import_module("comet")
+    except ModuleNotFoundError as exc:
+        raise ModuleNotFoundError(
+            "COMET metric requires optional dependency `unbabel-comet`. "
+            "Install lighteval with multilingual extras or add `unbabel-comet`."
+        ) from exc
+    return module.download_model, module.load_from_checkpoint
+
+
+def _load_gemba():
+    try:
+        module = importlib.import_module("gemba")
+    except ModuleNotFoundError as exc:
+        raise ModuleNotFoundError(
+            "GEMBA metric requires optional dependency `gemba`. "
+            "Install lighteval with multilingual extras or add `gemba`."
+        ) from exc
+    return module.get_gemba_scores
 
 
 def process_judge_response_freeform_gpt(response: str) -> float:
@@ -133,6 +158,7 @@ class GEMBA(SampleLevelComputation):
         sources = [doc.specific["source"] for doc in docs]
         predictions = [response.final_text for response in responses]
 
+        get_gemba_scores = _load_gemba()
         answers, errors = get_gemba_scores(
             sources, predictions, source_langs[0], target_langs[0], method=self.method, model=self.model
         )
@@ -281,6 +307,7 @@ class COMET(SampleLevelComputation):
         # Only load the model here to save memory and time
         if self.model is None:
             logger.info(f"Loading COMET model {self.model_name} lazily...")
+            download_model, load_from_checkpoint = _load_comet()
             self.model = load_from_checkpoint(download_model(self.model_name))
 
         logger.info(f"Scoring {len(docs)} samples with {self.metric_name}...")
@@ -731,7 +758,7 @@ LEXICAL_METRICS = [
 GPU_METRICS = [
     "bert_score",
     "bleurt_large",
-    "xcomet_xxl",
+    # "xcomet_xxl",  # Disabled: lighteval (numpy>=2) conflicts with stable unbabel-comet (numpy<2).
 ]
 
 API_METRICS = [
@@ -812,15 +839,14 @@ def init_model_based_metric(metric_name: str):
         METRICS["bleurt_base"] = get_bleurt(model_size="base", seq_len=512, batch_size=256, device=device)
     if metric_name == "bleurt_large":
         METRICS["bleurt_large"] = get_bleurt(model_size="large", seq_len=512, batch_size=256, device=device)
-    # There are also reference-free models (e.g., Unbabel/wmt22-cometkiwi-da), but since we have reference gold labels, we use the reference-based models.
-    if metric_name == "wmt22-comet-da":
-        METRICS["wmt22-comet-da"] = get_comet(
-            model_name="Unbabel/wmt22-comet-da", batch_size=64, gpus=1, device=device
+    # COMET metrics are intentionally disabled for now because lighteval depends on
+    # numpy>=2, while stable unbabel-comet releases currently require numpy<2.
+    if metric_name in _DISABLED_COMET_METRICS:
+        logger.warning(
+            "Skipping metric '%s': currently unavailable due to dependency conflicts between "
+            "lighteval and unbabel-comet (numpy version incompatibility).",
+            metric_name,
         )
-    if metric_name == "xcomet_xl":
-        METRICS["xcomet_xl"] = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=32, gpus=1, device=device)
-    if metric_name == "xcomet_xxl":
-        METRICS["xcomet_xxl"] = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=16, gpus=1, device=device)
 
 
 def init_llm_judge_metric(metric_name: str):
@@ -871,6 +897,14 @@ def init_metric(metric_name: str):
 def get_metrics(METRICS_TO_USE, target_lang: str, generation_size: int):
     metrics = []
     for metric in METRICS_TO_USE:
+        if metric in _DISABLED_COMET_METRICS:
+            logger.warning(
+                "Skipping metric '%s': currently unavailable due to dependency conflicts between "
+                "lighteval and unbabel-comet (numpy version incompatibility).",
+                metric,
+            )
+            continue
+
         # These metrics are sentence level metrics and we only want to use them for generation sizes up to 512.
         short_metrics = [
             "bleu_sentence",
@@ -880,9 +914,9 @@ def get_metrics(METRICS_TO_USE, target_lang: str, generation_size: int):
             "bleurt_tiny",
             "bleurt_base",
             "bleurt_large",
-            "wmt22-comet-da",
-            "xcomet_xl",
-            "xcomet_xxl",
+            # "wmt22-comet-da",
+            # "xcomet_xl",
+            # "xcomet_xxl",
         ]
         if generation_size > 512 and metric in short_metrics:
             logger.debug(
