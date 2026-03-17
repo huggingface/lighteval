@@ -729,18 +729,19 @@ def get_extractiveness(language: Literal["de", "fr", "it"]) -> SampleLevelMetric
 
 
 JUDGE_MODELS = {
-    "o1": "openai/o1-2024-12-17",
-    "o1-mini": "openai/o1-mini-2024-09-12",
-    "gpt-4o-mini": "openai/gpt-4o-mini-2024-07-18",
-    "gpt-4o": "openai/gpt-4o-2024-11-20",
-    # The Gemini models are not very good judges.
-    "gemini-1-5-flash": "gemini/gemini-1.5-flash-002",
-    "gemini-1-5-pro": "gemini/gemini-1.5-pro-002",
+    "o1": "openrouter/openai/o1",  # Updated to match OpenRouter availability; previously: openai/o1-2024-12-17
+    "gpt-4o-mini": "openrouter/openai/gpt-4o-mini-2024-07-18",
+    "gpt-4o": "openrouter/openai/gpt-4o-2024-11-20",
+    "llama-3-3-70b": "openrouter/meta-llama/llama-3.3-70b-instruct",  # Previously (no OpenRouter): together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo
+    # Not available via OpenRouter currently:
+    # "o1-mini": "openai/o1-mini-2024-09-12",
+    # "llama-3-1-405b": "together_ai/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+    # These Gemini models are not very good judges. Also, they are not available via OpenRouter.
+    # "gemini-1-5-flash": "gemini/gemini-1.5-flash-002",
+    # "gemini-1-5-pro": "gemini/gemini-1.5-pro-002",
     # The Claude models do not follow the required output format.
     # "claude-3-5-haiku": "anthropic/claude-3-5-haiku-20241022",
     # "claude-3-5-sonnet": "anthropic/claude-3-5-sonnet-20241022",
-    "llama-3-3-70b": "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo",
-    "llama-3-1-405b": "together_ai/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
 }
 
 LEXICAL_METRICS = [
