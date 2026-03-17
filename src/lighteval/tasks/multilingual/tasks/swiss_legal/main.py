@@ -250,7 +250,6 @@ class TranslationTask(LightevalTaskConfig):
         level_config = dataset_config.subsets[level_name]
         super().__init__(
             name=f"{dataset_config.name}-{level_name}:{source_lang}-{target_lang}",
-            suite=["community"],
             prompt_function=create_translation_prompt_fn(level_config, source_lang, target_lang),
             hf_repo=dataset_config.hf_repo,
             hf_subset=level_name,
@@ -279,7 +278,6 @@ class HeadnoteGenerationTask(LightevalTaskConfig):
 
         super().__init__(
             name=f"{dataset_config.name}:{level_name}",
-            suite=["community"],
             prompt_function=slds_prompt_fn,
             hf_repo="ipst/slds",
             hf_subset=level_name,
