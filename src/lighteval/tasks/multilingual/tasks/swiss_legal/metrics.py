@@ -66,7 +66,7 @@ class BertScoreMultilingual(BertScore):
         self.num_layers = num_layers
         self.device = device
 
-    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs) -> dict[str, float]:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict[str, float]:
         # Make sure we load the correct bert_scorer before the parent class does
         if self.bert_scorer is None:
             self._init_bert_scorer()
@@ -288,7 +288,10 @@ class COMET(SampleLevelComputation):
         predictions = [response.final_text[0] for response in responses]
         sources = [doc.specific["source"] for doc in docs]
 
-        data = [{"src": src, "mt": pred, "ref": gold} for src, pred, gold in zip(sources, predictions, golds)]
+        data = [
+            {"src": src, "mt": pred if isinstance(pred, str) else pred[0], "ref": gold}
+            for src, pred, gold in zip(sources, predictions, golds)
+        ]
         model_output = self.model.predict(
             data,
             batch_size=self.batch_size,
@@ -528,16 +531,21 @@ def get_bert_score(
 def get_swiss_legal_translation_judge(
     judge_model_name: str = "openai/gpt-4o-2024-11-20",
     short_judge_name: str = "slt_judge_gpt-4o",
-    backend: str = "litellm",
-    system_style: str = "basic",  # "basic" or "detailed"
-    few_shot_style: str = "diverse",  # "diverse" or "single"
+    backend: Literal["litellm", "openai", "transformers", "vllm", "tgi", "inference-providers"] = "litellm",
+    system_style: Literal["basic", "detailed", "codebook"] = "basic",
+    few_shot_style: Literal["diverse", "single"] = "diverse",
+    judgment_style: Literal["absolute", "deduction"] = "absolute",
 ):
+    if system_style == "codebook" and judgment_style == "absolute":
+        raise ValueError("The codebook system style can only be used with the deduction judgment style.")
+    if system_style in ("basic", "detailed") and judgment_style == "deduction":
+        raise ValueError(f"The {system_style} can only be used with the absolute judgment style.")
+
     def swiss_legal_translation_judge(question, options, answer, gold):
         system_prompt = SWISS_LEGAL_TRANSLATION_JUDGE_SYSTEM_PROMPT[system_style]
         user = SWISS_LEGAL_TRANSLATION_JUDGE_USER_PROMPT[system_style]
-        few_shot_examples = SWISS_LEGAL_TRANSLATION_JUDGE_FEW_SHOT_EXAMPLES[few_shot_style]
+        few_shot_examples = SWISS_LEGAL_TRANSLATION_JUDGE_FEW_SHOT_EXAMPLES[f"{few_shot_style}_{judgment_style}"]
         instruction = SWISS_LEGAL_TRANSLATION_JUDGE_INSTRUCTION.format(question=question, gold=gold, answer=answer)
-
         user_prompt = user + few_shot_examples + instruction
 
         return [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
@@ -694,10 +702,18 @@ def get_extractiveness(language: Literal["de", "fr", "it"]) -> SampleLevelMetric
 
 
 JUDGE_MODELS = {
+    "o1": "openai/o1-2024-12-17",
+    "o1-mini": "openai/o1-mini-2024-09-12",
     "gpt-4o-mini": "openai/gpt-4o-mini-2024-07-18",
     "gpt-4o": "openai/gpt-4o-2024-11-20",
+    # The Gemini models are not very good judges.
     "gemini-1-5-flash": "gemini/gemini-1.5-flash-002",
     "gemini-1-5-pro": "gemini/gemini-1.5-pro-002",
+    # The Claude models do not follow the required output format.
+    # "claude-3-5-haiku": "anthropic/claude-3-5-haiku-20241022",
+    # "claude-3-5-sonnet": "anthropic/claude-3-5-sonnet-20241022",
+    "llama-3-3-70b": "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "llama-3-1-405b": "together_ai/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
 }
 
 LEXICAL_METRICS = [
@@ -720,14 +736,20 @@ GPU_METRICS = [
 
 API_METRICS = [
     "gemba_mqm_gpt_4o",
-    "slt_judge_gpt_4o",
+    "slt_judge_gemini_1_5_flash_codebook_diverse_deduction",
 ]
 
 JUDGE_METRICS = [
-    f"slt_judge_{judge_model}-{system_style}-{few_shot_style}".replace("-", "_")
+    f"slt_judge_{judge_model}-{system_style}-{few_shot_style}-{judgment_style}".replace("-", "_")
     for judge_model in JUDGE_MODELS
-    for system_style in ["basic", "detailed"]
     for few_shot_style in ["diverse", "single"]
+    for system_style, judgment_style in [
+        ("basic", "absolute"),
+        ("detailed", "absolute"),
+        ("codebook", "deduction"),
+        # Make sure that the codebook system style is used with the deduction judgment style
+        # and the basic and detailed system styles are used with the absolute judgment style
+    ]
 ]
 
 metrics_to_evaluate = ["judge"]
@@ -813,9 +835,13 @@ def init_llm_judge_metric(metric_name: str):
 
     # Check all the judge metric combinations
     for judge_model in JUDGE_MODELS:
-        for system_style in ["basic", "detailed"]:
-            for few_shot_style in ["diverse", "single"]:
-                short_judge_name = f"slt_judge_{judge_model}-{system_style}-{few_shot_style}"
+        for few_shot_style in ("diverse", "single"):
+            for system_style, judgment_style in (
+                ("basic", "absolute"),
+                ("detailed", "absolute"),
+                ("codebook", "deduction"),
+            ):
+                short_judge_name = f"slt_judge_{judge_model}-{system_style}-{few_shot_style}-{judgment_style}"
                 judge_metric_name = short_judge_name.replace("-", "_")
                 if metric_name == judge_metric_name:
                     METRICS[metric_name] = get_swiss_legal_translation_judge(
@@ -823,6 +849,7 @@ def init_llm_judge_metric(metric_name: str):
                         short_judge_name=short_judge_name,
                         system_style=system_style,
                         few_shot_style=few_shot_style,
+                        judgment_style=judgment_style,
                     )
                     break
 
