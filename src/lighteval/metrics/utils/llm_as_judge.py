@@ -319,9 +319,16 @@ class JudgeLM:
                 try:
                     max_new_tokens = self.max_tokens
 
-                    is_reasoning_model = "o1" in self.model or "o3" in self.model or "R1" in self.model
-                    if is_reasoning_model and self.backend_options.increase_max_tokens_for_reasoning:
-                        max_new_tokens = min(max_new_tokens * 10, 32000)
+                    if (
+                        litellm.supports_reasoning(self.model)
+                        and self.backend_options.increase_max_tokens_for_reasoning
+                    ):
+                        # If no explicit token cap is provided, avoid None arithmetic and use
+                        # the model-facing upper bound intended for reasoning judges.
+                        if max_new_tokens is None:
+                            max_new_tokens = 32000
+                        else:
+                            max_new_tokens = min(max_new_tokens * 10, 32000)
 
                     kwargs = {
                         "model": self.model,
