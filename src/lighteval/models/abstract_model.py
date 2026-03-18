@@ -133,24 +133,24 @@ class ModelConfig(BaseModel, extra="forbid"):
                 'model': {'model_name': 'gpt2', 'use_cache': True, 'generation_parameters': {'temperature': 0.7}},
             }
         """
-        # Looking for generation_parameters in the model_args
-        generation_parameters_dict = None
-        pattern = re.compile(r"(\w+)=(\{.*\}|[^,]+)")
-        matches = pattern.findall(args)
-        for key, value in matches:
-            key = key.strip()
-            if key == "generation_parameters":
-                # Keys must be quoted (since they are strings)
-                gen_params = re.sub(r"(\w+):", r'"\1":', value)
-                # for k, v where v are strings, we quote them too
-                gen_params = re.sub(r":\s*([A-Za-z_][\w.-]*)\s*(?=[,}])", r':"\1"', gen_params)
-                generation_parameters_dict = json.loads(gen_params)
+        # Extract all key={...} dict parameters (e.g. generation_parameters, extra_body)
+        dict_params = {}
+        dict_pattern = re.compile(r"(\w+)=(\{[^}]*\})")
+        for match in dict_pattern.finditer(args):
+            key = match.group(1)
+            value = match.group(2)
+            # Keys must be quoted (since they are strings)
+            parsed = re.sub(r"(\w+):", r'"\1":', value)
+            # for k, v where v are strings, we quote them too
+            parsed = re.sub(r":\s*([A-Za-z_][\w.-]*)\s*(?=[,}])", r':"\1"', parsed)
+            dict_params[key] = json.loads(parsed)
 
-        args = re.sub(r"generation_parameters=\{.*?\},?", "", args).strip(",")
-        model_config = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.split(",")}
+        # Strip dict params from args string, then parse remaining simple key=value pairs
+        remaining = dict_pattern.sub("", args)
+        remaining = re.sub(r",+", ",", remaining).strip(",")
+        model_config = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in remaining.split(",") if k}
 
-        if generation_parameters_dict is not None:
-            model_config["generation_parameters"] = generation_parameters_dict
+        model_config.update(dict_params)
 
         return model_config
 

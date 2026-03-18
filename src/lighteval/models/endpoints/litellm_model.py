@@ -131,6 +131,11 @@ class LiteLLMModelConfig(ModelConfig):
     api_retry_multiplier: float = 2.0
     timeout: float | None = None
 
+    # Extra body parameters passed through to the API request body.
+    # Useful for provider-specific params not in the standard OpenAI API,
+    # e.g., vLLM supports top_k, min_p, repetition_penalty via extra_body.
+    extra_body: dict | None = None
+
 
 @requires("litellm")
 class LiteLLMClient(LightevalModel):
@@ -153,6 +158,7 @@ class LiteLLMClient(LightevalModel):
         self.API_RETRY_SLEEP = config.api_retry_sleep
         self.API_RETRY_MULTIPLIER = config.api_retry_multiplier
         self.timeout = config.timeout
+        self.extra_body = config.extra_body
 
         self._tokenizer = encode
         self.pairwise_tokenization = False
@@ -164,6 +170,12 @@ class LiteLLMClient(LightevalModel):
 
         # Initialize cache for tokenization and predictions
         self._cache = SampleCache(config)
+
+        # Log sampling params so the user can verify what will be sent to the server
+        sampling_params = self.generation_parameters.to_litellm_dict()
+        if self.extra_body:
+            sampling_params["extra_body"] = self.extra_body
+        logger.info(f"Sampling parameters: {sampling_params}")
 
     def _prepare_stop_sequence(self, stop_sequence):
         """Prepare and validate stop sequence."""
@@ -210,6 +222,7 @@ class LiteLLMClient(LightevalModel):
             "n": num_samples,
             "caching": True,
             "timeout": self.timeout,
+            "extra_body": self.extra_body,
         }
 
         if "o1" in self.model:
