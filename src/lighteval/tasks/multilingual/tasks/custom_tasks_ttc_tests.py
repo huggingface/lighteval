@@ -74,10 +74,15 @@ def drop_prompt(line, task_name: str = None):
 
 
 def coqa_prompt(line, task_name: str = None):
-    results = []
-    for q, a in zip(line["questions"], line["answers"]["input_text"]):
-        results.append(Doc(task_name=task_name, query=f"{line['story']} \n\nQ: {q}\n\nA: ", choices=[a], gold_index=0))
-    return results
+    q = line["questions"][0]
+    a = line["answers"]["input_text"][0]
+
+    return Doc(
+        task_name=task_name,
+        query=f"{line['story']}\n\nQ: {q}\n\nA:",
+        choices=[a],
+        gold_index=0,
+    )
 
 
 MATH_PROMPT_TEMPLATE = """
@@ -192,9 +197,9 @@ mychegeka = LightevalTaskConfig(
             "choices": [line["outputs"]],
         },
     ),
-    hf_repo="ai-forever/MERA",
+    hf_repo="MERA-evaluation/MERA",
     hf_subset="chegeka",
-    evaluation_splits=("test",),
+    evaluation_splits=("train",),
     hf_avail_splits=["train", "test"],
     generation_size=400,
     stop_sequence=[
