@@ -220,9 +220,16 @@ class Pipeline:
         # load the tasks from the configs and their datasets
         self.tasks_dict: dict[str, LightevalTask] = self.registry.load_tasks()
         LightevalTask.load_datasets(self.tasks_dict, self.pipeline_parameters.dataset_loading_processes)
-        self.documents_dict = {
-            task.full_name: task.get_docs(self.pipeline_parameters.max_samples) for _, task in self.tasks_dict.items()
-        }
+        self.documents_dict = {}
+
+        for _, task in self.tasks_dict.items():
+            try:
+                docs = task.get_docs(self.pipeline_parameters.max_samples)
+                self.documents_dict[task.full_name] = docs
+
+            except ValueError:
+                logger.warning(f"Skipping task: {task.full_name}. No documents are available for evaluation.")
+                continue
 
         self.sampling_docs = collections.defaultdict(list)
         for _, docs in self.documents_dict.items():
