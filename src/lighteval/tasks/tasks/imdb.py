@@ -35,7 +35,7 @@ def imdb_prompt(line, task_name: str = None):
 
 def imdb_contrastset_prompt(line, task_name: str = None):
     if line["contrast_input"] is None or line["contrast_references"] is None:
-        return imdb(line)
+        return imdb_prompt(line)
 
     return Doc(
         task_name=task_name,
