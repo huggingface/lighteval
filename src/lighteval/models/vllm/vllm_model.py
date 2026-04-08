@@ -355,7 +355,10 @@ class VLLMModel(LightevalModel):
             # The choice we go for here is to avoid truncating the prompt if we can, since it
             # should have been managed by the prompt creator/few shot manager if requested by the user.
             inputs = tokenized["input_ids"]
-            context_size = len(inputs[0])
+            # Use the longest prompt in the batch (worst case) for truncation decisions,
+            # not only the first item — otherwise shorter first samples can skip truncation
+            # while longer later samples still exceed max_length.
+            context_size = max((len(input_ids) for input_ids in inputs), default=0)
 
             # left truncate the inputs to the maximum length
             if self.max_length is None:
@@ -365,7 +368,8 @@ class VLLMModel(LightevalModel):
             elif max_new_tokens is not None:
                 if context_size + max_new_tokens > self.max_length:
                     logger.warning(
-                        f"{context_size + max_new_tokens=} which is greater than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
+                        f"max_prompt_len_in_batch={context_size}, {context_size + max_new_tokens=} which is greater than {self.max_length=}. "
+                        f"Truncating each context to {self.max_length - max_new_tokens} tokens (based on longest sample in batch)."
                     )
                     context_size = self.max_length - max_new_tokens
                     if context_size < 0:
@@ -377,7 +381,8 @@ class VLLMModel(LightevalModel):
             else:
                 if context_size > self.max_length:
                     logger.warning(
-                        f"{context_size=} which is greater than {self.max_length=}. Truncating context to {self.max_length} tokens."
+                        f"max_prompt_len_in_batch={context_size} which is greater than {self.max_length=}. "
+                        f"Truncating each context to {self.max_length} tokens (based on longest sample in batch)."
                     )
                     context_size = self.max_length
                     inputs = [input[-context_size:] for input in inputs]
