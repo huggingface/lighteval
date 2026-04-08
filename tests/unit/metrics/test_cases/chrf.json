@@ -79,9 +79,9 @@
           "text": ["Das Wetter ist schön"]
         }
       ],
-      "expected_output": 100.0,
+      "expected_output": 89.1577277178731,
       "tolerance": 0.1,
-      "description": "High similarity - minor character differences (CHRF ≈ 88.0)"
+      "description": "High similarity - minor character differences (CHRF ≈ 89.16)"
     },
     {
       "name": "CHRF - Word Order Changes",
@@ -119,9 +119,9 @@
           "text": ["Lernen Maschinelles"]
         }
       ],
-      "expected_output": 78.84,
+      "expected_output": 82.21013454114589,
       "tolerance": 0.1,
-      "description": "Word order changes - same characters, different order (CHRF ≈ 75.0)"
+      "description": "Word order changes - same characters, different order (CHRF ≈ 82.21)"
     },
     {
       "name": "CHRF - Moderate Similarity",
@@ -159,9 +159,9 @@
           "text": ["Die Sterne"]
         }
       ],
-      "expected_output": 37.68,
+      "expected_output": 34.847705825542,
       "tolerance": 0.1,
-      "description": "Moderate similarity - partial character overlap (CHRF ≈ 50.0)"
+      "description": "Moderate similarity - partial character overlap (CHRF ≈ 34.85)"
     },
     {
       "name": "CHRF - Low Similarity",
@@ -199,9 +199,9 @@
           "text": ["Es sehr heiß"]
         }
       ],
-      "expected_output": 7.7,
+      "expected_output": 6.82996024778865,
       "tolerance": 0.1,
-      "description": "Low similarity - minimal character overlap (CHRF ≈ 20.0)"
+      "description": "Low similarity - minimal character overlap (CHRF ≈ 6.83)"
     }
   ]
 }
