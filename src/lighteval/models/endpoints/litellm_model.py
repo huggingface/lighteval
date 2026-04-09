@@ -25,6 +25,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from json import JSONDecodeError
 
+import httpx
 import requests
 from tqdm import tqdm
 
@@ -158,6 +159,16 @@ class LiteLLMClient(LightevalModel):
         self.pairwise_tokenization = False
         litellm.drop_params = True
         litellm.verbose = config.verbose
+
+        # Configure litellm's global HTTP client to match concurrent_requests,
+        # avoiding the default httpx connection pool limit of 100.
+        litellm.client_session = httpx.Client(
+            limits=httpx.Limits(
+                max_connections=config.concurrent_requests,
+                max_keepalive_connections=config.concurrent_requests,
+            ),
+            timeout=httpx.Timeout(config.timeout) if config.timeout else httpx.Timeout(None),
+        )
         self.prompt_manager = PromptManager(
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
