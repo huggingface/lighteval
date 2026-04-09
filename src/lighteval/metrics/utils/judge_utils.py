@@ -20,9 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import logging
+import re
 
 
 logger = logging.getLogger(__name__)
+
+_POLLUX_RESULT_RE = re.compile(r"\[RESULT\]\s*([^\s\[]+)\s*\[END\]", re.IGNORECASE | re.DOTALL)
+_POLLUX_FEEDBACK_RE = re.compile(r"\[FEEDBACK\](.*?)\[RESULT\]", re.IGNORECASE | re.DOTALL)
 
 
 def get_judge_prompt_simpleqa(question: str, answer: str, gold: str, **kwargs):
@@ -125,3 +129,89 @@ def process_judge_response_simpleqa(response: str) -> float:
     else:
         logger.warning(f"Unknown response from judge: {response}")
         return 0.0
+
+
+def _build_pollux_prompt_text(
+    instruction: str,
+    answer: str,
+    criteria_name: str,
+    rubrics: str,
+    reference_answer: str | None = None,
+) -> str:
+    """Format the POLLUX judge user message."""
+    sections = [
+        "### Задание для оценки:\n" + instruction,
+    ]
+    if reference_answer is not None and reference_answer.strip():
+        sections.append("### Эталонный ответ:\n" + reference_answer)
+    sections.extend(
+        [
+            "### Ответ для оценки:\n" + answer,
+            "### Критерий оценки:\n" + criteria_name,
+            "### Шкала оценивания по критерию:\n" + rubrics,
+        ]
+    )
+    return "\n\n".join(sections)
+
+
+def get_judge_prompt_pollux(
+    question: str,
+    answer: str,
+    options: list[str] | None = None,  # noqa: ARG001, left for compatibility with JudgeLM implementation
+    gold: str | None = None,
+    criteria_name: str = "",
+    rubrics: str = "",
+):
+    """Build chat messages for the POLLUX judge (OpenAI-style ``messages`` list).
+
+    Args:
+        question: Task instruction / question (maps to POLLUX ``instruction``).
+        answer: Model answer to score.
+        options: Ignored (POLLUX does not use multiple-choice options).
+        gold: Optional reference answer.
+        criteria_name: Criterion name and description.
+        rubrics: Evaluation scale definitions for the criterion (normalized to a string format, see `metric_utils.normalize_rubrics`).
+
+    Returns:
+        A one-turn chat messages list ``[{"role": "user", "content": ...}]``.
+    """
+    body = _build_pollux_prompt_text(
+        instruction=question,
+        answer=answer,
+        criteria_name=criteria_name,
+        rubrics=rubrics,
+        reference_answer=gold if gold else None,
+    )
+    return [{"role": "user", "content": body}]
+
+
+def process_judge_response_pollux(response: str | object) -> float:
+    """Parse POLLUX judge output: ``[FEEDBACK] ... [RESULT] <score> [END]`` -> float.
+
+    Returns ``0.0`` if the score cannot be parsed.
+    """
+    text = response if isinstance(response, str) else str(response)
+    if not text:
+        return 0.0
+    match = _POLLUX_RESULT_RE.search(text)
+    if not match:
+        logger.warning("POLLUX judge response missing [RESULT]...[END]; returning 0.0")
+        return 0.0
+    raw = match.group(1).strip().replace(",", ".")
+    try:
+        return float(raw)
+    except ValueError:
+        logger.warning(f"POLLUX judge score not numeric: {raw!r}")
+        return 0.0
+
+
+def parse_pollux_feedback(response: str | object) -> str:
+    """Extract text between ``[FEEDBACK]`` and ``[RESULT]`` from a POLLUX judge reply.
+
+    Returns an empty string if the block is missing.
+    """
+    text = response if isinstance(response, str) else str(response)
+    if not text:
+        return ""
+    match = _POLLUX_FEEDBACK_RE.search(text)
+    return match.group(1).strip() if match else ""

@@ -61,3 +61,40 @@ These metrics need the model to generate an output. They are therefore slower.
 - `llm_judge_llama_3_405b`: Can be used for any generative task, the model will be scored by a Llama 3.405B model using the HuggingFace API.
 - `llm_judge_multi_turn_gpt3p5`: Can be used for any generative task, the model will be scored by a GPT3.5 model using the OpenAI API. It is used for multiturn tasks like mt-bench.
 - `llm_judge_multi_turn_llama_3_405b`: Can be used for any generative task, the model will be scored by a Llama 3.405B model using the HuggingFace API. It is used for multiturn tasks like mt-bench.
+
+### POLLUX (custom metric)
+
+[POLLUX](https://github.com/ai-forever/POLLUX) is a criteria-based LLM-judge suitable for any generative tasks with customizable criteria descriptions.
+
+`PolluxLLMJudgeMetric` is exposed as a **custom** metric class in `lighteval.metrics.metrics_sample` (not registered on the built-in `Metrics` enum), because both the scoring scale and criterion description are defined at initialization time.
+
+Use it by wrapping `PolluxLLMJudgeMetric(...)` into a `SampleLevelMetric`. Minimal setup:
+
+```python
+from lighteval.metrics.metrics_sample import PolluxLLMJudgeMetric, SampleLevelMetric
+
+pollux_helpfulness = SampleLevelMetric(
+    metric_name="pollux_helpfulness",
+    sample_level_fn=PolluxLLMJudgeMetric(
+        criterion="Helpfulness",
+        rubrics={
+            0: "Not helpful: misses the user request or gives incorrect guidance.",
+            1: "Partially helpful: addresses the request but misses important details.",
+            2: "Fully helpful: correct, complete, and directly actionable response.",
+        },
+        judge_model_name="ai-forever/pollux-judge-32b",
+        judge_backend="openai",
+        url="http://localhost:8000/v1",  # OpenAI-compatible endpoint (e.g. vllm serve)
+        include_feedback=True,
+    ),
+    batched_compute=True,
+)
+```
+
+Backend details:
+- `judge_backend="openai"` uses an OpenAI-compatible HTTP API endpoint (for example, one exposed by `vllm serve`), so pass `url` during metric initialization.
+- POLLUX itself returns both a score and an explanation. The metric always outputs `pollux_score`; `pollux_feedback` can be optionally included with `include_feedback`.
+- `pollux_feedback` is text and should not be aggregated with `np.mean`; one should aggregate numeric scores via `pollux_score` (or a custom `corpus_level_fn`).
+- For several criteria, instantiate multiple metric objects with different outer names and the corresponding criteria and scale descriptions.
+
+Official judge checkpoints are published in the [POLLUX collection](https://huggingface.co/collections/ai-forever/pollux) (e.g. 7B, 32B, and newer variants). Pass the model **repository id** as `judge_model_name` (same string used by `huggingface-cli download` or vLLM `--model`).
