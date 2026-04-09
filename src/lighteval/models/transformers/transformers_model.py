@@ -58,6 +58,7 @@ from lighteval.utils.imports import (
     is_package_available,
 )
 from lighteval.utils.parallelism import find_executable_batch_size
+from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
@@ -689,7 +690,7 @@ class TransformersModel(LightevalModel):
                     # NOTE: we are assuming all items in a batch behave similarly (same
                     # stop_tokens and max_tokens genrated) which is not necessarily
                     # the case! Because of that we only use batch size of 1
-                    stop_tokens = [self.tokenizer.eos_token] + batch[0].stop_sequences
+                    stop_tokens = [self.tokenizer.eos_token] + as_list(batch[0].stop_sequences)
 
                 max_new_tokens = batch[0].generation_size
                 num_samples = batch[0].num_samples
