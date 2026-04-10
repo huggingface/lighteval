@@ -11,27 +11,41 @@ import pytest
 from lighteval.metrics.metrics_sample import PolluxLLMJudgeMetric
 from lighteval.metrics.utils.judge_utils import (
     get_judge_prompt_pollux,
+    make_pollux_feedback_parser,
+    make_pollux_score_parser,
     parse_pollux_feedback,
+    POLLUX_TAGGED_FEEDBACK_RE,
+    POLLUX_TAGGED_SCORE_RE,
     process_judge_response_pollux,
 )
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
 
 
-def test_process_judge_response_pollux_parses_score():
+def test_process_judge_response_pollux_plain_score():
+    assert process_judge_response_pollux("2.5") == pytest.approx(2.5)
+    assert process_judge_response_pollux("\n\n2") == pytest.approx(2.0)
+
+
+def test_make_pollux_score_parser_tagged():
+    parse_tagged = make_pollux_score_parser(POLLUX_TAGGED_SCORE_RE)
     text = "[FEEDBACK] ok [RESULT] 2.5 [END]"
-    assert process_judge_response_pollux(text) == pytest.approx(2.5)
-    assert parse_pollux_feedback(text) == "ok"
+    assert parse_tagged(text) == pytest.approx(2.5)
 
 
-def test_parse_pollux_feedback_empty_when_missing():
-    assert parse_pollux_feedback("[RESULT] 1 [END]") == ""
-    assert parse_pollux_feedback("") == ""
+def test_parse_pollux_feedback_default_empty():
+    text = "[FEEDBACK] ok [RESULT] 2.5 [END]"
+    assert parse_pollux_feedback(text) == ""
+
+
+def test_make_pollux_feedback_parser_tagged():
+    parse_fb = make_pollux_feedback_parser(POLLUX_TAGGED_FEEDBACK_RE)
+    text = "[FEEDBACK] ok [RESULT] 2.5 [END]"
+    assert parse_fb(text) == "ok"
 
 
 def test_process_judge_response_pollux_comma_decimal():
-    text = "[RESULT] 1,75 [END]"
-    assert process_judge_response_pollux(text) == pytest.approx(1.75)
+    assert process_judge_response_pollux("1,75") == pytest.approx(1.75)
 
 
 def test_process_judge_response_pollux_missing_returns_zero():
@@ -100,7 +114,7 @@ def test_pollux_metric_compute_batch_mocked():
     assert call_kw[1]["rubrics"] == ["0: no\n1: yes", "0: no\n1: yes"]
 
 
-def test_pollux_metric_include_feedback_from_raw():
+def test_pollux_metric_include_feedback_tagged_patterns():
     metric = PolluxLLMJudgeMetric(
         criteria_name="c",
         rubrics={0: "r"},
@@ -108,6 +122,8 @@ def test_pollux_metric_include_feedback_from_raw():
         judge_backend="openai",
         url="http://localhost:8000/v1",
         include_feedback=True,
+        score_pattern=POLLUX_TAGGED_SCORE_RE,
+        feedback_pattern=POLLUX_TAGGED_FEEDBACK_RE,
     )
     raw_a = "[FEEDBACK] first [RESULT] 1.0 [END]"
     raw_b = "[RESULT] 0.0 [END]"
@@ -122,6 +138,24 @@ def test_pollux_metric_include_feedback_from_raw():
     out = metric.compute(responses, docs)
     assert out[0] == {"pollux_score": 1.0, "pollux_feedback": "first"}
     assert out[1] == {"pollux_score": 0.0, "pollux_feedback": ""}
+
+
+def test_pollux_metric_include_feedback_default_empty():
+    metric = PolluxLLMJudgeMetric(
+        criteria_name="c",
+        rubrics={0: "r"},
+        judge_model_name="m",
+        judge_backend="openai",
+        url="http://localhost:8000/v1",
+        include_feedback=True,
+    )
+    metric.judge.evaluate_answer_batch = MagicMock(
+        return_value=([1.0], [{"role": "user", "content": "p"}], ["2"])
+    )
+    docs = [Doc(query="q1", choices=[], gold_index=0, task_name="t")]
+    responses = [ModelResponse(text=["a1"])]
+    out = metric.compute(responses, docs)
+    assert out[0] == {"pollux_score": 1.0, "pollux_feedback": ""}
 
 
 def test_pollux_metric_accepts_rubrics_dict_and_normalizes():

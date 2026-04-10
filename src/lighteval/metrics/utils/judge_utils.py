@@ -25,8 +25,16 @@ import re
 
 logger = logging.getLogger(__name__)
 
-_POLLUX_RESULT_RE = re.compile(r"\[RESULT\]\s*([^\s\[]+)\s*\[END\]", re.IGNORECASE | re.DOTALL)
-_POLLUX_FEEDBACK_RE = re.compile(r"\[FEEDBACK\](.*?)\[RESULT\]", re.IGNORECASE | re.DOTALL)
+POLLUX_DEFAULT_SCORE_RE = re.compile(r"^\s*(\d+(?:[.,]\d+)?)\s*$")
+
+POLLUX_DEFAULT_FEEDBACK_RE: re.Pattern[str] | None = None
+
+POLLUX_TAGGED_SCORE_RE = re.compile(
+    r"\[RESULT\]\s*([^\s\[]+)\s*\[END\]", re.IGNORECASE | re.DOTALL
+)
+POLLUX_TAGGED_FEEDBACK_RE = re.compile(
+    r"\[FEEDBACK\](.*?)\[RESULT\]", re.IGNORECASE | re.DOTALL
+)
 
 
 def get_judge_prompt_simpleqa(question: str, answer: str, gold: str, **kwargs):
@@ -185,33 +193,51 @@ def get_judge_prompt_pollux(
     return [{"role": "user", "content": body}]
 
 
-def process_judge_response_pollux(response: str | object) -> float:
-    """Parse POLLUX judge output: ``[FEEDBACK] ... [RESULT] <score> [END]`` -> float.
+def make_pollux_score_parser(pattern=None):
+    """Build a callable that parses POLLUX judge output to a float score.
 
-    Returns ``0.0`` if the score cannot be parsed.
+    ``pattern`` defaults to :data:`POLLUX_DEFAULT_SCORE_RE` (bare numeric response).
+    Use :data:`POLLUX_TAGGED_SCORE_RE` for ``[RESULT] <score> [END]`` output.
     """
-    text = response if isinstance(response, str) else str(response)
-    if not text:
-        return 0.0
-    match = _POLLUX_RESULT_RE.search(text)
-    if not match:
-        logger.warning("POLLUX judge response missing [RESULT]...[END]; returning 0.0")
-        return 0.0
-    raw = match.group(1).strip().replace(",", ".")
-    try:
-        return float(raw)
-    except ValueError:
-        logger.warning(f"POLLUX judge score not numeric: {raw!r}")
-        return 0.0
+    effective = pattern if pattern is not None else POLLUX_DEFAULT_SCORE_RE
+
+    def _parse(response: str | object) -> float:
+        text = response if isinstance(response, str) else str(response)
+        if not text:
+            return 0.0
+        match = effective.search(text)
+        if not match:
+            logger.warning("POLLUX judge response could not be parsed for score; returning 0.0")
+            return 0.0
+        raw = match.group(1).strip().replace(",", ".")
+        try:
+            return float(raw)
+        except ValueError:
+            logger.warning(f"POLLUX judge score not numeric: {raw!r}")
+            return 0.0
+
+    return _parse
 
 
-def parse_pollux_feedback(response: str | object) -> str:
-    """Extract text between ``[FEEDBACK]`` and ``[RESULT]`` from a POLLUX judge reply.
+def make_pollux_feedback_parser(pattern=None):
+    """Build a callable that extracts feedback from POLLUX judge text.
 
-    Returns an empty string if the block is missing.
+    ``pattern`` defaults to :data:`POLLUX_DEFAULT_FEEDBACK_RE` (no feedback text).
+    Use :data:`POLLUX_TAGGED_FEEDBACK_RE` for ``[FEEDBACK]...[RESULT]`` output.
     """
-    text = response if isinstance(response, str) else str(response)
-    if not text:
-        return ""
-    match = _POLLUX_FEEDBACK_RE.search(text)
-    return match.group(1).strip() if match else ""
+    effective = pattern if pattern is not None else POLLUX_DEFAULT_FEEDBACK_RE
+
+    def _parse(response: str | object) -> str:
+        if effective is None:
+            return ""
+        text = response if isinstance(response, str) else str(response)
+        if not text:
+            return ""
+        match = effective.search(text)
+        return match.group(1).strip() if match else ""
+
+    return _parse
+
+
+process_judge_response_pollux = make_pollux_score_parser()
+parse_pollux_feedback = make_pollux_feedback_parser()

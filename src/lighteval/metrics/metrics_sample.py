@@ -27,6 +27,7 @@ using simple function (min, mean, max, ...) at the corpus level. Most metrics fa
 import inspect
 import logging
 import os
+from re import Pattern
 from abc import ABC, abstractmethod
 from typing import Callable, Literal, Mapping, Union
 
@@ -54,8 +55,8 @@ from lighteval.metrics.normalizations import (
 from lighteval.metrics.utils.judge_utils import (
     get_judge_prompt_pollux,
     get_judge_prompt_simpleqa,
-    parse_pollux_feedback,
-    process_judge_response_pollux,
+    make_pollux_feedback_parser,
+    make_pollux_score_parser,
     process_judge_response_simpleqa,
 )
 from lighteval.metrics.utils.llm_as_judge import JudgeLM
@@ -1068,7 +1069,8 @@ class PolluxLLMJudgeMetric(SampleLevelComputation):
     - ``options``: not used (always ``None`` in the judge batch)
 
     Returns per sample at least ``pollux_score``. If ``include_feedback=True``, also adds
-    ``pollux_feedback`` (text between ``[FEEDBACK]`` and ``[RESULT]``). Feedback is not
+    ``pollux_feedback`` using ``feedback_pattern`` (default: empty; use
+    ``POLLUX_TAGGED_FEEDBACK_RE`` for ``[FEEDBACK]...[RESULT]``). Feedback is not
     aggregatable at corpus level; use a custom ``corpus_level_fn`` that only averages
     ``pollux_score`` (e.g. ``lambda rows: np.mean([r["pollux_score"] for r in rows])``)
     when you enable feedback.
@@ -1078,7 +1080,7 @@ class PolluxLLMJudgeMetric(SampleLevelComputation):
         rubrics: Rubric / scale description for that criterion as a mapping
             ``score -> description`` (for example ``{0: "bad", 1: "ok", 2: "good"}``).
         judge_model_name: Model id for the backend (e.g. Hugging Face repo id for POLLUX judges:
-            ``ai-forever/pollux-judge-7b``, ``ai-forever/pollux-judge-32b``, or ``-r`` variants—see
+            ``ai-forever/Pollux-4B-Judge``, ``ai-forever/pollux-judge-7b``, ``ai-forever/pollux-judge-32b``, or ``-r`` variants—see
             the POLLUX collection on the Hub).
         judge_backend: ``JudgeLM`` backend; default ``openai`` for OpenAI-compatible HTTP APIs
             (e.g. ``vllm serve --api-key ...`` with ``OPENAI_BASE_URL`` / ``base_url``).
@@ -1090,6 +1092,9 @@ class PolluxLLMJudgeMetric(SampleLevelComputation):
         response_format: Optional OpenAI ``response_format`` (default is plain text).
         include_feedback: If True, include ``pollux_feedback`` in each sample dict (strings are
             not corpus-aggregated by default ``np.mean``).
+        score_pattern: Optional regex for score (default: bare numeric response).
+        feedback_pattern: Optional regex for feedback (default: no feedback unless
+            ``include_feedback`` with a non-``None`` pattern).
     """
 
     def __init__(
@@ -1105,14 +1110,17 @@ class PolluxLLMJudgeMetric(SampleLevelComputation):
         hf_provider: str | None = None,
         response_format: BaseModel | None = None,
         include_feedback: bool = False,
+        score_pattern: Pattern[str] | None = None,
+        feedback_pattern: Pattern[str] | None = None,
     ) -> None:
         self.criteria_name = criteria_name
         self.rubrics = self._normalize_rubrics(rubrics)
         self.include_feedback = include_feedback
+        self._feedback_parser = make_pollux_feedback_parser(feedback_pattern)
         self.judge = JudgeLM(
             model=judge_model_name,
             templates=get_judge_prompt_pollux,
-            process_judge_response=process_judge_response_pollux,
+            process_judge_response=make_pollux_score_parser(score_pattern),
             judge_backend=judge_backend,
             url=url,
             api_key=api_key,
@@ -1159,7 +1167,7 @@ class PolluxLLMJudgeMetric(SampleLevelComputation):
         for i in range(n):
             row: dict = {"pollux_score": scores[i]}
             if self.include_feedback:
-                row["pollux_feedback"] = parse_pollux_feedback(judgements[i])
+                row["pollux_feedback"] = self._feedback_parser(judgements[i])
             out.append(row)
         return out
 

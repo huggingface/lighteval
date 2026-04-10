@@ -76,7 +76,7 @@ from lighteval.metrics.metrics_sample import PolluxLLMJudgeMetric, SampleLevelMe
 pollux_helpfulness = SampleLevelMetric(
     metric_name="pollux_helpfulness",
     sample_level_fn=PolluxLLMJudgeMetric(
-        criterion="Helpfulness",
+        criteria_name="Helpfulness",
         rubrics={
             0: "Not helpful: misses the user request or gives incorrect guidance.",
             1: "Partially helpful: addresses the request but misses important details.",
@@ -93,7 +93,8 @@ pollux_helpfulness = SampleLevelMetric(
 
 Backend details:
 - `judge_backend="openai"` uses an OpenAI-compatible HTTP API endpoint (for example, one exposed by `vllm serve`), so pass `url` during metric initialization.
-- POLLUX itself returns both a score and an explanation. The metric always outputs `pollux_score`; `pollux_feedback` can be optionally included with `include_feedback`.
+- By default the judge is expected to return a **plain numeric** score (`score_pattern=None` uses `POLLUX_DEFAULT_SCORE_RE` from `lighteval.metrics.utils.judge_utils`). The metric always outputs `pollux_score`. `feedback_pattern=None` means no feedback text (same default chain as `POLLUX_DEFAULT_FEEDBACK_RE` in `make_pollux_feedback_parser`). With `include_feedback=True`, `pollux_feedback` is filled only if you pass a pattern (e.g. `POLLUX_TAGGED_FEEDBACK_RE` for tagged `[FEEDBACK]...[RESULT]...` output).
+- For tagged judge text (7b and 32b models), pass `score_pattern=POLLUX_TAGGED_SCORE_RE` and `feedback_pattern=POLLUX_TAGGED_FEEDBACK_RE` from the same module.
 - `pollux_feedback` is text and should not be aggregated with `np.mean`; one should aggregate numeric scores via `pollux_score` (or a custom `corpus_level_fn`).
 - For several criteria, instantiate multiple metric objects with different outer names and the corresponding criteria and scale descriptions.
 
