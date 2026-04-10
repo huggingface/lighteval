@@ -27,8 +27,9 @@ using simple function (min, mean, max, ...) at the corpus level. Most metrics fa
 import inspect
 import logging
 import os
+from re import Pattern
 from abc import ABC, abstractmethod
-from typing import Callable, Literal, Union
+from typing import Callable, Literal, Mapping, Union
 
 import nltk
 import numpy as np
@@ -51,7 +52,13 @@ from lighteval.metrics.normalizations import (
     remove_braces,
     remove_braces_and_strip,
 )
-from lighteval.metrics.utils.judge_utils import get_judge_prompt_simpleqa, process_judge_response_simpleqa
+from lighteval.metrics.utils.judge_utils import (
+    get_judge_prompt_pollux,
+    get_judge_prompt_simpleqa,
+    make_pollux_feedback_parser,
+    make_pollux_score_parser,
+    process_judge_response_simpleqa,
+)
 from lighteval.metrics.utils.llm_as_judge import JudgeLM
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
@@ -1041,6 +1048,128 @@ class JudgeLLMSimpleQA(JudgeLLM):
             )
 
         return metrics
+
+
+class PolluxLLMJudgeMetric(SampleLevelComputation):
+    """POLLUX rubric judge as a sample-level metric (uses :class:`~lighteval.metrics.utils.llm_as_judge.JudgeLM`).
+
+    This class does not subclass :class:`JudgeLLM`, so arbitrary judge model names are allowed
+    for the ``openai`` backend (no OpenAI model whitelist).
+
+    Use with :class:`~lighteval.metrics.utils.metric_utils.SampleLevelMetric` and
+    ``batched_compute=True``. For several criteria, add multiple metrics with different outer
+    ``metric_name`` values so result columns do not collide; each instance sets ``criteria_name``
+    and ``rubrics`` in ``__init__`` only.
+
+    Data mapping:
+
+    - Question/instruction: ``doc.query``
+    - Answer: ``response.final_text[0]``
+    - Optional reference: ``doc.specific["reference_answer"]`` (if present) as POLLUX gold
+    - ``options``: not used (always ``None`` in the judge batch)
+
+    Returns per sample at least ``pollux_score``. If ``include_feedback=True``, also adds
+    ``pollux_feedback`` using ``feedback_pattern`` (default: empty; use
+    ``POLLUX_TAGGED_FEEDBACK_RE`` for ``[FEEDBACK]...[RESULT]``). Feedback is not
+    aggregatable at corpus level; use a custom ``corpus_level_fn`` that only averages
+    ``pollux_score`` (e.g. ``lambda rows: np.mean([r["pollux_score"] for r in rows])``)
+    when you enable feedback.
+
+    Args:
+        criteria_name: Criterion title passed to the POLLUX template.
+        rubrics: Rubric / scale description for that criterion as a mapping
+            ``score -> description`` (for example ``{0: "bad", 1: "ok", 2: "good"}``).
+        judge_model_name: Model id for the backend (e.g. Hugging Face repo id for POLLUX judges:
+            ``ai-forever/Pollux-4B-Judge``, ``ai-forever/pollux-judge-7b``, ``ai-forever/pollux-judge-32b``, or ``-r`` variants—see
+            the POLLUX collection on the Hub).
+        judge_backend: ``JudgeLM`` backend; default ``openai`` for OpenAI-compatible HTTP APIs
+            (e.g. ``vllm serve --api-key ...`` with ``OPENAI_BASE_URL`` / ``base_url``).
+        url: Optional API base URL (local or hosted OpenAI-compatible endpoint).
+        api_key: Optional API key (local servers often work without one).
+        max_tokens: Max new tokens for the judge completion.
+        backend_options: Optional backend-specific options (e.g. LiteLLM).
+        hf_provider: Required when ``judge_backend`` is ``inference-providers``.
+        response_format: Optional OpenAI ``response_format`` (default is plain text).
+        include_feedback: If True, include ``pollux_feedback`` in each sample dict (strings are
+            not corpus-aggregated by default ``np.mean``).
+        score_pattern: Optional regex for score (default: bare numeric response).
+        feedback_pattern: Optional regex for feedback (default: no feedback unless
+            ``include_feedback`` with a non-``None`` pattern).
+    """
+
+    def __init__(
+        self,
+        criteria_name: str,
+        rubrics: Mapping[int | str, str],
+        judge_model_name: str,
+        judge_backend: Literal["litellm", "openai", "transformers", "vllm", "tgi", "inference-providers"] = "openai",
+        url: str | None = None,
+        api_key: str | None = None,
+        max_tokens: int | None = 512,
+        backend_options: dict | None = None,
+        hf_provider: str | None = None,
+        response_format: BaseModel | None = None,
+        include_feedback: bool = False,
+        score_pattern: Pattern[str] | None = None,
+        feedback_pattern: Pattern[str] | None = None,
+    ) -> None:
+        self.criteria_name = criteria_name
+        self.rubrics = self._normalize_rubrics(rubrics)
+        self.include_feedback = include_feedback
+        self._feedback_parser = make_pollux_feedback_parser(feedback_pattern)
+        self.judge = JudgeLM(
+            model=judge_model_name,
+            templates=get_judge_prompt_pollux,
+            process_judge_response=make_pollux_score_parser(score_pattern),
+            judge_backend=judge_backend,
+            url=url,
+            api_key=api_key,
+            max_tokens=max_tokens,
+            backend_options=backend_options,
+            hf_provider=hf_provider,
+            response_format=response_format,
+        )
+
+    @staticmethod
+    def _normalize_rubrics(rubrics: Mapping[int | str, str]) -> str:
+        if isinstance(rubrics, Mapping):
+            try:
+                items = sorted(rubrics.items(), key=lambda item: int(item[0]))
+            except (TypeError, ValueError):
+                items = sorted(rubrics.items(), key=lambda item: str(item[0]))
+            return "\n".join(f"{k}: {v}" for k, v in items)
+        raise TypeError("rubrics must be a mapping score->description")
+
+    def compute(self, responses: list[ModelResponse], docs: list[Doc], **kwargs) -> list[dict]:
+        n = len(docs)
+        if len(responses) != n:
+            raise ValueError("responses and docs must have the same length")
+        questions = [d.query for d in docs]
+        predictions = [r.final_text[0] for r in responses]
+        options = [None] * n
+        golds: list[str | None] = []  #optional reference answer
+        for d in docs:
+            ref = None
+            if d.specific:
+                raw = d.specific.get("reference_answer")
+                if raw is not None:
+                    ref = str(raw).strip() or None
+            golds.append(ref)
+        scores, _prompts, judgements = self.judge.evaluate_answer_batch(
+            questions,
+            predictions,
+            options,
+            golds,
+            criteria_name=[self.criteria_name] * n,
+            rubrics=[self.rubrics] * n,
+        )
+        out: list[dict] = []
+        for i in range(n):
+            row: dict = {"pollux_score": scores[i]}
+            if self.include_feedback:
+                row["pollux_feedback"] = self._feedback_parser(judgements[i])
+            out.append(row)
+        return out
 
 
 class JudgeLLMMTBench(JudgeLLM):
