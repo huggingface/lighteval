@@ -23,6 +23,7 @@
 
 import asyncio
 import logging
+import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -155,9 +156,13 @@ class JudgeLM:
                 if self.client is None:
                     from openai import OpenAI
 
-                    self.client = OpenAI(
-                        api_key=self.api_key if self.url is None else None, base_url=self.url if self.url else None
-                    )
+                    base_url = self.url if self.url else None
+                    # Custom base_url: OpenAI SDK requires an explicit api_key (use env or "" for local servers).
+                    if base_url is not None:
+                        api_key = self.api_key if self.api_key is not None else os.getenv("OPENAI_API_KEY") or ""
+                    else:
+                        api_key = self.api_key
+                    self.client = OpenAI(api_key=api_key, base_url=base_url)
                 return self.__call_api_parallel
 
             case "litellm":
