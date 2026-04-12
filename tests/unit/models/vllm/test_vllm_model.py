@@ -20,12 +20,36 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import sys
 import unittest
+from types import ModuleType
 from unittest.mock import Mock, patch
 
 from transformers import AutoTokenizer
 
-from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
+from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig, build_vllm_token_prompts
+
+
+class TestVLLMPromptConstruction(unittest.TestCase):
+    def test_build_vllm_token_prompts_uses_tokens_prompt_when_available(self):
+        fake_inputs = ModuleType("vllm.inputs")
+        fake_inputs.TokensPrompt = lambda *, prompt_token_ids: {  # noqa: E731
+            "kind": "tokens_prompt",
+            "prompt_token_ids": prompt_token_ids,
+        }
+        fake_vllm = ModuleType("vllm")
+        fake_vllm.inputs = fake_inputs
+
+        with patch.dict(sys.modules, {"vllm": fake_vllm, "vllm.inputs": fake_inputs}):
+            prompts = build_vllm_token_prompts([[1, 2], [3]])
+
+        self.assertEqual(
+            prompts,
+            [
+                {"kind": "tokens_prompt", "prompt_token_ids": [1, 2]},
+                {"kind": "tokens_prompt", "prompt_token_ids": [3]},
+            ],
+        )
 
 
 class TestVLLMTokenizerCreation(unittest.TestCase):
