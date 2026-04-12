@@ -30,6 +30,7 @@ from typing import Coroutine, Optional
 import torch
 from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 from tqdm import tqdm
+from transformers import PreTrainedTokenizerBase
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelConfig
@@ -44,6 +45,18 @@ from lighteval.utils.imports import is_package_available, requires
 logger = logging.getLogger(__name__)
 
 
+def _ensure_all_special_tokens_extended():
+    if hasattr(PreTrainedTokenizerBase, "all_special_tokens_extended"):
+        return
+
+    PreTrainedTokenizerBase.all_special_tokens_extended = property(  # type: ignore[attr-defined]
+        lambda self: list(self.all_special_tokens)
+    )
+
+
+_ensure_all_special_tokens_extended()
+
+
 if is_package_available("vllm"):
     import ray
     from more_itertools import distribute
@@ -52,8 +65,12 @@ if is_package_available("vllm"):
         destroy_distributed_environment,
         destroy_model_parallel,
     )
-    from vllm.tokenizers import get_tokenizer
     from vllm.v1.engine.async_llm import AsyncEngineArgs, AsyncLLM
+
+    try:
+        from vllm.tokenizers import get_tokenizer
+    except ModuleNotFoundError:
+        from vllm.transformers_utils.tokenizer import get_tokenizer
 
     logging.getLogger("vllm").propagate = True
     logging.getLogger("vllm").handlers.clear()
@@ -296,12 +313,28 @@ class VLLMModel(LightevalModel):
         return model
 
     def _create_auto_tokenizer(self, config: VLLMModelConfig):
-        tokenizer = get_tokenizer(
-            config.tokenizer or config.model_name,  # use HF tokenizer for non-HF models, like GGUF model.
-            tokenizer_mode="auto",
-            trust_remote_code=config.trust_remote_code,
-            revision=config.revision,
-        )
+        tokenizer_name = config.tokenizer or config.model_name
+
+        try:
+            tokenizer = get_tokenizer(
+                tokenizer_name,  # use HF tokenizer for non-HF models, like GGUF model.
+                tokenizer_mode="auto",
+                trust_remote_code=config.trust_remote_code,
+                revision=config.revision,
+            )
+        except AttributeError as exc:
+            if "all_special_tokens_extended" not in str(exc):
+                raise
+
+            from transformers import AutoTokenizer
+
+            tokenizer = AutoTokenizer.from_pretrained(
+                tokenizer_name,
+                trust_remote_code=config.trust_remote_code,
+                revision=config.revision,
+                truncation_side="left",
+            )
+
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
 
