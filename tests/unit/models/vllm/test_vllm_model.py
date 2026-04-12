@@ -27,7 +27,7 @@ from unittest.mock import Mock, patch
 
 from transformers import AutoTokenizer
 
-from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig, _build_vllm_token_prompts
+from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig, build_vllm_token_prompts
 
 
 class TestVLLMPromptConstruction(unittest.TestCase):
@@ -41,7 +41,7 @@ class TestVLLMPromptConstruction(unittest.TestCase):
         fake_vllm.inputs = fake_inputs
 
         with patch.dict(sys.modules, {"vllm": fake_vllm, "vllm.inputs": fake_inputs}):
-            prompts = _build_vllm_token_prompts([[1, 2], [3]])
+            prompts = build_vllm_token_prompts([[1, 2], [3]])
 
         self.assertEqual(
             prompts,
@@ -57,7 +57,7 @@ class TestVLLMPromptConstruction(unittest.TestCase):
         fake_vllm.inputs = fake_inputs
 
         with patch.dict(sys.modules, {"vllm": fake_vllm, "vllm.inputs": fake_inputs}):
-            prompts = _build_vllm_token_prompts([[4, 5]])
+            prompts = build_vllm_token_prompts([[4, 5]])
 
         self.assertEqual(prompts, [{"prompt_token_ids": [4, 5]}])
 
