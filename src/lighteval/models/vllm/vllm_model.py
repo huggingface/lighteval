@@ -46,10 +46,7 @@ logger = logging.getLogger(__name__)
 
 def build_vllm_token_prompts(inputs: list[list[int]]) -> list:
     """Build token prompts across vLLM prompt-schema reorganizations."""
-    try:
-        from vllm.inputs import TokensPrompt
-    except ImportError:
-        return [{"prompt_token_ids": token_ids} for token_ids in inputs]
+    from vllm.inputs import TokensPrompt
 
     return [TokensPrompt(prompt_token_ids=token_ids) for token_ids in inputs]
 
@@ -65,6 +62,8 @@ if is_package_available("vllm"):
     from vllm.v1.engine.async_llm import AsyncEngineArgs, AsyncLLM
 
     try:
+        # vLLM moved `get_tokenizer` to `vllm.tokenizers` in v0.12.0.
+        # Keep the fallback while our lower bound remains on v0.11.x.
         from vllm.tokenizers import get_tokenizer
     except ModuleNotFoundError:
         from vllm.transformers_utils.tokenizer import get_tokenizer

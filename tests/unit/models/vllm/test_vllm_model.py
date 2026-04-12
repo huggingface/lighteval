@@ -51,16 +51,6 @@ class TestVLLMPromptConstruction(unittest.TestCase):
             ],
         )
 
-    def test_build_vllm_token_prompts_falls_back_to_prompt_dict(self):
-        fake_inputs = ModuleType("vllm.inputs")
-        fake_vllm = ModuleType("vllm")
-        fake_vllm.inputs = fake_inputs
-
-        with patch.dict(sys.modules, {"vllm": fake_vllm, "vllm.inputs": fake_inputs}):
-            prompts = build_vllm_token_prompts([[4, 5]])
-
-        self.assertEqual(prompts, [{"prompt_token_ids": [4, 5]}])
-
 
 class TestVLLMTokenizerCreation(unittest.TestCase):
     def test_tokenizer_created_with_correct_revision(self):
