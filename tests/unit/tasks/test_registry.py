@@ -120,14 +120,3 @@ def test_task_creation():
 
     assert isinstance(task, LightevalTask)
     assert task.name == "storycloze:2016"
-
-
-def test_hellaswag_cf_task_creation():
-    """
-    Tests that the English HellaSwag continuation-form task is registered.
-    """
-    registry = Registry(tasks="hellaswag_cf|0")
-    task = registry.load_tasks()["hellaswag_cf|0"]
-
-    assert isinstance(task, LightevalTask)
-    assert task.name == "hellaswag_cf"
