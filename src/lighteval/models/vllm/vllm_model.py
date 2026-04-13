@@ -44,6 +44,13 @@ from lighteval.utils.imports import is_package_available, requires
 logger = logging.getLogger(__name__)
 
 
+def build_vllm_token_prompts(inputs: list[list[int]]) -> list:
+    """Build token prompts across vLLM prompt-schema reorganizations."""
+    from vllm.inputs import TokensPrompt
+
+    return [TokensPrompt(prompt_token_ids=token_ids) for token_ids in inputs]
+
+
 if is_package_available("vllm"):
     import ray
     from more_itertools import distribute
@@ -52,8 +59,14 @@ if is_package_available("vllm"):
         destroy_distributed_environment,
         destroy_model_parallel,
     )
-    from vllm.tokenizers import get_tokenizer
     from vllm.v1.engine.async_llm import AsyncEngineArgs, AsyncLLM
+
+    try:
+        # vLLM moved `get_tokenizer` to `vllm.tokenizers` in v0.12.0.
+        # Keep the fallback while our lower bound remains on v0.11.x.
+        from vllm.tokenizers import get_tokenizer
+    except ModuleNotFoundError:
+        from vllm.transformers_utils.tokenizer import get_tokenizer
 
     logging.getLogger("vllm").propagate = True
     logging.getLogger("vllm").handlers.clear()
@@ -302,6 +315,7 @@ class VLLMModel(LightevalModel):
             trust_remote_code=config.trust_remote_code,
             revision=config.revision,
         )
+
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
 
@@ -439,8 +453,7 @@ class VLLMModel(LightevalModel):
             @ray.remote(num_gpus=self.tensor_parallel_size)
             def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
                 llm = LLM(**model_args)
-                # Convert token IDs to TokensPrompt format for vLLM v0.15+
-                prompts = [{"prompt_token_ids": req} for req in requests]
+                prompts = build_vllm_token_prompts(requests)
                 return llm.generate(prompts=prompts, sampling_params=sampling_params)
 
             # dispatch requests to all self.data_parallel_size workers, in interleaved fashion
@@ -458,10 +471,7 @@ class VLLMModel(LightevalModel):
                 if x is not None
             ]
         else:
-            from vllm.inputs import TokenInputs
-
-            # Convert token IDs to TokensPrompt format for vLLM v0.15+
-            prompts = [TokenInputs(prompt_token_ids=token_ids) for token_ids in inputs]
+            prompts = build_vllm_token_prompts(inputs)
             outputs = self.model.generate(
                 prompts=prompts,
                 sampling_params=sampling_params,
