@@ -57,7 +57,11 @@ def first_generated_token_id(model_response: dict) -> int | None:
     if not output_tokens or not output_tokens[0]:
         return None
 
-    return output_tokens[0][0]
+    first_sequence = output_tokens[0]
+    if isinstance(first_sequence, list):
+        return first_sequence[0] if first_sequence else None
+
+    return first_sequence
 
 
 def first_step_logits(model_response: dict) -> list[float] | None:
@@ -66,7 +70,11 @@ def first_step_logits(model_response: dict) -> list[float] | None:
     if not logits:
         return None
 
-    return logits[0]
+    first_step = logits[0]
+    if isinstance(first_step, list):
+        return first_step
+
+    return logits
 
 
 def is_within_logit_tie_margin(logits: list[float], token_id: int, epsilon: float = LOGIT_TIE_EPSILON) -> bool:
@@ -92,14 +100,18 @@ def is_tied_choice_prediction(current: dict, reference: dict, epsilon: float = L
     if current_token is None or reference_token is None or current_token == reference_token:
         return False
 
-    current_logits = first_step_logits(current_response)
     reference_logits = first_step_logits(reference_response)
-    if current_logits is None or reference_logits is None:
+    if reference_logits is None:
         return False
 
-    for logits in (current_logits, reference_logits):
+    for token_id in (current_token, reference_token):
+        if not is_within_logit_tie_margin(reference_logits, token_id, epsilon):
+            return False
+
+    current_logits = first_step_logits(current_response)
+    if current_logits is not None:
         for token_id in (current_token, reference_token):
-            if not is_within_logit_tie_margin(logits, token_id, epsilon):
+            if not is_within_logit_tie_margin(current_logits, token_id, epsilon):
                 return False
 
     return True

@@ -22,13 +22,23 @@ def make_logits(logit_b: float, logit_c: float) -> list[list[float]]:
     return [logits]
 
 
-def make_current_detail(token_id: int, logit_b: float, logit_c: float, metric: float) -> DetailSample:
+def make_current_detail(
+    token_id: int,
+    logit_b: float,
+    logit_c: float,
+    metric: float,
+    *,
+    flat_output_tokens: bool = False,
+    include_logits: bool = True,
+) -> DetailSample:
+    output_tokens = [token_id, 151645] if flat_output_tokens else [[token_id, 151645]]
+
     return DetailSample(
         doc={"query": "query", "choices": ["A", "B", "C", "D"]},
         metric={"extractive_match": metric},
         model_response=ModelResponse(
-            output_tokens=[[token_id, 151645]],
-            logits=make_logits(logit_b, logit_c),
+            output_tokens=output_tokens,
+            logits=make_logits(logit_b, logit_c) if include_logits else None,
         ),
     )
 
@@ -48,7 +58,16 @@ def make_reference_detail(token_id: int, logit_b: float, logit_c: float, metric:
 
 def test_compare_sample_details_ignores_tied_multiple_choice_predictions():
     current_details = {
-        "task": [make_current_detail(token_id=34, logit_b=10.0, logit_c=10.0, metric=1.0)],
+        "task": [
+            make_current_detail(
+                token_id=34,
+                logit_b=10.0,
+                logit_c=10.0,
+                metric=1.0,
+                flat_output_tokens=True,
+                include_logits=False,
+            )
+        ],
     }
     reference_details = {
         "task": [make_reference_detail(token_id=33, logit_b=10.0, logit_c=10.0, metric=0.0)],
