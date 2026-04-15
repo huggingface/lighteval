@@ -38,6 +38,7 @@ from lighteval.utils.imports import is_package_available, requires
 
 
 logger = logging.getLogger(__name__)
+NON_RETRIABLE_STATUS_CODES = {401, 403, 404}
 
 if is_package_available("litellm"):
     import litellm
@@ -242,6 +243,8 @@ class LiteLLMClient(LightevalModel):
                         logger.warning(f"{error_string}. Returning empty response.")
                         return LitellmModelResponse()
             except Exception as e:
+                if getattr(e, "status_code", None) in NON_RETRIABLE_STATUS_CODES:
+                    raise
                 wait_time = min(
                     64, self.API_RETRY_SLEEP * (self.API_RETRY_MULTIPLIER**attempt)
                 )  # Exponential backoff with max 64s
