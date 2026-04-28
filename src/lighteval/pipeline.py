@@ -245,7 +245,12 @@ class Pipeline:
         """
         for task in tasks:
             for metric in task.metrics:
-                if metric_data := self._metric_options.get(metric.metric_name, None):
+                metric_names = metric.metric_name if isinstance(metric.metric_name, list) else [metric.metric_name]
+                metric_data = next(
+                    (self._metric_options[name] for name in metric_names if name in self._metric_options),
+                    None,
+                )
+                if metric_data:
                     num_samples = metric_data.get("num_samples", None)
                     if num_samples:
                         task.num_samples = [num_samples]
