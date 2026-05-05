@@ -10,8 +10,9 @@ permissions:
 
 jobs:
   style:
-    uses: huggingface/huggingface_hub/.github/workflows/style-bot-action.yml@ed9b560885ce974da9c0742a29ce1484b263e184
+    uses: huggingface/huggingface_hub/.github/workflows/style-bot-action.yml@e5365a9b53b19a0888a442075cc1032ab988a466
     with:
       python_quality_dependencies: "[quality]"
     secrets:
-      bot_token: ${{ secrets.HF_STYLE_BOT_ACTION }}
+      app_id: ${{ secrets.HF_BOT_STYLE_APP_ID }}
+      app_private_key: ${{ secrets.HF_BOT_STYLE_SECRET_PEM }}
