@@ -49,7 +49,7 @@ from lighteval.cli_args import (
 )
 
 
-logger = logging.getLogger(__name__)
+logger =logging.getLogger(__name__)
 
 
 def accelerate(  # noqa C901
