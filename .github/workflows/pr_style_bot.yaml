@@ -8,7 +8,24 @@ permissions:
   pull-requests: write
 
 jobs:
+  check_authorization:
+    runs-on: ubuntu-latest
+    outputs:
+      authorized: ${{ steps.check.outputs.authorized }}
+    steps:
+      - name: Check if commenter is authorized
+        id: check
+        run: |
+          if [[ "${{ github.event.comment.author_association }}" == "MEMBER" || "${{ github.event.comment.author_association }}" == "OWNER" || "${{ github.event.comment.author_association }}" == "COLLABORATOR" ]]; then
+            echo "authorized=true" >> $GITHUB_OUTPUT
+          else
+            echo "authorized=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
   style:
+    needs: check_authorization
+    if: needs.check_authorization.outputs.authorized == 'true'
     uses: huggingface/huggingface_hub/.github/workflows/style-bot-action.yml@5a5ad15de10edd2d1a2655c76de1dec7c27c3574
     with:
       python_quality_dependencies: "[quality]"
