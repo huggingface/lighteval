@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   style:
-    uses: huggingface/huggingface_hub/.github/workflows/style-bot-action.yml@b85b288d73b43e883401004a697010abea7adf1d
+    uses: huggingface/huggingface_hub/.github/workflows/style-bot-action.yml@ed9b560885ce974da9c0742a29ce1484b263e184
     with:
       python_quality_dependencies: "[quality]"
     secrets:
