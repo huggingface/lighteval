@@ -109,6 +109,12 @@ OPTIONAL_SUITES = [
 DEFAULT_SUITES = CORE_SUITES + OPTIONAL_SUITES
 
 
+def _metric_name_contains_at(metric_name: str | list[str]) -> bool:
+    if isinstance(metric_name, list):
+        return any("@" in name for name in metric_name)
+    return "@" in metric_name
+
+
 class Registry:
     """The Registry class is used to manage the task registry and get task classes."""
 
@@ -229,7 +235,7 @@ class Registry:
                 config.num_fewshots = few_shot
                 config.full_name = f"{expanded_task}|{config.num_fewshots}"
                 # If some tasks are parametrizable and in cli, we set attributes here
-                for metric in [m for m in config.metrics if "@" in m.metric_name]:  # parametrizable metric
+                for metric in [m for m in config.metrics if _metric_name_contains_at(m.metric_name)]:
                     for attribute, value in metric_params_dict.items():
                         setattr(metric.sample_level_fn, attribute, value)
                     required = getattr(metric.sample_level_fn, "attribute_must_be_set", [])

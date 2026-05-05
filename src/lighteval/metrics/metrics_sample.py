@@ -28,6 +28,7 @@ import inspect
 import logging
 import os
 from abc import ABC, abstractmethod
+from dataclasses import replace
 from typing import Callable, Literal, Union
 
 import nltk
@@ -1206,6 +1207,88 @@ class AvgAtN(SamplingMetric, SampleLevelComputation):
 
     def num_samples(self):
         return self.n
+
+
+class BayesAtN(SamplingMetric, SampleLevelComputation):
+    def __init__(
+        self,
+        n: int | None = None,
+        weights: list[float] | None = None,
+        prior: list[list[int]] | None = None,
+        confidence: float | None = None,
+        name_prefix: str | None = None,
+        **kwargs,
+    ):
+        """Collect repeated sample scores for corpus-level Bayes@N aggregation.
+
+        Args:
+            n (int | None): Number of generated samples to score. If omitted,
+                all available samples are used.
+            weights (list[float] | None): Optional score for each integer
+                category id. Binary scores default to ``[0.0, 1.0]``.
+            prior (list[list[int]] | None): Optional row-aligned prior
+                observations used by the corpus-level aggregator.
+            confidence (float | None): Reserved for future interval outputs.
+            name_prefix (str | None): Optional prefix for metric names.
+            **kwargs: Additional keyword arguments.
+        """
+        super().__init__(**kwargs)
+        self.n = n
+        self.weights = weights
+        self.prior = prior
+        self.confidence = confidence
+        self.name = f"{name_prefix}-bayes@n" if name_prefix else "bayes@n"
+
+    @property
+    def metric_names(self):
+        return [self.name, f"{self.name}_sigma"]
+
+    def _coerce_score(self, score: float | int | bool) -> int:
+        if isinstance(score, (bool, np.bool_)):
+            return int(score)
+        if isinstance(score, (int, np.integer)):
+            category = int(score)
+        elif isinstance(score, (float, np.floating)):
+            if not np.isfinite(score) or not float(score).is_integer():
+                raise ValueError(
+                    "Bayes@N sample scores must be integer category ids. "
+                    "Continuous scores require an explicit category mapping before aggregation."
+                )
+            category = int(score)
+        else:
+            raise ValueError("Bayes@N sample scores must be integer category ids.")
+
+        if category < 0:
+            raise ValueError("Bayes@N sample scores must be non-negative integer category ids.")
+        return category
+
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict:
+        """Collect the row of repeated outcomes for one document."""
+        predictions = model_response.final_text
+        if self.n is None:
+            n = len(predictions)
+            logger.warning(
+                "n undefined in Bayes@N. We assume it's the same as the sample's number of predictions."
+            )
+        else:
+            n = self.n
+            if len(predictions) < n:
+                logger.warning(f"Number of predictions is less than {self.n} for Bayes@N.")
+        if n <= 0:
+            raise ValueError("Bayes@N requires at least one prediction.")
+
+        processed_doc = replace(doc, choices=[self.preprocess(text=choice) for choice in doc.choices])
+
+        row = []
+        for pred in predictions[:n]:
+            processed_response = ModelResponse(text=[self.preprocess(text=pred)])
+            row.append(self._coerce_score(self.compute_score(processed_doc, processed_response)))
+
+        payload = {"scores": row, "weights": self.weights, "prior": self.prior}
+        return dict.fromkeys(self.metric_names, payload)
+
+    def num_samples(self):
+        return self.n if self.n is not None else 1
 
 
 class MajAtN(SamplingMetric, SampleLevelComputation):
