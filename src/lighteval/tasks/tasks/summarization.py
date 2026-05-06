@@ -30,7 +30,8 @@ def cnn_dm_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"Article: {line['article']}\n\nTL;DR:",
-        choices=[line["highlights"]],
+        specific={"text": line["article"]},
+        choices=[""],
         gold_index=0,
     )
 
@@ -41,6 +42,7 @@ def xsum_prompt(line, task_name: str = None):
         query=f"Document: {line['document']}\n\nA one-sentence summary of the above document is:",
         choices=[line["summary"]],
         gold_index=0,
+        specific={"text": line["document"]},
     )
 
 
