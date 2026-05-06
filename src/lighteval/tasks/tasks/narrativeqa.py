@@ -33,7 +33,7 @@ def narrativeqa_prompt(line, task_name: str = None):
         task_name=task_name,
         query=f"Passage: {line['passage']}\nQuestion: {line['question']}\nAnswer:",
         gold_index=list(range(len(line["references"]))),
-        choices=[[str(a) for a in line["references"]]],
+        choices=[str(a) for a in line["references"]],
     )
 
 
@@ -47,7 +47,7 @@ narrativeqa = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=100,
-    metrics=[Metrics.exact_match],
+    metrics=[Metrics.rougeL, Metrics.f1_score],
     stop_sequence=["\n"],
     version=0,
 )
