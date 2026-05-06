@@ -32,6 +32,9 @@ from huggingface_hub import HfApi
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.info_loggers import DetailsLogger
+from lighteval.models.endpoints.litellm_model import LiteLLMModelConfig
+from lighteval.models.endpoints.tgi_model import TGIModelConfig
+from lighteval.pipeline import Pipeline
 
 # ruff: noqa
 from tests.fixtures import TESTING_EMPTY_HF_ORG_ID
@@ -127,6 +130,77 @@ class TestLogging:
         assert "results" in saved_results
         assert saved_results["results"] == task_metrics
         assert saved_results["config_general"]["model_name"] == "test_model"
+
+    def test_results_redacts_litellm_api_key(self, mock_evaluation_tracker: EvaluationTracker):
+        mock_evaluation_tracker.general_config_logger.log_model_info(
+            LiteLLMModelConfig(model_name="test_model", api_key="super-secret-key")
+        )
+
+        results = mock_evaluation_tracker.results
+
+        assert results["config_general"]["model_config"]["api_key"] == "REDACTED"
+
+        mock_evaluation_tracker.save()
+
+        results_dir = Path(mock_evaluation_tracker.output_dir) / "results" / "test_model"
+        result_files = list(results_dir.glob("results_*.json"))
+        assert len(result_files) == 1
+
+        with open(result_files[0], "r") as f:
+            saved_results = json.load(f)
+
+        assert saved_results["config_general"]["model_config"]["api_key"] == "REDACTED"
+        assert saved_results["config_general"]["model_config"]["model_name"] == "test_model"
+
+    def test_results_redacts_tgi_auth(self, mock_evaluation_tracker: EvaluationTracker):
+        mock_evaluation_tracker.general_config_logger.log_model_info(
+            TGIModelConfig(
+                model_name="test_model",
+                inference_server_address="http://localhost:8080",
+                inference_server_auth="super-secret-token",
+            )
+        )
+
+        results = mock_evaluation_tracker.results
+
+        assert results["config_general"]["model_config"]["inference_server_auth"] == "REDACTED"
+        assert results["config_general"]["model_config"]["model_name"] == "test_model"
+
+    def test_pipeline_get_results_redacts_litellm_api_key(self, mock_evaluation_tracker: EvaluationTracker):
+        mock_evaluation_tracker.general_config_logger.log_model_info(
+            LiteLLMModelConfig(model_name="test_model", api_key="super-secret-key")
+        )
+
+        pipeline = Pipeline.__new__(Pipeline)
+        pipeline.accelerator = None
+        pipeline.parallel_context = None
+        pipeline.final_dict = None
+        pipeline.evaluation_tracker = mock_evaluation_tracker
+
+        results = pipeline.get_results()
+
+        assert results["config_general"]["model_config"]["api_key"] == "REDACTED"
+        assert results["config_general"]["model_config"]["model_name"] == "test_model"
+
+    def test_pipeline_get_results_redacts_tgi_auth(self, mock_evaluation_tracker: EvaluationTracker):
+        mock_evaluation_tracker.general_config_logger.log_model_info(
+            TGIModelConfig(
+                model_name="test_model",
+                inference_server_address="http://localhost:8080",
+                inference_server_auth="super-secret-token",
+            )
+        )
+
+        pipeline = Pipeline.__new__(Pipeline)
+        pipeline.accelerator = None
+        pipeline.parallel_context = None
+        pipeline.final_dict = None
+        pipeline.evaluation_tracker = mock_evaluation_tracker
+
+        results = pipeline.get_results()
+
+        assert results["config_general"]["model_config"]["inference_server_auth"] == "REDACTED"
+        assert results["config_general"]["model_config"]["model_name"] == "test_model"
 
     @pytest.mark.evaluation_tracker(save_details=True)
     def test_details_logging(self, mock_evaluation_tracker, mock_datetime):
