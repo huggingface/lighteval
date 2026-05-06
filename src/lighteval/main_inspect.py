@@ -37,6 +37,7 @@ from pytablewriter import MarkdownTableWriter
 from typer import Argument, Option
 from typing_extensions import Annotated
 
+from lighteval.cli_args import load_tasks_multilingual as load_tasks_multilingual_arg
 from lighteval.models.abstract_model import InspectAIModelConfig
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
@@ -432,10 +433,11 @@ def eval(  # noqa C901
             rich_help_panel=HELP_PANEL_NAME_4,
         ),
     ] = False,
+    load_tasks_multilingual: load_tasks_multilingual_arg.type = load_tasks_multilingual_arg.default,
 ):
     from lighteval.tasks.registry import Registry
 
-    registry = Registry(tasks=tasks, custom_tasks=None, load_multilingual=False)
+    registry = Registry(tasks=tasks, custom_tasks=custom_tasks, load_multilingual=load_tasks_multilingual)
     task_configs = registry.task_to_configs
     inspect_ai_tasks = []
 
