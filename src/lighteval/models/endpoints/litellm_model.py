@@ -33,7 +33,7 @@ from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.cache_management import SampleCache, cached
+from lighteval.utils.cache_management import cached
 from lighteval.utils.imports import is_package_available, requires
 
 
@@ -161,9 +161,6 @@ class LiteLLMClient(LightevalModel):
         self.prompt_manager = PromptManager(
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
-
-        # Initialize cache for tokenization and predictions
-        self._cache = SampleCache(config)
 
     def _prepare_stop_sequence(self, stop_sequence):
         """Prepare and validate stop sequence."""

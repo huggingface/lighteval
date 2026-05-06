@@ -31,7 +31,6 @@ from transformers.models.auto.tokenization_auto import AutoTokenizer
 from lighteval.models.abstract_model import ModelConfig
 from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel
 from lighteval.tasks.prompt_manager import PromptManager
-from lighteval.utils.cache_management import SampleCache
 from lighteval.utils.imports import Extra, is_package_available, requires
 
 
@@ -129,9 +128,6 @@ class ModelClient(InferenceEndpointModel):
         self.prompt_manager = PromptManager(
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
-
-        # Initialize cache for tokenization and predictions
-        self._cache = SampleCache(config)
 
     @requires(Extra.TGI)
     def _async_process_request(
