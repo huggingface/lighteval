@@ -46,7 +46,16 @@ def apply_metric(responses: list[ModelResponse], docs: list[Doc], metrics: list[
 
         # Add batched metric results for this sample
         for metric, metric_outputs in zip(batched_metrics, batched_outputs):
-            output.update({metric.metric_name: metric_outputs[metric.metric_name][i]})
+            # Batched metrics may return either:
+            # 1) list[dict[str, Any]] with one dict per sample, or
+            # 2) dict[str, list[Any]] with one list per metric name.
+            # Support both shapes for single and grouped metrics.
+            if isinstance(metric_outputs, list):
+                output.update(metric_outputs[i])
+            else:
+                metric_names = metric.metric_name if isinstance(metric.metric_name, list) else [metric.metric_name]
+                for metric_name in metric_names:
+                    output[metric_name] = metric_outputs[metric_name][i]
 
         # Add non-batched metric results for this sample
         for metric in non_batched_metrics:

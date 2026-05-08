@@ -123,6 +123,7 @@ multilingual = [
     "spacy[ja,ko,th]>=3.8.0",
     "jieba", # for chinese tokenizer
     "pyvi", # for vietnamese tokenizer
+    "gemba",  # swiss legal evals
 ]
 math = ["latex2sympy2_extended==1.0.6"]
 wandb = ["wandb"]
