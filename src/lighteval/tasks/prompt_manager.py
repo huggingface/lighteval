@@ -28,6 +28,7 @@ from enum import Enum
 from itertools import cycle
 from typing import TYPE_CHECKING
 
+from lighteval.models.model_input import ChatTemplateParameters
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list
 
@@ -40,10 +41,17 @@ if TYPE_CHECKING:
 
 
 class PromptManager:
-    def __init__(self, use_chat_template: bool = False, tokenizer=None, system_prompt: str | None = None):
+    def __init__(
+        self,
+        use_chat_template: bool = False,
+        tokenizer=None,
+        system_prompt: str | None = None,
+        chat_template_parameters: ChatTemplateParameters | None = None,
+    ):
         self.use_chat_template = use_chat_template
         self.tokenizer = tokenizer
         self.system_prompt = system_prompt  # System prompt to be used in chat templates
+        self.chat_template_parameters = chat_template_parameters if chat_template_parameters else {}
 
     def prepare_prompt(self, doc: Doc) -> str:
         """Prepare a prompt from a document, either using chat template or plain text format.
@@ -133,6 +141,7 @@ class PromptManager:
                 messages,
                 tokenize=False,
                 add_generation_prompt=True,
+                **self.chat_template_parameters.to_transformers_dict(),
             )
 
         else:  # for apis
