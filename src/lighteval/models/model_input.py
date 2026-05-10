@@ -52,6 +52,9 @@ class GenerationParameters(BaseModel, extra="forbid"):
     # response format to be followed by the model,
     # more info here https://platform.openai.com/docs/api-reference/chat/create#chat-create-response_format
     response_format: str | None = None  # inference_providers
+    # Provider-agnostic reasoning control for litellm; litellm maps it to each provider's
+    # native format (e.g., OpenAI reasoning_effort, Anthropic thinking, Google thinkingBudget).
+    reasoning_effort: str | None = None  # litellm
 
     @classmethod
     def from_dict(cls, config_dict: dict):
@@ -118,6 +121,7 @@ class GenerationParameters(BaseModel, extra="forbid"):
             "seed": self.seed,
             "repetition_penalty": self.repetition_penalty,
             "frequency_penalty": self.frequency_penalty,
+            "reasoning_effort": self.reasoning_effort,
         }
         return {k: v for k, v in args.items() if v is not None}
 
@@ -157,7 +161,12 @@ class GenerationParameters(BaseModel, extra="forbid"):
 
         # Task specific sampling params to set in model: n, best_of, use_beam_search
         # Generation specific params to set in model: logprobs, prompt_logprobs
-        x = {sampling_params_to_vllm_naming.get(k, k): v for k, v in self.model_dump().items() if v is not None}
+        x = {
+            sampling_params_to_vllm_naming.get(k, k): v
+            # Exclude reasoning_effort: vLLM's SamplingParams doesn't support it
+            for k, v in self.model_dump(exclude={"reasoning_effort"}).items()
+            if v is not None
+        }
         # VLLM max_tokens is 16 by default, however the pipeline expect the max_tokens to be None, if the user didn't specify it
         if not x.get("max_tokens"):
             x["max_tokens"] = None
@@ -172,7 +181,8 @@ class GenerationParameters(BaseModel, extra="forbid"):
         """
         # Task specific sampling params to set in model: n, best_of, use_beam_search
         # Generation specific params to set in model: logprobs, prompt_logprobs
-        return {k: v for k, v in self.model_dump().items() if v is not None}
+        # Exclude reasoning_effort: vLLM's SamplingParams doesn't support it
+        return {k: v for k, v in self.model_dump(exclude={"reasoning_effort"}).items() if v is not None}
 
     def to_transformers_dict(self) -> dict:
         """Selects relevant generation and sampling parameters for transformers models.

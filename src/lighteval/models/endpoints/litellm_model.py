@@ -173,12 +173,27 @@ class LiteLLMClient(LightevalModel):
                 stop_sequence = [s for s in stop_sequence if s and s.strip()]
         return stop_sequence
 
+    @staticmethod
+    def _is_o_series_model(model_name: str) -> bool:
+        base_model_name = model_name.split("/")[-1].lower()
+        return base_model_name.startswith(("o1", "o3", "o4"))
+
     def _prepare_max_new_tokens(self, max_new_tokens) -> int | None:
         """Calculate completion tokens based on max_new_tokens."""
         if not max_new_tokens or max_new_tokens <= 0:
             return None
 
-        if supports_reasoning(self.model):
+        reasoning_effort = self.generation_parameters.reasoning_effort
+        should_boost_for_reasoning = isinstance(reasoning_effort, str) and reasoning_effort.strip().lower() != "none"
+
+        if supports_reasoning(self.model) and reasoning_effort is None:
+            logger.warning(
+                f"Model {self.model} supports reasoning but no reasoning_effort is set. "
+                "Token budget will not be boosted for reasoning. If you want the model to reason, "
+                "set reasoning_effort explicitly (e.g., 'low', 'medium', 'high')."
+            )
+
+        if supports_reasoning(self.model) and should_boost_for_reasoning:
             # We need to allow more tokens to include reasoning tokens
             max_new_tokens = min(max_new_tokens * 10, self.max_length)
 
@@ -212,12 +227,23 @@ class LiteLLMClient(LightevalModel):
             "timeout": self.timeout,
         }
 
-        if "o1" in self.model:
-            logger.warning("O1 models do not support temperature, top_p, stop sequence. Disabling.")
+        litellm_generation_kwargs = self.generation_parameters.to_litellm_dict()
+        model_supports_reasoning = supports_reasoning(self.model)
+        # O-series models reject sampling params (temperature, top_p, stop); only pass reasoning_effort
+        if self._is_o_series_model(self.model):
+            logger.warning("O-series models do not support temperature, top_p, stop sequence. Disabling.")
+            reasoning_effort = litellm_generation_kwargs.get("reasoning_effort")
+            if reasoning_effort is not None:
+                kwargs["reasoning_effort"] = reasoning_effort
         else:
-            kwargs.update(self.generation_parameters.to_litellm_dict())
+            kwargs.update(litellm_generation_kwargs)
 
-        if kwargs.get("max_completion_tokens", None) is None:
+        # OpenAI non-reasoning models reject max_tokens and max_completion_tokens set at the same time;
+        # drop max_completion_tokens and keep max_tokens (already set above)
+        is_openai_non_reasoning_model = self.provider == "openai" and not model_supports_reasoning
+        if is_openai_non_reasoning_model:
+            kwargs.pop("max_completion_tokens", None)
+        elif kwargs.get("max_completion_tokens", None) is None:
             kwargs["max_completion_tokens"] = max_new_tokens
 
         for attempt in range(self.API_MAX_RETRY):
