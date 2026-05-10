@@ -435,7 +435,7 @@ def eval(  # noqa C901
 ):
     from lighteval.tasks.registry import Registry
 
-    registry = Registry(tasks=tasks, custom_tasks=None, load_multilingual=False)
+    registry = Registry(tasks=tasks, custom_tasks=custom_tasks, load_multilingual=True)
     task_configs = registry.task_to_configs
     inspect_ai_tasks = []
 
