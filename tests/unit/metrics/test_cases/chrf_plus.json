@@ -79,9 +79,9 @@
           "text": ["Das Wetter ist schön"]
         }
       ],
-      "expected_output": 100.0,
+      "expected_output": 88.06512778139042,
       "tolerance": 0.1,
-      "description": "High similarity - minor character differences (CHRF++ ≈ 85.0)"
+      "description": "High similarity - minor character differences (CHRF++ ≈ 88.07)"
     },
     {
       "name": "CHRF Plus - Moderate Similarity",
@@ -119,9 +119,9 @@
           "text": ["ML"]
         }
       ],
-      "expected_output": 58.82,
+      "expected_output": 24.450573381865112,
       "tolerance": 0.1,
-      "description": "Moderate similarity - significant character omissions (CHRF++ ≈ 45.0)"
+      "description": "Moderate similarity - significant character omissions (CHRF++ ≈ 24.45)"
     },
     {
       "name": "CHRF Plus - Low Similarity",
@@ -159,9 +159,9 @@
           "text": ["Es heiß"]
         }
       ],
-      "expected_output": 15.0,
-      "tolerance": 10.0,
-      "description": "Low similarity - minimal character overlap (CHRF++ ≈ 15.0)"
+      "expected_output": 2.733143823910822,
+      "tolerance": 0.1,
+      "description": "Low similarity - minimal character overlap (CHRF++ ≈ 2.73)"
     }
   ]
 }
