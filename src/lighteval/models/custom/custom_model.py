@@ -33,7 +33,7 @@ class CustomModelConfig(ModelConfig):
     This class will be automatically detected and instantiated when loading the model.
 
     Args:
-        model (str):
+        model_name (str):
             An identifier for the model. This can be used to track which model was evaluated
             in the results and logs.
 
@@ -46,23 +46,41 @@ class CustomModelConfig(ModelConfig):
         ```python
         # Define config
         config = CustomModelConfig(
-            model="my-custom-model",
+            model_name="my-custom-model",
             model_definition_file_path="path/to/my_model.py"
         )
 
         # Example custom model file (my_model.py):
         from lighteval.models.abstract_model import LightevalModel
+        from lighteval.models.model_output import ModelResponse
+        from lighteval.tasks.requests import Doc
 
         class MyCustomModel(LightevalModel):
-            def __init__(self, config, env_config):
-                super().__init__(config, env_config)
+            def __init__(self, config):
+                self.config = config
                 # Custom initialization...
+
+            @property
+            def tokenizer(self):
+                # Return the tokenizer used by your model
+                ...
+
+            @property
+            def add_special_tokens(self) -> bool:
+                return False
+
+            @property
+            def max_length(self) -> int:
+                return 2048
 
             def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
                 # Custom generation logic...
                 pass
 
             def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
+                pass
+
+            def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
                 pass
         ```
 
