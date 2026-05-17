@@ -436,6 +436,8 @@ class JudgeLM:
                         max_tokens=self.max_tokens,
                         n=1,
                     )
+                    if not response.choices or response.choices[0].message is None:
+                        raise ValueError("LLM returned empty or filtered response")
                     text = response.choices[0].message.content
                     return text
                 except Exception as e:
