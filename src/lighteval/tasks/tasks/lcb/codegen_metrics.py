@@ -16,6 +16,7 @@ paper:
 import ast
 import base64
 import faulthandler
+import io
 import json
 import multiprocessing
 import os
@@ -652,8 +653,17 @@ def compute_metrics_from_results(results, k_list: list[int] = [1, 5]) -> dict[st
 def translate_private_test_cases(encoded_data: str) -> dict[str, str]:
     decoded_data = base64.b64decode(encoded_data)
     decompressed_data = zlib.decompress(decoded_data)
-    original_data = pickle.loads(decompressed_data)
+    original_data = _load_private_test_cases_payload(decompressed_data)
     return json.loads(original_data)
+
+
+class _PrivateTestCasesUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        raise pickle.UnpicklingError(f"Unsupported pickle global in private test cases: {module}.{name}")
+
+
+def _load_private_test_cases_payload(data: bytes):
+    return _PrivateTestCasesUnpickler(io.BytesIO(data)).load()
 
 
 def extract_code(model_output: str) -> str:
