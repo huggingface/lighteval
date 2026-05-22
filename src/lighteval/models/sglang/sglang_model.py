@@ -34,7 +34,7 @@ from lighteval.models.model_output import ModelResponse
 from lighteval.models.utils import _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.cache_management import SampleCache, cached
+from lighteval.utils.cache_management import cached
 from lighteval.utils.imports import is_package_available, requires
 
 
@@ -162,9 +162,6 @@ class SGLangModel(LightevalModel):
         self.attention_backend = config.attention_backend
         self.pairwise_tokenization = config.pairwise_tokenization
         self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer, config.system_prompt)
-
-        # Initialize cache for tokenization and predictions
-        self._cache = SampleCache(config)
 
     @property
     def tokenizer(self):

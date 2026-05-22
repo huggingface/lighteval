@@ -50,7 +50,7 @@ from lighteval.tasks.requests import (
     Doc,
     SamplingMethod,
 )
-from lighteval.utils.cache_management import SampleCache, cached
+from lighteval.utils.cache_management import cached
 from lighteval.utils.imports import is_package_available
 from lighteval.utils.parallelism import find_executable_batch_size
 from lighteval.utils.utils import as_list
@@ -303,9 +303,6 @@ class NanotronLightevalModel(LightevalModel):
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
         self.pairwise_tokenization = nanotron_config.lighteval_config.tasks.pairwise_tokenization
         self.batch_size = nanotron_config.lighteval_config.batch_size
-
-        # Initialize cache for tokenization and predictions
-        self._cache = SampleCache(nanotron_config)
 
     @property
     def tokenizer(self):

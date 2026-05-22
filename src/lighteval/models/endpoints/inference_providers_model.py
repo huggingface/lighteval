@@ -36,7 +36,7 @@ from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.cache_management import SampleCache, cached
+from lighteval.utils.cache_management import cached
 
 
 logger = logging.getLogger(__name__)
@@ -133,9 +133,6 @@ class InferenceProvidersClient(LightevalModel):
         self.prompt_manager = PromptManager(
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
-
-        # Initialize cache for tokenization and predictions
-        self._cache = SampleCache(config)
 
     async def __call_api(self, prompt: List[dict], num_samples: int) -> Optional[ChatCompletionOutput]:
         """Make API call with exponential backoff retry logic.

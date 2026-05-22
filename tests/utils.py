@@ -32,7 +32,6 @@ from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.registry import Registry
 from lighteval.tasks.requests import Doc
-from lighteval.utils.cache_management import SampleCache
 from lighteval.utils.imports import is_package_available
 
 
@@ -54,7 +53,6 @@ class FakeModel(LightevalModel):
         self.greedy_until_responses = greedy_until_responses
         self.loglikelihood_responses = loglikelihood_responses
         self.loglikelihood_rolling_responses = loglikelihood_rolling_responses
-        self._cache = SampleCache(self.config)
 
     @property
     def tokenizer(self):

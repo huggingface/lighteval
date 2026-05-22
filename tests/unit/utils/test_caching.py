@@ -25,13 +25,14 @@ import unittest
 from dataclasses import asdict
 from unittest.mock import Mock, patch
 
+import diskcache
 import pytest
 import torch
 
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.cache_management import SampleCache
+from lighteval.utils.cache_management import hash_request
 from lighteval.utils.imports import Extra, is_package_available
 
 
@@ -60,46 +61,6 @@ class TestCaching(unittest.TestCase):
             )
             self.docs.append(doc)
             self.model_responses.append(model_resp)
-
-    def test_cache_directory_structure(self):
-        """Test that cache directories are created correctly."""
-        from lighteval.models.dummy.dummy_model import DummyModelConfig
-        from lighteval.models.endpoints.endpoint_model import InferenceEndpointModelConfig
-        from lighteval.models.endpoints.tgi_model import TGIModelConfig
-        from lighteval.models.sglang.sglang_model import SGLangModelConfig
-        from lighteval.models.transformers.transformers_model import TransformersModelConfig
-        from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModelConfig
-        from lighteval.models.vllm.vllm_model import VLLMModelConfig
-
-        # We skip AdapterModelConfig, DeltaModelConfig because of imports
-        # We skip FullNanotronConfig as it's not standardized with our other configs, will need to be homogeneized
-        model_configs = [
-            TransformersModelConfig,
-            VLMTransformersModelConfig,
-            VLLMModelConfig,
-            InferenceEndpointModelConfig,
-            TGIModelConfig,
-            SGLangModelConfig,
-            DummyModelConfig,
-        ]
-
-        for model_config in model_configs:
-            with self.subTest(model_config=model_config):
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    model_name = f"test_model_{model_config.__name__}"
-                    # if model_config in [AdapterModelConfig, DeltaModelConfig]:
-                    #    config = model_config(model_name=model_name, base_model=model_name + "2", cache_dir=temp_dir)
-                    # else:
-                    config = model_config(model_name=model_name, cache_dir=temp_dir)
-
-                    # Create cache with custom directory
-                    cache = SampleCache(config)
-
-                    # Check directory structure
-                    folder = cache.cache_dir
-                    self.assertTrue(folder.exists())
-                    self.assertIn(str(temp_dir), str(folder))
-                    self.assertIn(model_name, str(folder))
 
     def test_cache_decorator_presence(self):
         """Test that @cached decorators are present on the right methods."""
@@ -148,33 +109,24 @@ class TestCaching(unittest.TestCase):
                 process_inputs = getattr(model, function_name)
                 process_inputs(self.docs)
 
-                cache: SampleCache = model._cache
-
-                # Check task_id
-                task_id = cache.get_task_id(self.task_name, sampling_method)
-                self.assertEqual(task_id.task_name, self.task_name)
-                self.assertEqual(task_id.sampling_method, sampling_method)
-
-                # Verify cache files were created
-                cache_file = cache.get_cache_path(task_id)
-                self.assertTrue(cache_file.exists(), "Cache file not created")
-
-                # Test retrieving from cache
-                self.assertEqual(cache._load_cached_indices()[task_id], [doc.id for doc in self.docs])
-                uncached_docs, tasks_with_cached_samples = cache.get_samples_to_process_and_cache(
-                    docs=self.docs, sampling_method=sampling_method
-                )
-                self.assertEqual(tasks_with_cached_samples, {task_id})
-                self.assertEqual(
-                    len(uncached_docs), 0, f"{len(uncached_docs)} documents not found in cache when it should be 0"
-                )
-
-                # Verify cached results match original
-                cached_responses = cache.get_samples_from_cache(
-                    docs=self.docs, task_ids=[task_id], sampling_method=sampling_method
-                )
-                for cached_response, response in zip(cached_responses, self.model_responses):
-                    self.assertEqual(asdict(cached_response), asdict(response))
+                with diskcache.Cache(model.config.cache_dir) as cache:
+                    for doc in self.docs:
+                        key = hash_request(
+                            doc, sampling_method=sampling_method, config=model.config, args=[], kwargs={}
+                        )
+                        self.assertIn(key, cache, f"Document {doc.id} not found in cache after processing")
+                        self.assertEqual(
+                            cache[key]["doc"], asdict(doc), f"Cached doc does not match original for {doc.id}"
+                        )
+                        self.assertEqual(
+                            cache[key]["sampling_method"], sampling_method, f"Sampling method mismatch for {doc.id}"
+                        )
+                        self.assertEqual(cache[key]["config"], model.config.dict(), f"Config mismatch for {doc.id}")
+                        self.assertEqual(
+                            asdict(cache[key]["response"]),
+                            asdict(self.model_responses[self.docs.index(doc)]),
+                            f"Response mismatch for {doc.id}",
+                        )
 
     @patch("lighteval.models.transformers.transformers_model.TransformersModel._loglikelihood_tokens")
     @patch("lighteval.models.transformers.transformers_model.TransformersModel._padded_greedy_until")
