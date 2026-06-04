@@ -22,6 +22,7 @@
 
 import logging
 import os
+from dataclasses import replace
 from datetime import timedelta
 from typing import Dict, Optional, Tuple, Union
 
@@ -898,8 +899,13 @@ class TransformersModel(LightevalModel):
         docs: list[Doc],
     ) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
+        # Perplexity tasks put the full text in `query` with `choices=None`; score it as
+        # a single continuation with empty context (mirrors the Nanotron backend) instead
+        # of crashing the shared path that iterates over `doc.choices`. Originals are kept
+        # so the metric still reads the text length from `doc.query`.
+        rolling_docs = [replace(doc, query="", choices=[doc.query]) if not doc.choices else doc for doc in docs]
         return self._loglikelihood_tokens(
-            docs,
+            rolling_docs,
             rolling=True,
         )
 
@@ -991,20 +997,17 @@ class TransformersModel(LightevalModel):
                             choice_continuation, dtype=torch.long, device=self.device
                         )
                         continuation_length = len(choice_continuation_tensor)
-                        if rolling:
-                            choice_logits = choice_logits.unsqueeze(0).to(self.device)  # [1, seq, vocab]
-                            choice_continuation_tensor = (
-                                choice_continuation_tensor[:input_length].unsqueeze(0).to(self.device)
-                            )  # [1, seq]
-                        else:
-                            choice_logits = (
-                                choice_logits[input_length - continuation_length - 1 : input_length - 1]
-                                .unsqueeze(0)
-                                .to(self.device)
-                            )
-                            choice_continuation_tensor = choice_continuation_tensor.unsqueeze(0).to(
-                                self.device
-                            )  # [1, seq]
+                        # logits[i] predicts token i+1, so score the continuation against
+                        # logit positions [start : input_length-1]. Rolling previously used
+                        # the full unshifted logits, misaligning every token and inflating
+                        # perplexity; with an empty context the unpredictable first token is
+                        # dropped.
+                        start = max(input_length - continuation_length - 1, 0)
+                        choice_logits = choice_logits[start : input_length - 1].unsqueeze(0).to(self.device)
+                        n_pos = choice_logits.shape[1]
+                        choice_continuation_tensor = (
+                            choice_continuation_tensor[continuation_length - n_pos :].unsqueeze(0).to(self.device)
+                        )
 
                         # Check if per-token argmax is exactly equal to continuation
                         greedy_tokens = choice_logits.argmax(dim=-1).to(self.device)

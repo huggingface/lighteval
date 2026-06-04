@@ -146,7 +146,15 @@ class TestCaching(unittest.TestCase):
         for function_name, sampling_method in test_cases:
             with self.subTest(function_name=function_name):
                 process_inputs = getattr(model, function_name)
-                process_inputs(self.docs)
+                results = process_inputs(self.docs)
+
+                # The @cached wrapper must return one response per doc. Regression guard:
+                # PERPLEXITY samples used to be dropped by a content-based re-filter.
+                self.assertEqual(
+                    len(results),
+                    len(self.docs),
+                    f"{function_name} returned {len(results)} responses, expected {len(self.docs)}",
+                )
 
                 cache: SampleCache = model._cache
 

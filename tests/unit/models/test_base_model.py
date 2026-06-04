@@ -20,8 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import math
+
+import pytest
+import torch
+
 from lighteval.models.model_loader import load_model
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
+from lighteval.tasks.requests import Doc
 
 
 def test_empty_requests():
@@ -33,3 +39,31 @@ def test_empty_requests():
     assert model.loglikelihood([]) == []
     assert model.loglikelihood_rolling([]) == []
     assert model.greedy_until([]) == []
+
+
+def test_loglikelihood_rolling_matches_manual_scoring():
+    """Rolling perplexity on a `choices=None` doc (the_pile/wikitext style) should not
+    crash and should match a plain autoregressive logits[:-1] vs ids[1:] scoring."""
+    model_config = TransformersModelConfig(
+        model_name="hf-internal-testing/tiny-random-LlamaForCausalLM", model_parallel=False, revision="main"
+    )
+    model: TransformersModel = load_model(config=model_config)
+
+    text = "The quick brown fox jumps over the lazy dog."
+    doc = Doc(task_name="ppl", query=text, choices=None, gold_index=None)
+
+    (response,) = model.loglikelihood_rolling([doc])
+    total_logprob = float(sum(response.logprobs))
+    assert math.isfinite(total_logprob)
+
+    # Reference: score the exact tokens the model sees (context + continuation) with the
+    # standard one-position shift.
+    ctx_ids = model.tok_encode("", add_special_tokens=model.add_special_tokens)
+    cont_ids = model.tok_encode(text, add_special_tokens=False)
+    input_ids = torch.tensor([ctx_ids + cont_ids], device=model.device)
+    with torch.no_grad():
+        logits = model.model(input_ids).logits.float()
+    logprobs = torch.log_softmax(logits[:, :-1], dim=-1)
+    reference = logprobs.gather(-1, input_ids[:, 1:].unsqueeze(-1)).squeeze(-1).sum().item()
+
+    assert total_logprob == pytest.approx(reference, rel=1e-3, abs=1e-2)

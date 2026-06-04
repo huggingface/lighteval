@@ -425,10 +425,11 @@ def cached(sampling_method: SamplingMethod = None):  # noqa C901
             # 3) Create final results by pulling from newly saved file cache
             final_cached_results = cache.get_samples_from_cache(docs, task_ids, sampling_method)
 
-            # 4) We only keep samples with the correct sampling method
-            final_results = [
-                s for s in final_cached_results if cache.get_sampling_method(cache._dump_sample(s)) == sampling_method
-            ]
+            # 4) Cache files are already partitioned per sampling method, so the loaded
+            # samples are correct as-is. (get_sampling_method() infers the method from
+            # sample content and cannot tell PERPLEXITY from LOGPROBS, so re-filtering
+            # here would drop all PERPLEXITY samples.)
+            final_results = list(final_cached_results)
 
             if any(r is None for r in final_results):
                 raise ValueError("Problem while loading and aggregating items from cache.")
