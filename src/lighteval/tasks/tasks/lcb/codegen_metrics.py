@@ -30,7 +30,7 @@ import zlib
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from decimal import Decimal
 from enum import Enum
-from io import StringIO
+from io import BytesIO, StringIO
 from types import ModuleType
 from typing import Callable, Optional
 
@@ -129,17 +129,36 @@ def make_function(code: str) -> str:
         return code
 
 
+class _StdinWithBuffer:
+    """Stand-in for ``sys.stdin`` while running a solution.
+
+    Preserves the existing text behaviour (``read``/``readline``/``readlines``)
+    and additionally exposes ``.buffer`` so solutions that read raw bytes via
+    ``sys.stdin.buffer`` (a common fast-I/O idiom) are graded correctly. A plain
+    ``StringIO`` has no ``.buffer`` and cannot have one attached (readonly type).
+    """
+
+    def __init__(self, inputs: str):
+        self._inputs = inputs
+        self._lines = iter(inputs.split("\n"))
+        self.buffer = BytesIO(inputs.encode())
+
+    def read(self, *args):
+        return self._inputs
+
+    def readline(self, *args):
+        return next(self._lines)
+
+    def readlines(self, *args):
+        return self._inputs.split("\n")
+
+
 def call_method(method: Callable, inputs: list | str):
     if isinstance(inputs, list):
         inputs = "\n".join(inputs)
 
-    inputs_line_iterator = iter(inputs.split("\n"))
-
     @patch("builtins.open", mock_open(read_data=inputs))
-    @patch("sys.stdin", StringIO(inputs))
-    @patch("sys.stdin.readline", lambda *args: next(inputs_line_iterator))
-    @patch("sys.stdin.readlines", lambda *args: inputs.split("\n"))
-    @patch("sys.stdin.read", lambda *args: inputs)
+    @patch("sys.stdin", _StdinWithBuffer(inputs))
     def _inner_call_method(_method):
         try:
             return _method()
