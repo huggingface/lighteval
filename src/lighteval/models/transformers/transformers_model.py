@@ -112,6 +112,10 @@ class TransformersModelConfig(ModelConfig):
         multichoice_continuations_start_space (bool | None):
             Whether to add a space before multiple choice continuations. If None, uses model default.
             True forces adding space, False removes leading space if present.
+        move_trailing_context_space (bool):
+            Whether to move a trailing context space onto the continuation before tokenizing.
+            Defaults to True (natural multichoice tokenization). Set False for answer-only
+            perplexity / bits-per-byte so the continuation stays exactly the gold string.
         pairwise_tokenization (bool):
             Whether to tokenize context and continuation separately or together. Defaults to False.
         continuous_batching (bool):
@@ -160,6 +164,7 @@ class TransformersModelConfig(ModelConfig):
     trust_remote_code: bool = False
     compile: bool = False
     multichoice_continuations_start_space: bool | None = None
+    move_trailing_context_space: bool = True
     pairwise_tokenization: bool = False
     continuous_batching: bool = False
     override_chat_template: bool = None
@@ -202,6 +207,7 @@ class TransformersModel(LightevalModel):
         self.accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
         self._device = self.accelerator.device
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
+        self.move_trailing_context_space = config.move_trailing_context_space
         self._add_special_tokens = config.add_special_tokens or False
         self.skip_special_tokens = config.skip_special_tokens or True
         self.pairwise_tokenization = config.pairwise_tokenization
@@ -261,6 +267,7 @@ class TransformersModel(LightevalModel):
 
         self.config = config
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
+        self.move_trailing_context_space = config.move_trailing_context_space
         self._add_special_tokens = config.add_special_tokens
         self.skip_special_tokens = config.skip_special_tokens
         self.pairwise_tokenization = config.pairwise_tokenization
