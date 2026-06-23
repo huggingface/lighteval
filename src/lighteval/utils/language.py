@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from dataclasses import dataclass
 from enum import Enum
 
 
@@ -240,6 +241,51 @@ class Language(Enum):
     ZULU = "zul"
 
 
+class Script(str, Enum):
+    ARABIC = "Arab"
+    ARMENIAN = "Armn"
+    BENGALI = "Beng"
+    CYRILLIC = "Cyrl"
+    DEVANAGARI = "Deva"
+    ETHIOPIC = "Ethi"
+    GEORGIAN = "Geor"
+    GREEK = "Grek"
+    GUJARATI = "Gujr"
+    GURMUKHI = "Guru"
+    HAN_SIMPLIFIED = "Hans"
+    HAN_TRADITIONAL = "Hant"
+    HANGUL = "Hang"
+    HEBREW = "Hebr"
+    JAPANESE = "Jpan"
+    KANNADA = "Knda"
+    KHMER = "Khmr"
+    LAO = "Laoo"
+    LATIN = "Latn"
+    MALAYALAM = "Mlym"
+    MYANMAR = "Mymr"
+    ODIA = "Orya"
+    OL_CHIKI = "Olck"
+    SINHALA = "Sinh"
+    TAMIL = "Taml"
+    TELUGU = "Telu"
+    THAI = "Thai"
+    TIBETAN = "Tibt"
+    TIFINAGH = "Tfng"
+
+
+@dataclass(frozen=True)
+class LanguageWithScript:
+    language: Language
+    script: Script
+
+    @property
+    def value(self) -> str:
+        return self.language.value
+
+
+LanguageTag = Language | LanguageWithScript
+
+
 # This mapping was created for beleble, it converts iso_639_3 individual codes to iso_639_3 macro codes
 # However it requires iso639-lang package and I don't see a point installing it just for this mapping
 # Code to generate:
@@ -262,6 +308,14 @@ def manage_duplicate_language_codes(langcode):
     if langcode == "swh":  # Swahili
         langcode = "swa"
     return langcode
+
+
+def language_from_tag(language_tag: str) -> LanguageTag:
+    language_code, _, script_code = language_tag.partition("_")
+    language = Language(manage_duplicate_language_codes(language_code))
+    if not script_code:
+        return language
+    return LanguageWithScript(language=language, script=Script(script_code))
 
 
 iso_639_3_ind_to_iso_639_3_macro = {
