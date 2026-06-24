@@ -5,7 +5,7 @@ Hub, you can take advantage of the `hf_data_files` argument to point lighteval
 at local JSON/CSV resources. This makes it easy to evaluate datasets that live
 in your repo or that are generated on the fly.
 
-Internally, `hf_data_files` is passed directly to the `data_files` parameter of `datasets.load_dataset` ([docs]((https://huggingface.co/docs/datasets/en/package_reference/loading_methods#datasets.load_dataset))).
+Internally, `hf_data_files` is passed directly to the `data_files` parameter of `datasets.load_dataset` ([docs](https://huggingface.co/docs/datasets/en/package_reference/loading_methods#datasets.load_dataset)).
 
 See [adding a custom task](adding-a-custom-task) for more information on how to create a custom task.
 
