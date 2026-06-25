@@ -68,7 +68,9 @@ def helm_normalizer(text: str) -> str:
     def _tokenize(text):
         return re.split(" |-", text)
 
-    tokens = [white_space_fix(remove_articles(homogeneize_numbers(remove_punc(lower(t))))) for t in _tokenize(text)]
+    # homogeneize_numbers must run before remove_punc: otherwise remove_punc strips the decimal
+    # point first, so "1.0" -> "10" -> float -> "10.0" (distinct numbers collide, and 1.0 != 1).
+    tokens = [white_space_fix(remove_articles(remove_punc(homogeneize_numbers(lower(t))))) for t in _tokenize(text)]
     return " ".join([t for t in tokens if t != ""]).strip()
 
 
