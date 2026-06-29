@@ -92,6 +92,20 @@ class EnhancedJSONEncoder(json.JSONEncoder):
             return type(o).__name__
 
 
+MODEL_CONFIG_CREDENTIAL_FIELDS = {
+    "api_key",
+    "inference_server_auth",
+}
+
+
+def _redact_model_config_credentials(model_config: dict) -> dict:
+    model_config_dict = dict(model_config)
+    for field in MODEL_CONFIG_CREDENTIAL_FIELDS:
+        if field in model_config_dict and model_config_dict[field] is not None:
+            model_config_dict[field] = "REDACTED"
+    return model_config_dict
+
+
 class EvaluationTracker:
     """Tracks and manages evaluation results, metrics, and logging for model evaluations.
 
@@ -211,7 +225,7 @@ class EvaluationTracker:
     @property
     def results(self):
         config_general = asdict(self.general_config_logger)
-        config_general["model_config"] = config_general["model_config"].model_dump()
+        config_general["model_config"] = _redact_model_config_credentials(config_general["model_config"].model_dump())
         results = {
             "config_general": config_general,
             "results": self.metrics_logger.metric_aggregated,
@@ -376,6 +390,9 @@ class EvaluationTracker:
             "summary_tasks": self.details_logger.compiled_details,
             "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
         }
+        to_dump["config_general"]["model_config"] = _redact_model_config_credentials(
+            to_dump["config_general"]["model_config"].model_dump()
+        )
 
         final_dict = {
             k: {eval_name.replace("|", ":"): eval_score for eval_name, eval_score in v.items()}
