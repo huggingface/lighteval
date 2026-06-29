@@ -20,9 +20,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import logging
+import re
 
 
 logger = logging.getLogger(__name__)
+
+POLLUX_DEFAULT_SCORE_RE = re.compile(r"^\s*(\d+(?:[.,]\d+)?)\s*$")
+
+POLLUX_DEFAULT_FEEDBACK_RE: re.Pattern[str] | None = None
+
+POLLUX_TAGGED_SCORE_RE = re.compile(
+    r"\[RESULT\]\s*([^\s\[]+)\s*\[END\]", re.IGNORECASE | re.DOTALL
+)
+POLLUX_TAGGED_FEEDBACK_RE = re.compile(
+    r"\[FEEDBACK\](.*?)\[RESULT\]", re.IGNORECASE | re.DOTALL
+)
 
 
 def get_judge_prompt_simpleqa(question: str, answer: str, gold: str, **kwargs):
@@ -125,3 +137,107 @@ def process_judge_response_simpleqa(response: str) -> float:
     else:
         logger.warning(f"Unknown response from judge: {response}")
         return 0.0
+
+
+def _build_pollux_prompt_text(
+    instruction: str,
+    answer: str,
+    criteria_name: str,
+    rubrics: str,
+    reference_answer: str | None = None,
+) -> str:
+    """Format the POLLUX judge user message."""
+    sections = [
+        "### Задание для оценки:\n" + instruction,
+    ]
+    if reference_answer is not None and reference_answer.strip():
+        sections.append("### Эталонный ответ:\n" + reference_answer)
+    sections.extend(
+        [
+            "### Ответ для оценки:\n" + answer,
+            "### Критерий оценки:\n" + criteria_name,
+            "### Шкала оценивания по критерию:\n" + rubrics,
+        ]
+    )
+    return "\n\n".join(sections)
+
+
+def get_judge_prompt_pollux(
+    question: str,
+    answer: str,
+    options: list[str] | None = None,  # noqa: ARG001, left for compatibility with JudgeLM implementation
+    gold: str | None = None,
+    criteria_name: str = "",
+    rubrics: str = "",
+):
+    """Build chat messages for the POLLUX judge (OpenAI-style ``messages`` list).
+
+    Args:
+        question: Task instruction / question (maps to POLLUX ``instruction``).
+        answer: Model answer to score.
+        options: Ignored (POLLUX does not use multiple-choice options).
+        gold: Optional reference answer.
+        criteria_name: Criterion name and description.
+        rubrics: Evaluation scale definitions for the criterion (normalized to a string format, see `metric_utils.normalize_rubrics`).
+
+    Returns:
+        A one-turn chat messages list ``[{"role": "user", "content": ...}]``.
+    """
+    body = _build_pollux_prompt_text(
+        instruction=question,
+        answer=answer,
+        criteria_name=criteria_name,
+        rubrics=rubrics,
+        reference_answer=gold if gold else None,
+    )
+    return [{"role": "user", "content": body}]
+
+
+def make_pollux_score_parser(pattern=None):
+    """Build a callable that parses POLLUX judge output to a float score.
+
+    ``pattern`` defaults to :data:`POLLUX_DEFAULT_SCORE_RE` (bare numeric response).
+    Use :data:`POLLUX_TAGGED_SCORE_RE` for ``[RESULT] <score> [END]`` output.
+    """
+    effective = pattern if pattern is not None else POLLUX_DEFAULT_SCORE_RE
+
+    def _parse(response: str | object) -> float:
+        text = response if isinstance(response, str) else str(response)
+        if not text:
+            return 0.0
+        match = effective.search(text)
+        if not match:
+            logger.warning("POLLUX judge response could not be parsed for score; returning 0.0")
+            return 0.0
+        raw = match.group(1).strip().replace(",", ".")
+        try:
+            return float(raw)
+        except ValueError:
+            logger.warning(f"POLLUX judge score not numeric: {raw!r}")
+            return 0.0
+
+    return _parse
+
+
+def make_pollux_feedback_parser(pattern=None):
+    """Build a callable that extracts feedback from POLLUX judge text.
+
+    ``pattern`` defaults to :data:`POLLUX_DEFAULT_FEEDBACK_RE` (no feedback text).
+    Use :data:`POLLUX_TAGGED_FEEDBACK_RE` for ``[FEEDBACK]...[RESULT]`` output.
+    """
+    effective = pattern if pattern is not None else POLLUX_DEFAULT_FEEDBACK_RE
+
+    def _parse(response: str | object) -> str:
+        if effective is None:
+            return ""
+        text = response if isinstance(response, str) else str(response)
+        if not text:
+            return ""
+        match = effective.search(text)
+        return match.group(1).strip() if match else ""
+
+    return _parse
+
+
+process_judge_response_pollux = make_pollux_score_parser()
+parse_pollux_feedback = make_pollux_feedback_parser()
