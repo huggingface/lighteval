@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -28,7 +29,7 @@ from json import JSONDecodeError
 import requests
 from tqdm import tqdm
 
-from lighteval.data import GenerativeTaskDataset
+from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.prompt_manager import PromptManager
@@ -103,17 +104,32 @@ class LiteLLMModelConfig(ModelConfig):
             This prompt sets the behavior and context for the model during evaluation.
         cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
 
+    Supported evaluation modes:
+        - ``greedy_until`` (generative): all models and providers supported.
+        - ``loglikelihood`` (MCQ ranking) and ``loglikelihood_rolling`` (perplexity):
+          requires the ``/v1/completions`` endpoint with ``echo=True`` and
+          ``logprobs=1``.  Supported by ``gpt-3.5-turbo-instruct`` and any
+          OpenAI-compatible local server (llama.cpp, vLLM serve, etc.).
+          Chat-only models (gpt-4o, Claude, Gemini) are **not** supported for
+          these modes; the backend will warn at eval start and return ``-inf``.
+
     Example:
         ```python
+        # Generative tasks only (any provider)
         config = LiteLLMModelConfig(
             model_name="gpt-4",
             provider="openai",
             base_url="https://api.openai.com/v1",
             concurrent_requests=5,
-            generation_parameters=GenerationParameters(
-                temperature=0.7,
-                max_new_tokens=100
-            )
+            generation_parameters=GenerationParameters(temperature=0.7, max_new_tokens=100),
+        )
+
+        # MCQ / perplexity tasks (requires /v1/completions support)
+        config = LiteLLMModelConfig(
+            model_name="gpt-3.5-turbo-instruct",
+            provider="openai",
+            concurrent_requests=10,
+            generation_parameters=GenerationParameters(seed=42),
         )
         ```
     """
@@ -347,7 +363,7 @@ class LiteLLMClient(LightevalModel):
             position=0,
             disable=self.disable_tqdm,
         ):
-            contexts = [self.prompt_manager.prepare_prompt_api(doc) for doc in dataset]
+            contexts = [self.prompt_manager.prepare_prompt_api(doc) for doc in split]
             max_new_tokens = split[0].generation_size  # could be none
             return_logits = split[0].use_logits
             num_samples = split[0].num_samples
@@ -403,14 +419,378 @@ class LiteLLMClient(LightevalModel):
 
         return max_tokens
 
+    # ------------------------------------------------------------------
+    # Token Alignment Engine helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _find_continuation_start(logprobs_obj, context_str: str, model: str) -> int:
+        """Return the index in the token sequence where the continuation begins.
+
+        Two-layer strategy:
+          1. Character-offset alignment via ``text_offset`` (exact, uses the
+             API's own tokenisation — preferred when available).
+          2. Tiktoken-count fallback via ``litellm.encode`` (reliable for all
+             OpenAI-family models when ``text_offset`` is absent).
+        """
+        # Layer 1 — character-offset alignment
+        text_offset = getattr(logprobs_obj, "text_offset", None)
+        if text_offset:
+            context_char_len = len(context_str)
+            for i, offset in enumerate(text_offset):
+                if offset >= context_char_len:
+                    return i
+            return len(text_offset)  # empty continuation
+
+        # Layer 2 — tiktoken fallback
+        try:
+            ctx_toks = encode(model, context_str)
+            return len(ctx_toks)
+        except Exception:
+            logger.warning(
+                "Could not align continuation tokens via text_offset or tiktoken. "
+                "Logprob results may be inaccurate for this provider."
+            )
+            return 0
+
+    @staticmethod
+    def _check_argmax(
+        tokens: list[str],
+        token_logprobs: list,
+        top_logprobs: list,
+        cont_start: int,
+    ) -> bool:
+        """Return True if every continuation token was the model's top-1 prediction.
+
+        Mirrors vLLM's ``rank == 1`` check. The last token in ``tokens`` is the
+        newly generated token (from ``max_tokens=1``) and is excluded from the
+        check.
+        """
+        if not top_logprobs:
+            return False
+
+        cont_end = len(tokens) - 1  # exclude the single generated token at the end
+        if cont_start >= cont_end:
+            return True  # empty continuation trivially matches
+
+        for i in range(cont_start, cont_end):
+            if i >= len(top_logprobs):
+                return False
+            top_dict = top_logprobs[i]
+            if not top_dict:
+                return False
+            # With logprobs=1, top_dict has exactly one key: the top-1 token.
+            top_token = next(iter(top_dict))
+            if i >= len(tokens) or tokens[i] != top_token:
+                return False
+
+        return True
+
+    # ------------------------------------------------------------------
+    # Async loglikelihood implementation
+    # ------------------------------------------------------------------
+
+    async def _call_api_text_completion_async(
+        self,
+        full_text: str,
+        semaphore: asyncio.Semaphore,
+    ):
+        """Async call to ``litellm.atext_completion`` with exponential backoff.
+
+        Uses ``echo=True``, ``logprobs=1``, ``max_tokens=1``, and
+        ``temperature=0.0`` to retrieve per-token log-probabilities for every
+        token in ``full_text`` (context + continuation).
+
+        HTTP 429 (``RateLimitError``) is handled explicitly before the generic
+        exception handler so that rate-limit pauses are clearly logged.
+        """
+        async with semaphore:
+            for attempt in range(self.API_MAX_RETRY):
+                try:
+                    response = await litellm.atext_completion(
+                        model=self.model,
+                        prompt=full_text,
+                        max_tokens=1,  # generate exactly 1 token (echo gives prompt logprobs)
+                        echo=True,  # return prompt tokens with their log-probabilities
+                        logprobs=1,  # top-1 logprob per position for argmax check
+                        temperature=0.0,  # deterministic scoring
+                        base_url=self.base_url,
+                        api_key=self.api_key,
+                        caching=True,
+                        timeout=self.timeout,
+                        **self.generation_parameters.to_litellm_text_completion_dict(),
+                    )
+                    return response
+                except litellm.RateLimitError:
+                    wait_time = min(64.0, self.API_RETRY_SLEEP * (self.API_RETRY_MULTIPLIER**attempt))
+                    logger.warning(
+                        f"Rate limit (HTTP 429) on loglikelihood call — "
+                        f"backing off {wait_time:.1f}s "
+                        f"(attempt {attempt + 1}/{self.API_MAX_RETRY})"
+                    )
+                    await asyncio.sleep(wait_time)
+                except Exception as e:
+                    wait_time = min(64.0, self.API_RETRY_SLEEP * (self.API_RETRY_MULTIPLIER**attempt))
+                    logger.warning(
+                        f"Error in loglikelihood API call: {e} — "
+                        f"backing off {wait_time:.1f}s "
+                        f"(attempt {attempt + 1}/{self.API_MAX_RETRY})"
+                    )
+                    await asyncio.sleep(wait_time)
+
+            logger.error(
+                f"Loglikelihood API call failed after {self.API_MAX_RETRY} attempts, returning None."
+            )
+            return None
+
+    async def _process_doc_loglikelihood_async(
+        self,
+        doc: Doc,
+        context_str: str,
+        semaphore: asyncio.Semaphore,
+    ) -> ModelResponse:
+        """Compute logprobs for all choices of a single doc concurrently.
+
+        All (context + choice) API calls for this doc are fired at once via
+        ``asyncio.gather``, bounded by the shared semaphore.  Returns a
+        ``ModelResponse`` with ``logprobs`` and ``argmax_logits_eq_gold``
+        populated per-choice, matching the VLLMModel data contract exactly.
+        """
+        # Soft length check using the longest choice as a conservative estimate
+        if doc.choices:
+            longest = max(doc.choices, key=len)
+            self._warn_if_too_long(context_str + longest, label=f"doc '{doc.id}' longest choice")
+
+        tasks = [
+            self._call_api_text_completion_async(context_str + choice, semaphore)
+            for choice in doc.choices
+        ]
+        responses = await asyncio.gather(*tasks)
+
+        logprobs_per_choice: list[float] = []
+        argmax_per_choice: list[bool] = []
+
+        for choice, response in zip(doc.choices, responses):
+            if response is None or not getattr(response, "choices", None):
+                logprobs_per_choice.append(float("-inf"))
+                argmax_per_choice.append(False)
+                continue
+
+            lp_obj = getattr(response.choices[0], "logprobs", None)
+            if lp_obj is None or not getattr(lp_obj, "token_logprobs", None):
+                logprobs_per_choice.append(float("-inf"))
+                argmax_per_choice.append(False)
+                continue
+
+            tokens: list[str] = list(lp_obj.tokens or [])
+            token_logprobs: list = list(lp_obj.token_logprobs or [])
+            top_logprobs: list = list(lp_obj.top_logprobs or [])
+
+            cont_start = self._find_continuation_start(lp_obj, context_str, self.model)
+
+            # token_logprobs[cont_start:-1] isolates the continuation slice.
+            # The -1 excludes the single token generated by max_tokens=1 which
+            # is appended at the very end of the echoed sequence.
+            cont_lp_slice = token_logprobs[cont_start:-1]
+            valid_lp = [v for v in cont_lp_slice if v is not None]
+            total_logprob = sum(valid_lp) if valid_lp else float("-inf")
+
+            is_argmax = self._check_argmax(tokens, token_logprobs, top_logprobs, cont_start)
+
+            logprobs_per_choice.append(total_logprob)
+            argmax_per_choice.append(is_argmax)
+
+        return ModelResponse(
+            input=context_str,
+            logprobs=logprobs_per_choice,
+            argmax_logits_eq_gold=argmax_per_choice,
+        )
+
+    async def _loglikelihood_async(self, docs: list[Doc]) -> list[ModelResponse]:
+        """Async coordinator: process every doc in parallel, bounded by the semaphore.
+
+        ``asyncio.gather`` preserves input order, so the returned list aligns
+        1-to-1 with ``docs``.
+        """
+        semaphore = asyncio.Semaphore(self.concurrent_requests)
+        tasks = [
+            self._process_doc_loglikelihood_async(
+                doc=doc,
+                context_str=self.prompt_manager._prepare_plain_text(doc),
+                semaphore=semaphore,
+            )
+            for doc in docs
+        ]
+        return list(await asyncio.gather(*tasks))
+
+    # ------------------------------------------------------------------
+    # Provider compatibility guard
+    # ------------------------------------------------------------------
+
+    def _check_text_completion_support(self) -> None:
+        """Warn if the model is known to be chat-only and cannot serve loglikelihoods.
+
+        ``loglikelihood`` and ``loglikelihood_rolling`` use
+        ``litellm.atext_completion`` (``/v1/completions``) with ``echo=True``
+        and ``logprobs=1``.  Models whose ``mode`` is ``"chat"`` in litellm's
+        registry (gpt-4o, Claude, Gemini, …) do not expose this endpoint and
+        will return all-``-inf`` results.
+
+        We use ``litellm.get_model_info()`` so we only warn for *positively
+        identified* chat-only models, avoiding false positives on completion
+        models like ``gpt-3.5-turbo-instruct`` whose params list may not
+        enumerate ``echo`` explicitly.
+        """
+        try:
+            model_info = litellm.get_model_info(model=self.model, custom_llm_provider=self.provider) or {}
+            mode = model_info.get("mode", "")
+            if mode == "chat":
+                logger.warning(
+                    f"Model '{self.model}' is registered as a chat-only model (mode='chat'). "
+                    "loglikelihood and loglikelihood_rolling require the /v1/completions "
+                    "endpoint with echo=True — chat-only models do not support this. "
+                    "Results will be all -inf. "
+                    "Use 'gpt-3.5-turbo-instruct' or any OpenAI-compatible local server "
+                    "(llama.cpp, vLLM serve, etc.) instead."
+                )
+        except Exception:
+            pass  # Registry lookup failed — proceed silently, never crash an eval
+
+    def _warn_if_too_long(self, text: str, label: str = "") -> None:
+        """Warn when ``text`` is estimated to exceed the model's context window.
+
+        Uses tiktoken (via ``litellm.encode``) for a fast, local token count.
+        Silently skips if ``max_length`` is unknown or encoding fails.
+        """
+        try:
+            n_tokens = len(encode(self.model, text))
+            limit = self.max_length
+            if limit and n_tokens > limit:
+                tag = f" [{label}]" if label else ""
+                logger.warning(
+                    f"Input{tag} is ~{n_tokens} tokens, which exceeds max_length={limit}. "
+                    "The API may truncate or reject the request. "
+                    "Consider shortening your context or choice strings."
+                )
+        except Exception:
+            pass  # Encoding unavailable for this model — skip silently
+
+    # ------------------------------------------------------------------
+    # loglikelihood (MCQ / log-prob ranking)
+    # ------------------------------------------------------------------
+
     @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
-        """Tokenize the context and continuation and compute the log likelihood of those
-        tokenized sequences.
+        """Compute log-likelihoods for MCQ-style tasks via ``litellm.text_completion``.
+
+        Uses ``echo=True`` and ``logprobs=1`` to retrieve per-token log
+        probabilities for the full (context + choice) string, then isolates the
+        continuation slice with the Token Alignment Engine (see
+        ``_find_continuation_start``).
+
+        Provider requirement:
+            The underlying model must support the ``/v1/completions`` endpoint
+            with ``echo`` and ``logprobs`` parameters — for example
+            ``gpt-3.5-turbo-instruct`` or any OpenAI-compatible local server
+            (llama.cpp, vLLM serving, etc.).  Chat-only models such as
+            ``gpt-4o`` or Claude do not expose this endpoint and are **not**
+            supported by this method.
         """
-        raise NotImplementedError
+        self._check_text_completion_support()
+
+        dataset = LoglikelihoodDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
+        results = []
+
+        for split in tqdm(
+            dataset.splits_iterator(),
+            total=dataset.num_dataset_splits,
+            desc="Loglikelihood splits",
+            position=0,
+            disable=self.disable_tqdm,
+        ):
+            split_docs = list(split)
+            split_results = asyncio.run(self._loglikelihood_async(split_docs))
+            results.extend(split_results)
+
+        return dataset.get_original_order(results)
+
+    # ------------------------------------------------------------------
+    # loglikelihood_rolling (perplexity)
+    # ------------------------------------------------------------------
+
+    async def _process_doc_rolling_async(
+        self,
+        doc: Doc,
+        semaphore: asyncio.Semaphore,
+    ) -> ModelResponse:
+        """Compute per-token log-probabilities for the entire document text.
+
+        Sends the full document as the prompt with ``echo=True`` and collects
+        one logprob per token (skipping the leading null and the trailing
+        generated token appended by ``max_tokens=1``).
+
+        The returned ``ModelResponse.logprobs`` is a list of per-token floats.
+        ``PerplexityPreparator`` sums this list to obtain the document-level
+        log-likelihood, which is then used to compute perplexity, weighted
+        perplexity, or bits-per-byte.
+        """
+        doc_text = self.prompt_manager._prepare_plain_text(doc)
+        self._warn_if_too_long(doc_text, label=f"doc '{doc.id}'")
+        response = await self._call_api_text_completion_async(doc_text, semaphore)
+
+        if response is None or not getattr(response, "choices", None):
+            return ModelResponse(input=doc_text, logprobs=[float("-inf")])
+
+        lp_obj = getattr(response.choices[0], "logprobs", None)
+        if lp_obj is None or not getattr(lp_obj, "token_logprobs", None):
+            return ModelResponse(input=doc_text, logprobs=[float("-inf")])
+
+        token_logprobs: list = list(lp_obj.token_logprobs or [])
+
+        # token_logprobs[0]  → always None  (first token has no prior context)
+        # token_logprobs[1:-1] → per-token log-probs for the full document
+        # token_logprobs[-1] → the 1 newly generated token from max_tokens=1 (discard)
+        rolling_logprobs = [v for v in token_logprobs[1:-1] if v is not None]
+
+        return ModelResponse(
+            input=doc_text,
+            logprobs=rolling_logprobs,
+        )
+
+    async def _loglikelihood_rolling_async(self, docs: list[Doc]) -> list[ModelResponse]:
+        """Async coordinator for rolling perplexity: one API call per doc."""
+        semaphore = asyncio.Semaphore(self.concurrent_requests)
+        tasks = [self._process_doc_rolling_async(doc=doc, semaphore=semaphore) for doc in docs]
+        return list(await asyncio.gather(*tasks))
 
     @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
-        """This function is used to compute the log likelihood of the context for perplexity metrics."""
-        raise NotImplementedError
+        """Compute rolling log-likelihoods for perplexity-style evaluation.
+
+        Each document is sent as a single prompt with ``echo=True`` so that the
+        API returns per-token log-probabilities for the whole text.  The result
+        is a ``ModelResponse`` whose ``logprobs`` list holds one float per
+        token; downstream preparators (``PerplexityPreparator``,
+        ``TargetPerplexityPreparator``) sum these to produce the document-level
+        log-likelihood used by perplexity / bits-per-byte metrics.
+
+        Provider requirement: same as ``loglikelihood`` — requires the
+        ``/v1/completions`` endpoint with ``echo`` and ``logprobs``.
+        """
+        self._check_text_completion_support()
+
+        dataset = LoglikelihoodDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
+        results = []
+
+        for split in tqdm(
+            dataset.splits_iterator(),
+            total=dataset.num_dataset_splits,
+            desc="Loglikelihood rolling splits",
+            position=0,
+            disable=self.disable_tqdm,
+        ):
+            split_docs = list(split)
+            split_results = asyncio.run(self._loglikelihood_rolling_async(split_docs))
+            results.extend(split_results)
+
+        return dataset.get_original_order(results)

@@ -23,7 +23,7 @@
 import tempfile
 import unittest
 from dataclasses import asdict
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 import torch
@@ -83,6 +83,11 @@ class TestCaching(unittest.TestCase):
             DummyModelConfig,
         ]
 
+        if is_package_available("litellm"):
+            from lighteval.models.endpoints.litellm_model import LiteLLMModelConfig
+
+            model_configs.append(LiteLLMModelConfig)
+
         for model_config in model_configs:
             with self.subTest(model_config=model_config):
                 with tempfile.TemporaryDirectory() as temp_dir:
@@ -127,6 +132,11 @@ class TestCaching(unittest.TestCase):
             SGLangModel,
             DummyModel,
         ]
+
+        if is_package_available("litellm"):
+            from lighteval.models.endpoints.litellm_model import LiteLLMClient
+
+            model_classes.append(LiteLLMClient)
         methods_to_check = ["greedy_until", "loglikelihood", "loglikelihood_rolling"]
 
         for model_class in model_classes:
@@ -389,3 +399,28 @@ class TestCaching(unittest.TestCase):
                     ("greedy_until", SamplingMethod.GENERATIVE),
                 ],
             )
+
+    def test_cache_litellm(self):
+        """Test that @cached works correctly for LiteLLMClient loglikelihood methods."""
+        if not is_package_available("litellm"):
+            self.skipTest("litellm not installed")
+
+        from lighteval.models.endpoints.litellm_model import LiteLLMClient, LiteLLMModelConfig
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = LiteLLMModelConfig(model_name="gpt-3.5-turbo-instruct", cache_dir=temp_dir)
+            model = LiteLLMClient(config)
+
+            # _loglikelihood_async / _loglikelihood_rolling_async are the internal
+            # async methods called by the public @cached-decorated methods.
+            # AsyncMock makes them return coroutines that resolve to our test responses.
+            with patch.object(model, "_loglikelihood_async", AsyncMock(return_value=self.model_responses)), \
+                 patch.object(model, "_loglikelihood_rolling_async", AsyncMock(return_value=self.model_responses)), \
+                 patch.object(model, "_check_text_completion_support"):  # suppress provider warning
+                self._test_cache(
+                    model,
+                    [
+                        ("loglikelihood", SamplingMethod.LOGPROBS),
+                        ("loglikelihood_rolling", SamplingMethod.PERPLEXITY),
+                    ],
+                )

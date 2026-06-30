@@ -7,6 +7,49 @@ OpenAI, Groq, and many others.
 > [!TIP]
 > Documentation for available APIs and compatible endpoints can be found [here](https://docs.litellm.ai/docs/).
 
+## Supported Evaluation Modes
+
+The LiteLLM backend supports two evaluation modes depending on the model and provider:
+
+| Mode | Method | Benchmarks | Provider requirement |
+|------|--------|-----------|----------------------|
+| **Generative** | `greedy_until` | GSM8K, HLE, IFEval, … | Any chat-completion provider |
+| **Log-likelihood** | `loglikelihood` / `loglikelihood_rolling` | MMLU, ARC, HellaSwag, … | `/v1/completions` endpoint with `echo=True` |
+
+### Generative evaluation — all providers
+
+Generative benchmarks route through `POST /v1/chat/completions`. Any model from
+any provider works.
+
+```bash
+lighteval endpoint litellm \
+    "provider=openai,model_name=gpt-4o" \
+    gsm8k
+```
+
+### Log-likelihood evaluation — completion-capable models only
+
+MCQ benchmarks (MMLU, ARC, HellaSwag, …) and perplexity benchmarks require
+`POST /v1/completions` with `echo=True` and `logprobs=1`.  **Chat-only models
+such as gpt-4o, Claude, or Gemini do not expose this endpoint** and will
+produce all-`-inf` results with a warning.
+
+Supported models:
+- **OpenAI**: `gpt-3.5-turbo-instruct`
+- **Local servers**: any OpenAI-compatible server — llama.cpp, `vllm serve`, Ollama, etc.
+
+```bash
+# Run MCQ benchmarks (requires completion endpoint)
+lighteval endpoint litellm \
+    examples/model_configs/litellm_completion_model.yaml \
+    "mmlu|0" "arc|0" "hellaswag|0"
+```
+
+> [!WARNING]
+> Lighteval automatically detects unsupported chat-only models via
+> `litellm.get_model_info()` and emits a WARNING before the evaluation starts.
+> Results will be `-inf` for every choice and metrics will be at chance level.
+
 ## Basic Usage
 
 ```bash
@@ -18,9 +61,9 @@ lighteval endpoint litellm \
 ## Using a Configuration File
 
 LiteLLM allows generation with any OpenAI-compatible endpoint. For example, you
-can evaluate a model running on a local VLLM server.
+can evaluate a model running on a local vLLM server.
 
-To do so, you will need to use a configuration file like this:
+**Generative tasks** (`examples/model_configs/litellm_model.yaml`):
 
 ```yaml
 model_parameters:
@@ -37,25 +80,39 @@ model_parameters:
       frequency_penalty: 0.0
 ```
 
+**Log-likelihood / MCQ tasks** (`examples/model_configs/litellm_completion_model.yaml`):
+
+```yaml
+model_parameters:
+    model_name: "gpt-3.5-turbo-instruct"
+    provider: "openai"
+    concurrent_requests: 10
+    generation_parameters:
+      seed: 42
+```
+
 ## Supported Providers
 
 LiteLLM supports a wide range of LLM providers:
 
 ### Cloud Providers
 
-all cloud providers can be found in the [litellm documentation](https://docs.litellm.ai/docs/providers).
+All cloud providers can be found in the [litellm documentation](https://docs.litellm.ai/docs/providers).
 
 ### Local/On-Premise
-- **VLLM**: Local VLLM servers
-- **Hugging Face**: Local Hugging Face models
+- **vLLM**: Local vLLM servers (supports both generative and log-likelihood)
+- **llama.cpp**: OpenAI-compatible server (supports both generative and log-likelihood)
+- **Ollama**: OpenAI-compatible endpoint (generative only)
 - **Custom endpoints**: Any OpenAI-compatible API
 
 ## Using with Local Models
 
-### VLLM Server
-To use with a local VLLM server:
+### vLLM Server (generative + log-likelihood)
 
-1. Start your VLLM server:
+Local vLLM servers expose both `/v1/chat/completions` and `/v1/completions`, so
+they support all evaluation modes.
+
+1. Start your vLLM server:
 ```bash
 vllm serve HuggingFaceH4/zephyr-7b-beta --host 0.0.0.0 --port 8000
 ```
@@ -67,6 +124,46 @@ model_parameters:
     model_name: "hosted_vllm/HuggingFaceH4/zephyr-7b-beta"
     base_url: "http://localhost:8000/v1"
     api_key: ""
+    generation_parameters:
+      seed: 42
 ```
+
+3. Run any benchmark:
+```bash
+# Generative
+lighteval endpoint litellm my_config.yaml "gsm8k|0"
+
+# MCQ (log-likelihood)
+lighteval endpoint litellm my_config.yaml "mmlu|0" "arc|0"
+```
+
+### llama.cpp Server (generative + log-likelihood)
+
+```bash
+./llama-server -m model.gguf --port 8080
+```
+
+```yaml
+model_parameters:
+    model_name: "openai/local"
+    base_url: "http://localhost:8080/v1"
+    api_key: "none"
+```
+
+## Generation Parameters
+
+All parameters in `generation_parameters` are forwarded appropriately to the
+underlying API call.
+
+| Parameter | Generative (`/chat/completions`) | Log-likelihood (`/completions`) |
+|-----------|----------------------------------|----------------------------------|
+| `seed` | ✅ | ✅ |
+| `temperature` | ✅ | hardcoded `0.0` (deterministic scoring) |
+| `max_new_tokens` | ✅ | hardcoded `1` (only logprobs needed) |
+| `stop_tokens` | ✅ | ✅ |
+| `top_p` | ✅ | ✅ |
+| `frequency_penalty` | ✅ | ✅ |
+| `presence_penalty` | ✅ | ✅ |
+| `repetition_penalty` | ✅ | ❌ (not part of `/v1/completions`) |
 
 For more detailed error handling and debugging, refer to the [LiteLLM documentation](https://docs.litellm.ai/docs/).
