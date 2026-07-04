@@ -95,6 +95,12 @@ def required_dependencies() -> Tuple[Dict[str, Requirement], Dict[str, List[Requ
 
 @lru_cache()
 def is_multilingual_package_available(language: str):
+    """Check if the multilingual NLP packages required for a given language are available.
+
+    Always checks for ``spacy`` and ``stanza``. Additionally checks for ``pyvi``
+    when ``language`` is ``'vi'`` (Vietnamese) and ``jieba`` when it is ``'zh'``
+    (Chinese). Returns True only if every required package is importable.
+    """
     imports = []
     packages = ["spacy", "stanza"]
     if language == "vi":
@@ -109,6 +115,13 @@ def is_multilingual_package_available(language: str):
 
 
 def raise_if_package_not_available(package: Requirement | Extra, *, language: str = None, object_name: str = None):
+    """Raise an ``ImportError`` if the given package or extra is not installed.
+
+    For ``Extra.MULTILINGUAL``, also checks language-specific packages via
+    ``is_multilingual_package_available``. The error message is built by
+    ``not_installed_error_message`` and optionally prefixed with the name of
+    the calling object when ``object_name`` is provided.
+    """
     prefix = "You" if object_name is None else f"Through the use of {object_name}, you"
 
     if package == Extra.MULTILINGUAL and ((language is not None) or (not is_multilingual_package_available(language))):
@@ -159,6 +172,13 @@ class DummyObject(type):
 
 
 def parse_specified_backends(specified_backends):
+    """Resolve a sequence of backend specifiers to a list of ``Requirement`` or ``Extra`` objects.
+
+    Each specifier may be an ``Extra`` enum value (kept as-is) or a package
+    name string that must match an entry in ``required_dependencies()``.
+    Raises ``RuntimeError`` if a string specifier is not found among the
+    declared dependencies.
+    """
     requirements, _ = required_dependencies()
     applied_backends = []
 
