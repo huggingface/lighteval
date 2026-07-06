@@ -394,6 +394,30 @@ class TestTransformersModelProcessing(unittest.TestCase):
         # Restore original gather function
         self.model.accelerator.gather_for_metrics = lambda x: x
 
+    @patch("lighteval.models.transformers.transformers_model.DataLoader")
+    def test_loglikelihood_batches_tokenization_per_minibatch(self, mock_dataloader):
+        """The scoring loop should tokenize each mini-batch with two calls to
+        _batch_tok_encode (one for every context, one for every continuation),
+        not one pair of calls per document. That's the whole point of
+        tok_encode_pair_batch: with 3 documents below, a per-document loop
+        would make 6 calls; batched, it makes 2 regardless of how many
+        documents or choices are in the mini-batch."""
+        docs = [
+            Doc(query="What is the capital of France?", choices=["London", "Berlin", "Paris", "Madrid"], gold_index=2),
+            Doc(query="What is 2+2?", choices=["3", "4", "5"], gold_index=1),
+            Doc(query="What color is the sky?", choices=["Blue", "Green"], gold_index=0),
+        ]
+        mock_dataloader.return_value = [docs]
+        if hasattr(self.model.accelerator, "prepare"):
+            self.model.accelerator.prepare = Mock(side_effect=lambda x: x)
+
+        with patch.object(
+            TransformersModel, "_batch_tok_encode", wraps=self.model._batch_tok_encode
+        ) as mock_batch_encode:
+            self.model._loglikelihood_tokens(docs)
+
+        self.assertEqual(mock_batch_encode.call_count, 2)
+
 
 class TestTransformersModelUseChatTemplate(unittest.TestCase):
     @patch("lighteval.models.transformers.transformers_model.Accelerator")
