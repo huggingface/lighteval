@@ -57,3 +57,41 @@ def test_fewshot_sampler(fewshot_select: str):
             task_docs = task.fewshot_docs()
             rnd.shuffle(task_docs)
             assert docs == task_docs[:20]
+
+
+def test_fewshot_sampler_with_id_list():
+    config = LightevalTaskConfig(
+        name="test_fewshot_id_list_task",
+        prompt_function=lambda _, __: None,
+        hf_repo="",
+        hf_subset="default",
+        metrics=[],
+        few_shots_split="test",
+        few_shots_id_list=["7", "2", "5"],
+    )
+    task = LightevalTask(config)
+    task._fewshot_docs = [Doc(query=str(i), choices=["A", "B"], gold_index=0, id=str(i)) for i in range(10)]
+    sampler = FewShotSampler(task)
+
+    docs = sampler.sample_fewshot_examples(3, variance_seed=0)
+
+    # The requested ids are honored, in the exact order they were given.
+    assert [doc.id for doc in docs] == ["7", "2", "5"]
+
+
+def test_fewshot_sampler_with_id_list_raises_on_missing_id():
+    config = LightevalTaskConfig(
+        name="test_fewshot_id_list_missing_task",
+        prompt_function=lambda _, __: None,
+        hf_repo="",
+        hf_subset="default",
+        metrics=[],
+        few_shots_split="test",
+        few_shots_id_list=["1", "does-not-exist"],
+    )
+    task = LightevalTask(config)
+    task._fewshot_docs = [Doc(query=str(i), choices=["A", "B"], gold_index=0, id=str(i)) for i in range(3)]
+    sampler = FewShotSampler(task)
+
+    with pytest.raises(ValueError, match="does-not-exist"):
+        sampler.sample_fewshot_examples(2, variance_seed=0)

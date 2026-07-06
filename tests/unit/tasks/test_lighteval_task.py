@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import json
 
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -84,3 +85,30 @@ def test_hf_data_files(tmp_path):
 
     eval_docs = task.eval_docs()
     assert [doc.query for doc in eval_docs] == src_docs
+
+
+def test_few_shots_id_column_sets_doc_id_for_fewshot_docs(tmp_path):
+    # create a small jsonl dataset where each row has a stable, non-positional identifier
+    data_file = tmp_path / "data.jsonl"
+    rows = [{"text": f"document {i}", "row_id": f"custom-{i}"} for i in range(3)]
+    data_file.write_text("\n".join(json.dumps(row) for row in rows))
+
+    cfg = LightevalTaskConfig(
+        name="test_few_shots_id_column",
+        prompt_function=dummy_prompt_function,
+        hf_repo="json",
+        hf_subset="default",
+        metrics=[],
+        evaluation_splits=["train"],
+        few_shots_split="train",
+        few_shots_id_column="row_id",
+        hf_data_files=str(data_file),
+    )
+    task = LightevalTask(cfg)
+
+    fewshot_docs = task.fewshot_docs()
+    assert [doc.id for doc in fewshot_docs] == ["custom-0", "custom-1", "custom-2"]
+
+    # Evaluation docs are unaffected: they keep using the row's position as id.
+    eval_docs = task.eval_docs()
+    assert [doc.id for doc in eval_docs] == ["0", "1", "2"]

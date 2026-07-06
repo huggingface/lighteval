@@ -211,6 +211,7 @@ class FewShotSampler:
 
         self.few_shots_select = FewShotSelection[few_shots_select]
         self.few_shots_split = task.fewshot_split
+        self.few_shots_id_list = getattr(task, "few_shots_id_list", None)
 
         self._fewshot_cache = {}
 
@@ -237,7 +238,9 @@ class FewShotSampler:
     ):
         # If there is no cache, we initialize it
         if variance_seed not in self._fewshot_cache:
-            if self.few_shots_select.value.sorting == "sequential":
+            if self.few_shots_id_list:
+                self._init_fewshot_sampling_by_id(variance_seed=variance_seed)
+            elif self.few_shots_select.value.sorting == "sequential":
                 self._init_fewshot_sampling_sequential(num_fewshot=num_fewshot, variance_seed=variance_seed)
             elif self.few_shots_select.value.sorting == "random":
                 self._init_fewshot_sampling_random(variance_seed=variance_seed)
@@ -247,6 +250,10 @@ class FewShotSampler:
                 raise Exception("No correct few shot strategy selected - but this point should not be reachable.")
 
     def _sample_from_pool(self, variance_seed: int, num_fewshot: int, sampler: random.Random) -> list:
+        if self.few_shots_id_list:
+            # The pool was already built in the exact requested order; no further
+            # sampling strategy should be applied on top of an explicit id list.
+            return self._fewshot_cache[variance_seed]
         if self.few_shots_select.value.with_sampling and sampler is not None:
             if self.few_shots_select.value.fewshotpool_unique:
                 # This functionality is here for compatibility with the harness few shot system.
@@ -257,6 +264,19 @@ class FewShotSampler:
                 return sampler.sample(self._fewshot_cache[variance_seed], num_fewshot + 1)
         else:
             return self._fewshot_cache[variance_seed]
+
+    def _init_fewshot_sampling_by_id(self, variance_seed: int):
+        fewshotpool = self.task.fewshot_docs()
+        pool_by_id = {doc.id: doc for doc in fewshotpool}
+
+        missing_ids = [doc_id for doc_id in self.few_shots_id_list if doc_id not in pool_by_id]
+        if missing_ids:
+            raise ValueError(
+                f"few_shots_id_list for task {self.task.name} references ids that are not present "
+                f"in the few-shot pool: {missing_ids}"
+            )
+
+        self._fewshot_cache[variance_seed] = [pool_by_id[doc_id] for doc_id in self.few_shots_id_list]
 
     def _init_fewshot_sampling_sequential(self, num_fewshot: int, variance_seed: int):
         # No balancing of the few-shot examples, we take the first items of the set

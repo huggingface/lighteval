@@ -79,6 +79,14 @@ class LightevalTaskConfig:
             from. Defaults to None.
         few_shots_select (str | None, optional): Method for selecting few-shot
             examples. Defaults to None.
+        few_shots_id_column (str | None, optional): Name of a column in the dataset
+            that provides a stable identifier for each row. When set, this value is
+            used as the `id` of the corresponding few-shot `Doc` instead of the row's
+            position in the split. Defaults to None (the row's position is used).
+        few_shots_id_list (ListLike[str] | None, optional): Explicit list of ids
+            (matching `few_shots_id_column`, or the row position if it is not set)
+            to use as few-shot examples, in the given order, instead of applying
+            `few_shots_select`. Defaults to None.
 
     Generation Parameters:
         generation_size (int | None, optional): Maximum token length for generated
@@ -133,6 +141,8 @@ class LightevalTaskConfig:
     evaluation_splits: ListLike[str] = field(default_factory=lambda: ["validation"])
     few_shots_split: str | None = None
     few_shots_select: str | None = None
+    few_shots_id_column: str | None = None
+    few_shots_id_list: ListLike[str] | None = None
 
     # Generation args
     generation_size: int | None = None
@@ -157,6 +167,7 @@ class LightevalTaskConfig:
         self.hf_avail_splits = tuple(self.hf_avail_splits)
         self.evaluation_splits = tuple(self.evaluation_splits)
         self.stop_sequence = self.stop_sequence if self.stop_sequence is not None else ()
+        self.few_shots_id_list = tuple(str(x) for x in self.few_shots_id_list) if self.few_shots_id_list else None
         self.full_name = f"{self.name}|{self.num_fewshots}"  # todo clefourrier: this is likely incorrect
 
     def __str__(self, lite: bool = False):  # noqa: C901
@@ -235,6 +246,8 @@ class LightevalTask:
             config.hf_avail_splits or []
         )
         self.fewshot_selection = config.few_shots_select
+        self.few_shots_id_column = config.few_shots_id_column
+        self.few_shots_id_list = config.few_shots_id_list
         self.must_remove_duplicate_docs = config.must_remove_duplicate_docs
 
         self.formatter = config.prompt_function
@@ -311,7 +324,10 @@ class LightevalTask:
                 if doc is None or doc == []:
                     continue
 
-                doc.id = str(ix)
+                if few_shots and self.few_shots_id_column:
+                    doc.id = str(item[self.few_shots_id_column])
+                else:
+                    doc.id = str(ix)
 
                 # Transfer task-level generation parameters to the document
                 doc.generation_grammar = self.generation_grammar
