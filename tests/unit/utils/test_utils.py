@@ -22,7 +22,8 @@
 
 import unittest
 
-from lighteval.utils.utils import remove_reasoning_tags
+from lighteval.logging.info_loggers import DetailsLogger
+from lighteval.utils.utils import make_results_table, remove_reasoning_tags
 
 
 class TestRemoveReasoningTags(unittest.TestCase):
@@ -61,3 +62,50 @@ class TestRemoveReasoningTags(unittest.TestCase):
         tag_pairs = [("<think>", "</think>")]
         result = remove_reasoning_tags(text, tag_pairs)
         self.assertEqual(result, "<think> Reasoning section. Answer section")
+
+
+class TestMakeResultsTable(unittest.TestCase):
+    def test_includes_sample_count_per_task(self):
+        result_dict = {
+            "results": {
+                "task1": {"accuracy": 0.8, "accuracy_stderr": 0.05},
+            },
+            "versions": {"task1": "0"},
+            "summary_tasks": {
+                "task1": DetailsLogger.CompiledDetail(num_samples=10),
+            },
+        }
+        table = make_results_table(result_dict)
+        rows = [row for row in table.splitlines() if "task1" in row]
+        self.assertEqual(len(rows), 1)
+        self.assertIn("10", rows[0])
+
+    def test_distinguishes_zero_score_from_zero_samples(self):
+        # A task that truly evaluated zero samples should be visibly different
+        # from a task that evaluated many samples and scored zero on all of them.
+        result_dict = {
+            "results": {
+                "misconfigured_task": {"accuracy": 0.0},
+                "genuinely_failing_task": {"accuracy": 0.0},
+            },
+            "versions": {},
+            "summary_tasks": {
+                "misconfigured_task": DetailsLogger.CompiledDetail(num_samples=0),
+                "genuinely_failing_task": DetailsLogger.CompiledDetail(num_samples=25),
+            },
+        }
+        table = make_results_table(result_dict)
+        misconfigured_row = next(row for row in table.splitlines() if "misconfigured_task" in row)
+        failing_row = next(row for row in table.splitlines() if "genuinely_failing_task" in row)
+        self.assertIn("|0|", misconfigured_row.replace(" ", ""))
+        self.assertIn("|25|", failing_row.replace(" ", ""))
+
+    def test_missing_summary_tasks_defaults_to_blank(self):
+        # Older callers (or the doctest example) may not provide `summary_tasks`
+        # at all; the table should still render without raising.
+        result_dict = {
+            "results": {"task1": {"accuracy": 0.5}},
+            "versions": {"task1": "0"},
+        }
+        table = make_results_table(result_dict)
+        self.assertIn("task1", table)

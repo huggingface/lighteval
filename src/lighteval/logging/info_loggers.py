@@ -177,6 +177,7 @@ class DetailsLogger:
             non_truncated (int): Total number of samples which did not need prompt truncation to fit the model context size for the current task.
             padded (int): Total umber of samples which needed padding during the batching step for the current task.
             non_padded (int): Total number of samples which did not need padding during the batching step for the current task.
+            num_samples (int): Total number of samples that were actually evaluated for the current task.
         """
 
         hashes: dict = field(default_factory=dict)
@@ -184,6 +185,7 @@ class DetailsLogger:
         non_truncated: int = 0
         padded: int = 0
         non_padded: int = 0
+        num_samples: int = 0
 
     @dataclass
     class CompiledDetailOverAllTasks:
@@ -197,6 +199,7 @@ class DetailsLogger:
             non_truncated (int): Total number of samples which did not need prompt truncation to fit the model context size across all tasks
             padded (int): Number of samples which needed padding during the batching step across all tasks.
             non_padded (int): Number of samples which did not need padding during the batching step across all tasks.
+            num_samples (int): Total number of samples that were actually evaluated across all tasks.
         """
 
         hashes: dict = field(default_factory=dict)
@@ -204,6 +207,7 @@ class DetailsLogger:
         non_truncated: int = 0
         padded: int = 0
         non_padded: int = 0
+        num_samples: int = 0
 
     @dataclass
     class Hash:
@@ -292,8 +296,9 @@ class DetailsLogger:
             ).hexdigest()  # hash of all the hash - sorted for reproducibility
             self.compiled_hashes[task_name] = compiled_hash
 
-        for task_name, _ in self.details.items():
+        for task_name, task_details in self.details.items():
             self.compiled_details[task_name].hashes = asdict(self.compiled_hashes[task_name])
+            self.compiled_details[task_name].num_samples = len(task_details)
 
         hash_types: list[str] = list(self.compiled_details.values())[0].hashes.keys()
 
@@ -303,6 +308,10 @@ class DetailsLogger:
                     compiled_detail.hashes[hash_type] for _, compiled_detail in sorted(self.compiled_details.items())
                 )
             ).hexdigest()
+
+        self.compiled_details_over_all_tasks.num_samples = sum(
+            compiled_detail.num_samples for compiled_detail in self.compiled_details.values()
+        )
 
 
 @dataclass

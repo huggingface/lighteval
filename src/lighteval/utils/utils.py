@@ -226,13 +226,17 @@ def make_results_table(result_dict):
     """Generates a markdown table from evaluation results.
 
     Creates a formatted markdown table displaying task results with metrics, values,
-    and standard errors. The table includes columns for task name, version, metric,
-    value, and standard error.
+    standard errors, and the number of samples the metrics were computed on. The
+    sample count makes it possible to tell a genuine 0-scoring run apart from one
+    that silently evaluated zero (or very few) samples because of a misconfiguration.
 
     Args:
         result_dict (dict): Dictionary containing evaluation results with the structure:
             - 'results': Dict mapping task names to metric dictionaries
             - 'versions': Dict mapping task names to version strings
+            - 'summary_tasks' (optional): Dict mapping task names to their compiled
+              details (as produced by `DetailsLogger.aggregate`), used to read the
+              number of evaluated samples per task.
 
     Returns:
         str: A markdown-formatted table string displaying the results.
@@ -246,27 +250,30 @@ def make_results_table(result_dict):
         ...     'versions': {'squad': 'v2.0', 'glue': 'v1.0'}
         ... }
         >>> table = make_results_table(results)
-        # Returns markdown table with task, version, metric, value, ±, stderr columns
+        # Returns markdown table with task, version, metric, value, ±, stderr, samples columns
     """
     md_writer = MarkdownTableWriter()
-    md_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr"]
+    md_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr", "Samples"]
 
     values = []
+    summary_tasks = result_dict.get("summary_tasks", {})
 
     for k in sorted(result_dict["results"].keys()):
         dic = result_dict["results"][k]
         version = result_dict["versions"][k] if k in result_dict["versions"] else ""
+        num_samples = getattr(summary_tasks.get(k), "num_samples", "")
         for m, v in dic.items():
             if m.endswith("_stderr"):
                 continue
 
             if m + "_stderr" in dic:
                 se = dic[m + "_stderr"]
-                values.append([k, version, m, "%.4f" % v, "±", "%.4f" % se])
+                values.append([k, version, m, "%.4f" % v, "±", "%.4f" % se, num_samples])
             else:
-                values.append([k, version, m, "%.4f" % v, "", ""])
+                values.append([k, version, m, "%.4f" % v, "", "", num_samples])
             k = ""
             version = ""
+            num_samples = ""
     md_writer.value_matrix = values
 
     return md_writer.dumps()
