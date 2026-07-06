@@ -353,5 +353,80 @@ class LightevalModel(ABC):
 
         return context_encs, continuations_encs
 
+    def _batch_tok_encode(self, strings: list[str], add_special_tokens: bool) -> list[list[int]]:
+        """Tokenize a list of strings in a single tokenizer call, without padding.
+
+        Equivalent to `[self.tok_encode(s, add_special_tokens) for s in strings]`,
+        but issues one call instead of one per string, which lets a fast
+        tokenizer batch and parallelize the work instead of paying per-call
+        Python overhead for every string.
+        """
+        if not strings:
+            return []
+        return self.tokenizer(strings, add_special_tokens=add_special_tokens, padding=False)["input_ids"]
+
+    def tok_encode_pair_batch(
+        self, contexts: list[str], continuations_list: list[list[str]]
+    ) -> tuple[list[list[list[int]]], list[list[list[int]]]]:
+        """Batched equivalent of `tok_encode_pair(context, continuations, pairwise=True)`
+        for a whole list of documents.
+
+        On a large benchmark, calling `tok_encode_pair` once per document tokenizes
+        every context and every continuation with its own tokenizer call: a batch
+        of 32 documents with 4 choices each makes 32 + 128 separate calls. This
+        does the same encoding (including the trailing-space handling) but makes
+        exactly two tokenizer calls for the whole batch: one for every context,
+        one for every continuation across every document.
+
+        Args:
+            contexts: One context string per document.
+            continuations_list: One list of continuation strings per document,
+                aligned with `contexts`.
+
+        Returns:
+            Tuple of (context token ids, continuation token ids), each a list
+            with one entry per document, matching what `tok_encode_pair(...,
+            pairwise=True)` returns for a single document.
+        """
+        if getattr(self, "move_trailing_context_space", True):
+            adjusted_contexts = []
+            adjusted_continuations_list = []
+            for context, continuations in zip(contexts, continuations_list):
+                n_spaces = len(context) - len(context.rstrip())
+                if n_spaces > 0:
+                    adjusted_continuations_list.append([context[-n_spaces:] + cont for cont in continuations])
+                    adjusted_contexts.append(context[:-n_spaces])
+                else:
+                    adjusted_continuations_list.append(continuations)
+                    adjusted_contexts.append(context)
+            contexts = adjusted_contexts
+            continuations_list = adjusted_continuations_list
+
+        # One call for every context in the batch.
+        context_encs = self._batch_tok_encode(contexts, add_special_tokens=self.add_special_tokens)
+
+        # One call for every continuation across every document, flattened so the
+        # tokenizer sees the whole batch at once, then split back up per document.
+        flat_continuations = [cont for continuations in continuations_list for cont in continuations]
+        flat_continuation_encs = self._batch_tok_encode(flat_continuations, add_special_tokens=False)
+
+        continuation_encs_list: list[list[list[int]]] = []
+        flat_index = 0
+        for continuations in continuations_list:
+            n = len(continuations)
+            continuation_encs_list.append(flat_continuation_encs[flat_index : flat_index + n])
+            flat_index += n
+
+        # Mirrors the pairwise branch of tok_encode_pair: strip a trailing eos
+        # token (it would otherwise make the model ignore the context) and repeat
+        # the context encoding once per continuation.
+        context_encs_list: list[list[list[int]]] = []
+        for context_enc, continuations in zip(context_encs, continuations_list):
+            if len(context_enc) > 0 and context_enc[-1] == self.tokenizer.eos_token_id:
+                context_enc = context_enc[:-1]
+            context_encs_list.append([context_enc] * len(continuations))
+
+        return context_encs_list, continuation_encs_list
+
     def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
         return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)

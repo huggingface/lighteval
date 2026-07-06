@@ -57,3 +57,52 @@ def test_tok_encode_pair_move_trailing_context_space():
     model.move_trailing_context_space = False
     _, cont_kept = model.tok_encode_pair(context, continuation, pairwise=True)
     assert cont_kept == bare
+
+
+def test_tok_encode_pair_batch_matches_per_document_pairwise_encoding():
+    # tok_encode_pair_batch exists purely as a performance optimization: it must
+    # produce exactly what calling tok_encode_pair(..., pairwise=True) once per
+    # document would, just with fewer tokenizer calls.
+    model = DummyModel(config=DummyModelConfig(seed=42))
+    model._tokenizer = AutoTokenizer.from_pretrained("gpt2")
+
+    contexts = ["The capital of France is", "Question: 2+2= ", "No trailing space here"]
+    continuations_list = [
+        [" Paris", " London", " Berlin"],
+        ["4", "five"],
+        ["!", "?"],
+    ]
+
+    expected_contexts = []
+    expected_continuations = []
+    for context, continuations in zip(contexts, continuations_list):
+        context_enc, continuation_enc = model.tok_encode_pair(context, continuations, pairwise=True)
+        expected_contexts.append(context_enc)
+        expected_continuations.append(continuation_enc)
+
+    batch_contexts, batch_continuations = model.tok_encode_pair_batch(contexts, continuations_list)
+
+    assert batch_contexts == expected_contexts
+    assert batch_continuations == expected_continuations
+
+
+def test_tok_encode_pair_batch_respects_move_trailing_context_space():
+    model = DummyModel(config=DummyModelConfig(seed=42))
+    model._tokenizer = AutoTokenizer.from_pretrained("gpt2")
+    contexts = ["Answer: "]
+    continuations_list = [["Paris"]]
+    bare = [model.tok_encode("Paris", add_special_tokens=False)]
+
+    model.move_trailing_context_space = True
+    _, cont_moved = model.tok_encode_pair_batch(contexts, continuations_list)
+    assert cont_moved[0] != bare
+
+    model.move_trailing_context_space = False
+    _, cont_kept = model.tok_encode_pair_batch(contexts, continuations_list)
+    assert cont_kept[0] == bare
+
+
+def test_batch_tok_encode_empty_list_returns_empty_list():
+    model = DummyModel(config=DummyModelConfig(seed=42))
+    model._tokenizer = AutoTokenizer.from_pretrained("gpt2")
+    assert model._batch_tok_encode([], add_special_tokens=True) == []
