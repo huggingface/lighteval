@@ -45,7 +45,12 @@ logger = logging.getLogger(__name__)
 
 
 if is_package_available("vllm"):
-    import ray
+    if is_package_available("ray"):
+        import ray
+    else:
+        from unittest.mock import Mock
+
+        ray = Mock()
     from more_itertools import distribute
     from vllm import LLM, RequestOutput, SamplingParams
     from vllm.distributed.parallel_state import (
@@ -58,8 +63,9 @@ if is_package_available("vllm"):
     logging.getLogger("vllm").propagate = True
     logging.getLogger("vllm").handlers.clear()
 
-    logging.getLogger("ray").propagate = True
-    logging.getLogger("ray").handlers.clear()
+    if is_package_available("ray"):
+        logging.getLogger("ray").propagate = True
+        logging.getLogger("ray").handlers.clear()
 else:
     from unittest.mock import Mock
 
