@@ -338,7 +338,7 @@ class JudgeLM:
                         "response_format": self.response_format,
                     }
                     if max_new_tokens is not None:
-                        kwargs["max_tokens"] = (max_new_tokens,)
+                        kwargs["max_tokens"] = max_new_tokens
                     if self.api_key is not None:
                         kwargs["api_key"] = self.api_key
                     if self.url is not None:
