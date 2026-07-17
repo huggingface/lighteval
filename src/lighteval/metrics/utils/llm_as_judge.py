@@ -134,7 +134,7 @@ class JudgeLM:
         self.hf_provider = hf_provider
         self.max_tokens = max_tokens
 
-        self.response_format = response_format if not None else DEFAULT_FORMAT
+        self.response_format = response_format if response_format is not None else DEFAULT_FORMAT
 
         self.backend_options = backend_options or {}
 
