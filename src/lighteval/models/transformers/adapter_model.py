@@ -39,7 +39,6 @@ if is_package_available("peft"):
     from peft import PeftModel
 
 
-@requires("peft")
 class AdapterModelConfig(TransformersModelConfig):
     """Configuration class for PEFT (Parameter-Efficient Fine-Tuning) adapter models.
 
@@ -59,7 +58,16 @@ class AdapterModelConfig(TransformersModelConfig):
 
     base_model: str
 
+    def model_post_init(self, __context):
+        if self.tokenizer is None:
+            self.tokenizer = self.base_model
+        super().model_post_init(__context)
 
+    def get_transformers_config(self):
+        return super().get_transformers_config(model_name=self.base_model)
+
+
+@requires("peft")
 class AdapterModel(TransformersModel):
     def _create_auto_model(self) -> transformers.PreTrainedModel:
         """Returns a PeftModel from a base model and a version fined tuned using PEFT."""
@@ -67,7 +75,7 @@ class AdapterModel(TransformersModel):
         model_parallel, max_memory, device_map = self.init_model_parallel(self.config.model_parallel)
         self.config.model_parallel = model_parallel
 
-        adapter_weights = self.config.pretrained
+        adapter_weights = self.config.model_name
         merged_path = f"{adapter_weights}-adapter-applied"
 
         if self.config.dtype == "4bit":
