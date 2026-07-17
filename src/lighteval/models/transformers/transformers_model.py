@@ -558,7 +558,7 @@ class TransformersModel(LightevalModel):
                 # NOTE: we are assuming all items in a batch behave similarly (same
                 # stop_tokens and max_tokens genrated) which is not necessarily
                 # the case! Because of that we only use batch size of 1
-                stop_tokens = split[0].stop_sequence
+                stop_tokens = split[0].stop_sequences
 
             max_new_tokens = self.config.generation_parameters.max_new_tokens or split[0].generation_size
             returns_logits = split[0].use_logits
