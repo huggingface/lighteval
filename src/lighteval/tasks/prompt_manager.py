@@ -261,7 +261,9 @@ class FewShotSampler:
     def _init_fewshot_sampling_sequential(self, num_fewshot: int, variance_seed: int):
         # No balancing of the few-shot examples, we take the first items of the set
         # We rotate by num_fewshot * seed (seed >= 0) to be able to have different series of sequential few-shots
-        fewshotpool = self.task.fewshot_docs()
+        # Copy the pool: `fewshot_docs()` returns the task's memoized list by reference, so rotating it in
+        # place would corrupt the shared pool for every other variance seed.
+        fewshotpool = list(self.task.fewshot_docs())
         for _ in range(num_fewshot * variance_seed):
             fewshotpool.append(fewshotpool.pop(0))
         self._fewshot_cache[variance_seed] = fewshotpool  # Store few shot examples
