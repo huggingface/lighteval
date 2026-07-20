@@ -282,7 +282,11 @@ class FewShotSampler:
     ):
         fewshotpool = self.task.fewshot_docs()
 
-        random.seed(variance_seed)
+        # Use a local RNG (like _init_fewshot_sampling_random) rather than
+        # reseeding the global `random` module, which is non-reproducible if
+        # other code touches the global RNG between calls and leaks state into
+        # the rest of the program.
+        rnd = random.Random(variance_seed)
 
         # Build up balanced selection based on fewshot_sorting_class
         # (or the gold target, if the class is undefined)
@@ -301,7 +305,7 @@ class FewShotSampler:
         for count in sorted(counts_to_labels, reverse=True):
             labels = counts_to_labels[count]
             # Break ties by randomly shuffling labels that have the same number of Instances
-            random.shuffle(labels)
+            rnd.shuffle(labels)
             sorted_labels.extend(labels)
 
         examples = []
@@ -311,7 +315,11 @@ class FewShotSampler:
         labels_iterable = cycle(sorted_labels)
         while num_instances_to_sample > 0:
             next_label = next(labels_iterable, None)
-            if not next_label:
+            # `cycle` only yields None when sorted_labels is empty; stop then.
+            # A plain `if not next_label` would also break on a valid but falsy
+            # label (e.g. the integer 0 or an empty-string gold), truncating the
+            # sample for any task whose class labels include a falsy value.
+            if next_label is None:
                 break
 
             instances = label_to_instances[next_label]
@@ -320,7 +328,7 @@ class FewShotSampler:
                 continue
 
             # Randomly sample without replacement
-            examples.append(instances.pop(random.randrange(len(instances))))
+            examples.append(instances.pop(rnd.randrange(len(instances))))
             num_instances_to_sample -= 1
 
         self._fewshot_cache[variance_seed] = examples  # Store few shot examples

@@ -57,3 +57,48 @@ def test_fewshot_sampler(fewshot_select: str):
             task_docs = task.fewshot_docs()
             rnd.shuffle(task_docs)
             assert docs == task_docs[:20]
+
+
+def _make_balanced_task(docs: list[Doc]) -> LightevalTask:
+    config = LightevalTaskConfig(
+        name="test_balanced_task",
+        prompt_function=lambda _, __: None,
+        hf_repo="",
+        hf_subset="default",
+        metrics=[],
+        few_shots_split="test",
+        few_shots_select="balanced",
+    )
+    task = LightevalTask(config)
+    task._fewshot_docs = docs
+    return task
+
+
+def test_balanced_fewshot_falsy_label_not_truncated():
+    # A class whose label is falsy (here the empty-string gold) must not cut the
+    # balanced selection short: `if not next_label` used to break on it, so a
+    # task with such a label returned fewer (down to zero) examples than asked.
+    docs = [Doc(query=f"q{i}", choices=["", "x"], gold_index=0) for i in range(20)]  # label ""
+    docs += [Doc(query=f"p{i}", choices=["", "x"], gold_index=1) for i in range(20)]  # label "x"
+
+    num_fewshot = 10
+    selected = FewShotSampler(_make_balanced_task(docs)).sample_fewshot_examples(num_fewshot, variance_seed=0)
+
+    assert len(selected) == num_fewshot
+    # balanced: both classes are represented
+    labels = {d.get_golds()[0] for d in selected}
+    assert labels == {"", "x"}
+
+
+def test_balanced_fewshot_does_not_disturb_global_rng():
+    # Balanced sampling must draw from a local RNG (like the random selection
+    # path), not reseed/consume the global `random` module.
+    docs = [Doc(query=f"q{i}", choices=["a", "b"], gold_index=i % 2) for i in range(20)]
+
+    random.seed(12345)
+    before = [random.random() for _ in range(3)]
+    random.seed(12345)
+    FewShotSampler(_make_balanced_task(docs)).sample_fewshot_examples(5, variance_seed=999)
+    after = [random.random() for _ in range(3)]
+
+    assert before == after
