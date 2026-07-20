@@ -1,0 +1,82 @@
+{
+  "name": "Maj At N Test Suite",
+  "description": "Test cases for maj_at_n metric",
+  "test_cases": [
+    {
+      "name": "Maj at N - Majority Correct",
+      "metric_class": "maj_at_n",
+      "metric_params": {"n": 3},
+      "doc": {
+        "query": "What is the capital of France?",
+        "choices": ["London", "Paris", "Berlin"],
+        "gold_index": [1],
+        "task_name": "geography"
+      },
+      "model_response": {
+        "text": ["Paris", "Paris", "London"]
+      },
+      "expected_output": {
+        "maj@n:n=3": 1
+      },
+      "tolerance": 0.01,
+      "description": "Test maj at n with majority correct"
+    },
+    {
+      "name": "Maj at N - No Majority",
+      "metric_class": "maj_at_n",
+      "metric_params": {"n": 3},
+      "doc": {
+        "query": "What is the capital of France?",
+        "choices": ["London", "Paris", "Berlin"],
+        "gold_index": [1],
+        "task_name": "geography"
+      },
+      "model_response": {
+        "text": ["Paris", "London", "Berlin"]
+      },
+      "expected_output": {
+        "maj@n:n=3": 1
+      },
+      "tolerance": 0.01,
+      "description": "Test maj at n with no majority"
+    },
+    {
+      "name": "Maj at N - All Correct",
+      "metric_class": "maj_at_n",
+      "metric_params": {"n": 3},
+      "doc": {
+        "query": "What is the capital of France?",
+        "choices": ["London", "Paris", "Berlin"],
+        "gold_index": [1],
+        "task_name": "geography"
+      },
+      "model_response": {
+        "text": ["Paris", "Paris", "Paris"]
+      },
+      "expected_output": {
+        "maj@n:n=3": 1
+      },
+      "tolerance": 0.01,
+      "description": "Test maj at n with all correct"
+    },
+    {
+      "name": "Maj at N - Wrong Answer",
+      "metric_class": "maj_at_n",
+      "metric_params": {"n": 3},
+      "doc": {
+        "query": "What is the capital of France?",
+        "choices": ["London", "Paris", "Berlin"],
+        "gold_index": [1],
+        "task_name": "geography"
+      },
+      "model_response": {
+        "text": ["London", "London", "London"]
+      },
+      "expected_output": {
+        "maj@n:n=3": 0
+      },
+      "tolerance": 0.01,
+      "description": "Test maj at n with wrong answer"
+    }
+  ]
+}
