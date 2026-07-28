@@ -40,12 +40,26 @@ def test_hellaswag_arabic_pfn_parses_endings():
 
 def test_hellaswag_arabic_pfn_rejects_non_literal_endings():
     # endings comes from a hub dataset; anything that is not a plain literal
-    # must raise instead of being evaluated
+    # must raise instead of being evaluated. literal_eval raises ValueError on
+    # non-literal nodes but SyntaxError on malformed input (e.g. a truncated
+    # field), so both count as rejection.
     line = {
         "ctx": "sentence",
         "endings": "__import__('os').system('echo pwned')",
         "label": 0,
     }
 
-    with pytest.raises(ValueError):
+    with pytest.raises((ValueError, SyntaxError)):
         hellaswag_arabic_pfn(line, "test_task")
+
+
+def test_hellaswag_arabic_pfn_does_not_execute_endings():
+    # pytest.raises alone would also pass if something ran before raising;
+    # the side effect pins down that nothing in the field executes at all
+    executed = []
+    line = {"ctx": "s", "endings": "[executed.append(1)]", "label": 0}
+
+    with pytest.raises((ValueError, SyntaxError)):
+        hellaswag_arabic_pfn(line, "test_task")
+
+    assert executed == []
