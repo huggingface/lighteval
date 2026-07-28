@@ -501,6 +501,22 @@ class LogProbCharNorm:
 LogProbNormalization = LogProbCharNorm | LogProbTokenNorm | LogProbPMINorm
 
 
+def _char_norm_length(choice: str, ignore_first_space: bool) -> int:
+    """Number of characters `LogProbCharNorm` divides by, for a single choice.
+
+    `startswith` rather than `choice[0]` so an empty choice does not raise `IndexError`, and the
+    length is checked so a choice with nothing left to normalize by fails with something readable
+    instead of `ZeroDivisionError` several frames away.
+    """
+    length = len(choice) - 1 if ignore_first_space and choice.startswith(" ") else len(choice)
+    if length <= 0:
+        raise ValueError(
+            f"Cannot apply character normalization to the choice {choice!r}: it has no characters to "
+            "normalize by. Either drop the empty choice from the task or use a different normalization."
+        )
+    return length
+
+
 def normalize_log_probs(
     normalization: LogProbNormalization,
     choices_logprob: list[float],
@@ -510,17 +526,14 @@ def normalize_log_probs(
 ) -> list[float]:
     normalized_log_probs = choices_logprob
     match normalization:
-        case LogProbCharNorm(ignore_first_space=True):
+        case LogProbCharNorm(ignore_first_space=ignore_first_space):
             assert choices_text is not None, "choices_text must be provided for character normalization"
             if len(choices_text) != len(choices_logprob):
                 raise ValueError("choices_text and choices_logprob must have the same length")
             normalized_log_probs = [
-                choices_logprob[ix] / (len(choice) - 1 if choice[0] == " " else len(choice))
+                choices_logprob[ix] / _char_norm_length(choice, ignore_first_space)
                 for ix, choice in enumerate(choices_text)
             ]
-        case LogProbCharNorm(ignore_first_space=False):
-            assert choices_text is not None, "choices_text must be provided for character normalization"
-            normalized_log_probs = [choices_logprob[ix] / len(choice) for ix, choice in enumerate(choices_text)]
         case LogProbTokenNorm():
             assert choices_tokens is not None, "choices_tokens must be provided for token normalization"
             normalized_log_probs = [
