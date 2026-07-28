@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import sys
+
 import pytest
 
 from lighteval.tasks.multilingual.tasks.arabic import hellaswag_arabic_pfn
@@ -54,12 +56,16 @@ def test_hellaswag_arabic_pfn_rejects_non_literal_endings():
 
 
 def test_hellaswag_arabic_pfn_does_not_execute_endings():
-    # pytest.raises alone would also pass if something ran before raising;
-    # the side effect pins down that nothing in the field executes at all
-    executed = []
-    line = {"ctx": "s", "endings": "[executed.append(1)]", "label": 0}
+    # pytest.raises alone would also pass if something ran before raising. The payload has to
+    # reach its side effect through builtins, because eval() here runs against arabic.py's module
+    # globals and cannot see anything defined in this test.
+    marker = "lighteval_pwned_by_dataset_field"
+    sys.modules.pop(marker, None)
+    line = {"ctx": "s", "endings": f"[__import__('sys').modules.setdefault({marker!r}, 1)]", "label": 0}
 
-    with pytest.raises((ValueError, SyntaxError)):
-        hellaswag_arabic_pfn(line, "test_task")
-
-    assert executed == []
+    try:
+        with pytest.raises((ValueError, SyntaxError)):
+            hellaswag_arabic_pfn(line, "test_task")
+        assert marker not in sys.modules
+    finally:
+        sys.modules.pop(marker, None)
