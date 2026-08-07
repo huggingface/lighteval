@@ -367,6 +367,13 @@ def eval(  # noqa C901
             rich_help_panel=HELP_PANEL_NAME_2,
         ),
     ] = None,
+    sample_shuffle: Annotated[
+        int | None,
+        Option(
+            help="Seed for shuffling sample order before max-samples applies. Without it, max-samples keeps the first N samples in dataset storage order, which skews subsampling on category-grouped datasets (e.g. MMLU-Pro stores all business questions first).",
+            rich_help_panel=HELP_PANEL_NAME_2,
+        ),
+    ] = None,
     # Metric parameters
     epochs: Annotated[
         int,
@@ -464,6 +471,7 @@ def eval(  # noqa C901
         retry_on_error=retry_on_error,
         max_retries=max_retries,
         limit=max_samples,
+        sample_shuffle=sample_shuffle,
         max_tasks=max_tasks,
         log_dir=log_dir,
         log_dir_allow_dirty=log_dir_allow_dirty,
