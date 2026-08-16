@@ -261,7 +261,7 @@ class FewShotSampler:
     def _init_fewshot_sampling_sequential(self, num_fewshot: int, variance_seed: int):
         # No balancing of the few-shot examples, we take the first items of the set
         # We rotate by num_fewshot * seed (seed >= 0) to be able to have different series of sequential few-shots
-        fewshotpool = self.task.fewshot_docs()
+        fewshotpool = list(self.task.fewshot_docs())
         for _ in range(num_fewshot * variance_seed):
             fewshotpool.append(fewshotpool.pop(0))
         self._fewshot_cache[variance_seed] = fewshotpool  # Store few shot examples
@@ -282,13 +282,17 @@ class FewShotSampler:
     ):
         fewshotpool = self.task.fewshot_docs()
 
-        random.seed(variance_seed)
+        rnd = random.Random(variance_seed)
 
         # Build up balanced selection based on fewshot_sorting_class
         # (or the gold target, if the class is undefined)
         label_to_instances = defaultdict(list)
         for instance in fewshotpool:
-            target = instance.fewshot_sorting_class or as_list(instance.get_golds())[0]
+            target = (
+                instance.fewshot_sorting_class
+                if instance.fewshot_sorting_class is not None
+                else as_list(instance.get_golds())[0]
+            )
             label_to_instances[target].append(instance)
 
         # Sort by counts of class labels
@@ -301,7 +305,7 @@ class FewShotSampler:
         for count in sorted(counts_to_labels, reverse=True):
             labels = counts_to_labels[count]
             # Break ties by randomly shuffling labels that have the same number of Instances
-            random.shuffle(labels)
+            rnd.shuffle(labels)
             sorted_labels.extend(labels)
 
         examples = []
@@ -311,7 +315,7 @@ class FewShotSampler:
         labels_iterable = cycle(sorted_labels)
         while num_instances_to_sample > 0:
             next_label = next(labels_iterable, None)
-            if not next_label:
+            if next_label is None:
                 break
 
             instances = label_to_instances[next_label]
@@ -320,7 +324,7 @@ class FewShotSampler:
                 continue
 
             # Randomly sample without replacement
-            examples.append(instances.pop(random.randrange(len(instances))))
+            examples.append(instances.pop(rnd.randrange(len(instances))))
             num_instances_to_sample -= 1
 
         self._fewshot_cache[variance_seed] = examples  # Store few shot examples
