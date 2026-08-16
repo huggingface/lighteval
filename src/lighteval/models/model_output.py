@@ -149,6 +149,7 @@ class ModelResponse:
             input=self.input,
             input_tokens=self.input_tokens,
             text=[self.text[index]],
+            text_post_processed=[self.text_post_processed[index]] if self.text_post_processed is not None else None,
             output_tokens=[self.output_tokens[index]] if self.output_tokens else [],
             logprobs=[self.logprobs[index]] if self.logprobs else [],
             argmax_logits_eq_gold=[self.argmax_logits_eq_gold[index]] if self.argmax_logits_eq_gold else [],
