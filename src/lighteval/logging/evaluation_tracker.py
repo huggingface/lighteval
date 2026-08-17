@@ -58,6 +58,48 @@ except ImportError:
     from fsspec.core import url_to_fs
 
 
+def _nesting_depth(value) -> int | None:
+    """Returns the number of nested list levels of a value, or None if it constrains no Arrow type.
+
+    `None` values and empty lists are unconstrained: Arrow stores them as nulls or empty lists
+    whatever the nesting depth of the other values of their column.
+    """
+    if isinstance(value, list):
+        depths = [depth for depth in map(_nesting_depth, value) if depth is not None]
+        return 1 + max(depths) if depths else None
+    return None if value is None else 0
+
+
+def _harmonize_list_nesting(rows: list[dict]) -> list[dict]:
+    """Makes the rows of a details dataset Arrow compatible, in place.
+
+    A task can rely on metrics of different types, in which case a same field of the logged
+    `ModelResponse` holds values of different nesting depths from one sample to the next (for
+    example the prompt token ids for a generation, versus one list of token ids per choice for
+    log-probabilities). Arrow refuses to build a column mixing list and non-list values, so we wrap
+    the shallowest values until all the rows of a column agree. Homogeneous columns are untouched.
+    """
+    for key in {key for row in rows for key in row}:
+        values = [row[key] for row in rows if key in row]
+
+        if any(isinstance(value, dict) for value in values):
+            _harmonize_list_nesting([value for value in values if isinstance(value, dict)])
+            continue
+
+        depths = [depth for depth in map(_nesting_depth, values) if depth is not None]
+        if not depths or min(depths) == max(depths):
+            continue
+
+        for row in rows:
+            depth = _nesting_depth(row.get(key))
+            if depth is None:
+                continue
+            for _ in range(max(depths) - depth):
+                row[key] = [row[key]]
+
+    return rows
+
+
 class EnhancedJSONEncoder(json.JSONEncoder):
     """Provides a proper json encoding for the loggers and trackers json dumps.
     Notably manages the json encoding of dataclasses.
@@ -259,7 +301,7 @@ class EvaluationTracker:
         details_datasets: dict[str, Dataset] = {}
         for task_name, task_details in self.details_logger.details.items():
             # Create a dataset from the dictionary - we force cast to str to avoid formatting problems for nested objects
-            dataset = Dataset.from_list([asdict(detail) for detail in task_details])
+            dataset = Dataset.from_list(_harmonize_list_nesting([asdict(detail) for detail in task_details]))
 
             # We don't keep 'id' around if it's there
             column_names = dataset.column_names

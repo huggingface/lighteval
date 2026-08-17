@@ -32,6 +32,8 @@ from huggingface_hub import HfApi
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.info_loggers import DetailsLogger
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.requests import Doc
 
 # ruff: noqa
 from tests.fixtures import TESTING_EMPTY_HF_ORG_ID
@@ -148,6 +150,57 @@ class TestLogging:
             assert len(dataset) == 1
             assert int(dataset[0]["truncated"]) == task_details[task][0].truncated
             assert int(dataset[0]["padded"]) == task_details[task][0].padded
+
+    @pytest.mark.evaluation_tracker(save_details=True)
+    def test_details_logging_with_metrics_of_different_types(self, mock_evaluation_tracker, mock_datetime):
+        """Details of a task relying on both generative and log-probability metrics must be saveable."""
+        doc = Doc(query="question", choices=["a", "b"], gold_index=0, task_name="task1")
+        generative_response = ModelResponse(
+            input="question", input_tokens=[1, 2, 3], text=["a"], output_tokens=[[4, 5]]
+        )
+        logprobs_response = ModelResponse(
+            input="question",
+            input_tokens=[[1, 2, 3], [1, 2, 3]],
+            output_tokens=[[4], [5]],
+            logprobs=[-1.0, -2.0],
+            argmax_logits_eq_gold=[True, False],
+        )
+        mock_evaluation_tracker.details_logger.details = {
+            "task1": [
+                DetailsLogger.Detail(doc, generative_response, {"extractive_match": 1.0}),
+                DetailsLogger.Detail(doc, logprobs_response, {"acc": 0.0}),
+            ]
+        }
+
+        mock_evaluation_tracker.save()
+
+        date_id = mock_datetime.isoformat().replace(":", "-")
+        details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model" / date_id
+        dataset = Dataset.from_parquet(str(details_dir / f"details_task1_{date_id}.parquet"))
+
+        assert len(dataset) == 2
+        # The generative prompt tokens are wrapped to match the per-choice tokens of the other sample
+        assert dataset[0]["model_response"]["input_tokens"] == [[1, 2, 3]]
+        assert dataset[1]["model_response"]["input_tokens"] == [[1, 2, 3], [1, 2, 3]]
+        assert dataset[0]["metric"]["extractive_match"] == 1.0
+        assert dataset[1]["metric"]["acc"] == 0.0
+
+    @pytest.mark.evaluation_tracker(save_details=True)
+    def test_details_logging_with_metrics_of_a_single_type(self, mock_evaluation_tracker, mock_datetime):
+        """Details of a task relying on a single metric type must keep their original shape."""
+        doc = Doc(query="question", choices=["a", "b"], gold_index=0, task_name="task1")
+        response = ModelResponse(input="question", input_tokens=[1, 2, 3], text=["a"], output_tokens=[[4, 5]])
+        mock_evaluation_tracker.details_logger.details = {
+            "task1": [DetailsLogger.Detail(doc, response, {"extractive_match": 1.0})]
+        }
+
+        mock_evaluation_tracker.save()
+
+        date_id = mock_datetime.isoformat().replace(":", "-")
+        details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model" / date_id
+        dataset = Dataset.from_parquet(str(details_dir / f"details_task1_{date_id}.parquet"))
+
+        assert dataset[0]["model_response"]["input_tokens"] == [1, 2, 3]
 
     @pytest.mark.evaluation_tracker(save_details=False)
     def test_no_details_output(self, mock_evaluation_tracker: EvaluationTracker):
