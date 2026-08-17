@@ -20,13 +20,33 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import functools
 from dataclasses import dataclass
-from typing import Callable
+from typing import Any, Callable
 
 from lighteval.metrics.metrics_corpus import CorpusLevelComputation
 from lighteval.metrics.metrics_sample import SampleLevelComputation
 from lighteval.metrics.sample_preparator import Preparator
 from lighteval.tasks.requests import SamplingMethod
+
+
+def sample_param_repr(value: Any) -> str:
+    """Representation of a sample parameter value, for use in metric names.
+
+    Callables (normalization functions for example) are represented by their name, as their default
+    representation contains a memory address, which changes at every run.
+
+    Args:
+        value: Value of the sample parameter.
+
+    Returns:
+        str: A run independent representation of the value.
+    """
+    if isinstance(value, functools.partial):
+        return f"partial({sample_param_repr(value.func)}, ...)"
+    if isinstance(value, Callable):
+        return getattr(value, "__name__", type(value).__name__)
+    return str(value)
 
 
 @dataclass
@@ -86,7 +106,7 @@ class Metric:
         # CAREFUL: do not change the following logic!
         # It must always provide the values of all parameters, so that people can evaluate using a range of metrics
         # For example, pass@k=1&n=16, pass@k=10&n=16, etc
-        sample_params_name = "&".join(f"{k}={v}" for k, v in sample_params.items())
+        sample_params_name = "&".join(f"{k}={sample_param_repr(v)}" for k, v in sample_params.items())
         if isinstance(self, MetricGrouping):
             if hasattr(self.sample_level_fn, "metric_names"):
                 # this is mostly for the gpass@k metrics which redefine submetric names
