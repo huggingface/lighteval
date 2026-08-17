@@ -15,10 +15,14 @@ To save detailed evaluation information, you can use the `--save-details`
 option. The details are saved in Parquet files at
 `{output_dir}/details/{model_name}/{timestamp}/details_{task}_{timestamp}.parquet`.
 
+When the evaluated model uses a revision other than the default one (`main`), the revision is
+appended to the model name, so that evaluations of several revisions of the same model are not
+mixed together: `{output_dir}/results/{model_name}_{revision}/results_{timestamp}.json`.
+
 If you want results to be saved in a custom path structure, you can set the `results-path-template` option.
 This allows you to specify a string template for the path. The template must contain the following
-variables: `output_dir`, `model_name`, `org`. For example:
-`{output_dir}/{org}_{model}`. The template will be used to create the path for the results file.
+variables: `output_dir`, `model_name`, `org`, `revision`. For example:
+`{output_dir}/{org}_{model}/{revision}`. The template will be used to create the path for the results file.
 
 ## Pushing Results to the Hugging Face Hub
 

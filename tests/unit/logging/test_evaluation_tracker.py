@@ -128,6 +128,58 @@ class TestLogging:
         assert saved_results["results"] == task_metrics
         assert saved_results["config_general"]["model_name"] == "test_model"
 
+    def test_results_logging_template_with_revision(self, mock_evaluation_tracker: EvaluationTracker):
+        from lighteval.models.transformers.transformers_model import TransformersModelConfig
+
+        mock_evaluation_tracker.general_config_logger.log_model_info(
+            model_config=TransformersModelConfig(model_name="test_model", revision="v1.0")
+        )
+        mock_evaluation_tracker.results_path_template = "{output_dir}/{org}_{model}/{revision}"
+
+        mock_evaluation_tracker.save()
+
+        results_dir = Path(mock_evaluation_tracker.output_dir) / "_test_model" / "v1.0"
+        assert results_dir.exists()
+        assert len(list(results_dir.glob("results_*.json"))) == 1
+
+    @pytest.mark.evaluation_tracker(save_details=True)
+    def test_results_and_details_logging_with_revision(self, mock_evaluation_tracker, mock_datetime):
+        from lighteval.models.transformers.transformers_model import TransformersModelConfig
+
+        mock_evaluation_tracker.general_config_logger.log_model_info(
+            model_config=TransformersModelConfig(model_name="test_model", revision="v1.0")
+        )
+        mock_evaluation_tracker.details_logger.details = {
+            "task1": [DetailsLogger.CompiledDetail(hashes=None, truncated=10, padded=5)]
+        }
+
+        mock_evaluation_tracker.save()
+
+        date_id = mock_datetime.isoformat().replace(":", "-")
+        results_dir = Path(mock_evaluation_tracker.output_dir) / "results" / "test_model_v1.0"
+        details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model_v1.0" / date_id
+        assert len(list(results_dir.glob("results_*.json"))) == 1
+        assert (details_dir / f"details_task1_{date_id}.parquet").exists()
+
+    @pytest.mark.evaluation_tracker(save_details=True)
+    def test_default_revision_is_not_added_to_paths(self, mock_evaluation_tracker, mock_datetime):
+        from lighteval.models.transformers.transformers_model import TransformersModelConfig
+
+        mock_evaluation_tracker.general_config_logger.log_model_info(
+            model_config=TransformersModelConfig(model_name="test_model")
+        )
+        mock_evaluation_tracker.details_logger.details = {
+            "task1": [DetailsLogger.CompiledDetail(hashes=None, truncated=10, padded=5)]
+        }
+
+        mock_evaluation_tracker.save()
+
+        date_id = mock_datetime.isoformat().replace(":", "-")
+        results_dir = Path(mock_evaluation_tracker.output_dir) / "results" / "test_model"
+        details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model" / date_id
+        assert len(list(results_dir.glob("results_*.json"))) == 1
+        assert (details_dir / f"details_task1_{date_id}.parquet").exists()
+
     @pytest.mark.evaluation_tracker(save_details=True)
     def test_details_logging(self, mock_evaluation_tracker, mock_datetime):
         task_details = {

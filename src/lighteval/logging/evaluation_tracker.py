@@ -111,6 +111,7 @@ class EvaluationTracker:
     Args:
         output_dir (str): Local directory to save evaluation results and logs
         results_path_template (str, optional): Template for results directory structure.
+            Available variables: {output_dir}, {org}, {model}, {revision}.
             Example: "{output_dir}/results/{org}_{model}"
         save_details (bool, defaults to True): Whether to save detailed evaluation records
         push_to_hub (bool, defaults to False): Whether to push results to HF Hub
@@ -227,6 +228,23 @@ class EvaluationTracker:
         return results
 
     @property
+    def model_revision(self) -> str:
+        """Revision of the evaluated model, `main` if the model config has no revision."""
+        return getattr(self.general_config_logger.model_config, "revision", None) or "main"
+
+    @property
+    def model_sub_folder(self) -> str:
+        """Model sub folder in which results and details are saved.
+
+        The revision is appended to the model name when it's not the default one, so that
+        evaluations of several revisions of the same model don't get mixed in one folder.
+        """
+        model_sub_folder = self.general_config_logger.model_name.strip("/")
+        if self.model_revision != "main":
+            model_sub_folder = f"{model_sub_folder}_{self.model_revision.replace('/', '_')}"
+        return model_sub_folder
+
+    @property
     def details(self):
         return {
             task_name: [asdict(detail) for detail in task_details]
@@ -309,9 +327,13 @@ class EvaluationTracker:
             org = org_model_parts[0] if len(org_model_parts) >= 2 else ""
             model = org_model_parts[1] if len(org_model_parts) >= 2 else org_model_parts[0]
             output_dir = self.output_dir
-            output_dir_results = Path(self.results_path_template.format(output_dir=output_dir, org=org, model=model))
+            output_dir_results = Path(
+                self.results_path_template.format(
+                    output_dir=output_dir, org=org, model=model, revision=self.model_revision
+                )
+            )
         else:
-            output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name.strip("/")
+            output_dir_results = Path(self.output_dir) / "results" / self.model_sub_folder
         self.fs.mkdirs(output_dir_results, exist_ok=True)
         output_results_file = output_dir_results / f"results_{date_id}.json"
         logger.info(f"Saving results to {output_results_file}")
@@ -319,7 +341,7 @@ class EvaluationTracker:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
     def _get_details_sub_folder(self, date_id: str):
-        output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name.strip("/")
+        output_dir_details = Path(self.output_dir) / "details" / self.model_sub_folder
         if date_id in ["first", "last"]:
             # Get all folders in output_dir_details
             if not self.fs.exists(output_dir_details):
