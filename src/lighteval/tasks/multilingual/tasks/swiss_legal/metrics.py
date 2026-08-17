@@ -1,14 +1,12 @@
 import importlib
 import importlib.metadata as importlib_metadata
 import logging
-import os
 import re
 import statistics
 from typing import Callable, Literal, Optional
 
 import nltk
 import numpy as np
-import requests
 import torch
 from nltk import word_tokenize
 from nltk.translate import meteor_score
@@ -151,26 +149,6 @@ class BertScoreMultilingual(BertScore):
             baseline_path=None,
             device=self.device,
         )
-
-        if self.rescale_with_baseline:
-            baseline_path = self.bert_scorer.baseline_path
-            if baseline_path is None:
-                raise RuntimeError("BERTScore baseline path must be set when rescale_with_baseline=True")
-
-            os.makedirs(os.path.dirname(baseline_path), exist_ok=True)
-
-            if not os.path.exists(baseline_path):
-                raw_url = (
-                    "https://raw.githubusercontent.com/Tiiiger/bert_score/master/"
-                    f"bert_score/rescale_baseline/{language}/{self.model_type}.tsv"
-                )
-                logger.info("Downloading BERTScore baseline file from %s", raw_url)
-                response = requests.get(raw_url)
-                if response.status_code == 200:
-                    with open(baseline_path, "wb") as f:
-                        f.write(response.content)
-                else:
-                    raise RuntimeError(f"Failed to download baseline file from {raw_url}")
 
 
 class GEMBA(SampleLevelComputation):

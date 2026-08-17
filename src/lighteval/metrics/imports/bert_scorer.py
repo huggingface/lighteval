@@ -25,16 +25,26 @@
 
 import logging
 import os
+import tempfile
 import time
 from collections import defaultdict
+from pathlib import Path
 
 import pandas as pd
+import requests
 import torch
 from torch.nn.utils.rnn import pad_sequence
 from transformers import AutoModel, AutoTokenizer
 
 
 logger = logging.getLogger(__name__)
+
+# The baseline files used to rescale the scores are not shipped with lighteval, we download them on first use
+BASELINE_REPO_URL = "https://github.com/Tiiiger/bert_score/tree/master/bert_score/rescale_baseline"
+BASELINE_FILE_URL = (
+    "https://raw.githubusercontent.com/Tiiiger/bert_score/master/bert_score/rescale_baseline/{lang}/{model_type}.tsv"
+)
+BASELINE_CACHE_DIR = "~/.cache/huggingface/lighteval/bertscore_baselines"
 
 
 def padding(arr, pad_token, dtype=torch.long):
@@ -371,10 +381,7 @@ class BERTScorer:
         self._baseline_vals = None
         self.baseline_path = baseline_path
         if self.baseline_path is None:
-            self.baseline_path = os.path.join(
-                os.path.dirname(__file__),
-                f"rescale_baseline/{self.lang}/{self.model_type}.tsv",
-            )
+            self.baseline_path = self._default_baseline_path()
 
     @property
     def lang(self):
@@ -396,20 +403,51 @@ class BERTScorer:
     def rescale_with_baseline(self):
         return self._rescale_with_baseline
 
+    def _default_baseline_path(self) -> str:
+        """Baseline file location used when the user does not provide one.
+
+        Baselines downloaded by older lighteval versions live next to the package, we keep reading them from there.
+        """
+        packaged_path = os.path.join(
+            os.path.dirname(__file__),
+            f"rescale_baseline/{self.lang}/{self.model_type}.tsv",
+        )
+        if os.path.isfile(packaged_path):
+            return packaged_path
+        return os.path.join(os.path.expanduser(BASELINE_CACHE_DIR), f"{self.lang}/{self.model_type}.tsv")
+
+    def _download_baseline_file(self):
+        """Download the pre-computed baseline of the current language and model to `self.baseline_path`."""
+        url = BASELINE_FILE_URL.format(lang=self.lang, model_type=self.model_type)
+        logger.info(f"Downloading the BERTScore baseline file for {self.model_type} ({self.lang}) from {url}")
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            raise ValueError(
+                f"Baseline not found for {self.model_type} on {self.lang}: downloading it from {url} failed ({e}). "
+                f"You can download it manually from {BASELINE_REPO_URL} and pass its path as `baseline_path`, "
+                "or use `rescale_with_baseline=False`."
+            ) from e
+
+        baseline_path = Path(self.baseline_path)
+        baseline_path.parent.mkdir(parents=True, exist_ok=True)
+        # Written to a temporary file first, so that concurrent or interrupted downloads can't be read as baselines
+        with tempfile.NamedTemporaryFile(dir=baseline_path.parent, delete=False) as tmp_file:
+            tmp_file.write(response.content)
+        os.replace(tmp_file.name, baseline_path)
+
     @property
     def baseline_vals(self):
         if self._baseline_vals is None:
-            if os.path.isfile(self.baseline_path):
-                if not self.all_layers:
-                    self._baseline_vals = torch.from_numpy(
-                        pd.read_csv(self.baseline_path).iloc[self.num_layers].to_numpy()
-                    )[1:].float()
-                else:
-                    self._baseline_vals = (
-                        torch.from_numpy(pd.read_csv(self.baseline_path).to_numpy())[:, 1:].unsqueeze(1).float()
-                    )
+            if not os.path.isfile(self.baseline_path):
+                self._download_baseline_file()
+
+            baselines = pd.read_csv(self.baseline_path)
+            if not self.all_layers:
+                self._baseline_vals = torch.from_numpy(baselines.iloc[self.num_layers].to_numpy())[1:].float()
             else:
-                raise ValueError(f"Baseline not Found for {self.model_type} on {self.lang} at {self.baseline_path}")
+                self._baseline_vals = torch.from_numpy(baselines.to_numpy())[:, 1:].unsqueeze(1).float()
 
         return self._baseline_vals
 
