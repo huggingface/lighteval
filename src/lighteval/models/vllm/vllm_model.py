@@ -86,6 +86,47 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 STARTING_BATCH_SIZE = 512
 
 
+def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests: list[list[int]]) -> list:
+    """Generates the requests assigned to one data parallel worker.
+
+    Worker level progress bars are disabled: they are duplicated across workers and interleaved in
+    the logs, so they don't convey the global progress. The main process logs it instead.
+
+    Args:
+        model_args (dict): Arguments used to instantiate the vllm engine on the worker.
+        sampling_params (SamplingParams): Sampling parameters for the generation.
+        requests (list[list[int]]): Tokenized prompts assigned to this worker.
+
+    Returns:
+        list: The vllm outputs for the worker requests.
+    """
+    llm = LLM(**model_args)
+    prompts = build_vllm_token_prompts(requests)
+    return llm.generate(prompts=prompts, sampling_params=sampling_params, use_tqdm=False)
+
+
+def gather_with_progress_bar(object_refs: list, prompt_counts: list[int], disable: bool = False) -> list:
+    """Waits for the data parallel workers, logging the global progress on the main process.
+
+    Args:
+        object_refs (list): Ray object references, one per data parallel worker.
+        prompt_counts (list[int]): Number of prompts dispatched to each worker.
+        disable (bool): Whether to disable the progress bar.
+
+    Returns:
+        list: The workers results, in the order they were submitted in.
+    """
+    prompts_per_ref = dict(zip(object_refs, prompt_counts))
+    pending = list(object_refs)
+
+    with tqdm(total=sum(prompt_counts), desc="Processed prompts", unit="prompt", disable=disable) as pbar:
+        while pending:
+            done, pending = ray.wait(pending, num_returns=1)
+            pbar.update(sum(prompts_per_ref[ref] for ref in done))
+
+    return ray.get(object_refs)
+
+
 class VLLMModelConfig(ModelConfig):
     """Configuration class for VLLM inference engine.
 
@@ -449,19 +490,14 @@ class VLLMModel(LightevalModel):
             )
 
         if self.data_parallel_size > 1:
-
-            @ray.remote(num_gpus=self.tensor_parallel_size)
-            def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
-                llm = LLM(**model_args)
-                prompts = build_vllm_token_prompts(requests)
-                return llm.generate(prompts=prompts, sampling_params=sampling_params)
+            remote_inference = ray.remote(num_gpus=self.tensor_parallel_size)(run_inference_one_model)
 
             # dispatch requests to all self.data_parallel_size workers, in interleaved fashion
             # interleaved important to balance context lengths across workers
             requests = [list(x) for x in distribute(self.data_parallel_size, inputs)]
             inputs = ((self.model_args, sampling_params, req) for req in requests)
-            object_refs = [run_inference_one_model.remote(*x) for x in inputs]
-            results = ray.get(object_refs)
+            object_refs = [remote_inference.remote(*x) for x in inputs]
+            results = gather_with_progress_bar(object_refs, [len(req) for req in requests], disable=self.disable_tqdm)
             # Invoke ray.shutdown() to prevent hang-ups if subsequent calls required.
             ray.shutdown()
             # flatten results
@@ -475,7 +511,7 @@ class VLLMModel(LightevalModel):
             outputs = self.model.generate(
                 prompts=prompts,
                 sampling_params=sampling_params,
-                use_tqdm=True,
+                use_tqdm=not self.disable_tqdm,
             )
 
         return outputs
