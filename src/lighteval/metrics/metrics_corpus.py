@@ -148,7 +148,7 @@ class CorpusLevelTranslationMetric(CorpusLevelComputation):
             pred = as_list(i.preds)
             if len(pred) > 1:
                 logger.info(
-                    f"Multiple predictions present, keeping only the first prediction (when computing sacrebleu.{metric.__name__})."
+                    f"Multiple predictions present, keeping only the first prediction (when computing sacrebleu.{type(metric).__name__})."
                 )
             preds.append(pred[0])
 
