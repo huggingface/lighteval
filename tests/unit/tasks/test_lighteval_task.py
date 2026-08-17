@@ -21,6 +21,9 @@
 # SOFTWARE.
 
 
+from multiprocess.pool import ThreadPool
+
+import lighteval.tasks.lighteval_task as lighteval_task_module
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
@@ -84,3 +87,34 @@ def test_hf_data_files(tmp_path):
 
     eval_docs = task.eval_docs()
     assert [doc.query for doc in eval_docs] == src_docs
+
+
+def test_load_datasets_in_parallel(monkeypatch):
+    tasks = {
+        name: LightevalTask(
+            LightevalTaskConfig(
+                name=name,
+                prompt_function=dummy_prompt_function,
+                hf_repo=f"lighteval-tests-datasets/{name}",
+                hf_subset="default",
+                metrics=[],
+                evaluation_splits=["train"],
+            )
+        )
+        for name in ["task_a", "task_b", "task_c"]
+    }
+
+    def fake_download_dataset_worker(task):
+        return f"dataset for {task.name}"
+
+    # Threads keep the workers in-process, so the patched worker is used and no dataset is downloaded
+    monkeypatch.setattr(lighteval_task_module, "Pool", ThreadPool)
+    monkeypatch.setattr(LightevalTask, "download_dataset_worker", staticmethod(fake_download_dataset_worker))
+
+    LightevalTask.load_datasets(tasks, dataset_loading_processes=2)
+
+    assert {name: task.dataset for name, task in tasks.items()} == {
+        "task_a": "dataset for task_a",
+        "task_b": "dataset for task_b",
+        "task_c": "dataset for task_c",
+    }

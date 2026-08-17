@@ -430,9 +430,9 @@ class LightevalTask:
             datasets = [task.download_dataset_worker(task) for task in tasks.values()]
         else:
             with Pool(processes=dataset_loading_processes) as pool:
-                datasets = pool.starmap(
+                datasets = pool.map(
                     LightevalTask.download_dataset_worker,
-                    [tasks.values()],
+                    tasks.values(),
                 )
 
         for task, dataset in zip(tasks, datasets):
