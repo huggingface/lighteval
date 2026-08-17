@@ -21,12 +21,51 @@
 # SOFTWARE.
 
 
+import pytest
+
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
 def dummy_prompt_function(item, task_name):
     return Doc(query=item["text"], choices=["A", "B"], gold_index=0, task_name=task_name)
+
+
+def dummy_config(name: str, **kwargs) -> LightevalTaskConfig:
+    return LightevalTaskConfig(
+        name=name,
+        prompt_function=dummy_prompt_function,
+        hf_repo="lighteval-tests-datasets/dataset-test-1",
+        hf_subset="default",
+        metrics=[],
+        evaluation_splits=["train"],
+        **kwargs,
+    )
+
+
+def test_config_sorting():
+    # Configs must be sortable, as the sample cache sorts them to build task hashes
+    first = dummy_config("task_a")
+    second = dummy_config("task_a", num_fewshots=5)
+    third = dummy_config("task_b")
+
+    assert sorted([third, first, second]) == [first, second, third]
+    assert first < second < third
+    assert third > first
+    assert first <= dummy_config("task_a")
+
+
+def test_config_sorting_is_deterministic_for_identical_names():
+    # Same name and few shot number, so ordering must fall back on the rest of the config
+    short = dummy_config("task_a", generation_size=10)
+    long = dummy_config("task_a", generation_size=20)
+
+    assert sorted([short, long]) == sorted([long, short])
+
+
+def test_config_comparison_with_other_types():
+    with pytest.raises(TypeError):
+        dummy_config("task_a") < "task_a"
 
 
 def test_revision_check():

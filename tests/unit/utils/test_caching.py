@@ -101,6 +101,34 @@ class TestCaching(unittest.TestCase):
                     self.assertIn(str(temp_dir), str(folder))
                     self.assertIn(model_name, str(folder))
 
+    def test_task_hash_with_several_configs_for_one_task(self):
+        """Regression test for #1024. A task requested both directly and through its group ends up with
+        several configs in the registry, and the task hash must be built from them in a stable order
+        (this used to crash, as configs did not support comparison)."""
+        from lighteval.models.dummy.dummy_model import DummyModelConfig
+        from lighteval.tasks.lighteval_task import LightevalTaskConfig
+
+        configs = [
+            LightevalTaskConfig(
+                name=self.task_name,
+                prompt_function=lambda item, task_name: None,
+                hf_repo="lighteval-tests-datasets/dataset-test-1",
+                hf_subset="default",
+                metrics=[],
+                num_fewshots=num_fewshots,
+            )
+            for num_fewshots in [0, 5]
+        ]
+
+        task_hashes = []
+        for ordered_configs in [configs, list(reversed(configs))]:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                cache = SampleCache(DummyModelConfig(model_name="test_model", cache_dir=temp_dir))
+                cache._init_registry(Mock(task_to_configs={self.task_name: sorted(ordered_configs)}))
+                task_hashes.append(cache.get_task_id(self.task_name, SamplingMethod.GENERATIVE).task_hash)
+
+        self.assertEqual(task_hashes[0], task_hashes[1])
+
     def test_cache_decorator_presence(self):
         """Test that @cached decorators are present on the right methods."""
         from lighteval.models.dummy.dummy_model import DummyModel

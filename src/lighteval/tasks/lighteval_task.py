@@ -45,6 +45,7 @@ from lighteval.utils.utils import ListLike, as_list
 logger = logging.getLogger(__name__)
 
 
+@functools.total_ordering
 @dataclass
 class LightevalTaskConfig:
     """Configuration dataclass for a LightevalTask.
@@ -197,6 +198,17 @@ class LightevalTaskConfig:
         md_writer.value_matrix = values
 
         return md_writer.dumps()
+
+    def _sort_key(self) -> tuple[str, int, int, str]:
+        """Key used to order configs. The full config representation is used as last tie breaker, so
+        that several configs of a same task always sort the same way (needed to get stable cache hashes).
+        """
+        return (self.name, self.num_fewshots, self.version, self.__str__(lite=True))
+
+    def __lt__(self, other):
+        if not isinstance(other, LightevalTaskConfig):
+            return NotImplemented
+        return self._sort_key() < other._sort_key()
 
     def print(self, lite: bool = False):
         print(str(self, lite))
