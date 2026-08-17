@@ -149,6 +149,45 @@ class TestLogging:
             assert int(dataset[0]["truncated"]) == task_details[task][0].truncated
             assert int(dataset[0]["padded"]) == task_details[task][0].padded
 
+    @pytest.mark.evaluation_tracker(save_details=True)
+    def test_load_details_datasets(self, mock_evaluation_tracker: EvaluationTracker, mock_datetime):
+        date_id = mock_datetime.isoformat().replace(":", "-")
+        details_datasets = {
+            "task1|0": Dataset.from_dict({"model_response": [{"text": ["task1 prediction"]}]}),
+            "task2|5": Dataset.from_dict({"model_response": [{"text": ["task2 prediction"]}]}),
+        }
+        mock_evaluation_tracker.save_details(date_id, details_datasets)
+
+        loaded = mock_evaluation_tracker.load_details_datasets(date_id, ["task1|0", "task2|5"])
+
+        assert sorted(loaded.keys()) == ["task1|0", "task2|5"]
+        assert loaded["task1|0"][0]["model_response"]["text"] == ["task1 prediction"]
+        assert loaded["task2|5"][0]["model_response"]["text"] == ["task2 prediction"]
+
+    @pytest.mark.evaluation_tracker(save_details=True)
+    def test_load_details_datasets_only_loads_requested_tasks(
+        self, mock_evaluation_tracker: EvaluationTracker, mock_datetime
+    ):
+        date_id = mock_datetime.isoformat().replace(":", "-")
+        details_datasets = {
+            "task1|0": Dataset.from_dict({"model_response": [{"text": ["task1 prediction"]}]}),
+            "task2|5": Dataset.from_dict({"model_response": [{"text": ["task2 prediction"]}]}),
+        }
+        mock_evaluation_tracker.save_details(date_id, details_datasets)
+
+        loaded = mock_evaluation_tracker.load_details_datasets(date_id, ["task2|5"])
+
+        assert list(loaded.keys()) == ["task2|5"]
+
+    @pytest.mark.evaluation_tracker(save_details=True)
+    def test_load_details_datasets_missing_task(self, mock_evaluation_tracker: EvaluationTracker, mock_datetime):
+        date_id = mock_datetime.isoformat().replace(":", "-")
+        details_datasets = {"task1|0": Dataset.from_dict({"model_response": [{"text": ["task1 prediction"]}]})}
+        mock_evaluation_tracker.save_details(date_id, details_datasets)
+
+        with pytest.raises(ValueError):
+            mock_evaluation_tracker.load_details_datasets(date_id, ["task1|0", "task2|5"])
+
     @pytest.mark.evaluation_tracker(save_details=False)
     def test_no_details_output(self, mock_evaluation_tracker: EvaluationTracker):
         mock_evaluation_tracker.save()
