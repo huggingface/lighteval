@@ -233,6 +233,12 @@ class F1_score(SampleLevelComputation):
         gold_bow = set(gold.split())
         pred_bow = set(pred.split())
 
+        if not gold_bow:
+            raise ValueError(
+                "F1_score received an empty gold reference after normalization; "
+                "this is invalid evaluation data, not a model miss."
+            )
+
         ret = nltk.scores.f_measure(gold_bow, pred_bow)
 
         if ret is None:
