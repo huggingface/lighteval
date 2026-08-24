@@ -268,7 +268,10 @@ class SGLangModel(LightevalModel):
             # should have been managed by the prompt creator/few shot manager if requested by the user.
 
             inputs = tokenized["input_ids"]
-            context_size = len(inputs[0])
+            # Use the longest prompt in the batch (worst case) for truncation decisions,
+            # not only the first item, otherwise shorter first samples can skip truncation
+            # while longer later samples still exceed max_length.
+            context_size = max((len(input_ids) for input_ids in inputs), default=0)
 
             # left truncate the inputs to the maximum length
             if max_new_tokens is not None:
