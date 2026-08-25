@@ -89,7 +89,7 @@ class DropMetrics(SampleLevelComputation):
         pred_normalized_spans, pred_bags = self._answer_to_bags(predicted)
         gold_normalized_spans, gold_bags = self._answer_to_bags(gold)
 
-        if set(pred_normalized_spans) == set(gold_normalized_spans) and len(gold_normalized_spans) == len(
+        if set(pred_normalized_spans) == set(gold_normalized_spans) and len(pred_normalized_spans) == len(
             gold_normalized_spans
         ):
             exact_match = 1.0
