@@ -70,6 +70,29 @@
       },
       "tolerance": 0.01,
       "description": "Test DROP with partial match"
+    },
+    {
+      "name": "DROP - Duplicate Predicted Span",
+      "metric_class": "drop",
+      "metric_params": {},
+      "doc": {
+        "query": "What is 2 + 2?",
+        "specific": {
+          "golds_no_preprocessing": ["4"]
+        },
+        "choices": ["4"],
+        "gold_index": 0,
+        "task_name": "math"
+      },
+      "model_response": {
+        "text": ["4", "4"]
+      },
+      "expected_output": {
+        "em": 0.0,
+        "f1": 0.5
+      },
+      "tolerance": 0.01,
+      "description": "Two predicted spans against one gold span is not an exact match; lm-evaluation-harness scores this 0.0"
     }
   ]
 }
