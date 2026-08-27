@@ -21,8 +21,38 @@
 # SOFTWARE.
 
 import unittest
+from types import SimpleNamespace
 
-from lighteval.utils.utils import remove_reasoning_tags
+from lighteval.utils.utils import make_results_table, remove_reasoning_tags
+
+
+class TestMakeResultsTable(unittest.TestCase):
+    def test_includes_sample_count(self):
+        result_dict = {
+            "results": {"task_a": {"accuracy": 0.0, "accuracy_stderr": 0.0}},
+            "versions": {"task_a": 1},
+            "config_tasks": {"task_a": SimpleNamespace(effective_num_docs=10)},
+        }
+
+        table = make_results_table(result_dict)
+
+        self.assertIn("Samples", table)
+        row = next(row for row in table.splitlines() if "task_a" in row)
+        cells = row.strip("|").split("|")
+        self.assertEqual([cell.strip() for cell in cells[:4]], ["task_a", "1", "10", "accuracy"])
+
+    def test_leaves_sample_count_blank_for_legacy_configs(self):
+        result_dict = {
+            "results": {"task_a": {"accuracy": 0.0}},
+            "versions": {"task_a": 1},
+            "config_tasks": {"task_a": {"effective_num_docs": -1}},
+        }
+
+        table = make_results_table(result_dict)
+
+        row = next(row for row in table.splitlines() if "task_a" in row)
+        cells = row.strip("|").split("|")
+        self.assertEqual([cell.strip() for cell in cells[:4]], ["task_a", "1", "", "accuracy"])
 
 
 class TestRemoveReasoningTags(unittest.TestCase):
