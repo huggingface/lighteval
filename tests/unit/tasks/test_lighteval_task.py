@@ -21,6 +21,8 @@
 # SOFTWARE.
 
 
+import logging
+
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
@@ -84,3 +86,44 @@ def test_hf_data_files(tmp_path):
 
     eval_docs = task.eval_docs()
     assert [doc.query for doc in eval_docs] == src_docs
+
+
+def _num_samples_config(num_samples, metrics=None):
+    return LightevalTaskConfig(
+        name="test_num_samples",
+        prompt_function=dummy_prompt_function,
+        hf_repo="lighteval-tests-datasets/dataset-test-1",
+        hf_subset="default",
+        evaluation_splits=["train"],
+        metrics=metrics or [],
+        num_samples=num_samples,
+    )
+
+
+def test_num_samples_defaults_to_one_when_unset():
+    cfg = _num_samples_config(num_samples=None)
+    task = LightevalTask(cfg)
+    assert task.num_samples == [1]
+
+
+def test_num_samples_config_is_respected():
+    # Regression test for the config-level `num_samples` being silently dropped:
+    # the request builder takes max(num_samples), so the override must survive.
+    cfg = _num_samples_config(num_samples=[16])
+    task = LightevalTask(cfg)
+    assert max(task.num_samples) == 16
+    # 1 stays present so base generative scoring still works.
+    assert 1 in task.num_samples
+
+
+def test_num_samples_config_accepts_bare_int():
+    cfg = _num_samples_config(num_samples=8)
+    task = LightevalTask(cfg)
+    assert max(task.num_samples) == 8
+
+
+def test_num_samples_without_sampling_metric_warns(caplog):
+    cfg = _num_samples_config(num_samples=[16])
+    with caplog.at_level(logging.WARNING):
+        LightevalTask(cfg)
+    assert any("num_samples" in record.message for record in caplog.records)

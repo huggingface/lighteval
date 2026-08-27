@@ -249,12 +249,28 @@ class LightevalTask:
         self.generation_grammar = config.generation_grammar
         self.stop_sequence = config.stop_sequence
 
-        # We assume num_samples always contains 1 (for base generative evals)
+        # num_samples always contains 1 (for base generative evals). On top of
+        # that, honor an explicit task-level override from the config and the
+        # requirements of any sampling metric. The request builder later takes
+        # the max, so the largest requested value wins.
         self.num_samples = [1]
+        if config.num_samples is not None:
+            requested = config.num_samples if isinstance(config.num_samples, (list, tuple)) else [config.num_samples]
+            self.num_samples.extend(int(n) for n in requested)
         for metric in self.metrics:
             if isinstance(metric.sample_level_fn, SamplingMetric):
                 # Update the number of samples to generate using the information in the metric name
                 self.num_samples.append(metric.sample_level_fn.num_samples())
+
+        if max(self.num_samples) > 1 and not any(
+            isinstance(metric.sample_level_fn, SamplingMetric) for metric in self.metrics
+        ):
+            logger.warning(
+                f"Task {self.name}: num_samples > 1 is set but no metric consumes "
+                "multiple samples, so the extra generations will not affect any "
+                "score. Attach a sampling metric (for example pass@k or maj@k) or "
+                "set num_samples to 1."
+            )
 
     def get_first_possible_fewshot_splits(self, available_splits: ListLike[str]) -> str | None:
         """Parses the possible fewshot split keys in order: train, then validation
