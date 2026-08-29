@@ -63,8 +63,8 @@ class TaskID:
 
 class SampleCache:
     """Disk-based cache for sample evaluation results using HuggingFace datasets.
-    The model hash is a hash of the model config, to make sure we rerun the eval if any parameter changes
-    (generation param, model version, etc).
+    The model hash covers the model config and any immutable revision resolved by the backend, so evaluations rerun
+    when parameters or the resolved model version change.
 
     Cache Structure:
     - {cache_dir}/
@@ -74,14 +74,16 @@ class SampleCache:
                     - {task_hash}/ dataset dict, where splits are SamplingMethod
     """
 
-    def __init__(self, model_config: ModelConfig):
+    def __init__(self, model_config: ModelConfig, resolved_model_revision: str | None = None):
         """Initialize the sample cache.
 
         Args:
             model_config: Configuration for the model being cached
+            resolved_model_revision: Immutable model revision resolved by the backend, when available
         """
         self.model_config = model_config
-        self.model_hash = self.get_model_hash(model_config)
+        self.resolved_model_revision = resolved_model_revision
+        self.model_hash = self.get_model_hash(model_config, resolved_model_revision)
 
         self.cache_dir = (
             Path(os.path.expanduser(self.model_config.cache_dir)) / self.model_config.model_name / self.model_hash
@@ -138,15 +140,24 @@ class SampleCache:
 
         return cached_indices
 
-    def get_model_hash(self, model_config: ModelConfig) -> str:
+    def get_model_hash(self, model_config: ModelConfig, resolved_model_revision: str | None = None) -> str:
         """Create a hash for model configuration.
 
+        Mutable revision names such as ``main`` are not sufficient cache identities. Backends
+        that resolve an immutable revision include it alongside the configuration.
+
         Returns:
-            str: A 16-character hexadecimal hash of the model configuration
+            str: A 16-character hexadecimal hash of the available model identity
         """
         # Use Pydantic's model_dump instead of asdict for BaseModel
         config_dict = model_config.model_dump()
-        config_str = json.dumps(config_dict, sort_keys=True, default=str)
+        cache_identity = config_dict
+        if resolved_model_revision:
+            cache_identity = {
+                "model_config": config_dict,
+                "resolved_model_revision": resolved_model_revision,
+            }
+        config_str = json.dumps(cache_identity, sort_keys=True, default=str)
         return hashlib.sha256(config_str.encode()).hexdigest()[:16]
 
     def _get_task_hash(self, full_task_name: str) -> str:
