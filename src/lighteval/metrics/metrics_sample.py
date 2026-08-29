@@ -1119,9 +1119,9 @@ class SamplingMetric:
         if isinstance(normalize, str):
             import lighteval.metrics.normalizations
 
-            allowed_normalizations = inspect.getmembers(
-                lighteval.metrics.normalizations, inspect.isfunction
-            )  # -> {name: fn}
+            allowed_normalizations = dict(
+                inspect.getmembers(lighteval.metrics.normalizations, inspect.isfunction)
+            )  # {name: fn}
             if normalize in allowed_normalizations:
                 self.normalize = allowed_normalizations[normalize]
             else:
