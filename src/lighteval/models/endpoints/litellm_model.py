@@ -24,6 +24,7 @@ import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
 from json import JSONDecodeError
+from urllib.parse import quote
 
 import requests
 from pydantic import SecretStr
@@ -137,6 +138,7 @@ class LiteLLMModelConfig(ModelConfig):
 @requires("litellm")
 class LiteLLMClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
+    _ORCAROUTER_BASE_URL: str = "https://api.orcarouter.ai/v1"
 
     def __init__(self, config: LiteLLMModelConfig) -> None:
         """IMPORTANT: Your API keys should be set in the environment variables.
@@ -146,6 +148,8 @@ class LiteLLMClient(LightevalModel):
         self.model = config.model_name
         self.provider = config.provider or config.model_name.split("/")[0]
         self.base_url = config.base_url
+        if self.provider == "orcarouter" and self.base_url is None:
+            self.base_url = self._ORCAROUTER_BASE_URL
         self.api_key = config.api_key.get_secret_value() if config.api_key is not None else None
         self.generation_parameters = config.generation_parameters
         self.concurrent_requests = config.concurrent_requests
@@ -213,6 +217,11 @@ class LiteLLMClient(LightevalModel):
             "caching": True,
             "timeout": self.timeout,
         }
+
+        if self.provider == "orcarouter":
+            # OrcaRouter is an OpenAI-compatible gateway, so we route it through the
+            # OpenAI provider while keeping the model prefix for model selection.
+            kwargs["custom_llm_provider"] = "openai"
 
         if "o1" in self.model:
             logger.warning("O1 models do not support temperature, top_p, stop sequence. Disabling.")
@@ -326,6 +335,29 @@ class LiteLLMClient(LightevalModel):
 
         return fallback()
 
+    def _estimate_orcarouter_context_length(self) -> int:
+        """Fetch the model context length from OrcaRouter's model endpoint.
+
+        OrcaRouter exposes its models (and their context lengths) through an
+        OpenAI-compatible ``/models`` API. Unlike OpenRouter, the model
+        identifier keeps the ``orcarouter/`` prefix (e.g.
+        ``orcarouter/fusion-flash``), so it is URL-encoded in the request path.
+        """
+        model_info_response = requests.get(
+            f"https://api.orcarouter.ai/v1/models/{quote(self.model, safe='')}",
+            headers={},
+        )
+        if model_info_response.ok:
+            try:
+                model_info = model_info_response.json()
+                context_length = model_info.get("context_length")
+                if context_length is not None:
+                    return context_length
+            except (KeyError, TypeError, ValueError, JSONDecodeError):
+                pass
+        logger.warning("Failed to fetch model endpoint info from OrcaRouter, returning default max length.")
+        return self._DEFAULT_MAX_LENGTH
+
     @cached(SamplingMethod.GENERATIVE)
     def greedy_until(
         self,
@@ -393,7 +425,10 @@ class LiteLLMClient(LightevalModel):
             return self._max_length
 
         try:
-            max_tokens = get_max_tokens(self.model)
+            if self.provider == "orcarouter":
+                max_tokens = self._estimate_orcarouter_context_length()
+            else:
+                max_tokens = get_max_tokens(self.model)
         except Exception:
             logger.error(
                 f"Unable to get the maximum sequence length for model {self.model} from litellm. Fetching information from OpenRouter instead."
