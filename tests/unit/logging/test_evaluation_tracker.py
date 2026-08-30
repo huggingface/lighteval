@@ -92,7 +92,8 @@ class TestLogging:
 
         mock_evaluation_tracker.save()
 
-        results_dir = Path(mock_evaluation_tracker.output_dir) / "results" / "test_model"
+        # DummyModelConfig defines no revision, so the path falls back to "main".
+        results_dir = Path(mock_evaluation_tracker.output_dir) / "results" / "test_model" / "main"
         assert results_dir.exists()
 
         result_files = list(results_dir.glob("results_*.json"))
@@ -139,7 +140,7 @@ class TestLogging:
         mock_evaluation_tracker.save()
 
         date_id = mock_datetime.isoformat().replace(":", "-")
-        details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model" / date_id
+        details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model" / "main" / date_id
         assert details_dir.exists()
 
         for task in ["task1", "task2"]:
@@ -153,7 +154,7 @@ class TestLogging:
     def test_no_details_output(self, mock_evaluation_tracker: EvaluationTracker):
         mock_evaluation_tracker.save()
 
-        details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model"
+        details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model" / "main"
         assert not details_dir.exists()
 
     @pytest.mark.skip(  # skipif
@@ -199,6 +200,152 @@ class TestLogging:
         # Check that the details dataset was uploaded
         details_files = [file for file in repo_files if "details_" in file and file.endswith(".parquet")]
         assert len(details_files) == 2
+
+
+class TestRevisionInOutputPaths:
+    """Results and details are keyed on the model revision, so that evaluating several revisions
+    of the same model does not collapse every run into a single directory.
+    """
+
+    @staticmethod
+    def _make_tracker(output_dir: str, revision: str | None, save_details: bool = False):
+        """Builds a tracker for `test/model`, logging a model config with or without a revision.
+
+        Args:
+            output_dir (str): The tracker output directory.
+            revision (str | None): The revision to evaluate. When None, a `DummyModelConfig` is
+                logged instead, which does not define a `revision` field at all.
+            save_details (bool): Whether the tracker should save details.
+
+        Returns:
+            EvaluationTracker: A tracker with aggregated metrics already populated.
+        """
+        from lighteval.models.dummy.dummy_model import DummyModelConfig
+        from lighteval.models.transformers.transformers_model import TransformersModelConfig
+
+        tracker = EvaluationTracker(output_dir=output_dir, save_details=save_details)
+        if revision is None:
+            model_config = DummyModelConfig(model_name="test/model")
+        else:
+            model_config = TransformersModelConfig(model_name="test/model", revision=revision)
+        tracker.general_config_logger.log_model_info(model_config=model_config)
+        tracker.metrics_logger.metric_aggregated = {"task1": {"accuracy": 0.8}}
+        return tracker
+
+    def test_different_revisions_write_results_to_different_directories(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for revision in ["v1.0", "v2.0"]:
+                self._make_tracker(temp_dir, revision).save()
+
+            model_dir = Path(temp_dir) / "results" / "test" / "model"
+            assert sorted(path.name for path in model_dir.iterdir()) == ["v1.0", "v2.0"]
+            for revision in ["v1.0", "v2.0"]:
+                assert len(list((model_dir / revision).glob("results_*.json"))) == 1
+
+    def test_different_revisions_write_details_to_different_directories(self, mock_datetime):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for revision in ["v1.0", "v2.0"]:
+                tracker = self._make_tracker(temp_dir, revision, save_details=True)
+                tracker.details_logger.details = {
+                    "task1": [DetailsLogger.CompiledDetail(hashes=None, truncated=10, padded=5)]
+                }
+                tracker.save()
+
+            date_id = mock_datetime.isoformat().replace(":", "-")
+            model_dir = Path(temp_dir) / "details" / "test" / "model"
+            assert sorted(path.name for path in model_dir.iterdir()) == ["v1.0", "v2.0"]
+            for revision in ["v1.0", "v2.0"]:
+                details_file = model_dir / revision / date_id / f"details_task1_{date_id}.parquet"
+                assert details_file.is_file()
+
+    def test_missing_revision_falls_back_to_main(self):
+        """A model config without a `revision` field must still produce a valid path."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            self._make_tracker(temp_dir, revision=None).save()
+
+            results_dir = Path(temp_dir) / "results" / "test" / "model" / "main"
+            assert results_dir.is_dir()
+            assert len(list(results_dir.glob("results_*.json"))) == 1
+
+    def test_explicit_main_revision_matches_the_fallback(self):
+        """Evaluating `main` explicitly lands in the same place as not specifying a revision."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            self._make_tracker(temp_dir, revision="main").save()
+
+            assert (Path(temp_dir) / "results" / "test" / "model" / "main").is_dir()
+
+    def test_results_path_template_supports_revision(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            tracker = self._make_tracker(temp_dir, "v1.0")
+            tracker.results_path_template = "{output_dir}/{org}_{model}/{revision}"
+            tracker.save()
+
+            assert len(list((Path(temp_dir) / "test_model" / "v1.0").glob("results_*.json"))) == 1
+
+    def test_results_path_template_without_revision_is_unaffected(self):
+        """Templates written before `{revision}` existed must keep resolving unchanged."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            tracker = self._make_tracker(temp_dir, "v1.0")
+            tracker.results_path_template = "{output_dir}/{org}_{model}"
+            tracker.save()
+
+            assert len(list((Path(temp_dir) / "test_model").glob("results_*.json"))) == 1
+
+    def test_details_saved_before_this_change_are_still_readable(self):
+        """Details in the pre-revision layout stay loadable, so upgrading does not strand them."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            tracker = self._make_tracker(temp_dir, revision="v1.0", save_details=True)
+
+            # Lay details out the way lighteval wrote them before results were keyed on the
+            # revision: directly under details/{model}/{timestamp}/, with no revision segment.
+            # The trailing "|0" is the fewshot count, which load_details_datasets strips before
+            # matching against task_names.
+            date_id = "2023-01-01T12-00-00.000000"
+            legacy_dir = Path(temp_dir) / "details" / "test" / "model" / date_id
+            legacy_dir.mkdir(parents=True)
+            Dataset.from_dict({"truncated": [10], "padded": [5]}).to_parquet(
+                str(legacy_dir / f"details_task1|0_{date_id}.parquet")
+            )
+
+            loaded = tracker.load_details_datasets(date_id, ["task1"])
+
+            assert list(loaded.keys()) == ["task1|0"]
+            assert len(loaded["task1|0"]) == 1
+
+    def test_legacy_fallback_resolves_the_last_timestamp(self):
+        """The fallback also covers the "last" alias, not just an explicit timestamp."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            tracker = self._make_tracker(temp_dir, revision="v1.0", save_details=True)
+
+            model_dir = Path(temp_dir) / "details" / "test" / "model"
+            for date_id in ["2023-01-01T12-00-00.000000", "2023-06-01T12-00-00.000000"]:
+                legacy_dir = model_dir / date_id
+                legacy_dir.mkdir(parents=True)
+                Dataset.from_dict({"truncated": [10]}).to_parquet(
+                    str(legacy_dir / f"details_task1|0_{date_id}.parquet")
+                )
+
+            loaded = tracker.load_details_datasets("last", ["task1"])
+
+            assert list(loaded.keys()) == ["task1|0"]
+
+    def test_sibling_revision_folder_is_not_mistaken_for_legacy_details(self):
+        """A revision directory must never be picked up as though it were a timestamp folder.
+
+        `details/{model}/` is the parent of every revision directory, so a naive fallback would
+        treat `v1.0/` as a timestamp folder when asked for the details of some other revision.
+        """
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Only revision-scoped details exist, and none for the revision we ask about.
+            writer = self._make_tracker(temp_dir, revision="v1.0", save_details=True)
+            writer.details_logger.details = {
+                "task1": [DetailsLogger.CompiledDetail(hashes=None, truncated=10, padded=5)]
+            }
+            writer.save()
+
+            reader = self._make_tracker(temp_dir, revision="v2.0", save_details=True)
+            with pytest.raises((FileNotFoundError, ValueError)):
+                reader.load_details_datasets("last", ["task1"])
 
 
 class TestProperties(unittest.TestCase):
