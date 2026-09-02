@@ -228,6 +228,16 @@ class TestBaseMetrics:
         )
         assert result[prob_norm_metric.metric_name] == pytest.approx(0.7)
 
+    def test_mc_probability_metric_avoids_logprob_underflow(self):
+        doc = Doc(query="Test query", choices=["A", "B"], gold_index=0, task_name="test")
+        model_response = ModelResponse(logprobs=[-1000.0, -1001.0])
+
+        metric = NormalizedMultiChoiceProbMetric()
+        result = metric.compute_sample(doc=doc, model_response=model_response)
+
+        expected = 1 / (1 + np.exp(-1))
+        assert result[metric.metric_name] == pytest.approx(expected)
+
     def test_acc(self):
         # Test without normalization
         doc = Doc(query="Test query", choices=["A", "B", "C", "D"], gold_index=0, task_name="test")
