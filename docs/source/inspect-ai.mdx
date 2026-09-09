@@ -70,6 +70,14 @@ lighteval eval hf-inference-providers/openai/gpt-oss-20b gsm8k \
     --max-samples 10
 ```
 
+When subsampling with `--max-samples`, add `--sample-shuffle <seed>` to evaluate a deterministic random subset instead of the first N samples in dataset storage order. This matters for category-grouped datasets: for example, `mmlu_pro` stores all business questions first, so an unshuffled `--max-samples 1200` would evaluate almost nothing else.
+
+```bash
+lighteval eval hf-inference-providers/openai/gpt-oss-20b mmlu_pro \
+    --max-samples 1200 \
+    --sample-shuffle 42
+```
+
 7. Use multiple epochs for more reliable results.
 
 ```bash
