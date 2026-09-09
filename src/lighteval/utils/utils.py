@@ -249,24 +249,34 @@ def make_results_table(result_dict):
         # Returns markdown table with task, version, metric, value, ±, stderr columns
     """
     md_writer = MarkdownTableWriter()
-    md_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr"]
+    md_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr", "Count"]
 
     values = []
 
     for k in sorted(result_dict["results"].keys()):
         dic = result_dict["results"][k]
         version = result_dict["versions"][k] if k in result_dict["versions"] else ""
+        
+        count = ""
+        # The number of items is stored in summary_tasks under each task dict (for sub-tasks)
+        if "summary_tasks" in result_dict and k in result_dict["summary_tasks"]:
+            count = str(result_dict["summary_tasks"][k].get("number_of_samples", ""))
+        # If the key is 'all', grab it from summary_general
+        elif k == "all" and "summary_general" in result_dict:
+            count = str(result_dict["summary_general"].get("number_of_samples", ""))
+
         for m, v in dic.items():
             if m.endswith("_stderr"):
                 continue
 
             if m + "_stderr" in dic:
                 se = dic[m + "_stderr"]
-                values.append([k, version, m, "%.4f" % v, "±", "%.4f" % se])
+                values.append([k, version, m, "%.4f" % v, "±", "%.4f" % se, count])
             else:
-                values.append([k, version, m, "%.4f" % v, "", ""])
+                values.append([k, version, m, "%.4f" % v, "", "", count])
             k = ""
             version = ""
+            count = ""
     md_writer.value_matrix = values
 
     return md_writer.dumps()
