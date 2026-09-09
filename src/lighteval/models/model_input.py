@@ -32,7 +32,7 @@ class GenerationParameters(BaseModel, extra="forbid"):
     repetition_penalty: NonNegativeFloat | None = None  # vllm, transformers, tgi, sglang
     frequency_penalty: NonNegativeFloat | None = None  # vllm, tgi, sglang
     length_penalty: NonNegativeFloat | None = None  # vllm, transformers
-    presence_penalty: NonNegativeFloat | None = None  # vllm, sglang
+    presence_penalty: NonNegativeFloat | None = None  # vllm, sglang, litellm
 
     max_new_tokens: NonNegativeInt | None = None  # vllm, transformers, tgi, litellm, sglang
     min_new_tokens: NonNegativeInt | None = None  # vllm, transformers, sglang
@@ -42,8 +42,8 @@ class GenerationParameters(BaseModel, extra="forbid"):
     temperature: NonNegativeFloat = (
         0  # vllm, transformers, tgi, litellm, sglang # if not set, defaults to greedy decoding
     )
-    top_k: NonNegativeInt | None = None  # vllm, transformers, tgi, sglang
-    min_p: NonNegativeFloat | None = None  # vllm, transformers, sglang
+    top_k: NonNegativeInt | None = None  # vllm, transformers, tgi, sglang, litellm
+    min_p: NonNegativeFloat | None = None  # vllm, transformers, sglang, litellm
     top_p: NonNegativeFloat | None = None  # vllm, transformers, tgi, litellm, sglang
     truncate_prompt: bool | None = None  # vllm, tgi
 
@@ -118,6 +118,9 @@ class GenerationParameters(BaseModel, extra="forbid"):
             "seed": self.seed,
             "repetition_penalty": self.repetition_penalty,
             "frequency_penalty": self.frequency_penalty,
+            "presence_penalty": self.presence_penalty,
+            "top_k": self.top_k,
+            "min_p": self.min_p,
         }
         return {k: v for k, v in args.items() if v is not None}
 
