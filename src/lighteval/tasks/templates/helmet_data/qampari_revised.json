@@ -1,0 +1,112 @@
+{
+    "instruction": "Instruction: Provide a list of accurate answers for the given question using only the provided search results (some of which might be irrelevant) and cite them properly. Always cite one and only one document for each answer. When citing a document, surround its ID with square brackets, such as [x] to cite document x. Separate answers by commas. For questions that have more than 5 answers, write at least 5 answers.",
+    "demo_sep": "\n\n\n",
+    "demo_prompt": "{instruction}\n\nQuestion: {question}\n\n{context}\nAnswer: {answer}",
+    "doc_prompt": "Document [{ID}](Title: {title}): {text}",
+    "demos": [
+        {
+            "question": "Which books were written by Nevil Shute?",
+            "answer": "Marazan [1], Stephen Morris [1], Beyond the Black Stump [2], Lonely Road [2], The Chequer Board [2], In the Wet [2], Trustee from the Toolroom [2], Round the Bend [2], No Highway [3], Ruined City [3], On the Beach [3].",
+            "docs": [
+                {
+                    "title": "Nevil Shute",
+                    "text": "early stages. My congratulations.\" His celebrity as a writer caused the Ministry of Information to send him to the Normandy Landings on 6 June 1944 and later to Burma as a correspondent. He finished the war with the rank of lieutenant commander in the Royal Navy Volunteer Reserves (RNVR). Shute's first novel, \"Stephen Morris\", was written in 1923, but not published until 1961. His first published novel was \"Marazan\", which came out in 1926. After that he averaged one novel every two years through the 1950s, with the exception of a six-year hiatus while he was establishing his own aircraft"
+                },
+                {
+                    "title": "Nevil Shute",
+                    "text": "theme is the bridging of social barriers such as class (\"Lonely Road\" and \"Landfall\"), race (\"The Chequer Board\"), or religion (\"Round the Bend\"). The Australian novels are individual hymns to that country, with subtle disparagement of the mores of the United States (\"Beyond the Black Stump\") and overt antipathy towards the post-World War II socialist government of Shute's native Britain (\"The Far Country\" and \"In the Wet\"). Shute's heroes tended to be like himself: middle class solicitors, doctors, accountants, bank managers, engineers, generally university graduates. However (as in \"Trustee from the Toolroom\"), Shute valued the honest artisans and their social"
+                },
+                {
+                    "title": "Nevil Shute",
+                    "text": "construction company, Airspeed Ltd. His popularity grew slowly with each novel, but he became much more famous after the publication of \"On the Beach\" in 1957. Shute's novels are written in a simple, highly readable style, with clearly delineated plot lines. Where there is a romantic element, sex is referred to only obliquely. Many of the stories are introduced by a narrator who is not a character in the story. The most common theme in Shute's novels is the dignity of work, spanning all classes, whether an Eastern European bar \"hostess\" (\"Ruined City\") or brilliant boffin (\"No Highway\"). Another recurrent"
+                },
+                {
+                    "title": "The Chequer Board",
+                    "text": "the Burmese people\", both of which are central to the book's story. Shute was concerned that sales of the book in the United States would be negatively impacted by the book's open-minded handling of racial issues; as it turned out, sales soared. Shute and his wife traveled the U.S. on Greyhound buses to \"\"get in touch with the man on the street,\"\" finding the experience refreshing. Afterwards he wrote \"\"Sincerity is the first attribute for making money in the business of writing novels.\"\" The Chequer Board The Chequer Board is a novel by Nevil Shute, first published in the United"
+                },
+                {
+                    "title": "In the Wet",
+                    "text": "had used the idea of multiple votes for merit in his short story \"The Curious Republic of Gondour\". In the Wet In The Wet is a novel by Nevil Shute that was first published in the United Kingdom in 1953. It contains many of the typical elements of a hearty and adventurous Shute yarn such as flying, the future, mystic states, and ordinary people doing extraordinary things. The story is opened by its initial narrator \u2013 an Anglican priest in the Bush Brotherhood named Roger Hargreaves \u2013 who describes his ordinary circumstances in a large parish of the Australian outback"
+                }
+            ]
+        },
+        {
+            "question": "Which film has Gong Li as a member of its cast?",
+            "answer": "The Story of Qiu Ju [1], Farewell My Concubine [2], Flirting Scholar [2], The Monkey King 2 [3], Mulan [3], Saturday Fiction [3], Coming Home [3].",
+            "docs": [
+                {
+                    "title": "Gong Li",
+                    "text": "Gong Li Gong Li (born 31 December 1965) is a Chinese-born Singaporean film actress. She achieved international prominence through her close collaborations with Chinese director Zhang Yimou and won the Volpi Cup for Best Actress at Venice for her performance in his 1992 film \"The Story of Qiu Ju\". She has been credited with helping to bring Chinese cinema to prominence in Europe and the United States. In 2006, she was voted the most beautiful woman in China. Gong has won numerous accolades for her work as an actress; she won the New York Film Critics Circle Award for Best"
+                },
+                {
+                    "title": "Gong Li",
+                    "text": "making her realize that she has assisted the dark cynical system. In 1993, she received a New York Film Critics Circle award for her role in \"Farewell My Concubine\" (1993). Directed by Chen Kaige, the film was her first major role with a director other than Zhang Yimou. In the same year, she was awarded with the Berlinale Camera at the 43rd Berlin International Film Festival. \"Premiere\" magazine ranked her performance in \"Farewell My Concubine\" as the 89th greatest performance of all time. She also worked with renowned director Stephen Chow in comedy films \"\" (1991) and \"Flirting Scholar\" (1993)."
+                },
+                {
+                    "title": "Gong Li",
+                    "text": "International Film Festival. Later that same year, she reunited with Zhang Yimou for the film \"Coming Home\", which is set during the throes of the Cultural Revolution; this film was their first collaboration since 2006. In 2016, Gong took on her first action role in \"The Monkey King 2\", playing the White Bone Demon. In 2018, Gong was cast in Lou Ye's period drama \"Saturday Fiction\", where she plays an actress who is working undercover gathering intelligence for the Allies. That year, she was also cast in the live-action adaptation of the 1998 Disney animated film \"Mulan\", as an unspecified"
+                },
+                {
+                    "title": "Zhang Yimou",
+                    "text": "in Zhang's earlier films. \"Raise the Red Lantern\" was nominated in the Best Foreign Language Film category at the 1992 Academy Awards, becoming the second Chinese film to earn this distinction (after Zhang's \"Ju Dou\"). It eventually lost out to Gabriele Salvatores's \"Mediterraneo\". Zhang's next directorial work, \"The Story of Qiu Ju\", in 1992, once again starring Gong Li in the lead role. The film, which tells the tale of a peasant woman seeking justice for her husband after he was beaten by a village official, was a hit at film festivals and won the Golden Lion award at the"
+                },
+                {
+                    "title": "Gong Li",
+                    "text": "Gong Li Gong Li (born 31 December 1965) is a Chinese-born Singaporean film actress. She achieved international prominence through her close collaborations with Chinese director Zhang Yimou and won the Volpi Cup for Best Actress at Venice for her performance in his 1992 film \"The Story of Qiu Ju\". She has been credited with helping to bring Chinese cinema to prominence in Europe and the United States. In 2006, she was voted the most beautiful woman in China. Gong has won numerous accolades for her work as an actress; she won the New York Film Critics Circle Award for Best"
+                }
+            ]
+        },
+        {
+            "question": "In which years did Patti LaBelle publish music?",
+            "answer": "2006 [1], 1977 [2], 2004 [3], 2005 [3], 2000 [3], 2006 [3].",
+            "docs": [
+                {
+                    "title": "The Gospel According to Patti LaBelle",
+                    "text": "The Gospel According to Patti LaBelle The Gospel According to Patti LaBelle is the first gospel album released by singer Patti LaBelle, released in November 2006. This project began three years ago when Patti's late musical director and close friend Budd Ellison told a skeptical LaBelle that \"it's now or never, Patti.\" The album is dedicated to his memory as he succumbed to prostate cancer before the album saw a release. The album was released on November 21, 2006 through indie label Umbrella/Bungalow Records, also home to Carl Thomas, Rodney Jerkins, Dean \"DC\" Charles, and other artists. \"The Gospel According"
+                },
+                {
+                    "title": "Patti LaBelle (album)",
+                    "text": "scaled the high sixties on the \"Billboard\" R&B chart, it soon became one of her famous show-stoppers while performing the song. LaBelle performed the song at her first solo concert in London, getting a standing ovation, which helped to give LaBelle motivation to continue her career. The album, when released, performed successfully, reaching number 62 on the \"Billboard\" 200 and number 31 on the R&B albums chart, while critics hailed the album. Patti LaBelle (album) Patti LaBelle is the debut solo album by singer Patti LaBelle, released in 1977. The first album LaBelle recorded after sixteen years fronting the band"
+                },
+                {
+                    "title": "Patti LaBelle",
+                    "text": "win. In 2000, LaBelle released her final MCA album, \"When a Woman Loves\", before signing with Def Soul Classics to release the 2004 album, \"Timeless Journey\". Following the release of her 2005 covers album, \"Classic Moments\", LaBelle engaged in a rivalry with Antonio \"L.A.\" Reid over the direction of her career, leading to her leaving the label.In the same year, the World Music Awards recognized her years in the music business by awarding her the Legend Award. In 2006, she released her first gospel album, \"The Gospel According to Patti LaBelle\" on the Bungalo label, the album later peaking at"
+                },
+                {
+                    "title": "Patti LaBelle",
+                    "text": "Patti LaBelle Patti LaBelle (born Patricia Louise Holt; May 24, 1944) is an American singer, actress, and entrepreneur. LaBelle began her career in the early 1960s as lead singer and front woman of the vocal group, Patti LaBelle and the Bluebelles. Following the group's name change to Labelle in the early 1970s, they released the iconic disco song \"Lady Marmalade\" and the group later became the first African-American vocal group to land the cover of \"Rolling Stone\" magazine. After the group split in 1976, LaBelle began a successful solo career, starting with her critically acclaimed debut album, which included the"
+                },
+                {
+                    "title": "The Gospel According to Patti LaBelle",
+                    "text": "Billboard's Top Gospel Albums chart for 17 weeks. \"Where Love Begins,\" a duet with Yolanda Adams was played frequently on R&B and gospel radio stations and debuted at #68 on Billboard's Hot R&B/Hip-Hop tracks. The second single \"Anything\" featuring Kanye West, Mary Mary and Consequence hit #64 on Billboards Hot R&B/Hip-Hop tracks. In 2008, the album was nominated for a Dove Award for Contemporary Gospel Album of the Year at the 39th GMA Dove Awards. The Gospel According to Patti LaBelle The Gospel According to Patti LaBelle is the first gospel album released by singer Patti LaBelle, released in November"
+                }
+            ]
+        },
+        {
+            "question": "Glenn Ford was a member of cast in which film?",
+            "answer": "So Ends Our Night [1], Heaven with a Barbed Wire Fence [1], Happy Birthday to Me [2], The Greatest Gift [2], The Gift [2], The Brotherhood of the Bell [3].",
+            "docs": [
+                {
+                    "title": "Glenn Ford",
+                    "text": "name came from his father's hometown of Glenford, Alberta. His first major movie part was in the 1939 film, \"Heaven with a Barbed Wire Fence\". Top Hollywood director John Cromwell was impressed enough with his work to borrow him from Columbia for the independently produced drama, \"So Ends Our Night\" (1941), where Ford delivered a poignant portrayal of a 19-year-old German exile on the run in Nazi-occupied Europe. Working with Academy Award-winning Fredric March and wooing (onscreen) 30-year-old Margaret Sullavan, recently nominated for an Oscar, Ford's shy, ardent young refugee riveted attention even in such stellar company. \"Glenn Ford, a"
+                },
+                {
+                    "title": "Glenn Ford",
+                    "text": "were Westerns. He suggested doing a Western series, instead, which resulted in the \"modern-day Western\" series, \"Cade's County\". Ford played southwestern Sheriff Cade for one season (1971\u20131972) in a mix of police mystery and western drama. In \"The Family Holvak\" (1975\u20131976), Ford portrayed a Depression-era preacher in a family drama, reprising the same character he had played in the TV film, \"The Greatest Gift\". In 1978 Ford was host, presenter and narrator of the disaster documentary series 'When Havoc Struck'. In 1981, Ford co-starred with Melissa Sue Anderson in the slasher film \"Happy Birthday to Me\". In 1991, Ford agreed"
+                },
+                {
+                    "title": "CBS Thursday Night Movie",
+                    "text": "Night Movie\" opened its fall schedule with the premiere of a low-budget, made-for-TV movie, rather than a proven Hollywood blockbuster guaranteed to lure mass viewership, it became CBS's way of declaring its commitment to product that, although cheaply manufactured, was nevertheless new and topical. In this case, the movie was \"The Brotherhood of the Bell\", and the film's star was Glenn Ford, a movie actor who had never appeared in a television-film. In fact, before shooting on the project even began, Ford had been warned by friends in the industry that he would hate the experience. Instead, the actor reported"
+                },
+                {
+                    "title": "The Trouble with Girls (film) ",
+                    "text": "with Charlene, but when she refuses to give in, he deceives her and uses the local police force to be sure that she must leave on the train with the rest of the troupe. Cast notes In June 1959 it was announced that Don Mankiewicz would write a screenplay of an unpublished story by Mauri Grashin, Day Keene, and Dwight Babcock. By December 1960, with the project titled \"Chautauqua\", MGM was ready to make the film with Glenn Ford. Rumours circulating in Hollywood at the time stated that Presley would co-star with Ford, Hope Lange, and Arthur O'Connell, but nothing"
+                },
+                {
+                    "title": "Trouble in the Glen",
+                    "text": "Mel Ferrer. It was Orson Welles' fifth British movie in six months. Filming started 15 December 1953. The film received very poor reviews. Trouble in the Glen Trouble in the Glen is a 1954 British comedy film directed by Herbert Wilcox and starring Margaret Lockwood, Orson Welles, Forrest Tucker and Victor McLaglen. It is loosely based on Maurice Walsh's 1950 novel of the same name. It was filmed in Trucolor for Republic Pictures. After moving from South America to the Scottish Highlands, millionaire Sanin Cejador y Mengues (Welles) reassumes the title of laird of Glen Easan, which he inherited from"
+                }
+            ]
+        }
+    ]
+}
