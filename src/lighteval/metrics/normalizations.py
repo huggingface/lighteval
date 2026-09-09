@@ -501,6 +501,19 @@ class LogProbCharNorm:
 LogProbNormalization = LogProbCharNorm | LogProbTokenNorm | LogProbPMINorm
 
 
+def _num_continuation_tokens(tokens: list[int]) -> int:
+    """Number of real continuation tokens for a choice.
+
+    When choices of differing lengths are stacked, the shorter continuations are
+    right-padded (with ``-1``) so they can share a tensor. Those padding tokens
+    must be excluded here; otherwise the per-choice length used to normalize the
+    log-probability by token count is inflated by padding (see #1170).
+    """
+    real = sum(1 for t in tokens if t >= 0)
+    # Fall back to the raw length (never 0) so normalization never divides by zero.
+    return real or len(tokens) or 1
+
+
 def normalize_log_probs(
     normalization: LogProbNormalization,
     choices_logprob: list[float],
@@ -523,8 +536,15 @@ def normalize_log_probs(
             normalized_log_probs = [choices_logprob[ix] / len(choice) for ix, choice in enumerate(choices_text)]
         case LogProbTokenNorm():
             assert choices_tokens is not None, "choices_tokens must be provided for token normalization"
+            if len(choices_tokens) != len(choices_logprob):
+                raise ValueError(
+                    "choices_tokens and choices_logprob must have the same length for "
+                    f"token normalization (got {len(choices_tokens)} and {len(choices_logprob)}); "
+                    "this usually means the model backend returned fewer output_tokens than choices."
+                )
             normalized_log_probs = [
-                choices_logprob[ix] / len(choices_tokens[ix]) for ix in range(len(choices_logprob))
+                choices_logprob[ix] / _num_continuation_tokens(choices_tokens[ix])
+                for ix in range(len(choices_logprob))
             ]
         case LogProbPMINorm():
             assert unconditioned_logprob is not None, "unconditioned_logprob must be provided for PMI normalization"
