@@ -76,7 +76,7 @@ app.add_typer(
     lighteval.main_endpoint.app,
     name="endpoint",
     rich_help_panel="Evaluation Backends",
-    help="Evaluate models using some endpoint (tgi, inference endpoint, openai) as backend.",
+    help="Evaluate models using some endpoint (tgi, inference endpoint, litellm, inference providers) as backend.",
 )
 app.add_typer(
     lighteval.main_tasks.app,
