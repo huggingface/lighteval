@@ -523,9 +523,19 @@ def normalize_log_probs(
             normalized_log_probs = [choices_logprob[ix] / len(choice) for ix, choice in enumerate(choices_text)]
         case LogProbTokenNorm():
             assert choices_tokens is not None, "choices_tokens must be provided for token normalization"
-            normalized_log_probs = [
-                choices_logprob[ix] / len(choices_tokens[ix]) for ix in range(len(choices_logprob))
-            ]
+            # Handle cases where choices_tokens might be shorter than choices_logprob
+            # (e.g., when token generation fails for some choices)
+            normalized_log_probs = []
+            for ix in range(len(choices_logprob)):
+                if ix < len(choices_tokens) and choices_tokens[ix]:
+                    # Divide by the number of tokens (filtering out padding tokens marked as -1)
+                    token_count = sum(1 for token in choices_tokens[ix] if token != -1)
+                    # Avoid division by zero; use token count or 1 as fallback
+                    token_count = max(token_count, 1)
+                    normalized_log_probs.append(choices_logprob[ix] / token_count)
+                else:
+                    # If tokens are missing, use the log probability as-is (no normalization)
+                    normalized_log_probs.append(choices_logprob[ix])
         case LogProbPMINorm():
             assert unconditioned_logprob is not None, "unconditioned_logprob must be provided for PMI normalization"
             normalized_log_probs = [
