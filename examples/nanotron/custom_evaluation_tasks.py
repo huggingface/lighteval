@@ -275,7 +275,7 @@ READING_COMP_TASKS = [
         name="quac",
         prompt_function=quac_prompt,
         hf_repo="lighteval/quac_helm",
-        hf_subset="deault",
+        hf_subset="default",
         metrics=[
             Metrics.exact_match(sample_params={"normalize_gold": helm_normalizer, "normalize_pred": helm_normalizer})
         ],
