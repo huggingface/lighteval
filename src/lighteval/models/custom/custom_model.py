@@ -69,5 +69,4 @@ class CustomModelConfig(ModelConfig):
     An example of a custom model can be found in `examples/custom_models/google_translate_model.py`.
     """
 
-    model_name: str
     model_definition_file_path: str
