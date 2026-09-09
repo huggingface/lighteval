@@ -26,6 +26,7 @@ These metrics need the model to generate an output. They are therefore slower.
         - normalization on string pre-comparision on whitespace, articles, capitalization, ....
         - comparing the full string, or only subsets (prefix, suffix, ...)
     - `maj_at_k`: Model majority vote. Samples k generations from the model and assumes the most frequent is the actual prediction.
+    - `bayes_at_n`: Corpus-level Bayes@N for repeated generations. It reports `bayes@n`, the posterior mean, and `bayes@n_sigma`, the posterior standard deviation; multi-category outcomes require category weights.
     - `f1_score`:  Average F1 score in terms of word overlap between the model output and gold (normalisation optional).
     - `f1_score_macro`: Corpus level macro F1 score.
     - `f1_score_macro`: Corpus level micro F1 score.
@@ -54,7 +55,7 @@ These metrics need the model to generate an output. They are therefore slower.
         - `edit_distance`: Average Levenshtein edit distance between model generation and reference,
         - `edit_similarity`: Average Levenshtein edit similarity (normalized by the length of longer sequence) between model generation and reference.
 - Math:
-    - Both `exact_match` and `maj_at_k` can be used to evaluate mathematics tasks with math specific normalization to remove and filter latex.
+    - `exact_match`, `maj_at_k`, and `bayes_at_n` can be used to evaluate mathematics tasks with math specific normalization to remove and filter latex.
 
 ## LLM-as-Judge
 - `llm_judge_gpt3p5`: Can be used for any generative task, the model will be scored by a GPT3.5 model using the OpenAI API.
