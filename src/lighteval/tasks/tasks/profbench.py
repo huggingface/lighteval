@@ -1,0 +1,148 @@
+"""
+name:
+ProfBench
+
+dataset:
+nvidia/ProfBench
+
+abstract:
+More than 3000 rubric criteria across 40 human-annotated tasks presenting
+reports addressing professional tasks across PhD STEM (Chemistry, Physics) and
+Professional Services (Financial Services, Management Consulting) domains.
+
+languages:
+english
+
+tags:
+reasoning, professional-reports
+
+paper:
+https://arxiv.org/abs/2510.18941
+
+starred:
+true
+"""
+
+from inspect_ai.dataset import Sample
+from inspect_ai.model import get_model
+from inspect_ai.scorer import Score, accuracy, scorer
+from inspect_ai.solver import generate
+
+from lighteval.metrics.metrics import Metrics
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
+
+
+QUESTION_PROMPT_YES_NO = """Response:
+
+{response}
+
+Evaluate whether the response above satisfies this criterion: {criterion_description}. Only answer Yes or No."""
+
+weight_to_scale = {"Critical": 4, "Major": 3, "Minor": 2, "Additional": 1}
+
+
+async def evaluate_criterion_with_judge(response, criterion_description, domain, criterion_type):
+    """Evaluate a single criterion using LLM judge."""
+    prompt = QUESTION_PROMPT_YES_NO.format(response=response, criterion_description=criterion_description)
+
+    # The original code uses GPT-oss-120b as the judge model.
+    model = get_model("hf-inference-providers/openai/gpt-oss-120b")
+    result = await model.generate(prompt)
+
+    judge_rating = result.completion.strip()
+    return judge_rating.startswith("Yes"), judge_rating
+
+
+@scorer(metrics=[accuracy()])
+def profbench_weighted_scorer():
+    """Scorer that evaluates all criteria and computes weighted ProfBench scores."""
+
+    async def score(state, target):
+        rubrics = state.metadata.get("rubrics", [])
+        response = state.output.completion
+        task_id = state.metadata.get("task_id", "")
+        domain = state.metadata.get("domain", "")
+
+        # Evaluate each criterion
+        criterion_results = []
+        total_weight = 0
+        achieved_weight = 0
+
+        for rubric in rubrics:
+            criterion_description = rubric["criterion_description"]
+            criterion_weight = rubric["criterion_weight"]
+            criterion_type = rubric["criterion_type"]
+
+            weight_scale = weight_to_scale.get(criterion_weight, 1)
+            total_weight += weight_scale
+
+            # Evaluate criterion
+            fulfilled, judge_rating = await evaluate_criterion_with_judge(
+                response, criterion_description, domain, criterion_type
+            )
+
+            if fulfilled:
+                achieved_weight += weight_scale
+
+            criterion_results.append(
+                {
+                    "criterion_description": criterion_description,
+                    "criterion_weight": criterion_weight,
+                    "criterion_type": criterion_type,
+                    "fulfilled": fulfilled,
+                    "judge_rating": judge_rating,
+                }
+            )
+
+        # Calculate score for this task
+        task_score = (achieved_weight / total_weight) if total_weight > 0 else 0.0
+
+        return Score(
+            value=task_score,
+            metadata={
+                "task_id": task_id,
+                "domain": domain,
+                "task_score": task_score,
+                "achieved_weight": achieved_weight,
+                "total_weight": total_weight,
+                "criterion_results": criterion_results,
+                "response": response,
+            },
+        )
+
+    return score
+
+
+def record_to_sample(record):
+    """Convert ProfBench dataset record to Inspect Sample."""
+    return Sample(
+        input=record["prompt"],
+        target="",  # No target for generation tasks
+        metadata={
+            "task_id": record["task_id"],
+            "domain": record["domain"],
+            "rubrics": record["rubrics"],
+            "filepaths": record.get("filepaths", []),
+        },
+    )
+
+
+def profbench_prompt_function(line, task_name):
+    """Prompt function for ProfBench."""
+    raise NotImplementedError("ProfBench not implemented yet for backends other than inspect-ai.")
+
+
+profbench = LightevalTaskConfig(
+    name="profbench",
+    prompt_function=profbench_prompt_function,
+    hf_repo="nvidia/ProfBench",
+    hf_subset="default",
+    evaluation_splits=["test"],
+    metrics=[Metrics.exact_match],
+    version=0,
+    sample_fields=record_to_sample,
+    solver=[generate(cache=True)],
+    scorer=profbench_weighted_scorer(),
+)
+
+TASKS_TABLE = [profbench]
