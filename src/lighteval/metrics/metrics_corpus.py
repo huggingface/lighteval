@@ -28,6 +28,7 @@ A number of these aggregations come from the EleutherAIHarness
 import logging
 import math
 from abc import ABC, abstractmethod
+from itertools import zip_longest
 from typing import Literal
 
 import numpy as np
@@ -142,7 +143,7 @@ class CorpusLevelTranslationMetric(CorpusLevelComputation):
     def compute_corpus(self, items: list[GenerativeCorpusMetricInput]) -> float:
         """Computes the metric score over all the corpus generated items, by using the sacrebleu implementation."""
         metric = self.get_metric()
-        golds = [i.golds for i in items]
+        golds = [as_list(i.golds) for i in items]
         preds = []
         for i in items:
             pred = as_list(i.preds)
@@ -153,9 +154,12 @@ class CorpusLevelTranslationMetric(CorpusLevelComputation):
             preds.append(pred[0])
 
         if self.metric_type == "bleu":
-            golds = [[gold[0] for gold in golds]]
+            references = [[gold[0] for gold in golds]]
+        else:
+            # SacreBLEU expects references as [reference_id][sample_id].
+            references = [list(ref_group) for ref_group in zip_longest(*golds, fillvalue=None)]
 
-        corpus_score = metric.corpus_score(hypotheses=preds, references=golds)
+        corpus_score = metric.corpus_score(hypotheses=preds, references=references)
         score = corpus_score.score
         results = float(score)
         return results
