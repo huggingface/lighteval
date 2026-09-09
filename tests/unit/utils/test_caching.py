@@ -31,7 +31,7 @@ import torch
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.cache_management import SampleCache
+from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import Extra, is_package_available
 
 
@@ -251,6 +251,58 @@ class TestCaching(unittest.TestCase):
             mock_accelerator_instance.is_main_process = True
             model.greedy_until(self.docs)
             self.assertTrue(cache_file.exists(), "Main process must write the cache file")
+
+    def test_cache_subset_then_full_reprocesses_missing(self):
+        """Regression test for #1040. Running a truncated set first (e.g. --max-samples 2) must not cause a
+        later full run to serve back only the truncated cache. The @cached wrapper reprocesses the docs that
+        are not yet cached and returns the full requested set, while still reusing the already-cached docs
+        (so the behaviour keeps per-doc caching instead of throwing reuse away). Uses DummyModel so the test
+        needs no model download and runs on CPU."""
+        from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
+
+        class CountingDummyModel(DummyModel):
+            """DummyModel that records which docs actually reach the model and returns one identifiable
+            response per doc, so the test can assert both the returned count and that cached docs are reused."""
+
+            def __init__(self, config):
+                super().__init__(config)
+                self.processed_batches = []
+
+            @cached(SamplingMethod.GENERATIVE)
+            def greedy_until(self, docs):
+                self.processed_batches.append([doc.id for doc in docs])
+                return [ModelResponse(text=[f"answer_for_{doc.id}"]) for doc in docs]
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = DummyModelConfig(model_name="dummy_1040", cache_dir=temp_dir)
+            model = CountingDummyModel(config)
+            cache: SampleCache = model._cache
+            task_id = cache.get_task_id(self.task_name, SamplingMethod.GENERATIVE)
+
+            # 1) Truncated first run (like --max-samples 2).
+            subset = self.docs[:2]
+            first_results = model.greedy_until(subset)
+            self.assertEqual(len(first_results), len(subset))
+            self.assertEqual(model.processed_batches, [[doc.id for doc in subset]])
+            self.assertEqual(cache._load_cached_indices()[task_id], [doc.id for doc in subset])
+
+            # 2) Full run afterwards, sharing the same cache.
+            full_results = model.greedy_until(self.docs)
+
+            # The full set comes back, not the truncated cache. This assertion is the #1040 guard.
+            self.assertEqual(
+                len(full_results),
+                len(self.docs),
+                "A full run after a truncated run must return the full set, not the cached subset (#1040)",
+            )
+            self.assertEqual(
+                [r.text[0] for r in full_results],
+                [f"answer_for_{doc.id}" for doc in self.docs],
+            )
+            # Per-doc reuse is preserved: only the doc that was not already cached is reprocessed.
+            self.assertEqual(model.processed_batches[-1], [self.docs[2].id])
+            # The cache now covers the full set.
+            self.assertEqual(cache._load_cached_indices()[task_id], [doc.id for doc in self.docs])
 
     @patch("lighteval.models.vllm.vllm_model.VLLMModel._loglikelihood_tokens")
     @patch("lighteval.models.vllm.vllm_model.VLLMModel._greedy_until")
