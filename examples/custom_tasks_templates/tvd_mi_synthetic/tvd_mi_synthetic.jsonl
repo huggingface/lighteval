@@ -1,0 +1,5 @@
+{"response_a":"The capital of France is Paris.","response_b":"Paris is the capital city of France.","pair_label":1}
+{"response_a":"2 + 2 = 4.","response_b":"Four is the sum of two plus two.","pair_label":1}
+{"response_a":"Water freezes at 0°C at standard atmospheric pressure.","response_b":"At 1 atm, water’s freezing point is 0 degrees Celsius.","pair_label":1}
+{"response_a":"The capital of France is Paris.","response_b":"The mitochondria is the powerhouse of the cell.","pair_label":0}
+{"response_a":"2 + 2 = 4.","response_b":"Photosynthesis converts light into chemical energy in plants.","pair_label":0}

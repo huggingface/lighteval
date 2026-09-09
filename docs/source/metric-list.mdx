@@ -61,3 +61,4 @@ These metrics need the model to generate an output. They are therefore slower.
 - `llm_judge_llama_3_405b`: Can be used for any generative task, the model will be scored by a Llama 3.405B model using the HuggingFace API.
 - `llm_judge_multi_turn_gpt3p5`: Can be used for any generative task, the model will be scored by a GPT3.5 model using the OpenAI API. It is used for multiturn tasks like mt-bench.
 - `llm_judge_multi_turn_llama_3_405b`: Can be used for any generative task, the model will be scored by a Llama 3.405B model using the HuggingFace API. It is used for multiturn tasks like mt-bench.
+- `tvd_mi`: Corpus-level LLM-as-a-judge metric that estimates a lower bound on total variation mutual information using paired responses. It assumes each example has two responses and a binary label indicating whether they are from the same underlying item (`1`) or from different items (`0`), and computes `TPR + TNR - 1` from the judge’s binary decisions.
