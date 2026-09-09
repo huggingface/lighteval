@@ -27,11 +27,14 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+import xxhash
 from datasets import Dataset
 from huggingface_hub import HfApi
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.info_loggers import DetailsLogger
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.requests import Doc
 
 # ruff: noqa
 from tests.fixtures import TESTING_EMPTY_HF_ORG_ID
@@ -83,6 +86,32 @@ def mock_datetime(monkeypatch):
 
 
 class TestLogging:
+    def test_details_logger_hashes_utf8_bytes(self, monkeypatch):
+        original_xxh64 = xxhash.xxh64
+
+        def bytes_only_xxh64(value):
+            if not isinstance(value, bytes):
+                raise TypeError("a bytes-like object is required")
+            return original_xxh64(value)
+
+        monkeypatch.setattr("lighteval.logging.info_loggers.xxhash.xxh64", bytes_only_xxh64)
+
+        details_logger = DetailsLogger()
+        query = "xxhash 兼容性测试 🧪"
+        model_response = ModelResponse(input_tokens=[1, 2], output_tokens=[[3, 4]])
+        details_logger.log(
+            task_name="test|xxhash",
+            doc=Doc(query=query, choices=[], gold_index=0),
+            model_response=model_response,
+            metrics={},
+        )
+        details_logger.aggregate()
+
+        sample_hash = details_logger.hashes["test|xxhash"][0]
+        assert sample_hash.example == original_xxh64(query.encode("utf-8")).hexdigest()
+        assert details_logger.compiled_hashes["test|xxhash"].hash_examples
+        assert details_logger.compiled_details_over_all_tasks.hashes
+
     def test_results_logging(self, mock_evaluation_tracker: EvaluationTracker):
         task_metrics = {
             "task1": {"accuracy": 0.8, "f1": 0.75},
