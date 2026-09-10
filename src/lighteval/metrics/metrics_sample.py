@@ -1186,8 +1186,8 @@ class AvgAtN(SamplingMetric, SampleLevelComputation):
 
     def compute(self, doc: Doc, model_response: ModelResponse, **kwargs):
         """Computes the metric over a list of golds and predictions for one single sample.
-        It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones,
-        then compares it to the gold.
+        It applies normalisation (if needed) to the gold and to each of the n predictions, scores
+        each prediction against the gold, and returns the average of those per-prediction scores.
 
         Args:
             model_response (ModelResponse): The model's response containing predictions.
@@ -1197,9 +1197,22 @@ class AvgAtN(SamplingMetric, SampleLevelComputation):
         Returns:
             float: Aggregated score over the current sample's items.
         """
+        if self.n is None:
+            raise Exception("You did not set the value of n")
+
+        # Apply preprocessing (strip_strings / normalize) to the gold and each prediction before scoring,
+        # the same way maj@n and pass@k do. Without this the strip_strings/normalize configured on the
+        # metric were silently ignored, so avg@n under-counted matches that differed only by whitespace.
+        processed_choices = [self.preprocess(text=c) for c in doc.choices]
+        new_doc = Doc(
+            choices=processed_choices,
+            query=doc.query,
+            gold_index=doc.gold_index,
+        )
         all_scores = []
-        for i in range(self.n):
-            all_scores.append(self.compute_score(doc, model_response[i]))
+        for pred in model_response.final_text[: self.n]:
+            new_model_response = ModelResponse(text=[self.preprocess(text=pred)])
+            all_scores.append(self.compute_score(new_doc, new_model_response))
 
         avg_score = np.mean(all_scores)
         return avg_score
