@@ -56,6 +56,7 @@ from lighteval.metrics.metrics_sample import (
     PassAtK,
     Recall,
     StringDistance,
+    TextTaggingMetric,
 )
 from lighteval.metrics.normalizations import bigbench_normalizer, remove_braces, remove_braces_and_strip
 from lighteval.metrics.sample_preparator import (
@@ -619,6 +620,13 @@ class Metrics(Enum):
             ),
         ),
         category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    text_tagging_metric = SampleLevelMetric(
+        metric_name="text_tagging",
+        category=SamplingMethod.GENERATIVE,
+        sample_level_fn=TextTaggingMetric(),
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
