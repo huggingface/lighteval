@@ -242,7 +242,7 @@ def olympiad_bench_prompt(line, task_name: str = None):
         choices=[choice],
         gold_index=0,
         instruction=instruction,
-        specific={},
+        specific=None,
     )
 
 
