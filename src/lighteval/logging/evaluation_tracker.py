@@ -211,7 +211,11 @@ class EvaluationTracker:
     @property
     def results(self):
         config_general = asdict(self.general_config_logger)
-        config_general["model_config"] = config_general["model_config"].model_dump()
+        # This exclude set is defense in depth: SecretStr fields already serialize masked,
+        # but this ensures no future plain-str secret field leaks through model_dump().
+        config_general["model_config"] = config_general["model_config"].model_dump(
+            exclude={"api_key", "inference_server_auth"}
+        )
         results = {
             "config_general": config_general,
             "results": self.metrics_logger.metric_aggregated,

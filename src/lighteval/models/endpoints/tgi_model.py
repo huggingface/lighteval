@@ -26,6 +26,7 @@ from typing import Coroutine, Optional
 
 import requests
 from huggingface_hub import TextGenerationInputGenerateParameters, TextGenerationInputGrammarType, TextGenerationOutput
+from pydantic import SecretStr
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 
 from lighteval.models.abstract_model import ModelConfig
@@ -65,8 +66,9 @@ class TGIModelConfig(ModelConfig):
         inference_server_address (str | None):
             Address of the TGI server. Format: "http://host:port" or "https://host:port".
             Example: "http://localhost:8080"
-        inference_server_auth (str | None):
+        inference_server_auth (SecretStr | None):
             Authentication token for the TGI server. If None, no authentication is used.
+            Stored as a SecretStr so it is masked in logs, reprs, and serialized configs.
         model_name (str | None):
             Optional model name override. If None, uses the model name from server info.
         generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
@@ -91,7 +93,7 @@ class TGIModelConfig(ModelConfig):
     """
 
     inference_server_address: str | None = None
-    inference_server_auth: str | None = None
+    inference_server_auth: SecretStr | None = None
     model_name: str | None
     model_info: dict | None = None
     batch_size: int = 1
@@ -104,7 +106,9 @@ class ModelClient(InferenceEndpointModel):
 
     def __init__(self, config: TGIModelConfig) -> None:
         headers = (
-            {} if config.inference_server_auth is None else {"Authorization": f"Bearer {config.inference_server_auth}"}
+            {}
+            if config.inference_server_auth is None
+            else {"Authorization": f"Bearer {config.inference_server_auth.get_secret_value()}"}
         )
 
         self.client = AsyncClient(config.inference_server_address, headers=headers, timeout=240)

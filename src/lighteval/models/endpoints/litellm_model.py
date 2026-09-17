@@ -26,6 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 from json import JSONDecodeError
 
 import requests
+from pydantic import SecretStr
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset
@@ -77,9 +78,10 @@ class LiteLLMModelConfig(ModelConfig):
         base_url (str | None):
             Custom base URL for the API. If None, uses provider's default URL.
             Useful for using custom endpoints or local deployments.
-        api_key (str | None):
+        api_key (SecretStr | None):
             API key for authentication. If None, reads from environment variables.
             Environment variable names are provider-specific (e.g., OPENAI_API_KEY).
+            Stored as a SecretStr so it is masked in logs, reprs, and serialized configs.
         concurrent_requests (int):
             Maximum number of concurrent API requests to execute in parallel.
             Higher values can improve throughput for batch processing but may hit rate limits
@@ -121,7 +123,7 @@ class LiteLLMModelConfig(ModelConfig):
     model_name: str
     provider: str | None = None
     base_url: str | None = None
-    api_key: str | None = None
+    api_key: SecretStr | None = None
     concurrent_requests: int = 10
     verbose: bool = False
     max_model_length: int | None = None
@@ -144,7 +146,7 @@ class LiteLLMClient(LightevalModel):
         self.model = config.model_name
         self.provider = config.provider or config.model_name.split("/")[0]
         self.base_url = config.base_url
-        self.api_key = config.api_key
+        self.api_key = config.api_key.get_secret_value() if config.api_key is not None else None
         self.generation_parameters = config.generation_parameters
         self.concurrent_requests = config.concurrent_requests
         self._max_length = config.max_model_length

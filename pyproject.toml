@@ -80,7 +80,7 @@ dependencies = [
     # Extension of metrics
     "aenum==3.1.15",
     # Base metrics
-    "nltk==3.9.1",
+    "nltk==3.10.3",
     "scikit-learn",
     "sacrebleu",
     "rouge_score==0.1.2",
