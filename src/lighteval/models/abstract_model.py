@@ -353,5 +353,66 @@ class LightevalModel(ABC):
 
         return context_encs, continuations_encs
 
+    def tok_encode_pair_batch(self, contexts: list[str], continuations_batch: list[list[str]]):
+        """Batched, pairwise-only equivalent of `tok_encode_pair`.
+
+        Encodes every context and every continuation across the whole batch with a
+        single tokenizer call each, instead of calling the tokenizer once per document
+        (and once per continuation within each document). This is significantly faster
+        for large batches since it lets the tokenizer's Rust backend parallelize across
+        the batch instead of paying Python call overhead per item.
+
+        Args:
+            contexts (list[str]): One context string per document.
+            continuations_batch (list[list[str]]): One list of continuation strings per document.
+
+        Returns:
+            Tuple[list[list[TokenSequence]], list[list[TokenSequence]]]:
+                Per document, a list of encoded contexts (one per continuation, all identical)
+                and a list of encoded continuations, matching the shape returned by calling
+                `tok_encode_pair(..., pairwise=True)` once per document.
+        """
+        if getattr(self, "move_trailing_context_space", True):
+            adjusted_contexts = []
+            adjusted_continuations_batch = []
+            for context, continuations in zip(contexts, continuations_batch):
+                n_spaces = len(context) - len(context.rstrip())
+                if n_spaces > 0:
+                    adjusted_continuations_batch.append([context[-n_spaces:] + cont for cont in continuations])
+                    adjusted_contexts.append(context[:-n_spaces])
+                else:
+                    adjusted_continuations_batch.append(continuations)
+                    adjusted_contexts.append(context)
+        else:
+            adjusted_contexts = contexts
+            adjusted_continuations_batch = continuations_batch
+
+        # We don't add special tokens to the continuations as if bos is added
+        # models tend to completely ignore a context
+        context_encs = self.tokenizer(adjusted_contexts, add_special_tokens=self.add_special_tokens)["input_ids"]
+
+        flat_continuations = [cont for continuations in adjusted_continuations_batch for cont in continuations]
+        flat_continuation_encs = (
+            self.tokenizer(flat_continuations, add_special_tokens=False)["input_ids"] if flat_continuations else []
+        )
+
+        batch_context_encs = []
+        batch_continuation_encs = []
+        flat_idx = 0
+        for context_enc, continuations in zip(context_encs, adjusted_continuations_batch):
+            # In theory the context_enc can end with eos token, this would again
+            # cause the model to ignore the context. We thus strip the eos token from context_enc
+            if len(context_enc) > 0 and context_enc[-1] == self.tokenizer.eos_token_id:
+                context_enc = context_enc[:-1]
+
+            num_choices = len(continuations)
+            doc_continuation_encs = flat_continuation_encs[flat_idx : flat_idx + num_choices]
+            flat_idx += num_choices
+
+            batch_context_encs.append([context_enc] * num_choices)
+            batch_continuation_encs.append(doc_continuation_encs)
+
+        return batch_context_encs, batch_continuation_encs
+
     def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
         return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
