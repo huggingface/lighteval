@@ -311,7 +311,7 @@ class LightevalTask:
                 if doc is None or doc == []:
                     continue
 
-                doc.id = str(ix)
+                doc.id = f"{split}:{ix}" if len(splits) > 1 else str(ix)
 
                 # Transfer task-level generation parameters to the document
                 doc.generation_grammar = self.generation_grammar
