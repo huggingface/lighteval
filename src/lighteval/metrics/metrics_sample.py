@@ -208,11 +208,25 @@ class F1_score(SampleLevelComputation):
         results = []
         golds = doc.get_golds()
         predictions = model_response.final_text
-        # We might need to flatten golds if they are a list of lists
+        # Skip golds that normalize to an empty bag of words. Raise only when
+        # none of the references are usable, so one bad gold does not abort a
+        # sample that still has a valid one.
         for gold in golds:
+            if not self._gold_bow(gold):
+                continue
             for pred in predictions:
                 results.append(self.compute_one_item(gold=gold, pred=pred))
+        if not results:
+            raise ValueError(
+                "F1_score received an empty gold reference after normalization; "
+                "this is invalid evaluation data, not a model miss."
+            )
         return self.aggregation_function(results)
+
+    def _gold_bow(self, gold: str) -> set[str]:
+        if self.normalize_gold:
+            gold = self.normalize_gold(gold)
+        return set(gold.split())
 
     def compute_one_item(self, gold: str, pred: str) -> float:
         """Compares two strings only.
@@ -224,13 +238,11 @@ class F1_score(SampleLevelComputation):
         Returns:
             float: The f1 score over the bag of words, computed using nltk.
         """
-        if self.normalize_gold:
-            gold = self.normalize_gold(gold)
+        gold_bow = self._gold_bow(gold)
 
         if self.normalize_pred:
             pred = self.normalize_pred(pred)
 
-        gold_bow = set(gold.split())
         pred_bow = set(pred.split())
 
         if not gold_bow:
