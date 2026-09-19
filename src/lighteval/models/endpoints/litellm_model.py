@@ -50,13 +50,23 @@ if is_package_available("litellm"):
     logging.getLogger("LiteLLM").setLevel(logging.WARNING)
     logging.getLogger("LiteLLM").handlers.clear()
 
-    litellm.cache = Cache(type=LiteLLMCacheType.DISK)
 else:
     from unittest.mock import Mock
 
     litellm = Mock()
     encode = Mock()
     LitellmModelResponse = Mock()
+
+
+def _set_litellm_cache(cache_dir: str | None = None) -> None:
+    cache_kwargs = {"type": LiteLLMCacheType.DISK}
+    if cache_dir is not None:
+        cache_kwargs["disk_cache_dir"] = cache_dir
+    litellm.cache = Cache(**cache_kwargs)
+
+
+if is_package_available("litellm"):
+    _set_litellm_cache()
 
 
 class LiteLLMModelConfig(ModelConfig):
@@ -90,6 +100,8 @@ class LiteLLMModelConfig(ModelConfig):
             Whether to enable verbose logging. Default is False.
         max_model_length (int | None):
             Maximum context length for the model. If None, infers the model's default max length.
+        litellm_cache_dir (str | None):
+            Directory used by LiteLLM's disk cache. If None, LiteLLM uses its default location.
         api_max_retry (int):
             Maximum number of retries for API requests. Default is 8.
         api_retry_sleep (float):
@@ -127,6 +139,7 @@ class LiteLLMModelConfig(ModelConfig):
     concurrent_requests: int = 10
     verbose: bool = False
     max_model_length: int | None = None
+    litellm_cache_dir: str | None = None
 
     api_max_retry: int = 8
     api_retry_sleep: float = 1.0
@@ -143,6 +156,8 @@ class LiteLLMClient(LightevalModel):
         If a base_url is not set, it will default to the public API.
         """
         self.config = config
+        if config.litellm_cache_dir is not None:
+            _set_litellm_cache(config.litellm_cache_dir)
         self.model = config.model_name
         self.provider = config.provider or config.model_name.split("/")[0]
         self.base_url = config.base_url
