@@ -333,7 +333,7 @@ class TestTransformersModelProcessing(unittest.TestCase):
         self.model.accelerator.gather_for_metrics = mock_gather
 
         # Call the function under test
-        self.model._loglikelihood_tokens(docs)
+        results = self.model._loglikelihood_tokens(docs)
 
         # Verify we captured everyone
         self.assertIsNotNone(captured_num_choices, "Should have captured gathered_num_choices")
@@ -366,6 +366,13 @@ class TestTransformersModelProcessing(unittest.TestCase):
 
         # - Test 2D padded contexts: (batch_size, max_len_context)
         self.assertEqual(captured_padded_contexts.shape, (len(docs), max(captured_len_context)))
+
+        # Verify padding is removed after gathering without dropping any choices
+        self.assertEqual(
+            [len(results[0].output_tokens), len(results[1].output_tokens)],
+            [len(docs[0].choices), len(docs[1].choices)],
+        )
+        self.assertNotIn(-1, sum(results[0].output_tokens + results[1].output_tokens, []))
 
         # Verify padding values for 1D tensors
         # - First doc has 3 choices, so positions [3:5] should be padded with -1 for logits and False for max_equals
