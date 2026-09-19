@@ -56,6 +56,10 @@ class ModelConfig(BaseModel, extra="forbid"):
             behavior and context for the model during evaluation.
         cache_dir (str):
             Directory to cache the model. Defaults to "~/.cache/huggingface/lighteval".
+        concurrent_requests (int):
+            Maximum number of concurrent API requests to execute in parallel.
+            Higher values can improve throughput for batch processing but may hit rate limits
+            or exhaust API quotas faster. Default is 10.
 
     Methods:
         from_path(path: str):
@@ -87,6 +91,8 @@ class ModelConfig(BaseModel, extra="forbid"):
     generation_parameters: GenerationParameters = GenerationParameters()
     system_prompt: str | None = None
     cache_dir: str = "~/.cache/huggingface/lighteval"
+    concurrent_requests: int = 10
+
 
     @classmethod
     def from_path(cls, path: str):
