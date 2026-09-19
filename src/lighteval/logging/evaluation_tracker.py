@@ -111,7 +111,9 @@ class EvaluationTracker:
     Args:
         output_dir (str): Local directory to save evaluation results and logs
         results_path_template (str, optional): Template for results directory structure.
-            Example: "{output_dir}/results/{org}_{model}"
+            Supports the {output_dir}, {org}, {model} and {revision} variables; a template
+            using only a subset of them stays valid.
+            Example: "{output_dir}/results/{org}_{model}/{revision}"
         save_details (bool, defaults to True): Whether to save detailed evaluation records
         push_to_hub (bool, defaults to False): Whether to push results to HF Hub
         push_to_tensorboard (bool, defaults to False): Whether to push metrics to TensorBoard
@@ -303,23 +305,61 @@ class EvaluationTracker:
         )
         self.wandb_run.finish()
 
+    def _get_model_revision(self) -> str:
+        """Returns the revision of the evaluated model, used to disambiguate output paths.
+
+        Only the backends able to load a specific version of a model define a `revision` on
+        their config (transformers, VLM transformers, vllm and inference endpoints). For every
+        other backend, and for a model config logged without a revision, we fall back to "main",
+        which is the default those backends themselves use.
+
+        Returns:
+            str: The model revision, or "main" if the model config does not define one.
+        """
+        revision = getattr(self.general_config_logger.model_config, "revision", None)
+        if not revision:
+            return "main"
+        # Stripped like `model_name` is by the callers: a leading or trailing separator would
+        # otherwise introduce an empty path segment.
+        return revision.strip("/") or "main"
+
     def save_results(self, date_id: str, results_dict: dict):
+        revision = self._get_model_revision()
         if self.results_path_template is not None:
             org_model_parts = self.general_config_logger.model_name.split("/")
             org = org_model_parts[0] if len(org_model_parts) >= 2 else ""
             model = org_model_parts[1] if len(org_model_parts) >= 2 else org_model_parts[0]
             output_dir = self.output_dir
-            output_dir_results = Path(self.results_path_template.format(output_dir=output_dir, org=org, model=model))
+            output_dir_results = Path(
+                self.results_path_template.format(output_dir=output_dir, org=org, model=model, revision=revision)
+            )
         else:
-            output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name.strip("/")
+            output_dir_results = (
+                Path(self.output_dir) / "results" / self.general_config_logger.model_name.strip("/") / revision
+            )
         self.fs.mkdirs(output_dir_results, exist_ok=True)
         output_results_file = output_dir_results / f"results_{date_id}.json"
         logger.info(f"Saving results to {output_results_file}")
         with self.fs.open(output_results_file, "w") as f:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
-    def _get_details_sub_folder(self, date_id: str):
+    def _get_details_sub_folder(self, date_id: str, use_legacy_layout: bool = False):
+        """Returns the folder holding the details of a single evaluation run.
+
+        Args:
+            date_id (str): The run timestamp, or "first"/"last" to resolve it against the
+                timestamp folders present on disk.
+            use_legacy_layout (bool): Resolve against the pre-revision layout,
+                `{output_dir}/details/{model}/`, instead of the revision-scoped one. This is only
+                ever used to *read* details written by an older lighteval; details are always
+                written to the revision-scoped path.
+
+        Returns:
+            Path: The details folder for this run.
+        """
         output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name.strip("/")
+        if not use_legacy_layout:
+            output_dir_details = output_dir_details / self._get_model_revision()
         if date_id in ["first", "last"]:
             # Get all folders in output_dir_details
             if not self.fs.exists(output_dir_details):
@@ -335,8 +375,46 @@ class EvaluationTracker:
             date_id = max(folders) if date_id == "last" else min(folders)
         return output_dir_details / date_id
 
+    def _find_legacy_details_sub_folder(self, date_id: str) -> Path | None:
+        """Returns the pre-revision details folder for `date_id`, if it actually holds details.
+
+        Details written before results were keyed on the revision live one level up, directly
+        under `{output_dir}/details/{model}/`. We require the resolved folder to contain details
+        files so that a sibling *revision* directory is never mistaken for a timestamp folder.
+
+        Args:
+            date_id (str): The run timestamp, or "first"/"last".
+
+        Returns:
+            Path | None: The legacy details folder, or None if it holds no details.
+        """
+        try:
+            sub_folder = self._get_details_sub_folder(date_id, use_legacy_layout=True)
+        except FileNotFoundError:
+            return None
+        return sub_folder if self.fs.glob(str(sub_folder / "details_*.parquet")) else None
+
     def load_details_datasets(self, date_id: str, task_names: list[str]) -> dict[str, Dataset]:
-        output_dir_details_sub_folder = self._get_details_sub_folder(date_id)
+        try:
+            output_dir_details_sub_folder = self._get_details_sub_folder(date_id)
+            missing_error = None
+        except FileNotFoundError as e:
+            output_dir_details_sub_folder, missing_error = None, e
+
+        if output_dir_details_sub_folder is None or not self.fs.glob(
+            str(output_dir_details_sub_folder / "details_*.parquet")
+        ):
+            legacy_sub_folder = self._find_legacy_details_sub_folder(date_id)
+            if legacy_sub_folder is not None:
+                logger.warning(
+                    f"No details found for revision '{self._get_model_revision()}'. Falling back to "
+                    f"the pre-revision layout at {legacy_sub_folder}."
+                )
+                output_dir_details_sub_folder = legacy_sub_folder
+            elif missing_error is not None:
+                # Nothing in either layout: surface the original error untouched.
+                raise missing_error
+
         logger.info(f"Loading details from {output_dir_details_sub_folder}")
         date_id = output_dir_details_sub_folder.name  # Overwrite date_id in case of latest
         details_datasets = {}
