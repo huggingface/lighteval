@@ -233,12 +233,12 @@ def record_to_sample(record):
     return Sample(input=query, target=target, metadata={"domain": record["domain"], "topic": record["topic"]})
 
 
-def aa_omniscience_prompt(record):
+def aa_omniscience_prompt(record, task_name: str = None):
     query = OMNISCIENCE_ANSWER_PROMPT.format(domain=record["domain"], topic=record["topic"])
     query += "\n\n" + record["question"]
 
     return Doc(
-        task_name="aa_omniscience",
+        task_name=task_name,
         query=query,
         choices=[record["answer"]],
         gold_index=0,
