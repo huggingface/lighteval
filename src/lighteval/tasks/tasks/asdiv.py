@@ -31,7 +31,7 @@ def asdiv_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"{line['body']}\nQuestion:{line['question']}\nAnswer:",
-        choices=line["answer"].split(" (")[0],
+        choices=[line["answer"].split(" (")[0]],
         gold_index=[0],
     )
 
