@@ -70,6 +70,128 @@
       },
       "tolerance": 0.01,
       "description": "Test DROP with partial match"
+    },
+    {
+      "name": "DROP - Corpus em Is The Mean Over Documents",
+      "metric_class": "drop",
+      "metric_params": {},
+      "metric_name": "em",
+      "docs": [
+        {
+          "query": "What is 2 + 2?",
+          "specific": {
+            "golds_no_preprocessing": ["4"]
+          },
+          "choices": ["4"],
+          "gold_index": 0,
+          "task_name": "math"
+        },
+        {
+          "query": "What is 3 + 3?",
+          "specific": {
+            "golds_no_preprocessing": ["6"]
+          },
+          "choices": ["6"],
+          "gold_index": 0,
+          "task_name": "math"
+        },
+        {
+          "query": "What is 5 + 5?",
+          "specific": {
+            "golds_no_preprocessing": ["10"]
+          },
+          "choices": ["10"],
+          "gold_index": 0,
+          "task_name": "math"
+        },
+        {
+          "query": "What is 1 + 1?",
+          "specific": {
+            "golds_no_preprocessing": ["2"]
+          },
+          "choices": ["2"],
+          "gold_index": 0,
+          "task_name": "math"
+        }
+      ],
+      "model_responses": [
+        {
+          "text": ["4"]
+        },
+        {
+          "text": ["7"]
+        },
+        {
+          "text": ["11"]
+        },
+        {
+          "text": ["3"]
+        }
+      ],
+      "expected_output": 0.25,
+      "tolerance": 0.01,
+      "description": "One correct answer out of four documents scores 0.25, not the best single document"
+    },
+    {
+      "name": "DROP - Corpus f1 Is The Mean Over Documents",
+      "metric_class": "drop",
+      "metric_params": {},
+      "metric_name": "f1",
+      "docs": [
+        {
+          "query": "What is 2 + 2?",
+          "specific": {
+            "golds_no_preprocessing": ["4"]
+          },
+          "choices": ["4"],
+          "gold_index": 0,
+          "task_name": "math"
+        },
+        {
+          "query": "What is 3 + 3?",
+          "specific": {
+            "golds_no_preprocessing": ["6"]
+          },
+          "choices": ["6"],
+          "gold_index": 0,
+          "task_name": "math"
+        },
+        {
+          "query": "What is 5 + 5?",
+          "specific": {
+            "golds_no_preprocessing": ["10"]
+          },
+          "choices": ["10"],
+          "gold_index": 0,
+          "task_name": "math"
+        },
+        {
+          "query": "What is 1 + 1?",
+          "specific": {
+            "golds_no_preprocessing": ["2"]
+          },
+          "choices": ["2"],
+          "gold_index": 0,
+          "task_name": "math"
+        }
+      ],
+      "model_responses": [
+        {
+          "text": ["4"]
+        },
+        {
+          "text": ["7"]
+        },
+        {
+          "text": ["11"]
+        },
+        {
+          "text": ["3"]
+        }
+      ],
+      "expected_output": 0.25,
+      "tolerance": 0.01,
+      "description": "One correct answer out of four documents scores 0.25, not the best single document"
     }
   ]
 }
