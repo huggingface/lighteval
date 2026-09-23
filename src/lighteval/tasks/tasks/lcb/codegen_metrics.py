@@ -30,7 +30,7 @@ import zlib
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from decimal import Decimal
 from enum import Enum
-from io import StringIO
+from io import BytesIO, StringIO
 from types import ModuleType
 from typing import Callable, Optional
 
@@ -135,8 +135,13 @@ def call_method(method: Callable, inputs: list | str):
 
     inputs_line_iterator = iter(inputs.split("\n"))
 
+    # Some solutions read from sys.stdin.buffer (binary), which a plain StringIO does not
+    # provide. Expose a binary buffer on the patched stdin, mirroring LiveCodeBench (#1255).
+    mock_stdin = StringIO(inputs)
+    mock_stdin.buffer = BytesIO(inputs.encode())
+
     @patch("builtins.open", mock_open(read_data=inputs))
-    @patch("sys.stdin", StringIO(inputs))
+    @patch("sys.stdin", mock_stdin)
     @patch("sys.stdin.readline", lambda *args: next(inputs_line_iterator))
     @patch("sys.stdin.readlines", lambda *args: inputs.split("\n"))
     @patch("sys.stdin.read", lambda *args: inputs)
