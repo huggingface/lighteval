@@ -44,6 +44,18 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 logger = logging.getLogger(__name__)
 
 
+def _response_format_kwargs(response_format: str | None) -> dict:
+    """Pass response_format only when the installed inspect-ai GenerateConfig accepts it."""
+    if response_format is None:
+        return {}
+    from inspect_ai.model import GenerateConfig
+
+    if "response_format" in GenerateConfig.model_fields:
+        return {"response_format": response_format}
+    logger.warning("--response-format is not supported by the installed inspect-ai; ignoring it.")
+    return {}
+
+
 @task
 def get_inspect_ai_task(
     lighteval_task_config: LightevalTaskConfig,
@@ -270,6 +282,9 @@ def eval(  # noqa C901
     frequence_penalty: Annotated[
         float | None,
         Option(
+            "--frequency-penalty",
+            # The previous spelling, kept so existing invocations keep working.
+            "--frequence-penalty",
             help="Number between -2.0 and 2.0, Penalizes tokens that appear in the text too frequently, reducing repetition.",
             rich_help_panel=HELP_PANEL_NAME_1,
         ),
@@ -474,19 +489,19 @@ def eval(  # noqa C901
         temperature=temperature,
         top_p=top_p,
         top_k=top_k,
-        frequence_penalty=frequence_penalty,
+        frequency_penalty=frequence_penalty,
         presence_penalty=presence_penalty,
         seed=seed,
         stop_seqs=stop_seqs,
         num_choices=num_choices,
         best_of=best_of,
-        log_probs=log_probs,
+        logprobs=log_probs,
         top_logprobs=top_logprobs,
         cache_prompt=cache_prompt,
         reasoning_effort=reasoning_effort,
         reasoning_tokens=reasoning_tokens,
         reasoning_history=reasoning_history,
-        response_format=response_format,
+        **_response_format_kwargs(response_format),
         parallel_tool_calls=parallel_tool_calls,
         max_tool_output=max_tool_output,
         internal_tools=internal_tools,
