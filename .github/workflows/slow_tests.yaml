@@ -9,8 +9,12 @@ on:
     branches:
       - main
 
+permissions: {}
+
 jobs:
   run_tests:
+    permissions:
+      contents: read
     name: Run tests
     runs-on: 'aws-g4dn-2xlarge-use1-public-80'
     steps:
