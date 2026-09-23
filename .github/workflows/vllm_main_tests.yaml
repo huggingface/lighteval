@@ -5,11 +5,13 @@ on:
     - cron: '0 2 * * 1'  # Every Monday at 2 AM UTC
   workflow_dispatch:
 
-permissions:
-  contents: read
+
+permissions: {}
 
 jobs:
   test_vllm_main:
+    permissions:
+      contents: read
     name: Test with vLLM main branch
     runs-on: 'aws-g4dn-2xlarge-use1-public-80'
     continue-on-error: true
