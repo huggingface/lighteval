@@ -305,6 +305,9 @@ def remove_reasoning_tags(text: str, tag_pairs: list[tuple[str, str]]) -> str:
     """
     result = text
 
+    if result is None:
+        return ""
+
     for start_tag, end_tag in tag_pairs:
         while start_tag in result and end_tag in result:
             start = result.find(start_tag)
