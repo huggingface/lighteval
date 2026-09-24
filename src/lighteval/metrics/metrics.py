@@ -51,6 +51,8 @@ from lighteval.metrics.metrics_sample import (
     Faithfulness,
     GPassAtK,
     JudgeLLMSimpleQA,
+    JuryEvalPairwiseJudge,
+    JuryEvalPointwiseJudge,
     LoglikelihoodAcc,
     MajAtN,
     PassAtK,
@@ -559,6 +561,20 @@ class Metrics(Enum):
             "simpleqa_judge": np.mean,
         },
         batched_compute=True,
+    )
+    juryeval_pointwise_judge = SampleLevelMetric(
+        metric_name="juryeval_pointwise_judge",
+        higher_is_better=True,
+        category=SamplingMethod.GENERATIVE,
+        sample_level_fn=JuryEvalPointwiseJudge(),
+        corpus_level_fn=np.mean,
+    )
+    juryeval_pairwise_judge = SampleLevelMetric(
+        metric_name="juryeval_pairwise_judge",
+        higher_is_better=True,
+        category=SamplingMethod.GENERATIVE,
+        sample_level_fn=JuryEvalPairwiseJudge(),
+        corpus_level_fn=np.mean,
     )
     target_perplexity = SampleLevelMetric(
         metric_name="ppl",
