@@ -1454,3 +1454,48 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
 
     def num_samples(self):
         return self.n if self.n is not None else self.k
+
+
+class TextTaggingMetric(SampleLevelComputation):
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs):
+        gold_topics = [
+            g.strip().lower() for g in doc.specific.get("gold_topics", []) if isinstance(g, str) and g.strip()
+        ]
+        if not gold_topics:
+            return 0.0
+        if hasattr(model_response, "text_post_processed") and model_response.text_post_processed:
+            pred_text = model_response.text_post_processed[0]
+        elif hasattr(model_response, "text") and model_response.text:
+            pred_text = model_response.text[0] if isinstance(model_response.text, list) else model_response.text
+        else:
+            pred_text = str(model_response)
+        pred_tags = [p.strip().lower() for p in pred_text.split(",") if p.strip()]
+        if not pred_tags:
+            return 0.0
+        used = set()
+        scores = []
+        for g in gold_topics:
+            best_score, best_j = 0.0, None
+            for j, p in enumerate(pred_tags):
+                if j in used:
+                    continue
+                sim = self.char_ngram_f1(g, p, n=3)
+                if sim > best_score:
+                    best_score, best_j = sim, j
+            if best_j is not None:
+                used.add(best_j)
+            scores.append(best_score)
+        return sum(scores) / len(gold_topics)
+
+    def char_ngram_f1(self, a: str, b: str, n: int = 3) -> float:
+        def ngrams(s, n):
+            s = s.lower().replace(" ", "")
+            return {s[i : i + n] for i in range(len(s) - n + 1)} if len(s) >= n else {s}
+
+        A, B = ngrams(a, n), ngrams(b, n)
+        if not A or not B:
+            return 0.0
+        overlap = len(A & B)
+        precision = overlap / len(B)
+        recall = overlap / len(A)
+        return 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
