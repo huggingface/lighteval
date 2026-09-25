@@ -143,13 +143,22 @@ class Pipeline:
 
         self.model_config = model_config
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
-        self.model = self._init_model(model_config, model)
-        # Must occur after model and task init
-        self.model._cache._init_registry(self.registry)
+
+        # ✅ FIX: Agar details se load karna hai aur koi model instance nahi diya,
+        # toh model load hi mat karo — GPU waste nahi hoga
+        if self.pipeline_parameters.load_responses_from_details_date_id and model is None:
+            self.model = None
+            logger.info("--- SKIPPING MODEL LOAD (responses will be loaded from details) ---")
+        else:
+            self.model = self._init_model(model_config, model)
+
+        # Ye lines sirf tab chalao jab model actually load hua ho
+        if self.model is not None:
+            self.model._cache._init_registry(self.registry)
+            self.evaluation_tracker.general_config_logger.log_model_info(model_config=self.model.config)
+
         # Must occur after model init
         self._init_accelerator_seeds()
-
-        self.evaluation_tracker.general_config_logger.log_model_info(model_config=self.model.config)
 
         # Final results
         self.final_dict: dict | None = None
@@ -279,8 +288,17 @@ class Pipeline:
             try:
                 outputs = self._load_responses_from_details()
             except FileNotFoundError as e:
+                # ✅ FIX: Agar details file nahi mili aur model bhi load nahi hai
+                # toh clearly error do — GPU wali machine chahiye hogi
+                if self.model is None:
+                    raise RuntimeError(
+                        "Details file not found and no model was loaded. "
+                        "Please provide a model config to run inference, "
+                        "or check your details file path."
+                    ) from e
                 logger.warning(
-                    f"No responses found for {self.pipeline_parameters.load_responses_from_details_date_id} in details directory: {e}. Running model instead."
+                    f"No responses found for {self.pipeline_parameters.load_responses_from_details_date_id} "
+                    f"in details directory: {e}. Running model instead."
                 )
                 outputs = self._run_model()
         else:
@@ -311,8 +329,6 @@ class Pipeline:
         return outputs
 
     def _run_model_sync(self):
-        # Running all requests depending on the model call type (log likelihood, generative, ...)
-        # to be able to batch them
         outputs = {}
         for sampling_method, docs in self.sampling_docs.items():
             logger.info(f"Running {sampling_method} requests")
@@ -330,8 +346,6 @@ class Pipeline:
         return outputs
 
     def _run_model(self):
-        # Running all requests depending on the model call type (log likelihood, generative, ...)
-        # to be able to batch them
         logger.info("--- RUNNING MODEL ---")
 
         if self.model.is_async:
@@ -345,7 +359,6 @@ class Pipeline:
         return outputs
 
     def _post_process_outputs(self, sampling_method_responses: dict[str, list[ModelResponse]]):
-        # Removes reasoning tags if needed
         logger.info("--- POST-PROCESSING MODEL RESPONSES ---")
 
         if self.pipeline_parameters.remove_reasoning_tags:
@@ -360,19 +373,6 @@ class Pipeline:
                     ]
 
     def _compute_metrics(self, sampling_method_responses: dict[str, list[ModelResponse]]):
-        # To compute the metrics we first group the samples and task and then by metrics.
-        # This way we can batch the metrics computation for each task and metric category
-
-        # This variable will hold the samples grouped by task and metric category
-        # example:
-        # task_metric_category_groups = {
-        #     "gsm8k_1": {
-        #         "GENERATIVE": [
-        #             (doc1, response1), (doc2, response2), ...,
-        #         }
-        #         "LOGLIKELIHOOD": [
-        #             (doc1, response1), (doc2, response2), ...,
-        #         ]
         logger.info("--- COMPUTING METRICS ---")
         task_metric_category_groups = collections.defaultdict(lambda: collections.defaultdict(list))
 
