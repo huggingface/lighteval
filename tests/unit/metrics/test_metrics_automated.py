@@ -86,6 +86,7 @@ SKIPPED_METRICS = [
     "faithfulness",  # Need GPU to run
     "bert_score",  # Issue with the scoring function, int too big to convert
     "simpleqa_judge",  # Need to setup for compute costs
+    "maj_at_n",  # Blocked by the gold_index bug in Doc.get_golds, see PR #1274
 ]
 
 
@@ -136,6 +137,11 @@ class AutomatedMetricTester:
         """Run a single test case and return the result."""
         # Check if metric is available in METRIC_CLASSES
         if test_case.metric_class not in self.METRIC_CLASSES:
+            if test_case.metric_class not in SKIPPED_METRICS:
+                raise ValueError(
+                    f"Unknown metric class: {test_case.metric_class}. "
+                    "It is neither a Metrics member nor listed in SKIPPED_METRICS."
+                )
             return {
                 "test_case": test_case.name,
                 "success": True,  # Mark as success to skip
