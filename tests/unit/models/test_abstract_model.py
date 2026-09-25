@@ -22,7 +22,14 @@
 
 from transformers import AutoTokenizer
 
+from lighteval.models.abstract_model import ModelConfig
 from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
+
+
+def test_parse_args_eq():
+    url = "https://host/v1?api-version=2026-01-01&foo=bar"
+    cfg = ModelConfig._parse_args(f"model_name=openai/foo,base_url={url},provider=openai")
+    assert cfg["base_url"] == url
 
 
 def test_tok_encode_pair():
