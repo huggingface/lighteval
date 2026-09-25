@@ -147,7 +147,7 @@ class ModelConfig(BaseModel, extra="forbid"):
                 generation_parameters_dict = json.loads(gen_params)
 
         args = re.sub(r"generation_parameters=\{.*?\},?", "", args).strip(",")
-        model_config = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.split(",")}
+        model_config = {k.split("=", 1)[0]: k.split("=", 1)[1] if "=" in k else True for k in args.split(",")}
 
         if generation_parameters_dict is not None:
             model_config["generation_parameters"] = generation_parameters_dict

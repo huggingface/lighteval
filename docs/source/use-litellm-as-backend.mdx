@@ -15,6 +15,20 @@ lighteval endpoint litellm \
     gsm8k
 ```
 
+For a generic OpenAI-compatible endpoint, keep the `openai/` provider prefix
+on the model name and point `base_url` at the API root:
+
+```bash
+export OPENAI_API_KEY=<your-api-key>
+lighteval endpoint litellm \\
+    "provider=openai,model_name=openai/<model-id>,base_url=https://host.example/v1" \\
+    gsm8k
+```
+
+Use the `/v1` root rather than `/chat/completions`; LiteLLM appends the
+completion path. Use `provider=hosted_vllm` only when the endpoint is actually
+served by vLLM.
+
 ## Using a Configuration File
 
 LiteLLM allows generation with any OpenAI-compatible endpoint. For example, you
