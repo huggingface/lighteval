@@ -66,6 +66,7 @@ dependencies = [
     "huggingface_hub[hf_xet]>=0.30.2",
     "torch>=2.0,<3.0",
     "GitPython>=3.1.41", # for logging
+    "xxhash", # for logging
     "datasets>=4.0.0",
     "pydantic",
     "pillow",
