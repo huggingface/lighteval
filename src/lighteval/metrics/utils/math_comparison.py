@@ -496,7 +496,7 @@ def sympy_expr_eq(gold: Basic | MatrixBase, pred: Basic | MatrixBase, precision:
         except Exception:  # noqa: E722
             pass
 
-    # If the target is relational, but the refernce is not, it's possible it's a case of a=x+1+z, so we just take x+1+z
+    # If the target is relational, but the reference is not, it's possible it's a case of a=x+1+z, so we just take x+1+z
     # We only do this if the lhs of the first equation is fully symbolic, to prevent simplifying x+y+2z = 1
     if is_assignment_relation(gold) and not is_equation(pred):
         gold = take_last_relation(gold).rhs
