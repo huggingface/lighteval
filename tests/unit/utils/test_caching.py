@@ -101,6 +101,30 @@ class TestCaching(unittest.TestCase):
                     self.assertIn(str(temp_dir), str(folder))
                     self.assertIn(model_name, str(folder))
 
+    def test_model_sha_changes_the_cache_hash(self):
+        """Weights changing under a mutable revision name must use a fresh cache.
+
+        The config carries a mutable name (a branch, or a local path), so keying on
+        it alone serves run 2 the responses of run 1 when the weights moved. Binding
+        the key to the resolved commit is what the caching docs promise.
+        """
+        from lighteval.models.transformers.transformers_model import TransformersModelConfig
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = TransformersModelConfig(model_name="test_model", cache_dir=temp_dir)
+
+            def hash_for(model_sha):
+                cache = SampleCache(config)
+                cache.model_sha = model_sha
+                return cache.get_model_hash(config)
+
+            no_sha = hash_for(None)
+            sha_a = hash_for("aaaaaaaaaaaa")
+            sha_b = hash_for("bbbbbbbbbbbb")
+
+            self.assertNotEqual(sha_a, sha_b, "different weights must not share a cache")
+            self.assertNotEqual(sha_a, no_sha, "a resolved sha must not collide with the name-only key")
+
     def test_cache_decorator_presence(self):
         """Test that @cached decorators are present on the right methods."""
         from lighteval.models.dummy.dummy_model import DummyModel
