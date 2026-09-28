@@ -122,7 +122,7 @@ class VLLMModelConfig(ModelConfig):
         load_format (str | None):
             The format of the model weights to load. choices: auto, pt, safetensors, npcache, dummy, tensorizer, sharded_state, gguf, bitsandbytes, mistral, runai_streamer.
         swap_space (PositiveInt):
-            CPU swap space size in GiB per GPU. Defaults to 4.
+            Deprecated and ignored: vllm no longer exposes this option. Kept so existing configs still load.
         seed (NonNegativeInt):
             Random seed for reproducibility. Defaults to 1234.
         trust_remote_code (bool):
@@ -180,7 +180,7 @@ class VLLMModelConfig(ModelConfig):
     )
     quantization: str | None = None
     load_format: str | None = None
-    swap_space: PositiveInt = 4  # CPU swap space size (GiB) per GPU.
+    swap_space: PositiveInt = 4  # deprecated, ignored: removed from vllm
     seed: NonNegativeInt = 1234
     trust_remote_code: bool = False
     add_special_tokens: bool = True
@@ -272,7 +272,6 @@ class VLLMModel(LightevalModel):
             "tensor_parallel_size": config.tensor_parallel_size,
             "pipeline_parallel_size": config.pipeline_parallel_size,
             "max_model_len": self._max_length,
-            "swap_space": 4,
             "seed": int(config.seed),
             "max_num_seqs": int(config.max_num_seqs),
             "max_num_batched_tokens": int(config.max_num_batched_tokens),
@@ -587,7 +586,6 @@ class AsyncVLLMModel(VLLMModel):
             "data_parallel_size": config.data_parallel_size,
             "pipeline_parallel_size": config.pipeline_parallel_size,
             "max_model_len": self._max_length,
-            "swap_space": 4,
             "seed": int(config.seed),
             "max_num_seqs": int(config.max_num_seqs),
             "max_num_batched_tokens": int(config.max_num_batched_tokens),
