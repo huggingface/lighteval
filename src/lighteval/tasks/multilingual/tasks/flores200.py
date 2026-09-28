@@ -28,7 +28,7 @@ from lighteval.tasks.templates.translation import get_translation_prompt_functio
 from lighteval.tasks.templates.utils.formulation import (
     CFFormulation,
 )
-from lighteval.utils.language import Language, manage_duplicate_language_codes
+from lighteval.utils.language import language_from_tag
 
 
 flores_200_languages = [
@@ -233,7 +233,7 @@ flores_200_languages = [
     "yor_Latn",
     "yue_Hant",
     "zho_Hans",
-    # "zho_Hant",
+    "zho_Hant",
     "zsm_Latn",
     "zul_Latn",
 ]
@@ -250,8 +250,8 @@ TASKS_TABLE = [
     LightevalTaskConfig(
         name=f"flores200:{lang1}-{lang2}",
         prompt_function=get_translation_prompt_function(
-            source_language=Language(manage_duplicate_language_codes(lang1.split("_")[0])),
-            target_language=Language(manage_duplicate_language_codes(lang2.split("_")[0])),
+            source_language=language_from_tag(lang1),
+            target_language=language_from_tag(lang2),
             adapter=flores_adapter(lang1, lang2),
             formulation=CFFormulation(),
         ),
