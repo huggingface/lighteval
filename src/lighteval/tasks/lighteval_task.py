@@ -64,6 +64,19 @@ class LightevalTaskConfig:
         hf_subset (str): Dataset subset/configuration name to use for this task.
         metrics (ListLike[Metric | Metrics]): List of metrics or metric enums to compute for this task.
 
+    Inspect AI Compatible Parameters:
+        solver (None, optional): Reserved for Inspect AI solver compatibility.
+            Defaults to None.
+        scorer (None, optional): Reserved for Inspect AI scorer compatibility.
+            Defaults to None.
+        sample_fields (Callable[[dict], Sample] | None, optional): Function that
+            converts a dataset row to an Inspect AI Sample. Defaults to None.
+        sample_to_fewshot (Callable[[Sample], str] | None, optional): Function
+            that converts a Sample to its few-shot text representation.
+            Defaults to None.
+        filter (Callable[[dict], bool] | None, optional): Filter function applied
+            to Inspect AI samples. Defaults to None.
+
     Dataset Configuration:
         hf_revision (str | None, optional): Specific dataset revision to use.
             Defaults to None (latest).
@@ -96,8 +109,6 @@ class LightevalTaskConfig:
             prompt changes. Defaults to 0.
         num_fewshots (int, optional): Number of few-shot examples to include.
             Defaults to 0.
-        truncate_fewshots (bool, optional): Whether to truncate few-shot examples.
-            Defaults to False.
         must_remove_duplicate_docs (bool, optional): Whether to remove duplicate
             documents. Defaults to False.
 
