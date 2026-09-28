@@ -359,7 +359,9 @@ def sympy_compare_relational(gold: Relational | And, pred: Relational | And, pre
         True if relations are equivalent, False otherwise
     """
     # Handle And expressions by comparing each relation
-    if isinstance(gold, And):
+    if isinstance(gold, And) or isinstance(pred, And):
+        if not isinstance(gold, And) or not isinstance(pred, And) or len(gold.args) != len(pred.args):
+            return False
         return all(sympy_compare_relational(g, p, precision) for g, p in zip(gold.args, pred.args))
 
     # Helper to check if expressions are equivalent when flipped
