@@ -49,22 +49,5 @@ jobs:
       - name: run nvidia-smi
         run: nvidia-smi
 
-      # TEMPORARY: regenerate SmolLM2 reference details on the CI GPU. Revert before merge.
-      - name: Regenerate references
-        env:
-          CUBLAS_WORKSPACE_CONFIG: ":4096:8"
-        run: |
-          python -c "from lighteval.main_accelerate import accelerate; accelerate(model_args='examples/model_configs/transformers_model.yaml', tasks='examples/test_tasks.txt', output_dir='regen/transformers', dataset_loading_processes=1, save_details=True, max_samples=10, custom_tasks='examples/custom_tasks_tests.py')"
-          python -c "from lighteval.main_vllm import vllm; vllm(model_args='examples/model_configs/vllm_model_config.yaml', tasks='examples/test_tasks.txt', output_dir='regen/vllm', dataset_loading_processes=1, save_details=True, max_samples=10, custom_tasks='examples/custom_tasks_tests.py')"
-          # Artifact file names cannot contain ':' or '|', which details file names use
-          tar czf regen.tar.gz regen/
-
-      - name: Upload regenerated references
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
-        with:
-          name: regen-references
-          path: regen.tar.gz
-
       - name: Run tests
         run: python -m pytest --disable-pytest-warnings --runslow -v -s tests/slow_tests/
