@@ -21,8 +21,14 @@
 # SOFTWARE.
 
 import unittest
+from dataclasses import dataclass
 
-from lighteval.utils.utils import remove_reasoning_tags
+from lighteval.utils.utils import make_results_table, remove_reasoning_tags
+
+
+@dataclass
+class MockTaskConfig:
+    effective_num_docs: int = -1
 
 
 class TestRemoveReasoningTags(unittest.TestCase):
@@ -61,3 +67,101 @@ class TestRemoveReasoningTags(unittest.TestCase):
         tag_pairs = [("<think>", "</think>")]
         result = remove_reasoning_tags(text, tag_pairs)
         self.assertEqual(result, "<think> Reasoning section. Answer section")
+
+
+class TestMakeResultsTable(unittest.TestCase):
+    def test_results_table_with_count(self):
+        result_dict = {
+            "results": {
+                "task_a": {"accuracy": 0.85, "accuracy_stderr": 0.02},
+                "task_b": {"f1": 0.92},
+            },
+            "versions": {"task_a": "1.0", "task_b": "2.0"},
+            "config_tasks": {
+                "task_a": MockTaskConfig(effective_num_docs=100),
+                "task_b": MockTaskConfig(effective_num_docs=50),
+            },
+        }
+        
+        table = make_results_table(result_dict)
+        
+        self.assertIn("Count", table)
+        self.assertIn("100", table)
+        self.assertIn("50", table)
+        self.assertIn("task_a", table)
+        self.assertIn("task_b", table)
+        self.assertIn("0.85", table)
+        self.assertIn("0.92", table)
+
+    def test_results_table_without_config_tasks(self):
+        result_dict = {
+            "results": {
+                "task_a": {"accuracy": 0.85},
+            },
+            "versions": {"task_a": "1.0"},
+        }
+        
+        table = make_results_table(result_dict)
+        
+        self.assertIn("Count", table)
+        self.assertIn("task_a", table)
+        self.assertIn("0.85", table)
+
+    def test_results_table_with_missing_count(self):
+        result_dict = {
+            "results": {
+                "task_a": {"accuracy": 0.85},
+            },
+            "versions": {"task_a": "1.0"},
+            "config_tasks": {
+                "task_a": MockTaskConfig(effective_num_docs=-1),
+            },
+        }
+        
+        table = make_results_table(result_dict)
+        
+        self.assertIn("Count", table)
+        self.assertIn("task_a", table)
+        lines = table.split("\n")
+        count_column_present = any("Count" in line for line in lines)
+        self.assertTrue(count_column_present)
+
+    def test_results_table_with_zero_count(self):
+        result_dict = {
+            "results": {
+                "task_a": {"accuracy": 0.0},
+            },
+            "versions": {"task_a": "1.0"},
+            "config_tasks": {
+                "task_a": MockTaskConfig(effective_num_docs=0),
+            },
+        }
+        
+        table = make_results_table(result_dict)
+        
+        self.assertIn("Count", table)
+        self.assertIn("task_a", table)
+        lines = table.split("\n")
+        count_column_present = any("Count" in line for line in lines)
+        self.assertTrue(count_column_present)
+
+    def test_results_table_multiple_metrics_same_task(self):
+        result_dict = {
+            "results": {
+                "task_a": {"accuracy": 0.85, "accuracy_stderr": 0.02, "f1": 0.90, "f1_stderr": 0.01},
+            },
+            "versions": {"task_a": "1.0"},
+            "config_tasks": {
+                "task_a": MockTaskConfig(effective_num_docs=100),
+            },
+        }
+        
+        table = make_results_table(result_dict)
+        
+        self.assertIn("Count", table)
+        self.assertIn("100", table)
+        self.assertIn("accuracy", table)
+        self.assertIn("f1", table)
+        lines = table.split("\n")
+        count_in_table = sum(1 for line in lines if "100" in line)
+        self.assertGreaterEqual(count_in_table, 1)
