@@ -21,6 +21,9 @@ jobs:
       # CPU runner: the runtime image is enough. Keep torch in sync with the one
       # pinned by the latest vllm (and with slow_tests.yaml) so it is not reinstalled.
       image: pytorch/pytorch:2.13.0-cuda13.0-cudnn9-runtime
+    env:
+      # Tests download spacy models at runtime via `pip install` into the image's Python
+      PIP_BREAK_SYSTEM_PACKAGES: "1"
     defaults:
       run:
         shell: bash
