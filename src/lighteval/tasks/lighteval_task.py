@@ -79,6 +79,10 @@ class LightevalTaskConfig:
             from. Defaults to None.
         few_shots_select (str | None, optional): Method for selecting few-shot
             examples. Defaults to None.
+        few_shots_id_column (str | None, optional): Dataset column containing
+            identifiers used to filter few-shot examples. Defaults to None.
+        few_shots_id_list (Sequence[str] | None, optional): Identifiers to keep
+            from the few-shot ID column. Defaults to None.
 
     Generation Parameters:
         generation_size (int | None, optional): Maximum token length for generated
@@ -133,6 +137,8 @@ class LightevalTaskConfig:
     evaluation_splits: ListLike[str] = field(default_factory=lambda: ["validation"])
     few_shots_split: str | None = None
     few_shots_select: str | None = None
+    few_shots_id_column: str | None = None
+    few_shots_id_list: Sequence[str] | None = None
 
     # Generation args
     generation_size: int | None = None
@@ -235,6 +241,14 @@ class LightevalTask:
             config.hf_avail_splits or []
         )
         self.fewshot_selection = config.few_shots_select
+        self.fewshot_id_column = config.few_shots_id_column
+        self.fewshot_id_list = (
+            {str(identifier) for identifier in config.few_shots_id_list}
+            if config.few_shots_id_list is not None
+            else None
+        )
+        if (self.fewshot_id_column is None) != (self.fewshot_id_list is None):
+            raise ValueError("few_shots_id_column and few_shots_id_list must be provided together")
         self.must_remove_duplicate_docs = config.must_remove_duplicate_docs
 
         self.formatter = config.prompt_function
@@ -300,6 +314,14 @@ class LightevalTask:
         docs = []
         for split in splits:
             for ix, item in enumerate(self.dataset[split]):
+                if few_shots and self.fewshot_id_list is not None:
+                    assert self.fewshot_id_column is not None
+                    if self.fewshot_id_column not in item:
+                        raise ValueError(
+                            f"Few-shot ID column '{self.fewshot_id_column}' was not found in split '{split}'"
+                        )
+                    if str(item[self.fewshot_id_column]) not in self.fewshot_id_list:
+                        continue
                 # Some tasks formatting is applied differently when the document is used for fewshot examples
                 # vs when it's used for the actual prompt. That's why we store whether we are currently using the
                 # doc for a fewshot sample (few_shots=True) or not, which then leads to the creation of a different Doc.
