@@ -23,13 +23,122 @@ starred:
 true
 """
 
+import numpy as np
 from inspect_ai.dataset import Sample
-from inspect_ai.scorer import answer
-from inspect_ai.solver import generate, system_message
+from inspect_ai.scorer import Score, Target, accuracy, answer, scorer, stderr
+from inspect_ai.solver import TaskState, generate, system_message
 
-from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.utils.metric_utils import SampleLevelComputation, SampleLevelMetric
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
+
+
+# Evaluation semantics follow the official BBEH evaluator:
+# https://github.com/google-deepmind/bbeh/blob/main/bbeh/evaluate.py
+_ANSWER_PREFIXES = (
+    "The answer is:",
+    "The final answer is ",
+    "The final answer is: ",
+    "The answer is ",
+)
+
+
+def _strip_latex_wrappers(text: str) -> str:
+    if text.startswith("$") and text.endswith("$"):
+        text = text[1:-1]
+    if "boxed{" in text and text.endswith("}"):
+        text = text[:-1].split("boxed{")[1]
+    if "text{" in text and text.endswith("}"):
+        text = text[:-1].split("text{")[1]
+    if "texttt{" in text and text.endswith("}"):
+        text = text[:-1].split("texttt{")[1]
+    return text
+
+
+def _extract_and_normalize_prediction(sample: str) -> str:
+    text = sample.strip()
+    for prefix in _ANSWER_PREFIXES:
+        if prefix in text:
+            text = text.split(prefix)[-1].strip()
+    if text.endswith("."):
+        text = text[:-1]
+    text = _strip_latex_wrappers(text).lower()
+    text = text.replace(", ", ",").replace("**", "")
+    text = text.split("\n")[0]
+    if text.endswith("."):
+        text = text[:-1]
+    return text
+
+
+def _normalize_reference(reference: str) -> str:
+    return reference.strip().lower().replace(", ", ",")
+
+
+def _check_fuzzy_match(pred: str, ref: str) -> bool:
+    if pred == ref:
+        return True
+    if len(pred) == 3 and pred[0] == "(" and pred[-1] == ")" and pred[1] == ref:
+        return True
+    if len(ref) == 3 and ref[0] == "(" and ref[-1] == ")" and ref[1] == pred:
+        return True
+    try:
+        if float(pred) == float(ref):
+            return True
+    except ValueError:
+        pass
+    if pred.replace("'", "") == ref.replace("'", ""):
+        return True
+    if f"[{ref}]" == pred or f"[{pred}]" == ref:
+        return True
+    if pred.endswith("?") and pred[:-1] == ref:
+        return True
+    return False
+
+
+def evaluate_bbeh_correctness(sample: str, reference: str) -> bool:
+    normalized_pred = _extract_and_normalize_prediction(sample)
+    normalized_ref = _normalize_reference(reference)
+    return _check_fuzzy_match(normalized_pred, normalized_ref)
+
+
+class BBEHSampleLevelMetric(SampleLevelComputation):
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> float:
+        golds = doc.get_golds()
+        predictions = model_response.final_text
+        for gold in golds:
+            for pred in predictions:
+                if evaluate_bbeh_correctness(pred, gold):
+                    return 1.0
+        return 0.0
+
+
+bbeh_metric = SampleLevelMetric(
+    metric_name="acc",
+    sample_level_fn=BBEHSampleLevelMetric(),
+    category=SamplingMethod.GENERATIVE,
+    corpus_level_fn=np.mean,
+    higher_is_better=True,
+)
+
+
+@scorer(metrics=[accuracy(), stderr()])
+def bbeh_inspect_scorer():
+    base_scorer = answer(pattern="line")
+
+    async def score(state: TaskState, target: Target):
+        base_score = await base_scorer(state, target)
+        if base_score.answer is None:
+            return base_score
+        is_correct = evaluate_bbeh_correctness(base_score.answer, target.text)
+        return Score(
+            value="C" if is_correct else "I",
+            answer=base_score.answer,
+            explanation=base_score.explanation,
+            metadata=base_score.metadata,
+        )
+
+    return score
 
 
 def bbeh_prompt(line, task_name: str = None):
@@ -42,7 +151,7 @@ def bbeh_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=query,
-        choices=line["target"],
+        choices=[line["target"]],
         gold_index=0,
         instruction="",
     )
@@ -68,12 +177,12 @@ COMMON_TASK_ARGS = {
     "few_shots_split": None,
     "few_shots_select": None,
     "generation_size": -1,
-    "metrics": [Metrics.loglikelihood_acc],
+    "metrics": [bbeh_metric],
     "stop_sequence": ["</s>", "Q=", "\n\n"],
     "version": 0,
     "sample_fields": record_to_sample,
     "solver": [system_message(SYSTEM_MESSAGE), generate(cache=True)],
-    "scorer": answer(pattern="line"),
+    "scorer": bbeh_inspect_scorer(),
 }
 
 boardgame_qa = LightevalTaskConfig(
