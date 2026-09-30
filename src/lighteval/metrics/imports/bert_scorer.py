@@ -36,6 +36,8 @@ from transformers import AutoModel, AutoTokenizer
 
 logger = logging.getLogger(__name__)
 
+BASELINE_DOWNLOAD_URL = "https://raw.githubusercontent.com/Tiiiger/bert_score/master/bert_score/rescale_baseline"
+
 
 def padding(arr, pad_token, dtype=torch.long):
     lens = torch.LongTensor([len(a) for a in arr])
@@ -409,7 +411,13 @@ class BERTScorer:
                         torch.from_numpy(pd.read_csv(self.baseline_path).to_numpy())[:, 1:].unsqueeze(1).float()
                     )
             else:
-                raise ValueError(f"Baseline not Found for {self.model_type} on {self.lang} at {self.baseline_path}")
+                baseline_url = f"{BASELINE_DOWNLOAD_URL}/{self.lang}/{self.model_type}.tsv"
+                message = (
+                    f"BERTScore baseline not found for {self.model_type} on {self.lang} at {self.baseline_path}. "
+                    f"Download it from {baseline_url} and save it at that path, or pass a valid baseline_path."
+                )
+                logger.warning(message)
+                raise ValueError(message)
 
         return self._baseline_vals
 
