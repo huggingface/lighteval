@@ -17,7 +17,23 @@ jobs:
       contents: read
     name: Run tests
     runs-on: ubuntu-latest
+    container:
+      # CPU runner: the runtime image is enough. Keep torch in sync with the one
+      # pinned by the latest vllm (and with slow_tests.yaml) so it is not reinstalled.
+      image: pytorch/pytorch:2.13.0-cuda13.0-cudnn9-runtime
+    env:
+      # Tests download spacy models at runtime via `pip install` into the image's Python
+      PIP_BREAK_SYSTEM_PACKAGES: "1"
+    defaults:
+      run:
+        shell: bash
     steps:
+      - name: Install Git and Git LFS
+        run: |
+          apt-get update && apt-get install -y git git-lfs && git lfs install
+          # The workspace is mounted from the host with a different owner
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -37,20 +53,14 @@ jobs:
           key: hf-datasets-${{ runner.os }}-${{ github.ref }}
           restore-keys: hf-datasets-${{ runner.os }}-
 
-      - name: Cache uv virtual environment
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: .venv
-          key: uv-env-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
-          restore-keys: uv-env-${{ runner.os }}-
-
       - name: Install uv
         uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
         with:
           enable-cache: true
 
       - name: Install the project
-        run: uv sync --extra dev-gpu
+        # Install into the image's Python so the preinstalled torch is reused
+        run: uv pip install --system --break-system-packages -e ".[dev-gpu]"
 
       - name: Ensure cache directories exist
         run: mkdir -p cache/models cache/datasets
@@ -60,4 +70,4 @@ jobs:
           HF_TEST_TOKEN: ${{ secrets.HF_TEST_TOKEN }}
           HF_HOME: "cache/models"
           HF_DATASETS_CACHE: "cache/datasets"
-        run: uv run pytest -x --disable-pytest-warnings
+        run: python -m pytest -x --disable-pytest-warnings
