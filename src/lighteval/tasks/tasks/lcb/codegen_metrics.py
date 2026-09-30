@@ -494,18 +494,18 @@ def reliability_guard(maximum_memory_bytes: Optional[int] = None):
     sys.modules["tkinter"] = None
 
 
+def _temp_run(sample, generation, timeout, result):
+    result.append(run_test(sample, test=generation, timeout=timeout))
+
+
 def check_correctness(sample, generation, timeout: int) -> list[int | bool]:
     """Check correctness of code generation with a global timeout.
     The global timeout is to catch some extreme/rare cases not handled by the timeouts
     inside `run_test`.
     """
-
-    def _temp_run(sample, generation, result):
-        result.append(run_test(sample, test=generation, timeout=timeout))
-
     manager = multiprocessing.Manager()
     result = manager.list()
-    p = multiprocessing.Process(target=_temp_run, args=(sample, generation, result))
+    p = multiprocessing.Process(target=_temp_run, args=(sample, generation, timeout, result))
     p.start()
     p.join(timeout=(timeout + 1) * len(json.loads(sample["input_output"])["inputs"]) + 5)
     if p.is_alive():
