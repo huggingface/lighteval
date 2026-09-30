@@ -236,6 +236,15 @@ class Pipeline:
             self._update_num_samples(list(self.tasks_dict.values()))
 
         self.evaluation_tracker.task_config_logger.log(self.tasks_dict)
+        
+        for task in self.tasks_dict.values():
+            original_num_docs = len(task.eval_docs())
+            effective_num_docs = len(self.documents_dict[task.full_name])
+            self.evaluation_tracker.task_config_logger.log_num_docs(
+                task_name=task.full_name,
+                original_num_docs=original_num_docs,
+                effective_num_docs=effective_num_docs
+            )
 
     def _update_num_samples(self, tasks: list[LightevalTask]):
         """Helper function to update the num_samples of a given metric via the yaml file.
