@@ -357,14 +357,17 @@ class JudgeLM:
                         response = litellm.completion(**kwargs)
                         text = response.choices[0].message.content
                         if not text or text == error_message:
-                            # Just return an error response if the second attempt fails too
+                            # Signal failure to the caller instead of returning a
+                            # sentinel string: a string flows into
+                            # process_judge_response and is scored as a wrong answer.
                             logger.error(f"Failed to get response from the API for prompt: {prompt}")
-                            return error_message
+                            return None
                     return text
                 except Exception as e:
                     logger.warning(f"{type(e), e}")
                     time.sleep(self.API_RETRY_SLEEP)
-            return error_message
+            logger.error(f"Failed to get response from the API after {self.API_MAX_RETRY} retries")
+            return None
 
         results = []
         with ThreadPoolExecutor(self.backend_options.concurrent_requests) as executor:
