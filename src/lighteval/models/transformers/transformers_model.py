@@ -427,7 +427,7 @@ class TransformersModel(LightevalModel):
                 logger.info("Compiling the model")
                 model.compile()
             except AttributeError as e:
-                logger.warning("Could not compile the model because: ", e)
+                logger.warning("Could not compile the model because: %s", e)
 
         return model
 
