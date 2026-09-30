@@ -21,12 +21,37 @@
 # SOFTWARE.
 
 
+import logging
+
+import pytest
+
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
 def dummy_prompt_function(item, task_name):
     return Doc(query=item["text"], choices=["A", "B"], gold_index=0, task_name=task_name)
+
+
+@pytest.mark.parametrize(("num_fewshots", "warning_expected"), [(0, False), (1, True)])
+def test_evaluation_split_fewshot_warning(caplog, num_fewshots, warning_expected):
+    cfg = LightevalTaskConfig(
+        name="test_only_split",
+        prompt_function=dummy_prompt_function,
+        hf_repo="unused",
+        hf_subset="default",
+        hf_avail_splits=["test"],
+        evaluation_splits=["test"],
+        metrics=[],
+        num_fewshots=num_fewshots,
+    )
+
+    with caplog.at_level(logging.WARNING, logger="lighteval.tasks.lighteval_task"):
+        task = LightevalTask(cfg)
+
+    warning = "Careful, the task test_only_split is using evaluation data to build the few shot examples."
+    assert task.fewshot_split is None
+    assert (warning in caplog.messages) is warning_expected
 
 
 def test_revision_check():
