@@ -74,13 +74,19 @@ class SampleCache:
                     - {task_hash}/ dataset dict, where splits are SamplingMethod
     """
 
-    def __init__(self, model_config: ModelConfig):
+    def __init__(self, model_config: ModelConfig, model_sha: str | None = None):
         """Initialize the sample cache.
 
         Args:
             model_config: Configuration for the model being cached
+            model_sha: The resolved commit the weights were loaded from, when the
+                model knows it. Folded into the cache key so that weights changing
+                under a mutable revision name (the default ``revision="main"``) use
+                a fresh cache, as the caching docs promise, instead of being served
+                the previous run's responses.
         """
         self.model_config = model_config
+        self.model_sha = model_sha
         self.model_hash = self.get_model_hash(model_config)
 
         self.cache_dir = (
@@ -146,6 +152,10 @@ class SampleCache:
         """
         # Use Pydantic's model_dump instead of asdict for BaseModel
         config_dict = model_config.model_dump()
+        # Bind the key to the resolved weights, not just the mutable name the
+        # config carries (a branch like ``main``, or a local path). Absent when
+        # the model could not resolve a commit, which keeps the name-only key.
+        config_dict["__model_sha__"] = self.model_sha
         config_str = json.dumps(config_dict, sort_keys=True, default=str)
         return hashlib.sha256(config_str.encode()).hexdigest()[:16]
 
