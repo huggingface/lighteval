@@ -1454,3 +1454,49 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
 
     def num_samples(self):
         return self.n if self.n is not None else self.k
+
+
+class JuryEvalPointwiseJudge(SampleLevelComputation):
+    def __init__(self, model: str = "gpt-4", **judge_kwargs):
+        try:
+            from juryeval import PointwiseJudge
+        except ImportError:
+            raise ImportError(
+                "juryeval is required for JuryEvalPointwiseJudge. "
+                "Install it with: pip install lighteval[juryeval]"
+            )
+        self.judge = PointwiseJudge(model=model, **judge_kwargs)
+
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> float:
+        question = doc.query
+        prediction = model_response.final_text[0] if model_response.final_text else ""
+        gold = doc.get_golds()[0] if doc.get_golds() else None
+        result = self.judge.score(
+            output=prediction,
+            question=question,
+            reference=gold,
+        )
+        return result.get("score", 0.0)
+
+
+class JuryEvalPairwiseJudge(SampleLevelComputation):
+    def __init__(self, model: str = "gpt-4", **judge_kwargs):
+        try:
+            from juryeval import PairwiseJudge
+        except ImportError:
+            raise ImportError(
+                "juryeval is required for JuryEvalPairwiseJudge. "
+                "Install it with: pip install lighteval[juryeval]"
+            )
+        self.judge = PairwiseJudge(model=model, **judge_kwargs)
+
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> float:
+        question = doc.query
+        prediction = model_response.final_text[0] if model_response.final_text else ""
+        gold = doc.get_golds()[0] if doc.get_golds() else ""
+        result = self.judge.compare(
+            answer_a=prediction,
+            answer_b=gold,
+            question=question,
+        )
+        return result.get("score", 0.0)
