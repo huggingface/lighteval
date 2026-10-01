@@ -269,9 +269,9 @@ class DetailsLogger:
         self.details[task_name].append(detail)
 
         hash = self.Hash()
-        hash.example = xxhash.xxh64(doc.query).hexdigest()
-        hash.input_tokens = xxhash.xxh64(str(model_response.input_tokens)).hexdigest()
-        hash.cont_tokens = xxhash.xxh64(str(model_response.output_tokens)).hexdigest()
+        hash.example = xxhash.xxh64(doc.query.encode("utf-8")).hexdigest()
+        hash.input_tokens = xxhash.xxh64(str(model_response.input_tokens).encode("utf-8")).hexdigest()
+        hash.cont_tokens = xxhash.xxh64(str(model_response.output_tokens).encode("utf-8")).hexdigest()
         self.hashes[task_name].append(hash)
 
     def aggregate(self):
@@ -279,16 +279,16 @@ class DetailsLogger:
         for task_name in self.hashes:
             compiled_hash = self.CompiledHash()
             compiled_hash.hash_examples = xxhash.xxh64(
-                "".join(sorted(q.example for q in self.hashes[task_name]))
+                "".join(sorted(q.example for q in self.hashes[task_name])).encode("utf-8")
             ).hexdigest()  # hash of all the hash - sorted for reproducibility
             compiled_hash.hash_full_prompts = xxhash.xxh64(
-                "".join(sorted(q.full_prompt for q in self.hashes[task_name]))
+                "".join(sorted(q.full_prompt for q in self.hashes[task_name])).encode("utf-8")
             ).hexdigest()  # hash of all the hash - sorted for reproducibility
             compiled_hash.hash_input_tokens = xxhash.xxh64(
-                "".join(sorted(q.input_tokens for q in self.hashes[task_name]))
+                "".join(sorted(q.input_tokens for q in self.hashes[task_name])).encode("utf-8")
             ).hexdigest()  # hash of all the hash - sorted for reproducibility
             compiled_hash.hash_cont_tokens = xxhash.xxh64(
-                "".join(sorted(q.cont_tokens for q in self.hashes[task_name]))
+                "".join(sorted(q.cont_tokens for q in self.hashes[task_name])).encode("utf-8")
             ).hexdigest()  # hash of all the hash - sorted for reproducibility
             self.compiled_hashes[task_name] = compiled_hash
 
@@ -301,7 +301,7 @@ class DetailsLogger:
             self.compiled_details_over_all_tasks.hashes[hash_type] = xxhash.xxh64(
                 "".join(
                     compiled_detail.hashes[hash_type] for _, compiled_detail in sorted(self.compiled_details.items())
-                )
+                ).encode("utf-8")
             ).hexdigest()
 
 
