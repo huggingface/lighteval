@@ -809,7 +809,14 @@ class TransformersModel(LightevalModel):
         generation_config.update(
             max_new_tokens=max_new_tokens,
             pad_token_id=self.tokenizer.pad_token_id if self.tokenizer.pad_token_id else self.tokenizer.eos_token_id,
-            eos_token_id=self.tokenizer.eos_token_id,
+            # Prefer the model's declared terminators: chat models can end a turn with a token that is
+            # not the tokenizer's eos (e.g. Gemma ends turns with token 106 while tokenizer.eos is 1);
+            # overriding with tokenizer.eos_token_id alone makes such models generate until max_new_tokens.
+            eos_token_id=(
+                self.model.generation_config.eos_token_id
+                if self.model.generation_config.eos_token_id is not None
+                else self.tokenizer.eos_token_id
+            ),
             num_return_sequences=num_samples,
             output_logits=returns_logits,
             renormalize_logits=True,
