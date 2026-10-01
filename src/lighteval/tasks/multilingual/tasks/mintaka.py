@@ -30,18 +30,26 @@ from lighteval.utils.language import Language
 
 TASKS_TABLE = [
     LightevalTaskConfig(
-        name=f"mintaka_{lang.value}",
+        name=f"mlqa_{lang.value}",
         prompt_function=get_qa_prompt_function(
             lang,
             lambda line: {
+                "context": line["context"],
                 "question": line["question"],
-                "choices": [line["answerText"]],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        hf_repo="AmazonScience/mintaka",
-        hf_subset=standardize_tag(lang.value),
+        # --------------------------------------------------------
+        # Bypass the deprecated script by loading the parquet directly
+        hf_repo="parquet",
+        hf_subset="default",
+        hf_data_files={
+            "test": f"hf://datasets/facebook/mlqa@refs%2Fconvert%2Fparquet/mlqa.{standardize_tag(lang.value)}.{standardize_tag(lang.value)}/test/*.parquet"
+        },
+        # (Removed hf_revision since the parquet URL handles it)
+        # --------------------------------------------------------
         evaluation_splits=("test",),
-        few_shots_split="train",
+        hf_avail_splits=["test"],
         generation_size=400,
         stop_sequence=("\n",),
         metrics=[
@@ -52,12 +60,9 @@ TASKS_TABLE = [
     for lang in [
         Language.ARABIC,
         Language.GERMAN,
-        Language.ENGLISH,
         Language.SPANISH,
-        Language.FRENCH,
+        Language.CHINESE,
         Language.HINDI,
-        Language.ITALIAN,
-        Language.JAPANESE,
-        Language.PORTUGUESE,
+        Language.VIETNAMESE,
     ]
 ]
