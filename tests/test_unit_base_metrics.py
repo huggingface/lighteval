@@ -30,7 +30,7 @@ from lighteval.metrics.dynamic_metrics import (
     NormalizedMultiChoiceProbMetric,
     ProbabilityMetric,
 )
-from lighteval.metrics.metrics_sample import ExactMatches
+from lighteval.metrics.metrics_sample import ExactMatches, PassAtK
 from lighteval.metrics.normalizations import LogProbCharNorm, helm_normalizer
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
@@ -64,6 +64,23 @@ class TestBaseMetrics:
 
         res = em.compute_one_item("", "")
         assert res == 0
+
+    def test_pass_at_k_raises_when_k_exceeds_n(self):
+        # With k > n the estimator is undefined, and the `n - c < k` shortcut is
+        # true for every input, so a sample with zero correct answers scored a
+        # perfect pass@k. Fail loudly instead of reporting a meaningless 1.0.
+        metric = PassAtK(k=5, n=4)
+
+        with pytest.raises(ValueError, match=r"undefined when k > n"):
+            metric.pass_at_k([0, 0, 0, 0])
+
+    def test_pass_at_k_is_unchanged_when_k_at_most_n(self):
+        # k == n, nothing correct -> 0.0
+        assert PassAtK(k=4, n=4).pass_at_k([0, 0, 0, 0]) == 0.0
+        # k == n, everything correct -> 1.0
+        assert PassAtK(k=4, n=4).pass_at_k([1, 1, 1, 1]) == 1.0
+        # k < n still goes through the estimator
+        assert PassAtK(k=1, n=2).pass_at_k([1, 0]) == pytest.approx(0.5)
 
     def test_quasi_exact_match(self):
         em = ExactMatches(normalize_gold=helm_normalizer, normalize_pred=helm_normalizer)
