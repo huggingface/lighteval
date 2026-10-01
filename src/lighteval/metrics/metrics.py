@@ -249,7 +249,7 @@ class Metrics(Enum):
         metric_name=["em", "f1"],
         sample_level_fn=DropMetrics(),
         category=SamplingMethod.GENERATIVE,
-        corpus_level_fn={"em": max, "f1": max},
+        corpus_level_fn={"em": np.mean, "f1": np.mean},
         higher_is_better={"em": True, "f1": True},
     )
     exact_match = SampleLevelMetric(

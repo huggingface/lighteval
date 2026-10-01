@@ -154,7 +154,7 @@ class AutomatedMetricTester:
             model_responses = [
                 self.create_model_response_from_dict(response) for response in test_case.model_responses
             ]
-            aggregation_function = metric.get_corpus_aggregations()[metric.metric_name]
+            aggregation_function = metric.get_corpus_aggregations()[test_case.metric_name]
             outputs_per_sample = [
                 metric.compute_sample(doc=doc, model_response=model_response)[test_case.metric_name]
                 for doc, model_response in zip(docs, model_responses)
