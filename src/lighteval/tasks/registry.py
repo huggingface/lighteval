@@ -295,7 +295,7 @@ class Registry:
         """Creates a custom task module to load tasks defined by the user in their own file.
 
         Args:
-            custom_tasks (Optional[Union[str, ModuleType]]): Path to the custom tasks file or name of a module to import containing custom tasks or the module itself
+            custom_tasks: Path to the custom tasks file, name of a module containing custom tasks, or the module itself.
 
         Returns:
             ModuleType: The newly imported/created custom tasks modules
@@ -303,6 +303,19 @@ class Registry:
         if isinstance(custom_tasks, ModuleType):
             return custom_tasks
         if isinstance(custom_tasks, (str, Path)) and os.path.exists(custom_tasks):
+            custom_tasks_path = Path(custom_tasks).resolve()
+            for module in tuple(sys.modules.values()):
+                if not isinstance(module, ModuleType):
+                    continue
+                module_file = getattr(module, "__file__", None)
+                if module_file is None:
+                    continue
+                try:
+                    if Path(module_file).resolve() == custom_tasks_path:
+                        return module
+                except (OSError, RuntimeError, TypeError):
+                    continue
+
             module_name = os.path.splitext(os.path.basename(custom_tasks))[0]
             spec = importlib.util.spec_from_file_location(module_name, custom_tasks)
 
