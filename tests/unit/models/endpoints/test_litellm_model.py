@@ -30,12 +30,19 @@ def test_litellm_config_accepts_cache_dir():
     assert config.litellm_cache_dir == "/tmp/litellm"
 
 
-def test_set_litellm_cache_uses_configured_directory(monkeypatch, tmp_path):
-    created = {}
+def test_litellm_cache_dir_prefers_config_over_environment(monkeypatch):
+    monkeypatch.setenv(litellm_model.LITELLM_CACHE_LOCATION_ENV, "/env/cache")
+
+    assert litellm_model._get_litellm_cache_dir() == "/env/cache"
+    assert litellm_model._get_litellm_cache_dir("/config/cache") == "/config/cache"
+
+
+def test_set_litellm_cache_uses_configured_directory_and_can_reset(monkeypatch, tmp_path):
+    created = []
 
     class FakeCache:
         def __init__(self, **kwargs):
-            created.update(kwargs)
+            created.append(kwargs)
 
     monkeypatch.setattr(litellm_model, "Cache", FakeCache, raising=False)
     monkeypatch.setattr(litellm_model, "LiteLLMCacheType", SimpleNamespace(DISK="disk"), raising=False)
@@ -44,5 +51,10 @@ def test_set_litellm_cache_uses_configured_directory(monkeypatch, tmp_path):
 
     litellm_model._set_litellm_cache(str(tmp_path))
 
-    assert created == {"type": "disk", "disk_cache_dir": str(tmp_path)}
+    litellm_model._set_litellm_cache()
+
+    assert created == [
+        {"type": "disk", "disk_cache_dir": str(tmp_path)},
+        {"type": "disk"},
+    ]
     assert fake_litellm.cache is not None
