@@ -51,7 +51,10 @@ def test_fewshot_sampler(fewshot_select: str):
 
     match task.fewshot_selection:
         case "sequential":
-            assert docs == task.fewshot_docs()[:20]
+            # seed=1 with num_fewshot=20 rotates the pool by 20, so the first 20 examples are the pool's
+            # items 20..39. The pool itself is left unrotated; it was previously rotated in place, the bug
+            # fixed in #1307, which made this assertion pass only because both sides shared the mutated list.
+            assert docs == task.fewshot_docs()[20:40]
         case "random":
             rnd = random.Random(seed)
             task_docs = task.fewshot_docs()
