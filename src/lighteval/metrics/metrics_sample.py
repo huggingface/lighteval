@@ -1317,6 +1317,12 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
 
     def pass_at_k(self, all_scores: list[int]) -> float:
         """Algo from https://arxiv.org/pdf/2107.03374"""
+        if self.k > self.n:
+            raise ValueError(
+                f"pass@{self.k} is undefined when k > n (k={self.k}, n={self.n}). "
+                "Lower k to at most n, or use GPassAtK, which returns 0.0 when k > n."
+            )
+
         c: int = all_scores.count(1)
         if self.n - c < self.k:
             return 1.0
