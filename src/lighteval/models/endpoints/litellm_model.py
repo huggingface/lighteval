@@ -70,7 +70,7 @@ def _set_litellm_cache(cache_dir: str | None = None) -> None:
     if cache_dir is None:
         litellm.cache = Cache(type=LiteLLMCacheType.DISK)
     else:
-        litellm.cache = Cache(type=LiteLLMCacheType.DISK, disk_cache_dir=cache_dir)
+        litellm.cache = Cache(type=LiteLLMCacheType.DISK, disk_cache_dir=os.path.expanduser(cache_dir))
 
 
 if is_package_available("litellm"):
