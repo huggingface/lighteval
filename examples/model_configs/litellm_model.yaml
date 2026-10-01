@@ -9,3 +9,4 @@ model_parameters:
     seed: 0
     repetition_penalty: 1.0
     frequency_penalty: 0.0
+  litellm_cache_dir: "~/.cache/huggingface/lighteval/litellm"
