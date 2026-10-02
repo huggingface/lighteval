@@ -56,7 +56,7 @@ def flatten_dict(nested: dict, sep: str = "/") -> dict:
                         )  # Need this for markdown
                         into[prefix + k + sep + str(i)] = vv.tolist() if isinstance(vv, np.ndarray) else vv
             elif isinstance(v, np.ndarray):
-                into[prefix + k + sep + str(i)] = v.tolist()
+                into[prefix + k] = v.tolist()
             else:
                 v = clean_markdown(v)
                 into[prefix + k] = v
