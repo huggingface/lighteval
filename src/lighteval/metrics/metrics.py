@@ -32,6 +32,7 @@ from lighteval.metrics.dynamic_metrics import MultilingualExtractiveMatchMetric
 from lighteval.metrics.harness_compatibility.drop import DropMetrics
 from lighteval.metrics.harness_compatibility.truthful_qa import TruthfulqaMCMetrics
 from lighteval.metrics.metrics_corpus import (
+    BayesAtNCorpus,
     CorpusLevelF1Score,
     CorpusLevelPerplexityMetric,
     CorpusLevelTranslationMetric,
@@ -44,6 +45,7 @@ from lighteval.metrics.metrics_sample import (
     ROUGE,
     AccGoldLikelihood,
     AvgAtN,
+    BayesAtN,
     BertScore,
     ExactMatches,
     Extractiveness,
@@ -171,6 +173,43 @@ class Metrics(Enum):
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
+    )
+    bayes_at_n = CorpusLevelMetricGrouping(
+        metric_name=["bayes@n", "bayes@n_sigma"],
+        sample_level_fn=BayesAtN(strip_strings=True),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn={
+            "bayes@n": BayesAtNCorpus("mu"),
+            "bayes@n_sigma": BayesAtNCorpus("sigma"),
+        },
+        higher_is_better={
+            "bayes@n": True,
+            "bayes@n_sigma": False,
+        },
+    )
+    bayes_at_n_math = CorpusLevelMetricGrouping(
+        metric_name=["math-bayes@n", "math-bayes@n_sigma"],
+        sample_level_fn=BayesAtN(
+            name_prefix="math",
+            strip_strings=True,
+            sample_scoring_function=MultilingualExtractiveMatchMetric(
+                language=Language.ENGLISH,
+                fallback_mode="first_match",
+                precision=5,
+                gold_extraction_target=(ExprExtractionConfig(),),
+                pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+                aggregation_function=max,
+            ),
+        ),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn={
+            "math-bayes@n": BayesAtNCorpus("mu"),
+            "math-bayes@n_sigma": BayesAtNCorpus("sigma"),
+        },
+        higher_is_better={
+            "math-bayes@n": True,
+            "math-bayes@n_sigma": False,
+        },
     )
     bert_score = SampleLevelMetricGrouping(
         metric_name=["BERTScore-P", "BERTScore-R", "BERTScore-F"],
