@@ -30,6 +30,7 @@ from lighteval.metrics.dynamic_metrics import (
     NormalizedMultiChoiceProbMetric,
     ProbabilityMetric,
 )
+from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.metrics_sample import ExactMatches, PassAtK
 from lighteval.metrics.normalizations import LogProbCharNorm, helm_normalizer
 from lighteval.models.model_output import ModelResponse
@@ -81,6 +82,17 @@ class TestBaseMetrics:
         assert PassAtK(k=4, n=4).pass_at_k([1, 1, 1, 1]) == 1.0
         # k < n still goes through the estimator
         assert PassAtK(k=1, n=2).pass_at_k([1, 0]) == pytest.approx(0.5)
+
+    def test_pass_at_k_compute_raises_when_k_exceeds_n(self):
+        # The built-in tasks only pass `k` (e.g. `{"k": 1}`), so `n` is inferred from
+        # the number of predictions and can end up below `k`. Exercise that path
+        # through `compute()` instead of calling `pass_at_k` directly.
+        metric = Metrics.pass_at_k(sample_params={"k": 5})
+        doc = Doc(query="2+2?", choices=["4"], gold_index=0)
+        model_response = ModelResponse(text=["5", "6", "7", "8"])  # four samples, all wrong
+
+        with pytest.raises(ValueError, match=r"undefined when k > n"):
+            metric.sample_level_fn.compute(doc, model_response)
 
     def test_quasi_exact_match(self):
         em = ExactMatches(normalize_gold=helm_normalizer, normalize_pred=helm_normalizer)
