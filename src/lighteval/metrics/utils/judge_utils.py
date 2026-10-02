@@ -125,3 +125,49 @@ def process_judge_response_simpleqa(response: str) -> float:
     else:
         logger.warning(f"Unknown response from judge: {response}")
         return 0.0
+
+
+def get_judge_prompt_tvdmi(
+    question: str,
+    answer: str,
+    options: list[str] | None = None,
+    gold: str | None = None,
+    **kwargs,
+):
+    # `question` = response_a, `answer` = response_b
+    TEMPLATE = """
+You are judging whether two responses are likely derived from the same underlying task or item.
+
+Consider ONLY whether the two responses plausibly come from the same task/source, not whether they are factually correct.
+
+Response A:
+{response_a}
+
+Response B:
+{response_b}
+
+Grade as:
+A: SAME TASK/SOURCE
+B: DIFFERENT TASK/SOURCE
+
+Just return the letter "A" or "B", with no other text.
+""".strip()
+
+    content = TEMPLATE.format(response_a=question, response_b=answer)
+    return [{"role": "user", "content": content}]
+
+
+def process_judge_response_tvdmi(response: str) -> int:
+    # Normalize
+    if response is None:
+        return 0
+
+    cleaned = response.strip().lower()
+
+    if cleaned == "a":
+        return 1
+    elif cleaned == "b":
+        return 0
+    else:
+        logger.warning(f"Unknown response from TVD-MI judge: {response!r}")
+        return 0
