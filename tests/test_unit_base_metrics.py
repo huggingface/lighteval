@@ -191,6 +191,19 @@ class TestBaseMetrics:
         res = em.compute_one_item("", "")
         assert res == 0
 
+    def test_corpus_level_f1_binary_positive_class(self):
+        from types import SimpleNamespace
+
+        from lighteval.metrics.metrics_corpus import CorpusLevelF1Score
+
+        # The binary (num_classes=2) path must report the positive-class F1, not the best
+        # per-class F1. Regression: it returned np.max over both classes, inflating the score.
+        golds = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
+        preds = [0, 0, 0, 0, 0, 1, 0, 0, 0, 1]
+        items = [SimpleNamespace(golds=g, preds=p) for g, p in zip(golds, preds)]
+        score = CorpusLevelF1Score(None).compute_corpus(items)
+        assert score == pytest.approx(1 / 3)  # positive-class F1; max-per-class would be ~0.714
+
     def test_prob(self):
         doc = Doc(query="Test query", choices=["A", "B", "C"], gold_index=0, task_name="test")
 
