@@ -1337,6 +1337,8 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
 
     def pass_at_k(self, all_scores: list[int]) -> float:
         """Algo from https://arxiv.org/pdf/2107.03374"""
+        # Also checked at the top of compute(); this method is callable on its own and
+        # must not return a value that is undefined for k > n.
         self._check_k_le_n()
 
         c: int = all_scores.count(1)
