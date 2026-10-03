@@ -120,7 +120,6 @@ class LiteLLMModelConfig(ModelConfig):
         ```
     """
 
-    model_name: str
     provider: str | None = None
     base_url: str | None = None
     api_key: SecretStr | None = None
