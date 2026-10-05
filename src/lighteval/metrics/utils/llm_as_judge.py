@@ -29,7 +29,7 @@ from dataclasses import dataclass
 from typing import Callable, Literal, Optional
 
 from huggingface_hub import AsyncInferenceClient, InferenceTimeoutError
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 from requests.exceptions import HTTPError
 from tqdm import tqdm
 from tqdm.asyncio import tqdm_asyncio
@@ -74,6 +74,7 @@ class JudgeLM:
         judge_backend (Literal["litellm", "openai", "transformers", "tgi", "vllm", "inference-providers"]): The backend for the judge.
         url (str | None): The URL for the OpenAI API.
         api_key (str | None): The API key for the OpenAI API (either OpenAI or HF key).
+            Stored internally as a SecretStr so it is masked in logs, reprs, and serialized configs.
         max_tokens (int): The maximum number of tokens to generate. Defaults to 512.
         response_format (BaseModel | None): The format of the response from the API, used for the OpenAI and TGI backend.
         hf_provider (Literal["black-forest-labs", "cerebras", "cohere", "fal-ai", "fireworks-ai",
@@ -129,7 +130,7 @@ class JudgeLM:
         self.process_judge_response = process_judge_response
 
         self.url = url
-        self.api_key = api_key
+        self.api_key = SecretStr(api_key) if api_key is not None else None
         self.backend = judge_backend
         self.hf_provider = hf_provider
         self.max_tokens = max_tokens
@@ -156,7 +157,8 @@ class JudgeLM:
                     from openai import OpenAI
 
                     self.client = OpenAI(
-                        api_key=self.api_key if self.url is None else None, base_url=self.url if self.url else None
+                        api_key=self.api_key.get_secret_value() if self.url is None and self.api_key else None,
+                        base_url=self.url if self.url else None,
                     )
                 return self.__call_api_parallel
 
@@ -195,7 +197,11 @@ class JudgeLM:
             case "inference-providers":
                 from huggingface_hub import AsyncInferenceClient
 
-                self.client = AsyncInferenceClient(token=self.api_key, base_url=self.url, provider=self.hf_provider)
+                self.client = AsyncInferenceClient(
+                    token=self.api_key.get_secret_value() if self.api_key else None,
+                    base_url=self.url,
+                    provider=self.hf_provider,
+                )
                 return self.__call_hf_inference_async
 
             case _:
@@ -340,7 +346,7 @@ class JudgeLM:
                     if max_new_tokens is not None:
                         kwargs["max_tokens"] = (max_new_tokens,)
                     if self.api_key is not None:
-                        kwargs["api_key"] = self.api_key
+                        kwargs["api_key"] = self.api_key.get_secret_value()
                     if self.url is not None:
                         kwargs["base_url"] = self.url
 

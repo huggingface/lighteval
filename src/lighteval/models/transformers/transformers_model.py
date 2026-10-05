@@ -22,6 +22,7 @@
 
 import logging
 import os
+from dataclasses import replace
 from datetime import timedelta
 from typing import Dict, Optional, Tuple, Union
 
@@ -111,6 +112,10 @@ class TransformersModelConfig(ModelConfig):
         multichoice_continuations_start_space (bool | None):
             Whether to add a space before multiple choice continuations. If None, uses model default.
             True forces adding space, False removes leading space if present.
+        move_trailing_context_space (bool):
+            Whether to move a trailing context space onto the continuation before tokenizing.
+            Defaults to True (natural multichoice tokenization). Set False for answer-only
+            perplexity / bits-per-byte so the continuation stays exactly the gold string.
         pairwise_tokenization (bool):
             Whether to tokenize context and continuation separately or together. Defaults to False.
         continuous_batching (bool):
@@ -159,6 +164,7 @@ class TransformersModelConfig(ModelConfig):
     trust_remote_code: bool = False
     compile: bool = False
     multichoice_continuations_start_space: bool | None = None
+    move_trailing_context_space: bool = True
     pairwise_tokenization: bool = False
     continuous_batching: bool = False
     override_chat_template: bool = None
@@ -201,6 +207,7 @@ class TransformersModel(LightevalModel):
         self.accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
         self._device = self.accelerator.device
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
+        self.move_trailing_context_space = config.move_trailing_context_space
         self._add_special_tokens = config.add_special_tokens or False
         self.skip_special_tokens = config.skip_special_tokens or True
         self.pairwise_tokenization = config.pairwise_tokenization
@@ -260,6 +267,7 @@ class TransformersModel(LightevalModel):
 
         self.config = config
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
+        self.move_trailing_context_space = config.move_trailing_context_space
         self._add_special_tokens = config.add_special_tokens
         self.skip_special_tokens = config.skip_special_tokens
         self.pairwise_tokenization = config.pairwise_tokenization
@@ -898,8 +906,13 @@ class TransformersModel(LightevalModel):
         docs: list[Doc],
     ) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
+        # Perplexity tasks put the full text in `query` with `choices=None`; score it as
+        # a single continuation with empty context (mirrors the Nanotron backend) instead
+        # of crashing the shared path that iterates over `doc.choices`. Originals are kept
+        # so the metric still reads the text length from `doc.query`.
+        rolling_docs = [replace(doc, query="", choices=[doc.query]) if not doc.choices else doc for doc in docs]
         return self._loglikelihood_tokens(
-            docs,
+            rolling_docs,
             rolling=True,
         )
 
@@ -991,20 +1004,17 @@ class TransformersModel(LightevalModel):
                             choice_continuation, dtype=torch.long, device=self.device
                         )
                         continuation_length = len(choice_continuation_tensor)
-                        if rolling:
-                            choice_logits = choice_logits.unsqueeze(0).to(self.device)  # [1, seq, vocab]
-                            choice_continuation_tensor = (
-                                choice_continuation_tensor[:input_length].unsqueeze(0).to(self.device)
-                            )  # [1, seq]
-                        else:
-                            choice_logits = (
-                                choice_logits[input_length - continuation_length - 1 : input_length - 1]
-                                .unsqueeze(0)
-                                .to(self.device)
-                            )
-                            choice_continuation_tensor = choice_continuation_tensor.unsqueeze(0).to(
-                                self.device
-                            )  # [1, seq]
+                        # logits[i] predicts token i+1, so score the continuation against
+                        # logit positions [start : input_length-1]. Rolling previously used
+                        # the full unshifted logits, misaligning every token and inflating
+                        # perplexity; with an empty context the unpredictable first token is
+                        # dropped.
+                        start = max(input_length - continuation_length - 1, 0)
+                        choice_logits = choice_logits[start : input_length - 1].unsqueeze(0).to(self.device)
+                        n_pos = choice_logits.shape[1]
+                        choice_continuation_tensor = (
+                            choice_continuation_tensor[continuation_length - n_pos :].unsqueeze(0).to(self.device)
+                        )
 
                         # Check if per-token argmax is exactly equal to continuation
                         greedy_tokens = choice_logits.argmax(dim=-1).to(self.device)

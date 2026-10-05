@@ -7,6 +7,7 @@ import statistics
 from typing import Callable, Literal, Optional
 
 import nltk
+import numpy as np
 import requests
 import torch
 from nltk import word_tokenize
@@ -20,9 +21,17 @@ from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.metrics_sample import BertScore, JudgeLLM, SampleLevelComputation
 from lighteval.metrics.normalizations import remove_braces, remove_braces_and_strip
+from lighteval.metrics.utils.extractive_match_utils import (
+    IndicesExtractionConfig,
+    extract_target_from_pred,
+    get_extraction_regexes,
+)
 from lighteval.metrics.utils.metric_utils import SampleLevelMetric, SampleLevelMetricGrouping, SamplingMethod
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.multilingual.tasks.swiss_legal.prompts import (
+    LEXAM_OQ_JUDGE_INSTRUCTION,
+    LEXAM_OQ_JUDGE_SYSTEM_PROMPT,
+    LEXAM_OQ_JUDGE_USER_PROMPT,
     SLDS_JUDGE_ONE_SHOT_EXAMPLE_DE,
     SLDS_JUDGE_ONE_SHOT_EXAMPLE_FR,
     SLDS_JUDGE_ONE_SHOT_EXAMPLE_IT,
@@ -34,6 +43,7 @@ from lighteval.tasks.multilingual.tasks.swiss_legal.prompts import (
     SWISS_LEGAL_TRANSLATION_JUDGE_USER_PROMPT,
 )
 from lighteval.tasks.requests import Doc
+from lighteval.utils.language import Language
 
 
 logger = logging.getLogger(__name__)
@@ -553,6 +563,107 @@ class JudgeSwissLandmarkDecisionSummarization(JudgeLLM):
         ]
 
 
+class JudgeLEXamOQ(JudgeLLM):
+    """LLM-as-judge for LEXam open-ended legal exam questions.
+
+    Compares a model's free-form answer to a reference answer and extracts a
+    correctness score in [0.0, 1.0] from the judge response.
+    """
+
+    def compute(
+        self,
+        responses: list[ModelResponse],
+        docs: list[Doc],
+        **kwargs,
+    ) -> list[dict[str, float]]:
+        logger.info(f"Judging {len(docs)} samples with {self.short_judge_name}...")
+        # `question` is the raw exam question (without the QA prompt wrapper) and
+        # is stored in `doc.specific` so the judge sees the original task, not the
+        # full instruction we sent to the model.
+        questions = [doc.specific["question"] for doc in docs]
+        options = [doc.choices for doc in docs]
+        golds = [doc.get_golds()[0] for doc in docs]
+        predictions = [response.final_text[0] for response in responses]
+
+        scores, _, _ = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
+        return [{self.short_judge_name: score * 100} for score in scores]
+
+
+class LEXamMCQExtractive(SampleLevelComputation):
+    """Letter-based MCQ scorer for LEXam, with optional IDK calibration.
+
+    When `with_idk=False`, returns a single `acc` metric (0/1) plus
+    `extract_fail` (1 if no letter could be extracted).
+
+    When `with_idk=True`, the last choice letter is reserved for "I don't know"
+    and the metric returns four sub-metrics:
+      - `trad_score`: 1 if the prediction equals the gold letter, else 0.
+      - `idk_score`: +1 correct, 0 if IDK, -1 wrong or unparseable.
+      - `idk_freq`: 1 if the model picked the IDK letter.
+      - `extract_fail`: 1 if no letter could be extracted.
+    """
+
+    def __init__(self, with_idk: bool):
+        self.with_idk = with_idk
+        self._extraction_target = (IndicesExtractionConfig(prefix_for_extraction="NativeLetters"),)
+        # Falls back to a hand-rolled regex if the standard letter-extractor fails.
+        # We match the `###X###` convention used in the prompt template and the
+        # most common LaTeX/boxed/"Final answer" forms.
+        self._fallback_pattern = re.compile(
+            r"###\s*([A-Z])\s*###"
+            r"|\\boxed\s*\{\s*([A-Z])\s*\}"
+            r"|\bfinal\s+answer\s*[:\-]?\s*([A-Z])\b"
+            r"|\banswer\s*[:\-]?\s*([A-Z])\b",
+            re.IGNORECASE,
+        )
+
+    def _extract_letter(self, pred: str, doc: Doc) -> str | None:
+        regexes = get_extraction_regexes(doc, list(self._extraction_target), Language.ENGLISH)
+        extracted = extract_target_from_pred(pred, regexes, "first_match", "any_match", timeout_seconds=5)
+        if extracted:
+            # Use the last extracted letter as the "final" answer.
+            return str(extracted[-1]).upper()
+
+        matches = self._fallback_pattern.findall(pred)
+        if matches:
+            last = matches[-1]
+            # `findall` returns tuples for grouped patterns; pick the populated group.
+            letter = next((g for g in last if g), None) if isinstance(last, tuple) else last
+            if letter:
+                return letter.upper()
+        return None
+
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict[str, float]:
+        prediction = model_response.final_text[0]
+        gold_letter = doc.choices[doc.gold_index]
+        idk_letter = doc.choices[-1] if self.with_idk else None
+
+        letter = self._extract_letter(prediction, doc)
+        extract_fail = 1.0 if letter is None or letter not in doc.choices else 0.0
+
+        if doc.specific is None:
+            doc.specific = {}
+        doc.specific["extracted_prediction"] = letter
+        doc.specific["extracted_gold"] = gold_letter
+
+        if not self.with_idk:
+            acc = 1.0 if letter == gold_letter else 0.0
+            return {"acc": acc, "extract_fail": extract_fail}
+
+        # IDK calibration scoring: +1 correct, 0 abstain, -1 wrong / unparseable.
+        is_correct = letter == gold_letter
+        is_idk = letter == idk_letter
+        trad_score = 1.0 if is_correct else 0.0
+        idk_score = 1.0 if is_correct else (0.0 if is_idk else -1.0)
+        idk_freq = 1.0 if is_idk else 0.0
+        return {
+            "trad_score": trad_score,
+            "idk_score": idk_score,
+            "idk_freq": idk_freq,
+            "extract_fail": extract_fail,
+        }
+
+
 def get_bert_score(
     language: str,
     num_layers: int = 24,
@@ -583,6 +694,60 @@ def get_bert_score(
             "BERTScore-R": statistics.mean,
             "BERTScore-F": statistics.mean,
         },
+        batched_compute=False,
+    )
+
+
+def get_lexam_oq_judge(
+    judge_model_name: str = "openai/gpt-4o-2024-11-20",
+    short_judge_name: str = "lexam_oq_judge_gpt-4o",
+    backend: Literal["litellm", "openai", "transformers", "vllm", "tgi", "inference-providers"] = "litellm",
+) -> SampleLevelMetricGrouping:
+    """Build the LEXam open-question LLM-as-judge metric."""
+
+    def lexam_oq_judge_template(question, options, answer, gold):
+        instruction = LEXAM_OQ_JUDGE_INSTRUCTION.format(question=question, gold=gold, answer=answer)
+        return [
+            {"role": "system", "content": LEXAM_OQ_JUDGE_SYSTEM_PROMPT},
+            {"role": "user", "content": LEXAM_OQ_JUDGE_USER_PROMPT + instruction},
+        ]
+
+    return SampleLevelMetricGrouping(
+        metric_name=[short_judge_name],
+        higher_is_better={short_judge_name: True},
+        category=SamplingMethod.GENERATIVE,
+        sample_level_fn=JudgeLEXamOQ(
+            judge_model_name=judge_model_name,
+            template=lexam_oq_judge_template,
+            process_judge_response=process_judge_response_freeform_gpt,
+            judge_backend=backend,
+            short_judge_name=short_judge_name,
+        ),
+        corpus_level_fn={short_judge_name: statistics.mean},
+        batched_compute=True,
+    )
+
+
+def get_lexam_mcq_metric(with_idk: bool) -> SampleLevelMetricGrouping:
+    """Build the LEXam MCQ metric (with or without the IDK calibration)."""
+    if with_idk:
+        metric_names = ["trad_score", "idk_score", "idk_freq", "extract_fail"]
+        higher_is_better = {
+            "trad_score": True,
+            "idk_score": True,
+            "idk_freq": False,
+            "extract_fail": False,
+        }
+    else:
+        metric_names = ["acc", "extract_fail"]
+        higher_is_better = {"acc": True, "extract_fail": False}
+
+    return SampleLevelMetricGrouping(
+        metric_name=metric_names,
+        higher_is_better=higher_is_better,
+        category=SamplingMethod.GENERATIVE,
+        sample_level_fn=LEXamMCQExtractive(with_idk=with_idk),
+        corpus_level_fn=dict.fromkeys(metric_names, np.mean),
         batched_compute=False,
     )
 

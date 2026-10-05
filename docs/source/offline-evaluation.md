@@ -18,12 +18,7 @@ from lighteval.tasks.requests import Doc
 
 
 def local_prompt(line: dict, task_name: str) -> Doc:
-    return Doc(
-        task_name=task_name,
-        query=line["question"],
-        choices=line["choices"],
-        gold_index=line["answer"]
-    )
+    return Doc(task_name=task_name, query=line["question"], choices=line["choices"], gold_index=line["answer"])
 
 
 local_data = Path(__file__).parent / "samples" / "faq.jsonl"

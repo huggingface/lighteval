@@ -313,10 +313,16 @@ class LightevalModel(ABC):
         2) Works in case len(tok(context,cont)) != len(tok(context)) + len(tok(continuation)).
         E.g this can happen for chinese if no space is used between context/continuation
         """
-        n_spaces = len(context) - len(context.rstrip())
-        if n_spaces > 0:
-            continuations = [context[-n_spaces:] + cont for cont in continuations]
-            context = context[:-n_spaces]
+        # By default a trailing context space is moved onto the continuation so it
+        # tokenizes naturally (" Paris" -> "ĠParis"), which is what you want for
+        # multichoice. For answer-only perplexity / bits-per-byte the continuation
+        # must stay exactly the gold string so the scored tokens match the byte
+        # normalization, so models can opt out and keep the space in the context.
+        if getattr(self, "move_trailing_context_space", True):
+            n_spaces = len(context) - len(context.rstrip())
+            if n_spaces > 0:
+                continuations = [context[-n_spaces:] + cont for cont in continuations]
+                context = context[:-n_spaces]
 
         if pairwise:
             # We don't add special tokens to the continuation as if bos is added
