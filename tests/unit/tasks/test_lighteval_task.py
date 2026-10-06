@@ -21,8 +21,13 @@
 # SOFTWARE.
 
 
+from datasets import Dataset, DatasetDict
+
+from lighteval.models.dummy.dummy_model import DummyModelConfig
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.utils.cache_management import SampleCache
 
 
 def dummy_prompt_function(item, task_name):
@@ -84,3 +89,49 @@ def test_hf_data_files(tmp_path):
 
     eval_docs = task.eval_docs()
     assert [doc.query for doc in eval_docs] == src_docs
+
+
+def test_doc_ids_are_unique_across_evaluation_splits(tmp_path):
+    cfg = LightevalTaskConfig(
+        name="multi_split_task",
+        prompt_function=dummy_prompt_function,
+        hf_repo="unused",
+        hf_subset="default",
+        metrics=[],
+        evaluation_splits=["validation", "test"],
+    )
+    task = LightevalTask(cfg)
+    task.dataset = DatasetDict(
+        {
+            "validation": Dataset.from_dict({"text": ["validation 0", "validation 1"]}),
+            "test": Dataset.from_dict({"text": ["test 0"]}),
+        }
+    )
+
+    multi_split_docs = task._get_docs_from_split(["validation", "test"])
+    single_split_docs = task._get_docs_from_split(["test"])
+
+    assert [doc.id for doc in multi_split_docs] == ["validation:0", "validation:1", "test:0"]
+    assert [doc.id for doc in single_split_docs] == ["0"]
+
+    cache = SampleCache(DummyModelConfig(cache_dir=str(tmp_path)))
+    sampling_method = SamplingMethod.GENERATIVE
+    task_id = cache.get_task_id(multi_split_docs[0].task_name, sampling_method)
+    legacy_doc = Doc(
+        id="0",
+        task_name=multi_split_docs[0].task_name,
+        query="legacy",
+        choices=["A", "B"],
+        gold_index=0,
+    )
+    cache.cache_samples([legacy_doc], [ModelResponse(text=["legacy"])], [task_id], sampling_method)
+
+    uncached_docs, cached_tasks = cache.get_samples_to_process_and_cache(multi_split_docs, sampling_method)
+    assert uncached_docs == multi_split_docs
+    assert cached_tasks == set()
+
+    responses = [ModelResponse(text=[doc.query]) for doc in multi_split_docs]
+    cache.cache_samples(multi_split_docs, responses, [task_id], sampling_method)
+    assert [
+        response.text for response in cache.get_samples_from_cache(multi_split_docs, [task_id], sampling_method)
+    ] == [[doc.query] for doc in multi_split_docs]
