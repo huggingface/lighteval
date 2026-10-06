@@ -48,7 +48,7 @@ def boolq_contrastset_prompt(line, task_name: str = None):
             task_name=task_name,
             query=f"{passage}\nQuestion: {question}\nAnswer:",
             choices=["Yes", "No"],
-            gold_index=["No", "Yes"].index(line["answer"]),
+            gold_index=["Yes", "No"].index(line["answer"]),
         )
         for passage, question in zip(line["contrast_inputs"]["passage"], line["contrast_inputs"]["question"])
     ][0]
