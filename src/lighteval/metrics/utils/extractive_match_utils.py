@@ -39,6 +39,9 @@ from lighteval.utils.language import Language
 from lighteval.utils.timeout import timeout
 
 
+_LATEX_TEXT_AND_OR_RE = re.compile(r"\\text\{\s*(?:and|or)\s*\}")
+
+
 @requires("latex2sympy2_extended")
 def latex_normalization_config_default_factory():
     from latex2sympy2_extended.latex2sympy2 import NormalizationConfig
@@ -489,6 +492,10 @@ def extract_latex(
         name_without_prefix = name.split("_")[0]
         group_name = name.split("_")[1] if len(name.split("_")) > 1 else None
         is_percentage = True if match.groupdict().get(f"{name_without_prefix}_percent") else False
+
+        # latex2sympy2_extended>=1.0.9 turns these equation separators into commas,
+        # which flattens grouped solution tuples. Preserve the 1.0.6 behavior.
+        latex = _LATEX_TEXT_AND_OR_RE.sub(";", latex)
 
         # Use modified config if group name is 'boxed'
         config = latex_config.normalization_config
