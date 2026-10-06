@@ -242,7 +242,7 @@ class TransformersModel(LightevalModel):
         )
 
         # Initialize cache for tokenization and predictions
-        self._cache = SampleCache(config)
+        self._cache = SampleCache(config, resolved_model_revision=self.model_sha)
 
     def cleanup(self):
         """Clean up operations if needed, such as closing an endpoint."""
@@ -307,7 +307,7 @@ class TransformersModel(LightevalModel):
         )
 
         # Initialize cache for tokenization and predictions
-        self._cache = SampleCache(config) if config else None
+        self._cache = SampleCache(config, resolved_model_revision=self.model_sha) if config else None
 
         return self
 

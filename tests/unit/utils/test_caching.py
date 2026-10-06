@@ -101,6 +101,21 @@ class TestCaching(unittest.TestCase):
                     self.assertIn(str(temp_dir), str(folder))
                     self.assertIn(model_name, str(folder))
 
+    def test_cache_hash_includes_resolved_model_revision(self):
+        from lighteval.models.dummy.dummy_model import DummyModelConfig
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = DummyModelConfig(model_name="mutable-model", cache_dir=temp_dir)
+
+            first_cache = SampleCache(config, resolved_model_revision="commit-a")
+            same_cache = SampleCache(config, resolved_model_revision="commit-a")
+            updated_cache = SampleCache(config, resolved_model_revision="commit-b")
+
+            self.assertEqual(first_cache.model_hash, same_cache.model_hash)
+            self.assertEqual(first_cache.cache_dir, same_cache.cache_dir)
+            self.assertNotEqual(first_cache.model_hash, updated_cache.model_hash)
+            self.assertNotEqual(first_cache.cache_dir, updated_cache.cache_dir)
+
     def test_cache_decorator_presence(self):
         """Test that @cached decorators are present on the right methods."""
         from lighteval.models.dummy.dummy_model import DummyModel
@@ -204,6 +219,7 @@ class TestCaching(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             config = TransformersModelConfig(model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir)
             model = TransformersModel(config)
+            self.assertEqual(model._cache.resolved_model_revision, model.model_sha)
 
             self._test_cache(
                 model,
