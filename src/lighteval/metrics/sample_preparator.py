@@ -145,6 +145,8 @@ class TargetPerplexityPreparator(Preparator):
     def count_units(self, text: str) -> int:
         """Counts the given number of unit in the input text.
 
+        Empty or whitespace-only text retains its legacy word count.
+
         Args:
             text (str): Input text
 
@@ -152,7 +154,8 @@ class TargetPerplexityPreparator(Preparator):
             int: Number of units of type `self.units_type` in the input text.
         """
         if self.units_type == "words":
-            return len(re.split(r"\s+", text))
+            words = text.split()
+            return len(words) if words else len(re.split(r"\s+", text))
         if self.units_type == "bytes":
             return len(text.encode("utf-8"))
 
@@ -190,6 +193,8 @@ class PerplexityPreparator(Preparator):
     def count_units(self, text: str) -> int:
         """Counts the given number of unit in the input text.
 
+        Empty or whitespace-only text retains its legacy word count.
+
         Args:
             text (str): Input text
 
@@ -197,7 +202,8 @@ class PerplexityPreparator(Preparator):
             int: Number of units of type `self.units_type` in the input text.
         """
         if self.units_type == "words":
-            return len(re.split(r"\s+", text))
+            words = text.split()
+            return len(words) if words else len(re.split(r"\s+", text))
         if self.units_type == "bytes":
             return len(text.encode("utf-8"))
 
