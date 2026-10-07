@@ -3,7 +3,7 @@ name:
 Aime
 
 dataset:
-HuggingFaceH4/aime_2024, yentinglin/aime_2025
+HuggingFaceH4/aime_2024, yentinglin/aime_2025, math-ai/aime26
 
 abstract:
 The American Invitational Mathematics Examination (AIME) is a prestigious,
@@ -155,6 +155,53 @@ aime25_gpassk = LightevalTaskConfig(
     version=1,
 )
 
+aime26 = LightevalTaskConfig(
+    name="aime26",
+    prompt_function=aime_prompt,
+    sample_fields=record_to_sample,
+    solver=[prompt_template(MATH_PROMPT_TEMPLATE), generate(cache=True)],
+    scorer=math_scorer(),
+    hf_repo="math-ai/aime26",
+    hf_subset="default",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=None,
+    metrics=[Metrics.pass_at_k_math(sample_params={"k": 1, "n": 1}), Metrics.avg_at_n_math(sample_params={"n": 1})],
+    version=1,
+)
+
+aime26_avg = LightevalTaskConfig(
+    name="aime26_avg",
+    prompt_function=aime_prompt,
+    sample_fields=record_to_sample,
+    hf_repo="math-ai/aime26",
+    hf_subset="default",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=None,
+    metrics=[Metrics.avg_at_n_math(sample_params={"n": 64})],
+    version=1,
+)
+
+aime26_gpassk = LightevalTaskConfig(
+    name="aime26_gpassk",
+    prompt_function=aime_prompt,
+    sample_fields=record_to_sample,
+    hf_repo="math-ai/aime26",
+    hf_subset="default",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=None,
+    metrics=[Metrics.g_pass_at_k_math(sample_params={"k": 16, "n": 48})],
+    version=1,
+)
+
 TASKS_TABLE = [
     aime24,
     aime24_avg,
@@ -162,4 +209,7 @@ TASKS_TABLE = [
     aime25,
     aime25_avg,
     aime25_gpassk,
+    aime26,
+    aime26_avg,
+    aime26_gpassk,
 ]
