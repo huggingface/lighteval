@@ -92,6 +92,35 @@ class EnhancedJSONEncoder(json.JSONEncoder):
             return type(o).__name__
 
 
+def detail_task_name(stored_name: str) -> str:
+    """Return the requested task name for a stored details key.
+
+    Details files keep a trailing few-shot suffix (``gsm8k|0``). The task list passed to
+    ``load_details_datasets`` does not.
+
+    Args:
+        stored_name: Details key, including the few-shot suffix.
+
+    Returns:
+        Task name with that suffix removed.
+    """
+    return "|".join(stored_name.split("|")[:-1])
+
+
+def missing_detail_tasks(requested: list[str], stored_names: list[str]) -> list[str]:
+    """Return requested tasks that have no loaded details file.
+
+    Args:
+        requested: Task names from the evaluation, without the few-shot suffix.
+        stored_names: Keys of the details that were loaded, with the few-shot suffix.
+
+    Returns:
+        Requested names that are absent, in the same order.
+    """
+    loaded = {detail_task_name(name) for name in stored_names}
+    return [name for name in requested if name not in loaded]
+
+
 class EvaluationTracker:
     """Tracks and manages evaluation results, metrics, and logging for model evaluations.
 
@@ -342,17 +371,17 @@ class EvaluationTracker:
         details_datasets = {}
         for file in self.fs.glob(str(output_dir_details_sub_folder / f"details_*_{date_id}.parquet")):
             task_name = Path(file).stem.replace("details_", "").replace(f"_{date_id}", "")
-            if "|".join(task_name.split("|")[:-1]) not in task_names:
+            if detail_task_name(task_name) not in task_names:
                 logger.info(f"Skipping {task_name} because it is not in the task_names list")
                 continue
             dataset = load_dataset("parquet", data_files=file, split="train")
             details_datasets[task_name] = dataset
 
-        for task_name in task_names:
-            if not any(task_name.startswith(task_name) for task_name in details_datasets.keys()):
-                raise ValueError(
-                    f"Task {task_name} not found in details datasets. Check the tasks to be evaluated or the date_id used to load the details ({date_id})."
-                )
+        missing = missing_detail_tasks(task_names, list(details_datasets))
+        if missing:
+            raise ValueError(
+                f"Task {missing[0]} not found in details datasets. Check the tasks to be evaluated or the date_id used to load the details ({date_id})."
+            )
         return details_datasets
 
     def save_details(self, date_id: str, details_datasets: dict[str, Dataset]):
