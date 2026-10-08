@@ -30,7 +30,7 @@ from lighteval.metrics.dynamic_metrics import (
     NormalizedMultiChoiceProbMetric,
     ProbabilityMetric,
 )
-from lighteval.metrics.metrics_sample import ExactMatches
+from lighteval.metrics.metrics_sample import ExactMatches, F1_score
 from lighteval.metrics.normalizations import LogProbCharNorm, helm_normalizer
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
@@ -338,3 +338,30 @@ class TestBaseMetrics:
     @pytest.mark.skip(reason="Using nltk metric function, no need to test.")
     def test_f1(self):
         assert False
+
+    def test_f1_empty_prediction_is_zero(self):
+        f1 = F1_score()
+        assert f1.compute_one_item("hello world", "") == 0.0
+
+    def test_f1_empty_gold_raises(self):
+        f1 = F1_score()
+        with pytest.raises(ValueError, match="empty gold"):
+            f1.compute_one_item("", "hello")
+
+    def test_f1_gold_normalizes_to_empty_raises(self):
+        f1 = F1_score(normalize_gold=lambda s: "")
+        with pytest.raises(ValueError, match="empty gold"):
+            f1.compute_one_item("???", "hello")
+
+    def test_f1_skips_empty_gold_when_another_is_valid(self):
+        f1 = F1_score(normalize_gold=helm_normalizer, normalize_pred=helm_normalizer)
+        doc = Doc(query="capital", choices=["Paris", "???"], gold_index=[0, 1], task_name="test")
+        model_response = ModelResponse(text=["Paris"])
+        assert f1.compute(doc=doc, model_response=model_response) == 1.0
+
+    def test_f1_raises_when_every_gold_is_empty(self):
+        f1 = F1_score(normalize_gold=helm_normalizer)
+        doc = Doc(query="capital", choices=["???", ""], gold_index=[0, 1], task_name="test")
+        model_response = ModelResponse(text=["Paris"])
+        with pytest.raises(ValueError, match="empty gold"):
+            f1.compute(doc=doc, model_response=model_response)
