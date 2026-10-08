@@ -1197,9 +1197,23 @@ class AvgAtN(SamplingMetric, SampleLevelComputation):
         Returns:
             float: Aggregated score over the current sample's items.
         """
+        if self.n is None:
+            raise Exception("You did not set the value of n")
+
+        processed_choices = [self.preprocess(g) for g in doc.choices]
+        new_doc = Doc(
+            choices=processed_choices,
+            query=doc.query,
+            gold_index=doc.gold_index,
+        )
+
         all_scores = []
-        for i in range(self.n):
-            all_scores.append(self.compute_score(doc, model_response[i]))
+        for pred in model_response.final_text[: self.n]:
+            cur_pred = self.preprocess(pred)
+            new_model_response = ModelResponse(
+                text=[cur_pred],
+            )
+            all_scores.append(self.compute_score(doc=new_doc, model_response=new_model_response))
 
         avg_score = np.mean(all_scores)
         return avg_score
