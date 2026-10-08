@@ -30,7 +30,7 @@ import pytest
 from datasets import Dataset
 from huggingface_hub import HfApi
 
-from lighteval.logging.evaluation_tracker import EvaluationTracker
+from lighteval.logging.evaluation_tracker import EvaluationTracker, scored_sample_counts
 from lighteval.logging.info_loggers import DetailsLogger
 
 # ruff: noqa
@@ -104,6 +104,30 @@ class TestLogging:
         assert "results" in saved_results
         assert saved_results["results"] == task_metrics
         assert saved_results["config_general"]["model_name"] == "test_model"
+        assert "n_samples" not in saved_results
+
+    def test_final_dict_counts_scored_samples(self, mock_evaluation_tracker: EvaluationTracker):
+        mock_evaluation_tracker.details_logger.details = {
+            "community:ether0:loose|0": list(range(10)),
+            "mmlu:college_chemistry|5": [0],
+            "mmlu:us_foreign_policy|5": [0, 1, 2],
+        }
+
+        final_dict = mock_evaluation_tracker.generate_final_dict()
+
+        assert final_dict["n_samples"] == {
+            "community:ether0:loose:0": 10,
+            "mmlu:college_chemistry:5": 1,
+            "mmlu:us_foreign_policy:5": 3,
+            "mmlu:_average:5": 4,
+            "all": 14,
+        }
+        assert "n_samples" not in mock_evaluation_tracker.results
+
+    def test_single_task_suite_has_no_average_count(self):
+        counts = scored_sample_counts({"community:ether0:loose|0": list(range(10))})
+
+        assert counts == {"community:ether0:loose|0": 10, "all": 10}
 
     def test_results_logging_template(self, mock_evaluation_tracker: EvaluationTracker):
         task_metrics = {
