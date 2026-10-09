@@ -50,6 +50,15 @@ def build_fake_litellm(calls: list[dict]):
     return module
 
 
+def install_fake_litellm(monkeypatch, calls: list[dict]):
+    monkeypatch.setitem(sys.modules, "litellm", build_fake_litellm(calls))
+    # the litellm backend checks installed package metadata before calling, which a
+    # sys.modules entry doesn't satisfy, so skip that check too
+    monkeypatch.setattr(
+        "lighteval.metrics.utils.llm_as_judge.raise_if_package_not_available", lambda *args, **kwargs: None
+    )
+
+
 def build_judge(max_tokens):
     return JudgeLM(
         model="gpt-4o-mini",
@@ -72,10 +81,10 @@ class TestLiteLLMJudgeMaxTokens:
         """
 
         calls: list[dict] = []
-        monkeypatch.setitem(sys.modules, "litellm", build_fake_litellm(calls))
+        install_fake_litellm(monkeypatch, calls)
 
         judge = build_judge(max_tokens=512)
-        judge._JudgeLM__call_litellm([[{"role": "user", "content": "hello"}]])
+        judge.evaluate_answer_batch(questions=["hello"], answers=["hi"], options=[None], golds=[None])
 
         assert len(calls) == 1
         assert calls[0]["max_tokens"] == 512
@@ -85,10 +94,10 @@ class TestLiteLLMJudgeMaxTokens:
         """When max_tokens is None, the key must not be sent at all."""
 
         calls: list[dict] = []
-        monkeypatch.setitem(sys.modules, "litellm", build_fake_litellm(calls))
+        install_fake_litellm(monkeypatch, calls)
 
         judge = build_judge(max_tokens=None)
-        judge._JudgeLM__call_litellm([[{"role": "user", "content": "hello"}]])
+        judge.evaluate_answer_batch(questions=["hello"], answers=["hi"], options=[None], golds=[None])
 
         assert len(calls) == 1
         assert "max_tokens" not in calls[0]
