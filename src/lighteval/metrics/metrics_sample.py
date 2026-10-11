@@ -542,12 +542,16 @@ class ROUGE(SampleLevelComputation):
             float or dict: Aggregated score over the current sample's items.
                 If several rouge functions have been selected, returns a dict which maps name and scores.
         """
-        from rouge_score import rouge_scorer
-
         golds = doc.get_golds()
         predictions = model_response.final_text
 
         if self.scorer is None:
+            # rouge-score-rs (the `fast_rouge` extra) returns identical scores and is much faster
+            try:
+                from rouge_score_rs import rouge_scorer
+            except ImportError:
+                from rouge_score import rouge_scorer
+
             self.scorer = rouge_scorer.RougeScorer(self.methods, tokenizer=self.tokenizer)
 
         # Normalize
