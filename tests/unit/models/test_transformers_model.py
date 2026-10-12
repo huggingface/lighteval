@@ -426,5 +426,49 @@ class TestTransformersModelUseChatTemplate(unittest.TestCase):
                 self.assertEqual(model.use_chat_template, model._tokenizer.chat_template is not None)
 
 
+class TestTransformersModelNoChatTemplate(unittest.TestCase):
+    """Tests for stop_tokens assignment in _padded_greedy_until (lines 684-692)."""
+
+    @patch("lighteval.models.transformers.transformers_model.Accelerator")
+    @patch("lighteval.models.transformers.transformers_model.TransformersModel._generate")
+    @patch("lighteval.models.transformers.transformers_model.DataLoader")
+    def test_stop_tokens_without_chat_template_empty_stop_sequences(
+        self, mock_dataloader, mock_generate, mock_accelerator
+    ):
+        """When use_chat_template is False and stop_sequences is empty, stop_tokens is [eos_token] only."""
+        mock_accelerator_instance = Mock()
+        mock_accelerator_instance.device = torch.device("cpu")
+        mock_accelerator_instance.prepare = lambda x: x
+        mock_accelerator.return_value = mock_accelerator_instance
+
+        config = TransformersModelConfig(model_name="gpt2")
+        model = TransformersModel(config)
+        model.use_chat_template = False
+
+        doc = Doc(
+            query="Say hello.",
+            choices=[],
+            gold_index=0,
+            generation_size=5,
+            stop_sequences=(),  # empty tuple
+        )
+        batch_from_dataloader = [doc]
+        mock_dataloader.return_value = iter([batch_from_dataloader])
+
+        captured_stop_tokens = None
+
+        def capture_stop_tokens(*args, **kwargs):
+            nonlocal captured_stop_tokens
+            captured_stop_tokens = kwargs.get("stop_tokens")
+            return [ModelResponse(text=[""], logprobs=[], output_tokens=[], input_tokens=[])]
+
+        mock_generate.side_effect = capture_stop_tokens
+
+        model._padded_greedy_until([doc])
+
+        self.assertIsNotNone(captured_stop_tokens)
+        self.assertEqual(captured_stop_tokens, [model.tokenizer.eos_token])
+
+
 if __name__ == "__main__":
     unittest.main()
