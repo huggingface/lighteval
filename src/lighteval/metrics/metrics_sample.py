@@ -549,7 +549,9 @@ class ROUGE(SampleLevelComputation):
             # rouge-score-rs (the `fast_rouge` extra) returns identical scores and is much faster
             try:
                 from rouge_score_rs import rouge_scorer
-            except ModuleNotFoundError:
+            except ModuleNotFoundError as e:
+                if e.name != "rouge_score_rs":
+                    raise
                 from rouge_score import rouge_scorer
             logger.info(f"ROUGE backend: {rouge_scorer.__name__.split('.')[0]}")
 
