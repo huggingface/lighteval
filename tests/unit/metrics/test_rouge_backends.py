@@ -57,8 +57,12 @@ def make_samples(count=200, seed=0):
 
 def compute_all(metric_kwargs, samples):
     metric = ROUGE(**metric_kwargs)
+    state = np.random.get_state()
     np.random.seed(0)
-    return metric, [metric.compute(doc=doc, model_response=response) for doc, response in samples]
+    try:
+        return metric, [metric.compute(doc=doc, model_response=response) for doc, response in samples]
+    finally:
+        np.random.set_state(state)
 
 
 @pytest.mark.parametrize(
@@ -81,3 +85,29 @@ def test_rust_backend_matches_rouge_score(metric_kwargs, monkeypatch):
     assert type(reference_metric.scorer).__module__.startswith("rouge_score.")
 
     assert fast_scores == reference_scores
+
+
+EDGE_CASES = [
+    ("", "the cat"),
+    ("   ", "\n"),
+    ("İstanbul Straße KELVIN", "istanbul strasse kelvin"),
+    ("１２３ ４５６ cats", "123 456 cat"),
+    ("東京 は 大きい", "東京 大きい"),
+    ("مرحبا بالعالم", "مرحبا"),
+    ("cafe\u0301 naïve", "café naive"),
+    ("running 🏃 fast", "ran 🏃"),
+    ("line one\r\nline two\u2028line three", "line one\nline three"),
+    ("a\x0bb\x85c\x00d", "a b c d"),
+]
+
+
+@pytest.mark.parametrize("use_stemmer", [False, True])
+def test_rust_backend_matches_rouge_score_on_edge_cases(use_stemmer):
+    from rouge_score import rouge_scorer
+    from rouge_score_rs import rouge_scorer as rust_rouge_scorer
+
+    methods = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+    reference = rouge_scorer.RougeScorer(methods, use_stemmer=use_stemmer)
+    fast = rust_rouge_scorer.RougeScorer(methods, use_stemmer=use_stemmer)
+    for target, prediction in EDGE_CASES:
+        assert fast.score(target, prediction) == reference.score(target, prediction)
