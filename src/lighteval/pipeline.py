@@ -415,11 +415,15 @@ class Pipeline:
             self.pipeline_parameters.load_responses_from_details_date_id, tasks_names
         )
 
-        for _, dataset in tqdm(details_datasets.items(), desc="Loading responses from details for tasks"):
+        # Responses of all tasks are concatenated, in the task order used to build `self.sampling_docs`,
+        # as both are zipped together when computing the metrics
+        ordered_task_names = sorted(details_datasets.keys(), key=tasks_names.index)
+
+        for task_name in tqdm(ordered_task_names, desc="Loading responses from details for tasks"):
             for sampling_method in sampling_methods:
-                model_responses[sampling_method] = [
-                    ModelResponse(**model_response["model_response"]) for model_response in dataset
-                ]
+                model_responses.setdefault(sampling_method, []).extend(
+                    ModelResponse(**model_response["model_response"]) for model_response in details_datasets[task_name]
+                )
 
         return model_responses
 
