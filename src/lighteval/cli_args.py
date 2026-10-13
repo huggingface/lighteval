@@ -140,7 +140,7 @@ results_path_template = Arg(
     type=Annotated[
         str | None,
         Option(
-            help="Custom template for results file path. Available variables: {output_dir}, {org}, {model}. Example: '{output_dir}/experiments/{org}_{model}' creates results in a subdirectory.",
+            help="Custom template for results file path. Available variables: {output_dir}, {org}, {model}, {revision}. Example: '{output_dir}/experiments/{org}_{model}/{revision}' creates results in a subdirectory.",
             rich_help_panel=HELP_PANEL_NAME_2,
         ),
     ],
