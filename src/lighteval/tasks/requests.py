@@ -214,11 +214,23 @@ class Doc:
     num_samples: int = 1  # number of samples to generate for each sample
     generation_grammar: None = None
 
-    def get_golds(self):
-        """Return gold targets extracted from the target dict"""
+    def get_golds(self) -> list:
+        """Return gold targets extracted from the target dict.
+        
+        Returns:
+            list: The gold answer strings corresponding to gold_index indices.
+            
+        Raises:
+            ValueError: If gold_index refers to an out-of-bounds choice index.
+        """
         gold_indices = as_list(self.gold_index)
         golds = []
+        num_choices = len(self.choices)
         for gold_ix in gold_indices:
+            if gold_ix >= num_choices:
+                raise ValueError(
+                    f"gold_index {gold_ix} is out of bounds for choices of size {num_choices}"
+                )
             golds.extend(as_list(self.choices[gold_ix]))
         return golds
 
