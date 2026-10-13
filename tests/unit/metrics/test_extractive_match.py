@@ -615,6 +615,17 @@ def test_latex_notation_math(gold, pred, expected):
             "$-x >= -1$",
             1,
         ),
+        # Chained inequalities with different numbers of conditions
+        (
+            "$a < b < c$",
+            "$a < b < c < d$",
+            0,
+        ),
+        (
+            "$a < b < c < d$",
+            "$a < b < c$",
+            0,
+        ),
     ],
 )
 def test_relations_math(gold, pred, expected):
