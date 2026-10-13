@@ -21,8 +21,55 @@
 # SOFTWARE.
 
 import unittest
+from types import SimpleNamespace
 
-from lighteval.utils.utils import remove_reasoning_tags
+from lighteval.utils.utils import make_results_table, remove_reasoning_tags
+
+
+class TestMakeResultsTable(unittest.TestCase):
+    def _base_result_dict(self):
+        return {
+            "results": {
+                "mmlu:abstract_algebra": {"acc": 0.4, "acc_stderr": 0.05},
+                "hellaswag": {"acc_norm": 0.75},
+            },
+            "versions": {
+                "mmlu:abstract_algebra": 1,
+                "hellaswag": 0,
+            },
+        }
+
+    def test_num_samples_column_present(self):
+        result_dict = self._base_result_dict()
+        result_dict["config_tasks"] = {
+            "mmlu:abstract_algebra": SimpleNamespace(effective_num_docs=100),
+            "hellaswag": SimpleNamespace(effective_num_docs=10042),
+        }
+        table = make_results_table(result_dict)
+        self.assertIn("Num. samples", table)
+        self.assertIn("100", table)
+        self.assertIn("10042", table)
+
+    def test_num_samples_empty_without_config_tasks(self):
+        # config_tasks absent — column header still present, counts are blank
+        table = make_results_table(self._base_result_dict())
+        self.assertIn("Num. samples", table)
+
+    def test_num_samples_only_on_first_metric_row(self):
+        # Tasks with multiple metrics should only show the count on the first row
+        result_dict = {
+            "results": {"task_a": {"acc": 0.5, "acc_stderr": 0.01, "f1": 0.6, "f1_stderr": 0.02}},
+            "versions": {"task_a": 0},
+            "config_tasks": {"task_a": SimpleNamespace(effective_num_docs=50)},
+        }
+        table = make_results_table(result_dict)
+        self.assertEqual(table.count("50"), 1)
+
+    def test_stderr_row_format(self):
+        table = make_results_table(self._base_result_dict())
+        self.assertIn("±", table)
+        self.assertIn("0.40", table)
+        self.assertIn("0.05", table)
 
 
 class TestRemoveReasoningTags(unittest.TestCase):
