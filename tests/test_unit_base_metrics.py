@@ -30,7 +30,7 @@ from lighteval.metrics.dynamic_metrics import (
     NormalizedMultiChoiceProbMetric,
     ProbabilityMetric,
 )
-from lighteval.metrics.metrics_sample import ExactMatches
+from lighteval.metrics.metrics_sample import ExactMatches, MajAtN
 from lighteval.metrics.normalizations import LogProbCharNorm, helm_normalizer
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
@@ -190,6 +190,13 @@ class TestBaseMetrics:
 
         res = em.compute_one_item("", "")
         assert res == 0
+
+    def test_maj_at_n_non_first_gold(self):
+        # Regression: MajAtN preprocessed get_golds() into choices but kept the original
+        # gold_index, so a gold that is not the first choice raised IndexError.
+        doc = Doc(query="q", choices=["London", "Paris", "Berlin"], gold_index=[1], task_name="test")
+        assert MajAtN(n=3).compute(doc, ModelResponse(text=["Paris", "Paris", "London"])) == 1
+        assert MajAtN(n=3).compute(doc, ModelResponse(text=["London", "London", "Paris"])) == 0
 
     def test_prob(self):
         doc = Doc(query="Test query", choices=["A", "B", "C"], gold_index=0, task_name="test")
