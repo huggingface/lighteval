@@ -24,6 +24,7 @@ import functools
 import gc
 import inspect
 import logging
+from collections.abc import Callable
 
 import torch
 
@@ -54,14 +55,14 @@ def should_reduce_batch_size(exception: Exception) -> bool:
     return False
 
 
-def find_executable_batch_size(function: callable = None, starting_batch_size: int = 128):
+def find_executable_batch_size(function: Callable[..., object] | None = None, starting_batch_size: int = 128):
     """A basic decorator that will try to execute `function`. If it fails from exceptions related to out-of-memory or
     CUDNN, the batch size is cut in half and passed to `function`
 
     `function` must take in a `batch_size` parameter as its first argument.
 
     Args:
-        function (`callable`, *optional*):
+        function (`Callable`, *optional*):
             A function to wrap
         starting_batch_size (`int`, *optional*):
             The batch size to try and fit into memory
