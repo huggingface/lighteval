@@ -79,9 +79,9 @@
           "text": ["Das Wetter ist schön"]
         }
       ],
-      "expected_output": 0.0,
+      "expected_output": 9.090909090909092,
       "tolerance": 0.05,
-      "description": "Minor edits - small word differences"
+      "description": "Minor edits - small word differences (TER ≈ 9.09)"
     },
     {
       "name": "TER - Major Edits",
@@ -159,9 +159,9 @@
           "text": ["Es ist sehr heiß"]
         }
       ],
-      "expected_output": 80.0,
+      "expected_output": 100.0,
       "tolerance": 0.1,
-      "description": "Completely different translations - maximum edit distance"
+      "description": "Completely different translations - maximum edit distance (TER = 100.0)"
     }
   ]
 }
