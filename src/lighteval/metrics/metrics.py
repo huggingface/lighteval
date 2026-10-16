@@ -71,6 +71,7 @@ from lighteval.metrics.utils.extractive_match_utils import (
     extract_target_from_pred,
     get_extraction_regexes_inspect,
 )
+from lighteval.metrics.utils.math_comparison import compare_gold_target
 from lighteval.metrics.utils.metric_utils import (
     CorpusLevelMetric,
     CorpusLevelMetricGrouping,
@@ -102,7 +103,7 @@ def math_scorer():
         )
         return Score(
             # Correct or Incorrect, used by inspect-ai backend
-            value="C" if extracted_predictions == extracted_gold else "I",
+            value="C" if compare_gold_target(extracted_gold, extracted_predictions) else "I",
             explanation=state.output.completion,
             answer=str(extracted_predictions),
         )
