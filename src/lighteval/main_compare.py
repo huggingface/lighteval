@@ -5,6 +5,7 @@
 
 import json
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import typer
 from typing_extensions import Annotated
@@ -35,14 +36,16 @@ def compare(
     ] = None,
 ):
     """Compare paired sample scores, uncertainty, and changed examples without running a model."""
-    if output is not None and any(
-        output.resolve() == path.resolve() or (path.is_dir() and output.resolve().is_relative_to(path.resolve()))
-        for path in (baseline, candidate)
-    ):
-        raise typer.BadParameter(
-            "Save the report outside the input files/directories so it cannot overwrite or pollute a run"
-        )
     try:
+        if output is not None and any(
+            output.resolve() == path.resolve()
+            or (output.exists() and output.samefile(path))
+            or (path.is_dir() and output.resolve().is_relative_to(path.resolve()))
+            for path in (baseline, candidate)
+        ):
+            raise ValueError(
+                "Save the report outside the input files/directories so it cannot overwrite or pollute a run"
+            )
         report = compare_runs(
             load_run(baseline),
             load_run(candidate),
@@ -53,13 +56,23 @@ def compare(
             seed=seed,
             allow_partial=allow_partial,
         )
+        if output is not None:
+            content = json.dumps(report.to_dict(), indent=2, ensure_ascii=False, allow_nan=False) + "\n"
+            output.parent.mkdir(parents=True, exist_ok=True)
+            # Replace the destination atomically: interrupted writes leave the old
+            # report intact, and hard links to files inside run directories cannot
+            # cause the underlying input file to be truncated.
+            temporary = None
+            try:
+                with NamedTemporaryFile(mode="w", encoding="utf-8", dir=output.parent, delete=False) as stream:
+                    temporary = Path(stream.name)
+                    stream.write(content)
+                temporary.replace(output)
+            finally:
+                if temporary is not None:
+                    temporary.unlink(missing_ok=True)
     except (ValueError, OSError) as error:
         raise typer.BadParameter(str(error)) from error
-    if output is not None:
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(
-            json.dumps(report.to_dict(), indent=2, ensure_ascii=False, allow_nan=False) + "\n", encoding="utf-8"
-        )
     typer.echo(report.to_markdown())
     if fail_on_regression and any(row.verdict == "regressed" for row in report.comparisons):
         raise typer.Exit(code=1)

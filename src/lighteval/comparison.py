@@ -42,6 +42,8 @@ class ScoredSample:
         """Use typed IDs rather than position or a lossy string conversion."""
         if isinstance(self.sample_id, bool) or not isinstance(self.sample_id, (str, int)) or self.sample_id == "":
             raise ValueError(f"Task {self.task!r} has a missing or invalid sample ID: {self.sample_id!r}")
+        if isinstance(self.epoch, bool) or not isinstance(self.epoch, int) or self.epoch < 1:
+            raise ValueError(f"Task {self.task!r} has an invalid epoch: {self.epoch!r}")
         return self.task, json.dumps(self.sample_id), self.epoch
 
 
@@ -150,7 +152,8 @@ class ComparisonReport:
                 "Intervals are paired percentile bootstrap intervals for mean differences, not simultaneous intervals. "
                 "They describe uncertainty over the evaluated sample population; they do not capture training-seed, "
                 "dataset contamination, judge, or prompt-selection uncertainty. Small or constant samples can produce "
-                "degenerate intervals. Only scalar mean metrics are supported.",
+                "degenerate intervals. Permutation p-values assume exchangeable run labels within independent examples. "
+                "Only scalar mean metrics are supported.",
                 "",
             ]
         )
@@ -158,6 +161,10 @@ class ComparisonReport:
 
 
 def _json_value(value: Any) -> Any:
+    if isinstance(value, bytes):
+        # Parquet image structs can contain encoded bytes. Keep their identity
+        # without embedding an unbounded binary payload in a JSON report.
+        return {"sha256": hashlib.sha256(value).hexdigest()}
     if isinstance(value, BaseModel):
         return value.model_dump(mode="json")
     if isinstance(value, dict):
@@ -218,7 +225,7 @@ def _load_details(file: Path) -> EvaluationRun:
                     task=task or doc["task_name"],
                     sample_id=doc.get("id", ""),
                     scores=row["metric"],
-                    input=doc["query"],
+                    input=_json_value({"query": doc["query"], "choices": doc["choices"], "images": doc.get("images")}),
                     target=target,
                     output=row["model_response"].get("text"),
                 )
@@ -229,17 +236,24 @@ def _load_details(file: Path) -> EvaluationRun:
 def _load_inspect(file: Path) -> EvaluationRun:
     from inspect_ai.log import read_eval_log
 
-    log = read_eval_log(str(file))
+    log = read_eval_log(str(file), resolve_attachments=True)
     if not log.samples:
         raise ValueError(f"{file} has no saved sample scores; header-only logs cannot be compared")
     samples = []
     for sample in log.samples:
         scores = {}
         for name, score in (sample.scores or {}).items():
-            if isinstance(score.value, dict):
-                scores.update({f"{name}.{key}": value for key, value in score.value.items()})
-            else:
-                scores[name] = score.value
+            values = (
+                {f"{name}.{key}": value for key, value in score.value.items()}
+                if isinstance(score.value, dict)
+                else {name: score.value}
+            )
+            duplicates = scores.keys() & values.keys()
+            if duplicates:
+                raise ValueError(
+                    f"{file}: Ambiguous metric name(s) {sorted(duplicates)} after flattening scorer dimensions"
+                )
+            scores.update(values)
         samples.append(
             ScoredSample(
                 task=log.eval.task,

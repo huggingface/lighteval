@@ -48,8 +48,10 @@ Current detail files contain `doc`, `model_response`, and `metric` columns. The
 `doc.id` must be present. Older exports without stable IDs cannot safely be paired
 by row position and are not supported. The task identity in standard filenames
 includes the few-shot configuration, so different few-shot tasks are not silently
-combined. Inspect and classic task/score naming conventions are preserved; the
-tool does not guess mappings between formats.
+combined. The pairing check includes all answer choices and saved images, not
+just the question and correct answer. Encoded image bytes are represented by
+SHA-256 digests in JSON reports. Inspect and classic task/score naming conventions
+are preserved; the tool does not guess mappings between formats.
 
 To compare several tasks, pass a directory containing **one run's files** on each
 side. Do not pass a parent containing multiple models or multiple timestamps of
@@ -88,7 +90,11 @@ finish successfully, and have valid scores for every selected comparison. Inputs
 and targets are checked as well as IDs, so reusing an ID for a different question
 cannot produce an apparently valid paired comparison.
 Inspect's random message IDs and message bookkeeping metadata are ignored in
-this check; message roles, content, and other fields remain significant.
+this check; message roles, content, and other fields remain significant. Inspect
+attachments are resolved from the saved log. For media saved only as a URL or
+file path, matching checks the reference, not the historical file contents;
+removed media cannot be recovered. Use logs that retain media content when
+comparing dataset revisions.
 
 For a CI check, add `--fail-on-regression`. The command writes and prints the
 report, then exits with code `1` if any comparison is a regression after Holm
@@ -125,7 +131,11 @@ each sample's mean, and each remaining sample has equal weight.
   McNemar test (a two-sided binomial test on discordant pairs).
 - Otherwise, a paired sign-flip permutation test is used. Small samples are
   enumerated exactly when feasible; larger samples use the specified number of
-  random permutations and SciPy's conservative randomized-test p-value.
+  random permutations and SciPy's conservative randomized-test p-value. This
+  test assumes the two run labels are exchangeable within each independent
+  example under the null (equivalently, symmetric paired differences for the
+  sign-flip formulation). Equal means alone do not guarantee this assumption for
+  arbitrary skewed scores. Repeated epochs remain grouped by example.
 - Holm step-down correction adjusts p-values across **all returned task/metric
   rows**. A verdict is improved or regressed only when its adjusted p-value is at
   most `1 - confidence_level`, with the sign interpreted using score direction.

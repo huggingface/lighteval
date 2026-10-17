@@ -6,6 +6,7 @@
 import asyncio
 import json
 from dataclasses import asdict, replace
+from itertools import product
 
 import numpy as np
 import pyarrow as pa
@@ -15,7 +16,7 @@ import typer
 from inspect_ai import Task, eval_async
 from inspect_ai.dataset import Sample
 from inspect_ai.log import read_eval_log, write_eval_log
-from inspect_ai.model import ChatMessageUser, ModelOutput, get_model
+from inspect_ai.model import ChatMessageUser, ContentImage, ContentText, ModelOutput, get_model
 from inspect_ai.scorer import exact
 from inspect_ai.solver import generate
 from typer.testing import CliRunner
@@ -178,6 +179,13 @@ def test_missing_and_invalid_ids_are_rejected(sample_id):
         row(replace(a, samples=[replace(a.samples[0], sample_id=sample_id)]), a)
 
 
+@pytest.mark.parametrize("epoch", [None, True, 0, -1, 1.5, "1"])
+def test_epochs_must_be_positive_integers(epoch):
+    a = run([0])
+    with pytest.raises(ValueError, match="invalid epoch"):
+        row(replace(a, samples=[replace(a.samples[0], epoch=epoch)]), a)
+
+
 def test_integer_and_string_ids_are_distinct():
     a = run([0, 1])
     b = replace(a, samples=[replace(s, sample_id=str(s.sample_id)) for s in a.samples])
@@ -266,6 +274,24 @@ def test_seed_is_stable_when_another_task_is_added():
     assert actual.p_value == expected.p_value
 
 
+def test_permutation_p_values_match_independent_exhaustive_sign_flips():
+    rng = np.random.default_rng(216)
+    for n in range(2, 9):
+        for _ in range(5):
+            differences = rng.integers(-3, 4, size=n).tolist()
+            observed = abs(sum(differences))
+            extreme = sum(
+                abs(sum(sign * difference for sign, difference in zip(signs, differences))) >= observed
+                for signs in product((-1, 1), repeat=n)
+            )
+            expected = extreme / 2**n
+            result = compare_runs(
+                run([4] * n), run([4 + d for d in differences]), ["accuracy"], n_resamples=2**n
+            ).comparisons[0]
+            assert result.test == "paired_permutation"
+            assert result.p_value == pytest.approx(expected)
+
+
 def test_binary_null_calibration():
     rng = np.random.default_rng(819)
     discoveries = 0
@@ -288,12 +314,21 @@ def test_bootstrap_coverage_on_paired_gaussian_data():
     assert covered >= 85  # Broad deterministic calibration bound, nominal coverage is 95%.
 
 
-def write_details(path, scores):
+def write_details(path, scores, **doc_fields):
     logger = DetailsLogger()
     for i, score in enumerate(scores):
         logger.log(
             "task|0",
-            Doc(query=f"question {i}", choices=["gold"], gold_index=0, id=str(i), task_name="task"),
+            Doc(
+                **{
+                    "query": f"question {i}",
+                    "choices": ["gold"],
+                    "gold_index": 0,
+                    "id": str(i),
+                    "task_name": "task",
+                    **doc_fields,
+                }
+            ),
             ModelResponse(text=["answer"]),
             {"accuracy": score},
         )
@@ -308,6 +343,16 @@ def test_reads_actual_lighteval_details_schema(tmp_path):
     assert loaded.samples[0].task == "task|0"
     assert loaded.samples[0].target == ["gold"]
     assert row(loaded, loaded).samples == 3
+
+
+def test_image_bytes_are_fingerprinted_and_serializable(tmp_path):
+    a, b = tmp_path / "a.parquet", tmp_path / "b.parquet"
+    images = [{"bytes": b"saved image", "path": None}]
+    write_details(a, [0, 1], images=images)
+    write_details(b, [1, 1], images=images)
+    report = compare_runs(load_run(a), load_run(b), ["accuracy"], n_resamples=99)
+    data = json.loads(json.dumps(report.to_dict(), allow_nan=False))
+    assert len(data["comparisons"][0]["changes"][0]["input"]["images"][0]["bytes"]["sha256"]) == 64
 
 
 def test_refuses_aggregate_parquet_without_sample_data(tmp_path):
@@ -343,9 +388,84 @@ def test_cli_writes_report_and_reports_pairing_errors(tmp_path):
     assert "regressed" in result.output
 
 
+@pytest.mark.parametrize(
+    "field,value",
+    [("choices", ["gold", "changed distractor"]), ("images", [{"bytes": b"changed image", "path": None}])],
+)
+def test_detail_pairing_checks_choices_and_images(tmp_path, field, value):
+    a, b = tmp_path / "a.parquet", tmp_path / "b.parquet"
+    write_details(a, [0, 1])
+    write_details(b, [1, 1], **{field: value})
+    with pytest.raises(ValueError, match="input or target differs"):
+        row(load_run(a), load_run(b))
+
+
+def test_cli_cannot_overwrite_an_input_through_a_hard_link(tmp_path):
+    a, b = tmp_path / "a.parquet", tmp_path / "b.parquet"
+    write_details(a, [0, 1])
+    write_details(b, [1, 1])
+    original = a.read_bytes()
+    output = tmp_path / "report.json"
+    output.hardlink_to(a)
+    app = typer.Typer()
+    app.command()(compare)
+    result = CliRunner().invoke(app, [str(a), str(b), "--metric", "accuracy", "--output", str(output)])
+    assert result.exit_code == 2
+    assert a.read_bytes() == original
+
+
+def test_report_write_failure_preserves_existing_file_and_cleans_up(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    a, b = tmp_path / "a.parquet", tmp_path / "b.parquet"
+    write_details(a, [0, 1])
+    write_details(b, [1, 1])
+    output = tmp_path / "report.json"
+    output.write_text("existing report")
+    original_files = set(tmp_path.iterdir())
+
+    def fail_replace(self, target):
+        raise OSError("simulated write failure")
+
+    monkeypatch.setattr(Path, "replace", fail_replace)
+    app = typer.Typer()
+    app.command()(compare)
+    result = CliRunner().invoke(app, [str(a), str(b), "--metric", "accuracy", "--output", str(output)])
+    assert result.exit_code == 2
+    assert "simulated write failure" in result.output
+    assert output.read_text() == "existing report"
+    assert set(tmp_path.iterdir()) == original_files
+
+
+def test_report_hard_link_to_directory_input_cannot_modify_source(tmp_path):
+    baseline = tmp_path / "baseline"
+    baseline.mkdir()
+    a, b = baseline / "a.parquet", tmp_path / "b.parquet"
+    write_details(a, [0, 1])
+    write_details(b, [1, 1])
+    original = a.read_bytes()
+    output = tmp_path / "report.json"
+    output.hardlink_to(a)
+    app = typer.Typer()
+    app.command()(compare)
+    result = CliRunner().invoke(app, [str(baseline), str(b), "--metric", "accuracy", "--output", str(output)])
+    assert result.exit_code == 0, result.output
+    assert a.read_bytes() == original
+    assert json.loads(output.read_text())["comparisons"][0]["samples"] == 2
+
+
 def test_reads_real_inspect_logs_with_repeated_epochs(tmp_path):
+    image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII="
+
     async def evaluate():
-        dataset = [Sample(input=[ChatMessageUser(content=f"question {i}")], target="yes", id=str(i)) for i in range(3)]
+        dataset = [
+            Sample(
+                input=[ChatMessageUser(content=[ContentText(text=f"question {i}"), ContentImage(image=image)])],
+                target="yes",
+                id=str(i),
+            )
+            for i in range(3)
+        ]
         model = get_model(
             "mockllm/model", custom_outputs=[ModelOutput.from_content("mockllm/model", "yes")] * 6, memoize=False
         )
@@ -360,6 +480,7 @@ def test_reads_real_inspect_logs_with_repeated_epochs(tmp_path):
 
     log_path = asyncio.run(evaluate())
     loaded = load_run(log_path)
+    assert loaded.samples[0].input[0]["content"][1]["image"] == image
     result = compare_runs(loaded, loaded, ["exact"], n_resamples=99).comparisons[0]
     assert result.samples == 3
     assert result.observations == 6
@@ -381,6 +502,14 @@ def test_reads_real_inspect_logs_with_repeated_epochs(tmp_path):
         compare_runs(dictionary_run, dictionary_run, ["exact.accuracy"], n_resamples=99).comparisons[0].baseline_mean
         == 1
     )
+    collision_log = dictionary_log.model_copy(deep=True)
+    for sample in collision_log.samples:
+        sample.scores["exact.accuracy"] = sample.scores["exact"].model_copy(update={"value": 0})
+    collision_path = tmp_path / "collision.json"
+    write_eval_log(collision_log, collision_path)
+    with pytest.raises(ValueError, match="Ambiguous metric"):
+        load_run(collision_path)
+    collision_path.unlink()
     dictionary_log.eval.model = "mockllm/other-model"
     write_eval_log(dictionary_log, tmp_path / "other-model.json")
     with pytest.raises(ValueError, match="different models"):
