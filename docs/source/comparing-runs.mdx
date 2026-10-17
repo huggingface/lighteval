@@ -1,0 +1,166 @@
+# Compare evaluation runs
+
+Use `lighteval compare` to compare two saved evaluations on the **same examples**.
+The command works offline: it reads existing sample scores and does not run a
+model, load benchmark datasets, or call a judge.
+
+It reports baseline and candidate means, the paired difference, a confidence
+interval, a hypothesis test, and counts of improved, regressed, and unchanged
+examples. A JSON report includes each changed example and its saved model outputs.
+
+## Compare Inspect logs
+
+```bash
+lighteval compare baseline.eval candidate.eval \
+    --metric math_scorer \
+    --output comparison.json
+```
+
+Inspect `.eval` and native `.json` logs are supported. Select the **sample score
+name**, such as `math_scorer` or `exact`, rather than the aggregate metric name
+`accuracy`. If a scorer returns a dictionary, use `scorer_name.dimension`, for
+example `judge.helpfulness`.
+
+Standard Inspect score literals `C`, `I`, `P`, and `N` are converted to `1`, `0`,
+`0.5`, and `0`. Unknown strings, non-finite numbers, vector scores, and missing
+scores are rejected instead of being converted to zero.
+
+The runs may represent different models, checkpoints, or scorer versions. Their
+task names, sample IDs, epochs, original inputs, and targets must match. The tool
+cannot establish that generation settings, solver configurations, dataset
+versions, or judge configurations are scientifically comparable; choose runs
+appropriate to the comparison you intend to make.
+
+## Compare Lighteval detail files
+
+Generate classic backend details using `--save-details`, then compare their
+Parquet files:
+
+```bash
+lighteval compare \
+    'baseline/details_gsm8k|0_2026-10-16T12-00-00.parquet' \
+    'candidate/details_gsm8k|0_2026-10-16T13-00-00.parquet' \
+    --metric extractive_match \
+    --output comparison.json
+```
+
+Current detail files contain `doc`, `model_response`, and `metric` columns. The
+`doc.id` must be present. Older exports without stable IDs cannot safely be paired
+by row position and are not supported. The task identity in standard filenames
+includes the few-shot configuration, so different few-shot tasks are not silently
+combined. Inspect and classic task/score naming conventions are preserved; the
+tool does not guess mappings between formats.
+
+To compare several tasks, pass a directory containing **one run's files** on each
+side. Do not pass a parent containing multiple models or multiple timestamps of
+the same task. Duplicate task/ID/epoch observations are errors. Keep the JSON
+report outside both input directories so it is not loaded as part of a later run.
+
+## Select metrics and score direction
+
+```bash
+lighteval compare baseline/ candidate/ \
+    --metric accuracy --metric loss \
+    --lower-is-better loss \
+    --confidence-level 0.95 --n-resamples 9999 --seed 42 \
+    --output comparison.json
+```
+
+Requested metrics are compared on tasks where they appear. Shared tasks with none
+of the requested metrics are listed as unselected. A metric that does not occur
+anywhere is an error. Missing scores within a selected task remain errors.
+
+Scores are assumed higher-is-better unless listed with `--lower-is-better`.
+The displayed difference is always **candidate minus baseline**; score direction
+affects the verdict and improved/regressed counts, not the sign of that difference.
+
+Only **arithmetic means of scalar sample scores** are supported. Do not use this
+command to reconstruct corpus BLEU, corpus F1, perplexity, or pass@k from raw
+generations or other intermediate contributions. Such metrics require their own
+estimator and resampling procedure. Saved scalar per-example pass@k estimates may
+be compared as means, but the bootstrap does not generate new completions to
+capture generation uncertainty.
+
+## Pairing, missing examples, and repeated epochs
+
+By default, both runs must have the same tasks and task/ID/epoch observations,
+finish successfully, and have valid scores for every selected comparison. Inputs
+and targets are checked as well as IDs, so reusing an ID for a different question
+cannot produce an apparently valid paired comparison.
+Inspect's random message IDs and message bookkeeping metadata are ignored in
+this check; message roles, content, and other fields remain significant.
+
+For a CI check, add `--fail-on-regression`. The command writes and prints the
+report, then exits with code `1` if any comparison is a regression after Holm
+correction. Valid comparisons otherwise exit with code `0`; invalid input exits
+with code `2`. Regressions are interpreted using the declared score direction.
+
+For an explicitly partial comparison:
+
+```bash
+lighteval compare baseline.eval candidate.eval \
+    --metric exact --allow-partial --output intersection.json
+```
+
+This selects valid shared observations. The report lists baseline-only and
+candidate-only tasks and observations, plus failed/missing/non-finite pairs that
+were excluded. The means describe this intersection, not the original full runs.
+Duplicate observations or changed questions/targets remain errors in partial mode.
+Exclusion can introduce selection bias; inspect the reported counts before drawing
+conclusions.
+
+When a sample has multiple Inspect epochs, scores are averaged **within that
+sample on each side**, then compared. Bootstrap resampling and hypothesis testing
+operate on samples, not on the individual epochs. This avoids overstating the
+number of independent examples. In partial mode, only shared valid epochs enter
+each sample's mean, and each remaining sample has equal weight.
+
+## Statistical interpretation
+
+- Confidence intervals use a paired percentile bootstrap of per-sample
+  differences. Pairing is preserved by resampling the difference array. Batching
+  bounds temporary resampling memory. A single sample has no reported interval;
+  constant differences produce a degenerate interval.
+- If both sides' per-sample values are binary, the p-value is from the exact
+  McNemar test (a two-sided binomial test on discordant pairs).
+- Otherwise, a paired sign-flip permutation test is used. Small samples are
+  enumerated exactly when feasible; larger samples use the specified number of
+  random permutations and SciPy's conservative randomized-test p-value.
+- Holm step-down correction adjusts p-values across **all returned task/metric
+  rows**. A verdict is improved or regressed only when its adjusted p-value is at
+  most `1 - confidence_level`, with the sign interpreted using score direction.
+  Otherwise the verdict is inconclusive. Intervals are marginal, not simultaneous.
+
+Intervals and tests describe sampling uncertainty for the examples evaluated.
+They do not capture training-seed variation, contamination, judge bias, or
+prompt-selection uncertainty. Correlation between distinct sample IDs (for example
+multiple questions about one image) is not modeled. Small samples and bootstrap
+boundary cases need particular care; a narrow interval is not proof of broad
+generalization.
+
+The implementation uses SciPy's [bootstrap](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.bootstrap.html),
+[binomial test](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.binomtest.html),
+and [paired permutation test](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.permutation_test.html).
+
+## Use the Python API
+
+```python
+from lighteval.comparison import compare_runs, load_run
+
+report = compare_runs(
+    load_run("baseline.eval"),
+    load_run("candidate.eval"),
+    metrics=["math_scorer"],
+    seed=42,
+)
+print(report.to_markdown())
+data = report.to_dict()
+```
+
+Applications can also construct `EvaluationRun` and `ScoredSample` objects to
+compare already-loaded scores. JSON reports include selected settings, raw and
+adjusted p-values, paired intervals, coverage counts, changed samples, source-file
+SHA-256 digests, and library versions. Seeds are derived separately for each task
+and metric, so input order or adding another task does not change an existing
+comparison's resampling results. Adding comparisons can change the Holm-adjusted
+p-values, as expected.
