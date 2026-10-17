@@ -46,12 +46,15 @@ lighteval compare \
 
 Current detail files contain `doc`, `model_response`, and `metric` columns. The
 `doc.id` must be present. Older exports without stable IDs cannot safely be paired
-by row position and are not supported. The task identity in standard filenames
-includes the few-shot configuration, so different few-shot tasks are not silently
-combined. The pairing check includes all answer choices and saved images, not
-just the question and correct answer. Encoded image bytes are represented by
-SHA-256 digests in JSON reports. Inspect and classic task/score naming conventions
-are preserved; the tool does not guess mappings between formats.
+by row position and are not supported. Lighteval sets `doc.id` to the document's
+index within its evaluation split, and detail files do not record the split, so a
+task evaluated on several splits repeats IDs; such files are rejected. The task
+identity in standard filenames includes the few-shot configuration, so different
+few-shot tasks are not silently combined. The pairing check includes all answer
+choices and saved images, not just the question and correct answer. Encoded image
+bytes are represented by SHA-256 digests in JSON reports. Inspect and classic
+task/score naming conventions are preserved; the tool does not guess mappings
+between formats.
 
 To compare several tasks, pass a directory containing **one run's files** on each
 side. Do not pass a parent containing multiple models or multiple timestamps of
@@ -98,8 +101,9 @@ comparing dataset revisions.
 
 For a CI check, add `--fail-on-regression`. The command writes and prints the
 report, then exits with code `1` if any comparison is a regression after Holm
-correction. Valid comparisons otherwise exit with code `0`; invalid input exits
-with code `2`. Regressions are interpreted using the declared score direction.
+correction. Valid comparisons otherwise exit with code `0`; invalid input or any
+other failure exits with code `2`, so a crash is never mistaken for a regression.
+Regressions are interpreted using the declared score direction.
 
 For an explicitly partial comparison:
 

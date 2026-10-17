@@ -388,6 +388,29 @@ def test_cli_writes_report_and_reports_pairing_errors(tmp_path):
     assert "regressed" in result.output
 
 
+def test_cli_unexpected_failures_exit_with_code_2_not_regression_code(tmp_path, monkeypatch):
+    a, b = tmp_path / "a.parquet", tmp_path / "b.parquet"
+    write_details(a, [0, 1])
+    write_details(b, [1, 1])
+
+    def fail(path):
+        raise RuntimeError("unreadable log")
+
+    monkeypatch.setattr("lighteval.main_compare.load_run", fail)
+    app = typer.Typer()
+    app.command()(compare)
+    result = CliRunner().invoke(app, [str(a), str(b), "--metric", "accuracy", "--fail-on-regression"])
+    assert result.exit_code == 2
+    assert "RuntimeError: unreadable log" in result.output
+
+
+def test_details_with_ids_repeated_across_splits_are_rejected(tmp_path):
+    path = tmp_path / "details_task|0_2026-10-16T12-00-00.parquet"
+    write_details(path, [0, 1], id="0")
+    with pytest.raises(ValueError, match="within each evaluation split"):
+        load_run(path)
+
+
 @pytest.mark.parametrize(
     "field,value",
     [("choices", ["gold", "changed distractor"]), ("images", [{"bytes": b"changed image", "path": None}])],

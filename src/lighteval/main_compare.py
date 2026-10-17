@@ -71,8 +71,11 @@ def compare(
             finally:
                 if temporary is not None:
                     temporary.unlink(missing_ok=True)
-    except (ValueError, OSError) as error:
-        raise typer.BadParameter(str(error)) from error
+    except Exception as error:
+        # Exit code 1 is reserved for --fail-on-regression, so unexpected failures
+        # (unreadable files, missing packages) must also exit with code 2.
+        message = str(error) if isinstance(error, (ValueError, OSError)) else f"{type(error).__name__}: {error}"
+        raise typer.BadParameter(message) from error
     typer.echo(report.to_markdown())
     if fail_on_regression and any(row.verdict == "regressed" for row in report.comparisons):
         raise typer.Exit(code=1)

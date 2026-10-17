@@ -13,7 +13,7 @@ import importlib.metadata
 import json
 import math
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass, field
 from numbers import Real
 from pathlib import Path
@@ -230,6 +230,16 @@ def _load_details(file: Path) -> EvaluationRun:
                     output=row["model_response"].get("text"),
                 )
             )
+    # Lighteval numbers documents within each evaluation split, and details files
+    # do not record the split, so a multi-split task repeats IDs.
+    counts = Counter(sample.sample_id for sample in samples if sample.sample_id not in ("", None))
+    repeated = sorted(sample_id for sample_id, count in counts.items() if count > 1)
+    if repeated:
+        raise ValueError(
+            f"{file}: {len(repeated)} doc.id value(s) repeat (e.g. {repeated[:3]}). Lighteval numbers documents "
+            "within each evaluation split and details files do not record the split, so tasks evaluated on "
+            "several splits cannot be paired safely"
+        )
     return EvaluationRun(str(file), samples, "lighteval-parquet")
 
 
