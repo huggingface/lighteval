@@ -559,9 +559,7 @@ class LiteLLMClient(LightevalModel):
                     )
                     await asyncio.sleep(wait_time)
 
-            logger.error(
-                f"Loglikelihood API call failed after {self.API_MAX_RETRY} attempts, returning None."
-            )
+            logger.error(f"Loglikelihood API call failed after {self.API_MAX_RETRY} attempts, returning None.")
             return None
 
     async def _process_doc_loglikelihood_async(
@@ -582,10 +580,7 @@ class LiteLLMClient(LightevalModel):
             longest = max(doc.choices, key=len)
             self._warn_if_too_long(context_str + longest, label=f"doc '{doc.id}' longest choice")
 
-        tasks = [
-            self._call_api_text_completion_async(context_str + choice, semaphore)
-            for choice in doc.choices
-        ]
+        tasks = [self._call_api_text_completion_async(context_str + choice, semaphore) for choice in doc.choices]
         responses = await asyncio.gather(*tasks)
 
         logprobs_per_choice: list[float] = []

@@ -414,9 +414,11 @@ class TestCaching(unittest.TestCase):
             # _loglikelihood_async / _loglikelihood_rolling_async are the internal
             # async methods called by the public @cached-decorated methods.
             # AsyncMock makes them return coroutines that resolve to our test responses.
-            with patch.object(model, "_loglikelihood_async", AsyncMock(return_value=self.model_responses)), \
-                 patch.object(model, "_loglikelihood_rolling_async", AsyncMock(return_value=self.model_responses)), \
-                 patch.object(model, "_check_text_completion_support"):  # suppress provider warning
+            with (
+                patch.object(model, "_loglikelihood_async", AsyncMock(return_value=self.model_responses)),
+                patch.object(model, "_loglikelihood_rolling_async", AsyncMock(return_value=self.model_responses)),
+                patch.object(model, "_check_text_completion_support"),
+            ):  # suppress provider warning
                 self._test_cache(
                     model,
                     [

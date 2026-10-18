@@ -178,7 +178,9 @@ class TestFindContinuationStart:
         """If encode raises, we fall back gracefully to 0 (log a warning)."""
         context_str = "ctx"
         lp = make_logprobs(["ctx", "cont"], [None, -0.3], text_offset=None)
-        with patch("lighteval.models.endpoints.litellm_model.encode", side_effect=RuntimeError("tiktoken unavailable")):
+        with patch(
+            "lighteval.models.endpoints.litellm_model.encode", side_effect=RuntimeError("tiktoken unavailable")
+        ):
             result = LiteLLMClient._find_continuation_start(lp, context_str, "unknown-model")
         assert result == 0
 
@@ -197,8 +199,8 @@ class TestCheckArgmax:
         tokens = ["ctx", " A", " B", "_gen"]
         top_logprobs = [
             {"ctx": -0.1},
-            {" A": -0.5},   # actual token " A" IS top-1 ✓
-            {" B": -0.3},   # actual token " B" IS top-1 ✓
+            {" A": -0.5},  # actual token " A" IS top-1 ✓
+            {" B": -0.3},  # actual token " B" IS top-1 ✓
             {"_gen": -0.9},
         ]
         result = LiteLLMClient._check_argmax(tokens, [], top_logprobs, cont_start=1)
@@ -208,7 +210,7 @@ class TestCheckArgmax:
         tokens = ["ctx", " A", "_gen"]
         top_logprobs = [
             {"ctx": -0.1},
-            {" B": -0.2},   # top-1 is " B" but actual is " A" ✗
+            {" B": -0.2},  # top-1 is " B" but actual is " A" ✗
             {"_gen": -0.9},
         ]
         result = LiteLLMClient._check_argmax(tokens, [], top_logprobs, cont_start=1)
@@ -219,8 +221,8 @@ class TestCheckArgmax:
         tokens = ["ctx", " A", " C", "_gen"]
         top_logprobs = [
             {"ctx": -0.1},
-            {" A": -0.5},   # ✓
-            {" B": -0.3},   # top-1 is " B" but actual is " C" ✗
+            {" A": -0.5},  # ✓
+            {" B": -0.3},  # top-1 is " B" but actual is " C" ✗
             {"_gen": -0.9},
         ]
         result = LiteLLMClient._check_argmax(tokens, [], top_logprobs, cont_start=1)
@@ -309,9 +311,7 @@ class TestCallApiTextCompletionAsync:
             sem = asyncio.Semaphore(10)
             with patch("lighteval.models.endpoints.litellm_model.litellm") as mock_lit:
                 mock_lit.RateLimitError = self._FakeRateLimitError
-                mock_lit.atext_completion = AsyncMock(
-                    side_effect=[self._FakeGenericError("timeout"), fake_resp]
-                )
+                mock_lit.atext_completion = AsyncMock(side_effect=[self._FakeGenericError("timeout"), fake_resp])
                 return await client._call_api_text_completion_async("test", sem)
 
         result = self._run_async(run())
@@ -325,9 +325,7 @@ class TestCallApiTextCompletionAsync:
             sem = asyncio.Semaphore(10)
             with patch("lighteval.models.endpoints.litellm_model.litellm") as mock_lit:
                 mock_lit.RateLimitError = self._FakeRateLimitError
-                mock_lit.atext_completion = AsyncMock(
-                    side_effect=self._FakeGenericError("permanent failure")
-                )
+                mock_lit.atext_completion = AsyncMock(side_effect=self._FakeGenericError("permanent failure"))
                 return await client._call_api_text_completion_async("test", sem)
 
         result = self._run_async(run())
@@ -341,9 +339,7 @@ class TestCallApiTextCompletionAsync:
             sem = asyncio.Semaphore(10)
             with patch("lighteval.models.endpoints.litellm_model.litellm") as mock_lit:
                 mock_lit.RateLimitError = self._FakeRateLimitError
-                mock_lit.atext_completion = AsyncMock(
-                    side_effect=self._FakeRateLimitError("perpetual 429")
-                )
+                mock_lit.atext_completion = AsyncMock(side_effect=self._FakeRateLimitError("perpetual 429"))
                 return await client._call_api_text_completion_async("test", sem)
 
         result = self._run_async(run())
@@ -441,18 +437,16 @@ class TestProcessDocLoglikelihoodAsync:
                 "_call_api_text_completion_async",
                 AsyncMock(side_effect=[resp_a, resp_b]),
             ):
-                return await client._process_doc_loglikelihood_async(
-                    self._make_doc_with_two_choices(), "Q:", sem
-                )
+                return await client._process_doc_loglikelihood_async(self._make_doc_with_two_choices(), "Q:", sem)
 
         result = self._run_async(run())
 
         assert isinstance(result, ModelResponse)
         assert len(result.logprobs) == 2
-        assert result.logprobs[0] == pytest.approx(-0.5)   # only continuation token for A
-        assert result.logprobs[1] == pytest.approx(-2.0)   # only continuation token for B
-        assert result.argmax_logits_eq_gold[0] is True     # " A" was top-1
-        assert result.argmax_logits_eq_gold[1] is False    # " B" was NOT top-1
+        assert result.logprobs[0] == pytest.approx(-0.5)  # only continuation token for A
+        assert result.logprobs[1] == pytest.approx(-2.0)  # only continuation token for B
+        assert result.argmax_logits_eq_gold[0] is True  # " A" was top-1
+        assert result.argmax_logits_eq_gold[1] is False  # " B" was NOT top-1
 
     def test_multi_token_continuation_sums_correctly(self):
         """Continuation with two tokens: sum of both logprobs."""
@@ -462,8 +456,11 @@ class TestProcessDocLoglikelihoodAsync:
             tokens=["Q", ":", " yes", " sir", "_gen"],
             token_logprobs=[None, -0.1, -0.4, -0.6, -0.9],
             top_logprobs=[
-                {"Q": -0.05}, {":": -0.1},
-                {" yes": -0.4}, {" sir": -0.6}, {"_gen": -0.9},
+                {"Q": -0.05},
+                {":": -0.1},
+                {" yes": -0.4},
+                {" sir": -0.6},
+                {"_gen": -0.9},
             ],
             text_offset=[0, 1, 2, 6, 10],  # context "Q:" ends at char 2
         )
@@ -487,9 +484,7 @@ class TestProcessDocLoglikelihoodAsync:
 
         async def run():
             sem = asyncio.Semaphore(10)
-            with patch.object(
-                client, "_call_api_text_completion_async", AsyncMock(return_value=None)
-            ):
+            with patch.object(client, "_call_api_text_completion_async", AsyncMock(return_value=None)):
                 return await client._process_doc_loglikelihood_async(doc, "Q:", sem)
 
         result = self._run_async(run())
@@ -505,9 +500,7 @@ class TestProcessDocLoglikelihoodAsync:
 
         async def run():
             sem = asyncio.Semaphore(10)
-            with patch.object(
-                client, "_call_api_text_completion_async", AsyncMock(return_value=bad_resp)
-            ):
+            with patch.object(client, "_call_api_text_completion_async", AsyncMock(return_value=bad_resp)):
                 return await client._process_doc_loglikelihood_async(doc, "Q:", sem)
 
         result = self._run_async(run())
@@ -522,9 +515,7 @@ class TestProcessDocLoglikelihoodAsync:
         async def run():
             sem = asyncio.Semaphore(10)
             # We verify that atext_completion is never called when choices is empty
-            with patch.object(
-                client, "_call_api_text_completion_async", AsyncMock()
-            ) as mock_call:
+            with patch.object(client, "_call_api_text_completion_async", AsyncMock()) as mock_call:
                 result = await client._process_doc_loglikelihood_async(doc, "Q:", sem)
                 assert mock_call.call_count == 0
             return result
@@ -537,8 +528,9 @@ class TestProcessDocLoglikelihoodAsync:
         """Verifies full_text = context + choice is sent for each choice."""
         client = make_bare_client()
         doc = make_doc("CTX", [" X", " Y"], gold_index=0)
-        fake_resp = make_response(["C", "T", "X", " X", "_gen"], [None, -0.1, -0.1, -0.5, -0.9],
-                                  text_offset=[0, 1, 2, 3, 5])
+        fake_resp = make_response(
+            ["C", "T", "X", " X", "_gen"], [None, -0.1, -0.1, -0.5, -0.9], text_offset=[0, 1, 2, 3, 5]
+        )
 
         captured_prompts = []
 
@@ -576,9 +568,7 @@ class TestProcessDocLoglikelihoodAsync:
 
         async def run():
             sem = asyncio.Semaphore(10)
-            with patch.object(
-                client, "_call_api_text_completion_async", AsyncMock(side_effect=resps)
-            ):
+            with patch.object(client, "_call_api_text_completion_async", AsyncMock(side_effect=resps)):
                 return await client._process_doc_loglikelihood_async(doc, "Q:", sem)
 
         result = self._run_async(run())
@@ -627,8 +617,10 @@ class TestLoglikelihoodIntegration:
         async def fake_process_doc(doc, context_str, semaphore):
             return responses_by_id[doc.id]
 
-        with patch.object(client, "_process_doc_loglikelihood_async", side_effect=fake_process_doc), \
-             patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True):
+        with (
+            patch.object(client, "_process_doc_loglikelihood_async", side_effect=fake_process_doc),
+            patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True),
+        ):
             results = client.loglikelihood(docs)
 
         assert len(results) == 2
@@ -649,8 +641,10 @@ class TestLoglikelihoodIntegration:
         async def fake_process(doc, context_str, semaphore):
             return pre_resp
 
-        with patch.object(client, "_process_doc_loglikelihood_async", side_effect=fake_process), \
-             patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True):
+        with (
+            patch.object(client, "_process_doc_loglikelihood_async", side_effect=fake_process),
+            patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True),
+        ):
             results = client.loglikelihood([doc])
 
         assert len(results) == 1
@@ -682,8 +676,10 @@ class TestLoglikelihoodIntegration:
 
         # Input order: [short, long]. Dataset sorts long first. loglikelihood must
         # restore original order → results[0] is short_doc's response.
-        with patch.object(client, "_process_doc_loglikelihood_async", side_effect=fake_process), \
-             patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True):
+        with (
+            patch.object(client, "_process_doc_loglikelihood_async", side_effect=fake_process),
+            patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True),
+        ):
             results = client.loglikelihood([short_doc, long_doc])
 
         assert len(results) == 2
@@ -704,8 +700,10 @@ class TestLoglikelihoodIntegration:
                 argmax_logits_eq_gold=[False, False],
             )
 
-        with patch.object(client, "_process_doc_loglikelihood_async", side_effect=fake_process), \
-             patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True):
+        with (
+            patch.object(client, "_process_doc_loglikelihood_async", side_effect=fake_process),
+            patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True),
+        ):
             results = client.loglikelihood(docs)
 
         assert len(results) == 3
@@ -733,6 +731,7 @@ class TestCheckTextCompletionSupport:
         with patch("lighteval.models.endpoints.litellm_model.litellm") as mock_lit:
             mock_lit.get_supported_openai_params = MagicMock(return_value=["echo", "logprobs", "max_tokens"])
             import logging
+
             with caplog.at_level(logging.WARNING, logger="lighteval.models.endpoints.litellm_model"):
                 client._check_text_completion_support()
         assert "echo" not in caplog.text or "does not list" not in caplog.text
@@ -742,6 +741,7 @@ class TestCheckTextCompletionSupport:
         with patch("lighteval.models.endpoints.litellm_model.litellm") as mock_lit:
             mock_lit.get_model_info = MagicMock(return_value={"mode": "chat"})
             import logging
+
             with caplog.at_level(logging.WARNING, logger="lighteval.models.endpoints.litellm_model"):
                 client._check_text_completion_support()
         assert "chat-only" in caplog.text
@@ -764,6 +764,7 @@ class TestCheckTextCompletionSupport:
         with patch("lighteval.models.endpoints.litellm_model.litellm") as mock_lit:
             mock_lit.get_model_info = MagicMock(return_value={"mode": "chat"})
             import logging
+
             with caplog.at_level(logging.WARNING, logger="lighteval.models.endpoints.litellm_model"):
                 client._check_text_completion_support()
         assert "claude-3-opus" in caplog.text
@@ -779,9 +780,11 @@ class TestCheckTextCompletionSupport:
         async def fake_process(doc, context_str, semaphore):
             return ModelResponse(input=context_str, logprobs=[-0.5], argmax_logits_eq_gold=[True])
 
-        with patch.object(LiteLLMClient, "_check_text_completion_support", fake_guard), \
-             patch.object(client, "_process_doc_loglikelihood_async", side_effect=fake_process), \
-             patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True):
+        with (
+            patch.object(LiteLLMClient, "_check_text_completion_support", fake_guard),
+            patch.object(client, "_process_doc_loglikelihood_async", side_effect=fake_process),
+            patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True),
+        ):
             client.loglikelihood([make_doc("Q:", [" A"], gold_index=0, doc_id="0")])
 
         assert guard_called["n"] == 1
@@ -797,9 +800,11 @@ class TestCheckTextCompletionSupport:
         async def fake_process(doc, semaphore):
             return ModelResponse(input=doc.query, logprobs=[-0.1, -0.2])
 
-        with patch.object(LiteLLMClient, "_check_text_completion_support", fake_guard), \
-             patch.object(client, "_process_doc_rolling_async", side_effect=fake_process), \
-             patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True):
+        with (
+            patch.object(LiteLLMClient, "_check_text_completion_support", fake_guard),
+            patch.object(client, "_process_doc_rolling_async", side_effect=fake_process),
+            patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True),
+        ):
             client.loglikelihood_rolling([make_doc("Hello world", choices=[], gold_index=0, doc_id="0")])
 
         assert guard_called["n"] == 1
@@ -944,8 +949,10 @@ class TestLoglikelihoodRollingIntegration:
         async def fake_rolling(doc, semaphore):
             return responses[doc.id]
 
-        with patch.object(client, "_process_doc_rolling_async", side_effect=fake_rolling), \
-             patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True):
+        with (
+            patch.object(client, "_process_doc_rolling_async", side_effect=fake_rolling),
+            patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True),
+        ):
             results = client.loglikelihood_rolling(docs)
 
         assert len(results) == 3
@@ -964,8 +971,10 @@ class TestLoglikelihoodRollingIntegration:
         async def fake_rolling(doc, semaphore):
             return ModelResponse(input=doc.query, logprobs=[-0.3, -0.5, -0.2])
 
-        with patch.object(client, "_process_doc_rolling_async", side_effect=fake_rolling), \
-             patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True):
+        with (
+            patch.object(client, "_process_doc_rolling_async", side_effect=fake_rolling),
+            patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True),
+        ):
             results = client.loglikelihood_rolling([doc])
 
         total_logprob = float(np.sum(results[0].logprobs))
@@ -991,6 +1000,7 @@ class TestCheckTextCompletionSupportModeDetection:
         with patch("lighteval.models.endpoints.litellm_model.litellm") as mock_lit:
             mock_lit.get_model_info = MagicMock(return_value={"mode": "completion"})
             import logging
+
             with caplog.at_level(logging.WARNING, logger="lighteval.models.endpoints.litellm_model"):
                 client._check_text_completion_support()
         assert "chat-only" not in caplog.text
@@ -1001,6 +1011,7 @@ class TestCheckTextCompletionSupportModeDetection:
         with patch("lighteval.models.endpoints.litellm_model.litellm") as mock_lit:
             mock_lit.get_model_info = MagicMock(return_value={"mode": "chat"})
             import logging
+
             with caplog.at_level(logging.WARNING, logger="lighteval.models.endpoints.litellm_model"):
                 client._check_text_completion_support()
         assert "chat-only" in caplog.text
@@ -1012,6 +1023,7 @@ class TestCheckTextCompletionSupportModeDetection:
         with patch("lighteval.models.endpoints.litellm_model.litellm") as mock_lit:
             mock_lit.get_model_info = MagicMock(return_value={"max_tokens": 4096})
             import logging
+
             with caplog.at_level(logging.WARNING, logger="lighteval.models.endpoints.litellm_model"):
                 client._check_text_completion_support()
         assert "chat-only" not in caplog.text
@@ -1116,16 +1128,18 @@ class TestWarnIfTooLong:
         client = self._make_client(max_length=3)
         with patch("lighteval.models.endpoints.litellm_model.encode", return_value=list(range(5))):
             import logging
+
             with caplog.at_level(logging.WARNING, logger="lighteval.models.endpoints.litellm_model"):
                 client._warn_if_too_long("some long text", label="test")
         assert "exceeds max_length" in caplog.text
-        assert "5" in caplog.text   # token count shown
-        assert "3" in caplog.text   # max_length shown
+        assert "5" in caplog.text  # token count shown
+        assert "3" in caplog.text  # max_length shown
 
     def test_no_warning_when_within_limit(self, caplog):
         client = self._make_client(max_length=100)
         with patch("lighteval.models.endpoints.litellm_model.encode", return_value=list(range(5))):
             import logging
+
             with caplog.at_level(logging.WARNING, logger="lighteval.models.endpoints.litellm_model"):
                 client._warn_if_too_long("short text")
         assert "exceeds" not in caplog.text
@@ -1141,6 +1155,7 @@ class TestWarnIfTooLong:
         client._max_length = None
         with patch("lighteval.models.endpoints.litellm_model.encode", return_value=list(range(999))):
             import logging
+
             with caplog.at_level(logging.WARNING, logger="lighteval.models.endpoints.litellm_model"):
                 client._warn_if_too_long("very long text")
         assert "exceeds" not in caplog.text
@@ -1149,6 +1164,7 @@ class TestWarnIfTooLong:
         client = self._make_client(max_length=1)
         with patch("lighteval.models.endpoints.litellm_model.encode", return_value=[1, 2, 3]):
             import logging
+
             with caplog.at_level(logging.WARNING, logger="lighteval.models.endpoints.litellm_model"):
                 client._warn_if_too_long("text", label="doc '42' longest choice")
         assert "doc '42'" in caplog.text
@@ -1163,20 +1179,20 @@ class TestWarnIfTooLong:
 
         # Use choices of clearly different lengths so max(key=len) is deterministic
         doc = make_doc("Q:", [" A", " longer_choice"], gold_index=0)
-        fake_resp = make_response(["Q", ":", " A", "_gen"], [None, -0.1, -0.5, -0.9],
-                                  text_offset=[0, 1, 2, 4])
+        fake_resp = make_response(["Q", ":", " A", "_gen"], [None, -0.1, -0.5, -0.9], text_offset=[0, 1, 2, 4])
 
         async def run():
             sem = asyncio.Semaphore(10)
-            with patch.object(client, "_warn_if_too_long", side_effect=fake_warn), \
-                 patch.object(client, "_call_api_text_completion_async",
-                              AsyncMock(return_value=fake_resp)):
+            with (
+                patch.object(client, "_warn_if_too_long", side_effect=fake_warn),
+                patch.object(client, "_call_api_text_completion_async", AsyncMock(return_value=fake_resp)),
+            ):
                 return await client._process_doc_loglikelihood_async(doc, "Q:", sem)
 
         asyncio.run(run())
-        assert len(warn_calls) == 1                      # called exactly once per doc
-        assert "longer_choice" in warn_calls[0][0]       # longest choice was used
-        assert warn_calls[0][0].startswith("Q:")         # context is prepended
+        assert len(warn_calls) == 1  # called exactly once per doc
+        assert "longer_choice" in warn_calls[0][0]  # longest choice was used
+        assert warn_calls[0][0].startswith("Q:")  # context is prepended
 
     def test_length_guard_called_in_process_doc_rolling(self):
         """_warn_if_too_long is called in _process_doc_rolling_async."""
@@ -1191,9 +1207,10 @@ class TestWarnIfTooLong:
 
         async def run():
             sem = asyncio.Semaphore(10)
-            with patch.object(client, "_warn_if_too_long", side_effect=fake_warn), \
-                 patch.object(client, "_call_api_text_completion_async",
-                              AsyncMock(return_value=fake_resp)):
+            with (
+                patch.object(client, "_warn_if_too_long", side_effect=fake_warn),
+                patch.object(client, "_call_api_text_completion_async", AsyncMock(return_value=fake_resp)),
+            ):
                 return await client._process_doc_rolling_async(doc, sem)
 
         asyncio.run(run())
@@ -1249,9 +1266,10 @@ class TestGreedyUntilSplitFix:
         def fake_parallel(contexts, *args, **kwargs):
             return [self._make_chat_response() for _ in contexts]
 
-        with patch.object(
-            client, "_LiteLLMClient__call_api_parallel", side_effect=fake_parallel
-        ), patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True):
+        with (
+            patch.object(client, "_LiteLLMClient__call_api_parallel", side_effect=fake_parallel),
+            patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True),
+        ):
             results = client.greedy_until(docs)
 
         assert len(prepared) == 2, (
@@ -1282,9 +1300,10 @@ class TestGreedyUntilSplitFix:
         def fake_parallel(contexts, *args, **kwargs):
             return [self._make_chat_response() for _ in contexts]
 
-        with patch.object(
-            client, "_LiteLLMClient__call_api_parallel", side_effect=fake_parallel
-        ), patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True):
+        with (
+            patch.object(client, "_LiteLLMClient__call_api_parallel", side_effect=fake_parallel),
+            patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True),
+        ):
             results = client.greedy_until(docs)
 
         assert len(prepared) == 3
@@ -1342,9 +1361,10 @@ class TestUseChatTemplateConfig:
         def fake_parallel(contexts, *args, **kwargs):
             return [self._make_chat_response() for _ in contexts]
 
-        with patch.object(
-            client, "_LiteLLMClient__call_api_parallel", side_effect=fake_parallel
-        ) as call_parallel, patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True):
+        with (
+            patch.object(client, "_LiteLLMClient__call_api_parallel", side_effect=fake_parallel) as call_parallel,
+            patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True),
+        ):
             client.greedy_until([doc])
 
         client.prompt_manager.prepare_prompt_api.assert_called_once_with(doc)
@@ -1363,9 +1383,10 @@ class TestUseChatTemplateConfig:
         def fake_parallel(contexts, *args, **kwargs):
             return [self._make_chat_response() for _ in contexts]
 
-        with patch.object(
-            client, "_LiteLLMClient__call_api_parallel", side_effect=fake_parallel
-        ) as call_parallel, patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True):
+        with (
+            patch.object(client, "_LiteLLMClient__call_api_parallel", side_effect=fake_parallel) as call_parallel,
+            patch.object(type(client), "disable_tqdm", new_callable=PropertyMock, return_value=True),
+        ):
             client.greedy_until([doc])
 
         client.prompt_manager.prepare_prompt_api.assert_not_called()
