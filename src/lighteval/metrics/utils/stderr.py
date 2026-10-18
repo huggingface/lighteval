@@ -82,12 +82,13 @@ def bootstrap_stderr(metric: Callable, population: list, number_experiments: int
     """
     res = []
     number_draws = min(1000, number_experiments)
-    number_seeds = number_experiments // number_draws
+    number_seeds = (number_experiments + number_draws - 1) // number_draws
 
     logger.info(f"Bootstrapping {metric.__name__}'s stderr with {number_seeds} seeds.")
     for seed in range(number_seeds):
         # sample w replacement
-        res.extend(_bootstrap_internal(metric=metric, number_draws=number_draws)((population, seed)))
+        draws_for_seed = min(number_draws, number_experiments - seed * number_draws)
+        res.extend(_bootstrap_internal(metric=metric, number_draws=draws_for_seed)((population, seed)))
 
     return mean_stderr(res)
 
