@@ -23,6 +23,7 @@
 import tempfile
 import unittest
 from dataclasses import asdict
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
@@ -100,6 +101,22 @@ class TestCaching(unittest.TestCase):
                     self.assertTrue(folder.exists())
                     self.assertIn(str(temp_dir), str(folder))
                     self.assertIn(model_name, str(folder))
+
+    def test_cache_directory_with_local_model(self):
+        """Test that a local model's cache is created outside the model directory."""
+        from lighteval.models.dummy.dummy_model import DummyModelConfig
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_dir = Path(temp_dir) / "model"
+            model_dir.mkdir()
+            cache_dir = Path(temp_dir) / "cache"
+            config = DummyModelConfig(model_name=str(model_dir), cache_dir=str(cache_dir))
+
+            cache = SampleCache(config)
+
+            self.assertTrue(cache.cache_dir.exists())
+            self.assertEqual(cache.cache_dir.parent.parent, cache_dir)
+            self.assertFalse(any(model_dir.iterdir()))
 
     def test_cache_decorator_presence(self):
         """Test that @cached decorators are present on the right methods."""
