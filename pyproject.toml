@@ -68,6 +68,7 @@ dependencies = [
     "GitPython>=3.1.41", # for logging
     "datasets>=4.0.0",
     "pydantic",
+    "pillow",
     "numpy>=2",  # pinned to avoid incompatibilities
     "hf-xet>=1.1.8",  # pinned to avoid failing test suite
     # Prettiness
@@ -79,7 +80,7 @@ dependencies = [
     # Extension of metrics
     "aenum==3.1.15",
     # Base metrics
-    "nltk==3.9.1",
+    "nltk==3.10.3",
     "scikit-learn",
     "sacrebleu",
     "rouge_score==0.1.2",

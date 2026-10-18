@@ -7,7 +7,6 @@ model_parameters:
   pipeline_parallel_size: 1
   gpu_memory_utilization: 0.4
   max_model_length: null
-  swap_space: 4
   seed: 42
   trust_remote_code: False
   add_special_tokens: True

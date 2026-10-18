@@ -1,3 +1,6 @@
+import ast
+import random
+import string
 from dataclasses import dataclass
 from typing import Callable, Literal, Optional
 
@@ -8,10 +11,22 @@ from lighteval.tasks.multilingual.tasks.swiss_legal.metrics import (
     device,
     get_bert_score,
     get_extractiveness,
+    get_lexam_mcq_metric,
+    get_lexam_oq_judge,
     get_metrics,
     get_swiss_landmark_decision_summarization_judge,
 )
+from lighteval.tasks.multilingual.tasks.swiss_legal.prompts import (
+    LEXAM_MCQ_INSTRUCTION,
+    LEXAM_MCQ_PROMPT_TEMPLATE,
+    LEXAM_MCQ_PROMPT_TEMPLATE_IDK,
+    LEXAM_OQ_QA_PROMPT,
+)
 from lighteval.tasks.requests import Doc, SamplingMethod
+
+
+# Deterministic shuffle for MCQ choice order so runs are reproducible.
+_LEXAM_RNG = random.Random(42)
 
 
 def create_translation_pairs(langs_list: list) -> list[tuple]:
@@ -310,6 +325,124 @@ class HeadnoteGenerationTask(LightevalTaskConfig):
         ]
 
 
+# =====================================================================
+# LEXam: Swiss + EU + international law exams from https://huggingface.co/datasets/LEXam-Benchmark/LEXam
+# - Open-ended questions evaluated with an LLM-as-judge.
+# - Multiple-choice questions evaluated with letter extraction; optionally
+#   include an "I don't know" choice (IDK calibration: +1/0/-1).
+# =====================================================================
+
+LEXAM_REPO = "LEXam-Benchmark/LEXam"
+LEXAM_LANGUAGES = ["en", "de"]
+LEXAM_MCQ_NUM_CHOICES = [4, 8, 16, 32]
+# Generous output budget so the chain-of-thought reasoning can complete before
+# the model emits its ###X### final answer.
+LEXAM_GENERATION_SIZE = 32768
+LEXAM_STOP_SEQUENCES = ["</s>"]
+
+
+def lexam_oq_prompt_fn(line: dict, task_name: str = None) -> Doc:
+    """Prompt function for LEXam open-ended legal exam questions."""
+    query = LEXAM_OQ_QA_PROMPT.format(course_name=line["course"], question=line["question"])
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=[str(line["answer"])],
+        gold_index=0,
+        # `question` (without the QA wrapper) is required by `JudgeLEXamOQ`.
+        specific={"question": line["question"]},
+    )
+
+
+def _build_lexam_mcq_prompt_fn(with_idk: bool) -> Callable[[dict, str], Doc]:
+    """Build a LEXam MCQ prompt function with or without the IDK calibration option.
+
+    The substantive choices are shuffled deterministically; when IDK is enabled
+    an additional letter slot (always last) is reserved for "I don't know".
+    """
+
+    def prompt_fn(line: dict, task_name: str = None) -> Doc:
+        # `choices` is serialised as a stringified Python list in the dataset.
+        choice_list = line["choices"] if isinstance(line["choices"], list) else ast.literal_eval(line["choices"])
+        correct = choice_list[line["gold"]]
+        shuffled = choice_list.copy()
+        _LEXAM_RNG.shuffle(shuffled)
+        gold_index = shuffled.index(correct)
+
+        letters = string.ascii_uppercase[: len(shuffled) + (1 if with_idk else 0)]
+        choices_str = "\n".join(f"{letters[i]}) {text}" for i, text in enumerate(shuffled))
+        if with_idk:
+            choices_str += f"\n{letters[-1]}) I don't know"
+            query = LEXAM_MCQ_PROMPT_TEMPLATE_IDK.format(
+                question_text=line["question"].strip(),
+                choices_str=choices_str,
+                idk_letter=letters[-1],
+            )
+        else:
+            query = LEXAM_MCQ_PROMPT_TEMPLATE.format(
+                question_text=line["question"].strip(),
+                choices_str=choices_str,
+            )
+
+        return Doc(
+            task_name=task_name,
+            query=query,
+            choices=list(letters),
+            gold_index=gold_index,
+            instruction=LEXAM_MCQ_INSTRUCTION.format(course_name=line["course"]),
+        )
+
+    return prompt_fn
+
+
+def _lexam_language_filter(language: str) -> Callable[[dict], bool]:
+    def _filter(example: dict) -> bool:
+        return example["language"] == language
+
+    return _filter
+
+
+class LEXamOpenQuestionTask(LightevalTaskConfig):
+    """LEXam open-ended legal exam questions, scored with an LLM-as-judge."""
+
+    def __init__(self, language: Literal["en", "de"]):
+        super().__init__(
+            name=f"lexam_oq:{language}",
+            prompt_function=lexam_oq_prompt_fn,
+            hf_repo=LEXAM_REPO,
+            hf_subset="open_question",
+            hf_filter=_lexam_language_filter(language),
+            hf_avail_splits=["dev", "test"],
+            evaluation_splits=["test"],
+            few_shots_split="dev",
+            few_shots_select="sequential",
+            generation_size=LEXAM_GENERATION_SIZE,
+            stop_sequence=LEXAM_STOP_SEQUENCES,
+            metrics=[get_lexam_oq_judge()],
+        )
+
+
+class LEXamMCQTask(LightevalTaskConfig):
+    """LEXam multiple-choice questions, with an optional "I don't know" choice."""
+
+    def __init__(self, language: Literal["en", "de"], num_choices: int, with_idk: bool):
+        suffix = "_idk" if with_idk else ""
+        super().__init__(
+            name=f"lexam_mcq_{num_choices}{suffix}:{language}",
+            prompt_function=_build_lexam_mcq_prompt_fn(with_idk=with_idk),
+            hf_repo=LEXAM_REPO,
+            hf_subset=f"mcq_{num_choices}_choices",
+            hf_filter=_lexam_language_filter(language),
+            hf_avail_splits=["test"],
+            evaluation_splits=["test"],
+            few_shots_split=None,
+            few_shots_select=None,
+            generation_size=LEXAM_GENERATION_SIZE,
+            stop_sequence=LEXAM_STOP_SEQUENCES,
+            metrics=[get_lexam_mcq_metric(with_idk=with_idk)],
+        )
+
+
 DATASETS = [
     SwissDecisionSummaryTranslations,
     SwissLawTranslations,
@@ -336,5 +469,12 @@ TASKS_TABLE = [
             level_name=subset,
         )
         for subset in SwissLandmarkDecisionHeadnotes.subsets
+    ],
+    *[LEXamOpenQuestionTask(language=lang) for lang in LEXAM_LANGUAGES],
+    *[
+        LEXamMCQTask(language=lang, num_choices=num_choices, with_idk=with_idk)
+        for lang in LEXAM_LANGUAGES
+        for num_choices in LEXAM_MCQ_NUM_CHOICES
+        for with_idk in (False, True)
     ],
 ]

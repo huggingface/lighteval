@@ -51,7 +51,7 @@ you need, or, here's an overview of some *popular benchmarks*:
 ### 📚 **Knowledge**
 - **General Knowledge**: MMLU, MMLU-Pro, MMMU, BIG-Bench
 - **Question Answering**: TriviaQA, Natural Questions, SimpleQA, Humanity's Last Exam (HLE)
-- **Specialized**: GPQA, AGIEval
+- **Specialized**: GPQA, AGIEval, LEXam
 
 ### 🧮 **Math and Code**
 - **Math Problems**: GSM8K, GSM-Plus, MATH, MATH500
@@ -72,7 +72,7 @@ you need, or, here's an overview of some *popular benchmarks*:
   - **Arabic**: ArabicMMLU
   - **Filipino**: FilBench
   - **French**: IFEval-fr, GPQA-fr, BAC-fr
-  - **German**: German RAG Eval
+  - **German**: German RAG Eval, SwiLTra-Bench
   - **Serbian**: Serbian LLM Benchmark, OZ Eval
   - **Turkic**: TUMLU (9 Turkic languages)
   - **Chinese**: CMMLU, CEval, AGIEval
@@ -145,14 +145,9 @@ MODEL_NAME = "meta-llama/Meta-Llama-3-8B-Instruct"
 BENCHMARKS = "gsm8k"
 
 evaluation_tracker = EvaluationTracker(output_dir="./results")
-pipeline_params = PipelineParameters(
-    launcher_type=ParallelismManager.NONE,
-    max_samples=2
-)
+pipeline_params = PipelineParameters(launcher_type=ParallelismManager.NONE, max_samples=2)
 
-model = AutoModelForCausalLM.from_pretrained(
-  MODEL_NAME, device_map="auto"
-)
+model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, device_map="auto")
 config = TransformersModelConfig(model_name=MODEL_NAME, batch_size=1)
 model = TransformersModel.from_model(model, config)
 
