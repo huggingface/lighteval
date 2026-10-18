@@ -87,6 +87,10 @@ class ServerlessEndpointModelConfig(ModelConfig):
         system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
             This prompt sets the behavior and context for the model during evaluation.
         cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
+        chat_template_kwargs (dict | None):
+            Extra keyword arguments forwarded to the tokenizer's `apply_chat_template`. Useful for
+            template-specific flags such as `{"enable_thinking": False}` to disable a reasoning
+            model's (e.g. Qwen3) thinking mode. Defaults to None.
 
     Example:
         ```python
@@ -103,6 +107,7 @@ class ServerlessEndpointModelConfig(ModelConfig):
     model_name: str
     add_special_tokens: bool = True
     batch_size: int = 1
+    chat_template_kwargs: dict | None = None
 
 
 class InferenceEndpointModelConfig(ModelConfig):
@@ -153,6 +158,10 @@ class InferenceEndpointModelConfig(ModelConfig):
         system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
             This prompt sets the behavior and context for the model during evaluation.
         cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
+        chat_template_kwargs (dict | None):
+            Extra keyword arguments forwarded to the tokenizer's `apply_chat_template`. Useful for
+            template-specific flags such as `{"enable_thinking": False}` to disable a reasoning
+            model's (e.g. Qwen3) thinking mode. Defaults to None.
 
     Methods:
         model_post_init():
@@ -206,6 +215,7 @@ class InferenceEndpointModelConfig(ModelConfig):
     image_url: str | None = None
     env_vars: dict | None = None
     batch_size: int = 1
+    chat_template_kwargs: dict | None = None
 
     def model_post_init(self, __context):
         # xor operator, one is None but not the other
@@ -263,7 +273,10 @@ class InferenceEndpointModel(LightevalModel):
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
 
         self.prompt_manager = PromptManager(
-            use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
+            use_chat_template=True,
+            tokenizer=self.tokenizer,
+            system_prompt=config.system_prompt,
+            chat_template_kwargs=config.chat_template_kwargs,
         )
         self.generation_parameters = config.generation_parameters
         self.generation_config = self.generation_parameters.to_tgi_ie_dict()

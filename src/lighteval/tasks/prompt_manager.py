@@ -40,10 +40,19 @@ if TYPE_CHECKING:
 
 
 class PromptManager:
-    def __init__(self, use_chat_template: bool = False, tokenizer=None, system_prompt: str | None = None):
+    def __init__(
+        self,
+        use_chat_template: bool = False,
+        tokenizer=None,
+        system_prompt: str | None = None,
+        chat_template_kwargs: dict | None = None,
+    ):
         self.use_chat_template = use_chat_template
         self.tokenizer = tokenizer
         self.system_prompt = system_prompt  # System prompt to be used in chat templates
+        # Extra kwargs forwarded to the tokenizer's `apply_chat_template`, e.g.
+        # `{"enable_thinking": False}` to disable a reasoning model's thinking mode.
+        self.chat_template_kwargs = chat_template_kwargs or {}
 
     def prepare_prompt(self, doc: Doc) -> str:
         """Prepare a prompt from a document, either using chat template or plain text format.
@@ -83,6 +92,7 @@ class PromptManager:
             message,
             tokenize=False,
             add_generation_prompt=True,
+            **self.chat_template_kwargs,
         )
 
     def prepare_prompt_api(self, doc: Doc) -> list[dict[str, str]]:
@@ -133,6 +143,7 @@ class PromptManager:
                 messages,
                 tokenize=False,
                 add_generation_prompt=True,
+                **self.chat_template_kwargs,
             )
 
         else:  # for apis
