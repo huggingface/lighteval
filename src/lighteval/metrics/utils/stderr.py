@@ -78,7 +78,8 @@ class _bootstrap_internal:
 def bootstrap_stderr(metric: Callable, population: list, number_experiments: int):
     """Bootstraps the stderr of the given metric for the given population of samples,
     by sampling said population for number_experiments and recomputing the metric on the
-    different samplings.
+    different samplings. The standard error is the sample standard deviation of
+    these bootstrap metric values, without dividing by the number of replicates.
     """
     res = []
     number_draws = min(1000, number_experiments)
@@ -90,7 +91,7 @@ def bootstrap_stderr(metric: Callable, population: list, number_experiments: int
         draws_for_seed = min(number_draws, number_experiments - seed * number_draws)
         res.extend(_bootstrap_internal(metric=metric, number_draws=draws_for_seed)((population, seed)))
 
-    return mean_stderr(res)
+    return _stddev(res)
 
 
 def get_stderr_function(aggregation: Callable, number_experiments: int = 1000):
