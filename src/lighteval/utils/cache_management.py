@@ -34,6 +34,7 @@ from datasets import Dataset, load_dataset
 
 from lighteval.models.abstract_model import ModelConfig
 from lighteval.models.model_output import ModelResponse
+from lighteval.models.utils import _simplify_name
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.registry import Registry
 from lighteval.tasks.requests import Doc, SamplingMethod
@@ -84,7 +85,9 @@ class SampleCache:
         self.model_hash = self.get_model_hash(model_config)
 
         self.cache_dir = (
-            Path(os.path.expanduser(self.model_config.cache_dir)) / self.model_config.model_name / self.model_hash
+            Path(os.path.expanduser(self.model_config.cache_dir))
+            / _simplify_name(self.model_config.model_name)
+            / self.model_hash
         )
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
