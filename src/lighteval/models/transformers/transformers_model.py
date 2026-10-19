@@ -713,6 +713,18 @@ class TransformersModel(LightevalModel):
                     add_special_tokens=self.add_special_tokens,
                 ).to(self.device)
 
+                # `truncation="longest_first"` above drops the overflow of any context longer than
+                # `max_context_continuation_size_allowed`, so `tokenized` alone no longer tells us how many
+                # tokens each context holds. `contexts` holds strings, so `len(context)` is a character
+                # count and cannot be compared against a token count: re-tokenize without a cap to get the
+                # real token counts (`verbose=False` silences the tokenizer's over-long-input warning).
+                context_token_counts = [
+                    len(input_ids)
+                    for input_ids in self.tokenizer(
+                        contexts, add_special_tokens=self.add_special_tokens, verbose=False
+                    )["input_ids"]
+                ]
+
                 # The main question for this step is the following:
                 # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
                 # of losing some meaning, or have some generations that are exceedingly short?
@@ -739,7 +751,10 @@ class TransformersModel(LightevalModel):
                     input_ids=tokenized["input_ids"],
                     input_lengths=[len(item == 1) for item in tokenized["attention_mask"]],
                     input_mask=tokenized["attention_mask"],
-                    truncated=[max(len(c) - tokenized["input_ids"].shape[1], 0) for c in contexts],
+                    truncated=[
+                        max(context_token_count - tokenized["input_ids"].shape[1], 0)
+                        for context_token_count in context_token_counts
+                    ],
                     padded=[sum(mask == 0) for mask in tokenized["attention_mask"]],
                 )
 
