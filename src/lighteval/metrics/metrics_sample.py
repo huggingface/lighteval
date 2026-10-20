@@ -661,8 +661,8 @@ class BertScore(SampleLevelComputation):
 class Extractiveness(SampleLevelComputation):
     def __init__(
         self,
-        normalize_input: callable = remove_braces,
-        normalize_pred: callable = remove_braces_and_strip,
+        normalize_input: Callable = remove_braces,
+        normalize_pred: Callable = remove_braces_and_strip,
         input_column: str = "text",
         language: Literal["en", "de", "fr", "it"] = "en",
     ):
