@@ -31,25 +31,15 @@ from lighteval.utils.utils import as_list
 # Comes from the harness
 class TruthfulqaMCMetrics(SampleLevelComputation):
     def compute(self, doc: Doc, model_response: ModelResponse):
-        gold_ixs = as_list(doc.gold_index)
+        gold_ixs = set(as_list(doc.gold_index))
         choices_logprob = model_response.logprobs
 
-        # The harness assumes that all items are gold before the last one, but that is not always the case
-        # For gold ix 5, 6, 8, the harness will look at the first "gap" (7) and consider that the following
-        # items are not gold (even though here, 8 is gold). Example at item 371 of the dataset.
-        # This is broken and will have to be fixed once we OSS this, by actually separating
-        # gold and not gold items for mc2 computations
         len_mc1 = doc.specific["len_mc1"]
-        last_harness_gold = gold_ixs[1] - 1  # fake value to init the loop
-        for g in gold_ixs[1:]:  # we ignore the first item, which is the gold for mc1
-            if last_harness_gold == g - 1:
-                last_harness_gold = g
-            else:
-                break
         # TODO: This completely ignores any normalization, but keeping it as is
-        mc2_last_gold_ix = last_harness_gold - len_mc1 + 1
         mc1_lls, mc2_lls = choices_logprob[:len_mc1], choices_logprob[len_mc1:]
-        return {"truthfulqa_mc1": self.mc1(mc1_lls), "truthfulqa_mc2": self.mc2(mc2_lls, mc2_last_gold_ix)}
+        mc2_true = [ll for i, ll in enumerate(mc2_lls, start=len_mc1) if i in gold_ixs]
+        mc2_false = [ll for i, ll in enumerate(mc2_lls, start=len_mc1) if i not in gold_ixs]
+        return {"truthfulqa_mc1": self.mc1(mc1_lls), "truthfulqa_mc2": self.mc2(mc2_true + mc2_false, len(mc2_true))}
 
     def mc1(self, lls):
         # The gold answers in `mc1_targets` are always first (index = `0`).
