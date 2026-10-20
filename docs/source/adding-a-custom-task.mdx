@@ -25,7 +25,7 @@ from lighteval.tasks.requests import Doc
 # Define as many as you need for your different tasks
 def prompt_fn(line: dict, task_name: str):
     """Defines how to go from a dataset line to a doc object.
-    Follow examples in src/lighteval/tasks/default_prompts.py, or get more info
+    Follow examples in src/lighteval/tasks/tasks, or get more info
     about what this function should do in the README.
     """
     return Doc(
@@ -158,5 +158,5 @@ lighteval accelerate \
 lighteval accelerate \
     "model_name=openai-community/gpt2" \
     "myothertask|3" \
-    --custom-tasks community_tasks/my_custom_task.py
+    --custom-tasks {path_to_your_custom_task_file}
 ```
