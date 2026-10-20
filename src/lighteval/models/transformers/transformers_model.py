@@ -340,10 +340,13 @@ class TransformersModel(LightevalModel):
             return False, None, None
 
         self.num_local_processes = int(os.environ.get("LOCAL_WORLD_SIZE", 1))
+        # GPUs visible to each process, not the number of machines. One GPU per
+        # process is the usual data-parallel launch. An explicit model_parallel=True
+        # still shards the GPUs assigned to this process.
         self.num_machines = torch.cuda.device_count() // self.num_local_processes
 
-        if self.num_machines == 1:
-            logger.info("We are not in a distributed setting. Setting model_parallel to False.")
+        if self.num_machines == 1 and model_parallel is not True:
+            logger.info("Each process can see a single GPU, so model parallel stays off.")
             model_parallel = False
 
         if model_parallel is None:
