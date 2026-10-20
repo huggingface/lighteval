@@ -63,94 +63,40 @@ class CorpusLevelComputation(ABC):
         return f"{self.__class__.__name__}({', '.join(attr_strs)})"
 
 
-def _is_repeated_full_bayes_prior(non_null_priors: list[object], first_prior: np.ndarray, num_rows: int) -> bool:
-    if not all(np.array_equal(np.asarray(prior), first_prior) for prior in non_null_priors):
-        return False
-    return (first_prior.ndim == 2 and first_prior.shape[0] == num_rows) or (
-        first_prior.ndim == 1 and num_rows == 1
-    )
-
-
-def _coerce_bayes_prior_row(prior: object) -> list[int]:
-    prior_array = np.asarray(prior)
-    if prior_array.ndim == 0:
-        raise ValueError("Bayes@N prior rows must be 1D arrays.")
-    if prior_array.ndim == 2:
-        if prior_array.shape[0] != 1:
-            raise ValueError("Bayes@N row-level prior payloads must contain exactly one row.")
-        prior_array = prior_array.reshape(-1)
-    elif prior_array.ndim != 1:
-        raise ValueError("Bayes@N row-level prior payloads must be 1D arrays.")
-    return prior_array.tolist()
-
-
-def _coerce_bayes_prior(priors: list[object | None], num_rows: int) -> list[list[int]] | object | None:
-    non_null_priors = [prior for prior in priors if prior is not None]
-    if not non_null_priors:
-        return None
-    if len(non_null_priors) != len(priors):
-        raise ValueError("Bayes@N prior observations must be provided for every row or omitted for every row.")
-
-    first_prior = np.asarray(non_null_priors[0])
-    if _is_repeated_full_bayes_prior(non_null_priors, first_prior, num_rows):
-        return non_null_priors[0]
-
-    prior_rows = [_coerce_bayes_prior_row(prior) for prior in non_null_priors]
-    prior_lengths = {len(row) for row in prior_rows}
-    if len(prior_lengths) != 1:
-        raise ValueError("Bayes@N prior rows must all have the same number of observations.")
-    return prior_rows
-
-
-def _coerce_bayes_items(items: list[dict | list[int]]) -> tuple[list[list[int]], list[float] | None, object | None]:
-    if len(items) == 0:
-        raise ValueError("Bayes@N needs at least one row.")
-
-    rows = []
-    weights = None
-    priors = []
-    for item in items:
-        if isinstance(item, dict):
-            if "scores" not in item:
-                raise ValueError("Bayes@N payloads must contain a 'scores' row.")
-            row = item["scores"]
-            item_weights = item.get("weights")
-            priors.append(item.get("prior"))
-        else:
-            row = item
-            item_weights = None
-            priors.append(None)
-
-        row = list(row)
-        if len(row) == 0:
-            raise ValueError("Bayes@N rows must contain at least one score.")
-        rows.append(row)
-
-        if item_weights is not None:
-            item_weights = np.asarray(item_weights, dtype=float)
-            if weights is None:
-                weights = item_weights
-            elif not np.array_equal(weights, item_weights):
-                raise ValueError("Bayes@N received inconsistent weights across rows.")
-
-    row_lengths = {len(row) for row in rows}
-    if len(row_lengths) != 1:
-        raise ValueError("Bayes@N requires every row to have the same number of scores.")
-
-    weights_list = weights.tolist() if weights is not None else None
-    return rows, weights_list, _coerce_bayes_prior(priors, len(rows))
-
-
 class BayesAtNCorpus(CorpusLevelComputation):
     def __init__(self, statistic: Literal["mu", "sigma"]):
         if statistic not in {"mu", "sigma"}:
             raise ValueError("BayesAtNCorpus statistic must be either 'mu' or 'sigma'.")
         self.statistic = statistic
 
-    def compute_corpus(self, items: list[dict | list[int]]) -> float:
-        rows, weights, prior = _coerce_bayes_items(items)
-        mu, sigma = bayes_at_n(rows, weights=weights, prior=prior)
+    def compute_corpus(self, items: list[dict]) -> float:
+        """Combine question rows, retaining their own prior observations."""
+        if not items:
+            raise ValueError("Bayes@N needs at least one row.")
+        weights = items[0].get("weights")
+        priors = [item.get("prior") for item in items]
+        for item in items:
+            if "scores" not in item:
+                raise ValueError("Bayes@N payloads must contain a 'scores' row.")
+            if not np.array_equal(weights, item.get("weights")):
+                raise ValueError("Bayes@N received inconsistent weights across rows.")
+            if np.asarray(item["scores"]).ndim != 1:
+                raise ValueError("Bayes@N payloads must contain one scores row.")
+        has_prior = [prior is not None for prior in priors]
+        if any(has_prior) and not all(has_prior):
+            raise ValueError("Bayes@N prior observations must be supplied for every row or omitted for every row.")
+        if all(has_prior) and any(np.asarray(prior).ndim != 1 for prior in priors):
+            raise ValueError("Bayes@N prior payloads must contain one prior row.")
+        mu, sigma = bayes_at_n(
+            [item["scores"] for item in items], weights=weights, prior=priors if all(has_prior) else None
+        )
         return mu if self.statistic == "mu" else sigma
+
+    def aggregate_tasks(self, values: list[float]) -> float:
+        """Return moments of the equal-task mean for independent question sets."""
+        if self.statistic == "sigma":
+            return math.hypot(*values) / len(values)
+        return float(np.mean(values))
 
 
 # General aggregations
