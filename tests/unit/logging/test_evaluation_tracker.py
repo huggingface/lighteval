@@ -299,13 +299,11 @@ class TestProperties(unittest.TestCase):
             "model_name": "test/case",
             "provider": None,
             "base_url": None,
-            "api_key": None,
             "system_prompt": ref_system_prompt,
             "generation_parameters": ref_generation_parameters,
         }  # ruff: noqa: E501
         self.tgi_ref_config = {
             "inference_server_address": None,
-            "inference_server_auth": None,
             "model_name": "test/case",
             "model_info": None,
             "system_prompt": ref_system_prompt,
@@ -485,3 +483,41 @@ class TestProperties(unittest.TestCase):
                 for k, v in ref_config.items():
                     with self.subTest(model_config=model_config, model_property=k):
                         self.assertEqual(results["config_general"]["model_config"][k], v)
+
+    def test_litellm_api_key_never_leaks_to_results(self):
+        """A LiteLLM api_key must never appear in the results dict or its JSON/parquet serialization."""
+        from lighteval.logging.evaluation_tracker import EnhancedJSONEncoder
+        from lighteval.models.endpoints.litellm_model import LiteLLMModelConfig
+
+        secret = "sk-super-secret-should-not-leak"
+        model_config = LiteLLMModelConfig(model_name="test/case", api_key=secret)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            evaluation_tracker = EvaluationTracker(output_dir=tmp_dir)
+            evaluation_tracker.general_config_logger.log_model_info(model_config=model_config)
+
+            results = evaluation_tracker.results
+
+            self.assertNotIn("api_key", results["config_general"]["model_config"])
+
+            serialized = json.dumps(results, cls=EnhancedJSONEncoder)
+            self.assertNotIn(secret, serialized)
+
+    def test_tgi_inference_server_auth_never_leaks_to_results(self):
+        """A TGI inference_server_auth token must never appear in the results dict or its JSON/parquet serialization."""
+        from lighteval.logging.evaluation_tracker import EnhancedJSONEncoder
+        from lighteval.models.endpoints.tgi_model import TGIModelConfig
+
+        secret = "tgi-bearer-token-should-not-leak"
+        model_config = TGIModelConfig(model_name="test/case", inference_server_auth=secret)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            evaluation_tracker = EvaluationTracker(output_dir=tmp_dir)
+            evaluation_tracker.general_config_logger.log_model_info(model_config=model_config)
+
+            results = evaluation_tracker.results
+
+            self.assertNotIn("inference_server_auth", results["config_general"]["model_config"])
+
+            serialized = json.dumps(results, cls=EnhancedJSONEncoder)
+            self.assertNotIn(secret, serialized)

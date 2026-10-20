@@ -110,7 +110,7 @@ class MetricGrouping(Metric):
 
     metric_name: list[str]
     corpus_level_fn: dict[str, Callable]
-    higher_is_better: dict[str, Callable]
+    higher_is_better: dict[str, bool]
 
 
 @dataclass

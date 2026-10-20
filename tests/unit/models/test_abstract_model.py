@@ -36,3 +36,24 @@ def test_tok_encode_pair():
     assert non_pairwise_tokens == ([[6, 47873]], [[34871]])
     # Pairwise separated "：" and "1"
     assert pairwise_tokens == ([[6, 47873, 13]], [[82]])
+
+
+def test_tok_encode_pair_move_trailing_context_space():
+    model = DummyModel(config=DummyModelConfig(seed=42))
+    # BPE tokenizer where " Paris" ("ĠParis") differs from "Paris".
+    model._tokenizer = AutoTokenizer.from_pretrained("gpt2")
+    context = "Answer: "  # trailing space
+    continuation = ["Paris"]
+    bare = [model.tok_encode("Paris", add_special_tokens=False)]
+
+    # Default: the trailing space is moved onto the continuation, so the scored
+    # continuation is no longer the bare gold.
+    model.move_trailing_context_space = True
+    _, cont_moved = model.tok_encode_pair(context, continuation, pairwise=True)
+    assert cont_moved != bare
+
+    # Opt-out: the space stays in the context and the continuation is exactly the
+    # gold string (needed so answer-only bits-per-byte matches the byte normalization).
+    model.move_trailing_context_space = False
+    _, cont_kept = model.tok_encode_pair(context, continuation, pairwise=True)
+    assert cont_kept == bare
