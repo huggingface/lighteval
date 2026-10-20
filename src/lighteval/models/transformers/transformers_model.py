@@ -958,13 +958,10 @@ class TransformersModel(LightevalModel):
 
             for batch in tqdm(dataloader, disable=self.disable_tqdm):
                 batch_contexts: list[str] = [self.prompt_manager.prepare_prompt(doc) for doc in batch]
-                batch_tokenized_contexts = []
-                batch_tokenized_continuations = []
-
-                for context, doc in zip(batch_contexts, batch):
-                    doc_contexts, doc_continuations = self.tok_encode_pair(context, doc.choices, pairwise=True)
-                    batch_tokenized_contexts.append(doc_contexts)
-                    batch_tokenized_continuations.append(doc_continuations)
+                batch_choices: list[list[str]] = [doc.choices for doc in batch]
+                batch_tokenized_contexts, batch_tokenized_continuations = self.tok_encode_pair_batch(
+                    batch_contexts, batch_choices
+                )
 
                 prepared_batch = self.prepare_batch_logprob(
                     tokenized_contexts=batch_tokenized_contexts,

@@ -57,3 +57,44 @@ def test_tok_encode_pair_move_trailing_context_space():
     model.move_trailing_context_space = False
     _, cont_kept = model.tok_encode_pair(context, continuation, pairwise=True)
     assert cont_kept == bare
+
+
+def test_tok_encode_pair_batch_matches_per_document_tok_encode_pair():
+    model = DummyModel(config=DummyModelConfig(seed=42))
+    model._tokenizer = AutoTokenizer.from_pretrained("gpt2")
+
+    contexts = ["The capital of France is", "Hello world, this is ", "Question: 2+2=?\nAnswer:"]
+    choices_batch = [[" Paris", " London"], ["a test", "another test", "yet another"], [" 4", " 5"]]
+
+    expected_contexts, expected_continuations = [], []
+    for context, choices in zip(contexts, choices_batch):
+        doc_contexts, doc_continuations = model.tok_encode_pair(context, choices, pairwise=True)
+        expected_contexts.append(doc_contexts)
+        expected_continuations.append(doc_continuations)
+
+    # tok_encode_pair_batch tokenizes the whole batch in a couple of calls instead of
+    # once per document; the result must be identical to calling tok_encode_pair per document.
+    batch_contexts, batch_continuations = model.tok_encode_pair_batch(contexts, choices_batch)
+
+    assert batch_contexts == expected_contexts
+    assert batch_continuations == expected_continuations
+
+
+def test_tok_encode_pair_batch_move_trailing_context_space():
+    model = DummyModel(config=DummyModelConfig(seed=42))
+    model._tokenizer = AutoTokenizer.from_pretrained("gpt2")
+
+    contexts = ["Answer: ", "Answer: "]
+    choices_batch = [["Paris"], ["London"]]
+    bare = [
+        [model.tok_encode("Paris", add_special_tokens=False)],
+        [model.tok_encode("London", add_special_tokens=False)],
+    ]
+
+    model.move_trailing_context_space = True
+    _, cont_moved = model.tok_encode_pair_batch(contexts, choices_batch)
+    assert cont_moved != bare
+
+    model.move_trailing_context_space = False
+    _, cont_kept = model.tok_encode_pair_batch(contexts, choices_batch)
+    assert cont_kept == bare
