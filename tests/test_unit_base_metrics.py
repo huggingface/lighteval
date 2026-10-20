@@ -30,7 +30,7 @@ from lighteval.metrics.dynamic_metrics import (
     NormalizedMultiChoiceProbMetric,
     ProbabilityMetric,
 )
-from lighteval.metrics.metrics_sample import ExactMatches
+from lighteval.metrics.metrics_sample import ExactMatches, F1_score
 from lighteval.metrics.normalizations import LogProbCharNorm, helm_normalizer
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
@@ -331,10 +331,37 @@ class TestBaseMetrics:
     def test_pass_at_k_estimator(self):
         assert False
 
-    @pytest.mark.skip(reason="Using nltk metric function, no need to test.")
     def test_f1_score_quasi(self):
-        assert False
+        metric = F1_score(normalize_gold=helm_normalizer, normalize_pred=helm_normalizer)
+        doc = Doc(query="Which colors?", choices=["The RED blue."], gold_index=0)
+        response = ModelResponse(text=["red, RED red blue!"])
 
-    @pytest.mark.skip(reason="Using nltk metric function, no need to test.")
-    def test_f1(self):
-        assert False
+        assert metric.compute(doc=doc, model_response=response) == pytest.approx(2 / 3)
+
+    @pytest.mark.parametrize(
+        "gold,pred,expected",
+        [
+            ("red blue", "red red red blue", 2 / 3),
+            ("red red blue", "red blue", 0.8),
+            ("red red blue blue", "red red red blue", 0.75),
+            ("red red blue", "red red blue", 1.0),
+            ("red red blue", "blue red red", 1.0),
+            ("red blue", "green yellow", 0.0),
+            ("red blue", "", 0.0),
+            ("", "red blue", 0.0),
+            ("", "", 0.0),
+        ],
+    )
+    def test_f1(self, gold, pred, expected):
+        doc = Doc(query="Which colors?", choices=[gold], gold_index=0)
+        response = ModelResponse(text=[pred])
+
+        assert F1_score().compute(doc=doc, model_response=response) == pytest.approx(expected)
+
+    @pytest.mark.parametrize("aggregation,expected", [(max, 0.8), (min, 0.0)])
+    def test_f1_aggregates_references_and_predictions(self, aggregation, expected):
+        doc = Doc(query="Which colors?", choices=["red red blue", "green"], gold_index=[0, 1])
+        response = ModelResponse(text=["red blue", "blue"])
+
+        metric = F1_score(aggregation_function=aggregation)
+        assert metric.compute(doc=doc, model_response=response) == pytest.approx(expected)
