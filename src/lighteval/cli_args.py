@@ -42,7 +42,7 @@ HELP_PANEL_NAME_4 = "Modeling Parameters"
 class Arg:
     """Base class for CLI arguments with type and default value."""
 
-    type: Annotated
+    type: Any
     default: Any
 
 
