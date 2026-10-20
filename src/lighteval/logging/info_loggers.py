@@ -29,6 +29,7 @@ from dataclasses import asdict, dataclass, field
 import git
 import xxhash
 
+from lighteval.metrics.metrics_corpus import BayesAtNCorpus
 from lighteval.metrics.utils.stderr import get_stderr_function
 from lighteval.models.abstract_model import ModelConfig
 from lighteval.models.model_output import ModelResponse
@@ -334,6 +335,7 @@ class MetricsLogger:
             task_dict (dict[str, LightevalTask]): used to determine what aggregation function to use for each metric
             bootstrap_iters (int, optional): Number of runs used to run the statistical bootstrap. Defaults to 1000.
         """
+        task_aggregations = {}
         for task_name, metrics in self.metrics_values.items():
             task = task_dict[task_name]
 
@@ -344,6 +346,7 @@ class MetricsLogger:
                     continue
 
                 aggregation = task.aggregation()[metric_name]
+                task_aggregations[metric_name] = aggregation
 
                 try:
                     metric_result = aggregation(metric_values)
@@ -357,7 +360,11 @@ class MetricsLogger:
                 else:
                     self.metric_aggregated[task_name][metric_name] = metric_result
 
-                if isinstance(metric_result, dict) or bootstrap_iters == 0:
+                if (
+                    isinstance(metric_result, dict)
+                    or bootstrap_iters == 0
+                    or isinstance(getattr(aggregation, "__self__", None), BayesAtNCorpus)
+                ):
                     stderr = (
                         None  # We skip stderr for some corpus metrics that return dicts, or if bootstrap_iters is 0
                     )
@@ -374,8 +381,7 @@ class MetricsLogger:
         # We group subtasks which belong to the same parent task, like MMLU, to compute an average on them
         # and compute an average of all metrics
         grouped_tasks = collections.defaultdict(list)
-        suite_average = {}
-        suite_nb = {}
+        suite_values = collections.defaultdict(list)
 
         # Build aggregation
         for k, metrics in self.metric_aggregated.items():
@@ -383,23 +389,27 @@ class MetricsLogger:
                 task, fewshot = k.split("|")
                 grouped_tasks[f"{task.split(':')[0]}:_average|{fewshot}"].append(k)
             for metric, value in metrics.items():
-                suite_average[metric] = suite_average.get(metric, 0) + value
-                suite_nb[metric] = suite_nb.get(metric, 0) + 1
+                suite_values[metric].append(value)
+
+        def average_tasks(metric, values):
+            reducer = getattr(task_aggregations.get(metric), "__self__", None)
+            if isinstance(reducer, BayesAtNCorpus):
+                return reducer.aggregate_tasks(values)
+            return sum(values) / len(values)
 
         # Compute average for sub groups
         for average_task, list_of_subtasks in grouped_tasks.items():
             if len(list_of_subtasks) > 1:
                 metrics = list(self.metric_aggregated[list_of_subtasks[0]].keys())
                 self.metric_aggregated[average_task] = {
-                    metric: sum(self.metric_aggregated[k][metric] for k in list_of_subtasks) / len(list_of_subtasks)
+                    metric: average_tasks(metric, [self.metric_aggregated[k][metric] for k in list_of_subtasks])
                     for metric in metrics
                 }
 
         # Compute average for all
-        for metric, value in suite_average.items():
-            suite_average[metric] = value / suite_nb[metric]
-
-        self.metric_aggregated["all"] = suite_average
+        self.metric_aggregated["all"] = {
+            metric: average_tasks(metric, values) for metric, values in suite_values.items()
+        }
 
 
 @dataclass

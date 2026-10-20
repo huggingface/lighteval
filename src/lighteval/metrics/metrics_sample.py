@@ -28,6 +28,7 @@ import inspect
 import logging
 import os
 from abc import ABC, abstractmethod
+from dataclasses import replace
 from typing import Callable, Literal, Union
 
 import nltk
@@ -41,6 +42,7 @@ from pydantic import BaseModel
 from scipy.stats import hypergeom
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
+from lighteval.metrics.bayes_at_n import bayes_at_n
 from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.imports.data_stats_metric import DataStatsMetric
 from lighteval.metrics.imports.summac import SummaCZS
@@ -1206,6 +1208,66 @@ class AvgAtN(SamplingMetric, SampleLevelComputation):
 
     def num_samples(self):
         return self.n
+
+
+class BayesAtN(SamplingMetric, SampleLevelComputation):
+    def __init__(
+        self,
+        n: int | None = None,
+        weights: list[float] | None = None,
+        prior: Callable[[Doc], list[int]] | None = None,
+        name_prefix: str | None = None,
+        **kwargs,
+    ):
+        """Collect categorical outcomes for corpus-level Bayes@N.
+
+        Args:
+            n: Number of candidates to score, or all available candidates when omitted.
+            weights: Score of each category. Omission selects the binary rubric.
+            prior: Callable returning prior outcomes for the current document.
+                Each document must supply the same number of prior outcomes.
+            name_prefix: Optional prefix for both output names.
+            **kwargs: Normalization and candidate-scoring options from SamplingMetric.
+        """
+        super().__init__(**kwargs)
+        if prior is not None and not callable(prior):
+            raise ValueError("Bayes@N prior must be a callable returning the current document's prior row.")
+        self.n = n
+        self.weights = weights
+        self.prior = prior
+        self.name = f"{name_prefix}-bayes@n" if name_prefix else "bayes@n"
+
+    @property
+    def metric_names(self):
+        return [self.name, f"{self.name}_sigma"]
+
+    def _sample_count(self) -> int | None:
+        if self.n is not None and (
+            isinstance(self.n, (bool, np.bool_)) or not isinstance(self.n, (int, np.integer)) or self.n <= 0
+        ):
+            raise ValueError("Bayes@N n must be a positive integer.")
+        return self.n
+
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict:
+        """Score one candidate at a time without changing the source document."""
+        predictions = model_response.final_text
+        configured_n = self._sample_count()
+        n = len(predictions) if configured_n is None else configured_n
+        if n <= 0 or len(predictions) < n:
+            raise ValueError("Bayes@N requires at least n predictions for every document.")
+        processed_doc = replace(doc, choices=[self.preprocess(text=choice) for choice in doc.choices])
+        row = []
+        for index, pred in enumerate(predictions[:n]):
+            response = replace(model_response[index], text=[self.preprocess(text=pred)], text_post_processed=None)
+            row.append(self.compute_score(processed_doc, response))
+        prior = None if self.prior is None else self.prior(doc)
+        # Validate before logging so invalid categories cannot enter cached details.
+        bayes_at_n([row], weights=self.weights, prior=None if prior is None else [prior])
+        payload = {"scores": [int(score) for score in row], "weights": self.weights, "prior": prior}
+        return dict.fromkeys(self.metric_names, payload)
+
+    def num_samples(self):
+        return self._sample_count() or 1
 
 
 class MajAtN(SamplingMetric, SampleLevelComputation):
