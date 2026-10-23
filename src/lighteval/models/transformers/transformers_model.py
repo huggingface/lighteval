@@ -505,6 +505,15 @@ class TransformersModel(LightevalModel):
     def _get_batch_size(self, max_input_length: int, override_bs: int | None, starting_batch_size: int = 512) -> int:
         if override_bs is not None:
             return override_bs
+        # The search runs a forward and halves the batch after an OOM. Ranks do not
+        # take the same path, so under model parallel that search deadlocks.
+        num_processes = getattr(self.accelerator, "num_processes", 1)
+        if self.config.model_parallel and num_processes > 1:
+            logger.info(
+                "Model parallel is on for %s processes, so batch size detection is skipped. Using batch size 1.",
+                num_processes,
+            )
+            return 1
         logger.info(f"Detecting largest batch size with max_input_length={max_input_length}")
 
         @find_executable_batch_size(

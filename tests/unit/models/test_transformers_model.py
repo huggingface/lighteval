@@ -426,5 +426,62 @@ class TestTransformersModelUseChatTemplate(unittest.TestCase):
                 self.assertEqual(model.use_chat_template, model._tokenizer.chat_template is not None)
 
 
+class TestGetBatchSize(unittest.TestCase):
+    def _model(self, model_parallel, num_processes):
+        model = TransformersModel.__new__(TransformersModel)
+        model.config = TransformersModelConfig(model_name="gpt2", model_parallel=model_parallel)
+        model.accelerator = Mock()
+        model.accelerator.num_processes = num_processes
+        return model
+
+    def test_distributed_model_parallel_does_not_search_for_a_batch_size(self):
+        model = self._model(model_parallel=True, num_processes=2)
+        with patch("lighteval.models.transformers.transformers_model.find_executable_batch_size") as search:
+            batch_size = model._get_batch_size(max_input_length=32, override_bs=None)
+        self.assertEqual(batch_size, 1)
+        search.assert_not_called()
+
+    def test_an_explicit_batch_size_is_kept_under_model_parallel(self):
+        model = self._model(model_parallel=True, num_processes=2)
+        with patch("lighteval.models.transformers.transformers_model.find_executable_batch_size") as search:
+            batch_size = model._get_batch_size(max_input_length=32, override_bs=8)
+        self.assertEqual(batch_size, 8)
+        search.assert_not_called()
+
+    def test_data_parallel_still_searches_for_a_batch_size(self):
+        model = self._model(model_parallel=False, num_processes=2)
+
+        def decorator(*args, **kwargs):
+            def wrap(function):
+                return lambda: 16
+
+            return wrap
+
+        with patch(
+            "lighteval.models.transformers.transformers_model.find_executable_batch_size",
+            side_effect=decorator,
+        ) as search:
+            batch_size = model._get_batch_size(max_input_length=32, override_bs=None)
+        self.assertEqual(batch_size, 16)
+        search.assert_called_once()
+
+    def test_one_process_still_searches_for_a_batch_size(self):
+        model = self._model(model_parallel=True, num_processes=1)
+
+        def decorator(*args, **kwargs):
+            def wrap(function):
+                return lambda: 32
+
+            return wrap
+
+        with patch(
+            "lighteval.models.transformers.transformers_model.find_executable_batch_size",
+            side_effect=decorator,
+        ) as search:
+            batch_size = model._get_batch_size(max_input_length=32, override_bs=None)
+        self.assertEqual(batch_size, 32)
+        search.assert_called_once()
+
+
 if __name__ == "__main__":
     unittest.main()
