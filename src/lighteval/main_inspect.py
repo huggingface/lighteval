@@ -37,6 +37,7 @@ from pytablewriter import MarkdownTableWriter
 from typer import Argument, Option
 from typing_extensions import Annotated
 
+from lighteval.from_hub import create_task_function
 from lighteval.models.abstract_model import InspectAIModelConfig
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
@@ -218,6 +219,7 @@ def eval(  # noqa C901
     models: Annotated[list[str], Argument(help="Models to evaluate")],
     tasks: Annotated[str, Argument(help="Tasks to evaluate")],
     # model arguments
+    revision: Annotated[str, Option(help="Revision of the benchmark repo on the hub")] = "main",
     model_base_url: Annotated[
         str | None,
         Option(
@@ -433,15 +435,23 @@ def eval(  # noqa C901
         ),
     ] = False,
 ):
+    from huggingface_hub import HfApi
+
     from lighteval.tasks.registry import Registry
 
-    registry = Registry(tasks=tasks, custom_tasks=None, load_multilingual=False)
-    task_configs = registry.task_to_configs
-    inspect_ai_tasks = []
+    if "/" in tasks:
+        api = HfApi()
+        print(f"Loading tasks from dataset repository {tasks}...")
+        api.repo_info(repo_id=tasks, repo_type="dataset", revision=revision)
+        inspect_ai_tasks = create_task_function(tasks, revision)
+    else:
+        registry = Registry(tasks=tasks, custom_tasks=None, load_multilingual=False)
+        task_configs = registry.task_to_configs
+        inspect_ai_tasks = []
 
-    for task_name, task_configs in task_configs.items():
-        for task_config in task_configs:
-            inspect_ai_tasks.append(get_inspect_ai_task(task_config, epochs=epochs, epochs_reducer=epochs_reducer))
+        for task_name, task_configs in task_configs.items():
+            for task_config in task_configs:
+                inspect_ai_tasks.append(get_inspect_ai_task(task_config, epochs=epochs, epochs_reducer=epochs_reducer))
 
     if model_args is not None:
         model_args = InspectAIModelConfig._parse_args(model_args)
