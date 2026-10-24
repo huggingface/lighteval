@@ -432,7 +432,9 @@ class Recall(SampleLevelComputation):
 
         if self.recall_depth == 1:
             return int(np.argmax(choices_logprobs) in gold_ixs)
-        return int(any(ix in gold_ixs for ix in np.array(choices_logprobs).argsort()[::-1][: self.recall_depth]))
+        # Break ties by choice order, consistently with argmax at depth 1.
+        ranked_choices = np.argsort(-np.asarray(choices_logprobs), kind="stable")
+        return int(any(ix in gold_ixs for ix in ranked_choices[: self.recall_depth]))
 
 
 class MRR(SampleLevelComputation):
