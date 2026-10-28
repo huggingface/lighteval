@@ -314,4 +314,11 @@ def remove_reasoning_tags(text: str, tag_pairs: list[tuple[str, str]]) -> str:
             else:
                 break
 
+        # The opening tag can be part of the input prompt rather than the
+        # generation (e.g. chat templates that prefill "<think>"), so only the
+        # closing tag reaches the output. Treat everything up to and including
+        # that dangling closing tag as reasoning and remove it.
+        if start_tag not in result and end_tag in result:
+            result = result[result.find(end_tag) + len(end_tag) :]
+
     return result
