@@ -178,7 +178,7 @@ class VLMTransformersModel(LightevalModel):
         )
 
         # Initialize cache for tokenization and predictions
-        self._cache = SampleCache(config)
+        self._cache = SampleCache(config, resolved_model_revision=self.model_sha)
 
     @property
     def tokenizer(self):
