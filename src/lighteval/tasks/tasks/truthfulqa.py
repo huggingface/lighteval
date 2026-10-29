@@ -51,7 +51,7 @@ def truthful_qa_generative_prompt(line, task_name: str = None):
         query=line["question"].strip(),
         choices=correct_answers + incorrect_answers,
         gold_index=list(range(len(correct_answers))),
-        specific={"len_mc1": len(line["mc1_targets"]["choices"])},
+        specific={"len_mc1": len(line["mc1_targets"]["choices"]) if "mc1_targets" in line and "choices" in line["mc1_targets"] else 0},
     )
 
 
