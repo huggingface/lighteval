@@ -357,8 +357,9 @@ def run_test(sample: dict[str, str], test=None, timeout: int = 6) -> list[int | 
     """
     signal.signal(signal.SIGALRM, timeout_handler)
 
-    # Disable functionalities that can make destructive changes to the test.
-    # max memory is set to 4GB
+    # Bound the memory the solution can add, then disable functionalities that can make
+    # destructive changes to the test.
+    limit_solution_memory()
     reliability_guard()
 
     try:
@@ -413,6 +414,46 @@ def run_test(sample: dict[str, str], test=None, timeout: int = 6) -> list[int | 
             signal.alarm(0)
 
     return [-4]
+
+
+SOLUTION_MEMORY_LIMIT_ENV = "LIGHTEVAL_LCB_MEMORY_LIMIT_MIB"
+DEFAULT_SOLUTION_MEMORY_LIMIT_MIB = 4096
+
+
+def limit_solution_memory() -> None:
+    """Limit how much memory a generated solution can add to the process that runs it.
+
+    Solutions run in a forked child of the evaluation process, so the address space the child
+    already has (a process with torch loaded maps several GiB) is not the solution's. The limit
+    is that size plus `LIGHTEVAL_LCB_MEMORY_LIMIT_MIB` (default 4096, 0 disables it). A solution
+    that goes over it raises MemoryError and fails, instead of growing until the machine runs
+    out of memory and the operating system kills the whole evaluation. Linux only: elsewhere the
+    size cannot be read.
+
+    This bounds the address space, not the resident memory. Pages the child inherited are
+    already counted, but if the solution writes to them (garbage collection does) the kernel
+    copies them, so the memory in use can exceed the limit by that amount, typically a few
+    hundred MiB.
+    """
+    try:
+        limit_mib = int(os.environ.get(SOLUTION_MEMORY_LIMIT_ENV) or DEFAULT_SOLUTION_MEMORY_LIMIT_MIB)
+    except ValueError:
+        limit_mib = DEFAULT_SOLUTION_MEMORY_LIMIT_MIB
+    if limit_mib <= 0:
+        return
+
+    import resource
+
+    try:
+        with open("/proc/self/status") as status:
+            current = next(int(line.split()[1]) * 1024 for line in status if line.startswith("VmSize:"))
+    except (OSError, StopIteration, ValueError):
+        return
+    limit = current + limit_mib * 1024 * 1024
+    try:
+        resource.setrlimit(resource.RLIMIT_AS, (limit, limit))
+    except (ValueError, OSError):
+        pass
 
 
 def reliability_guard(maximum_memory_bytes: Optional[int] = None):
