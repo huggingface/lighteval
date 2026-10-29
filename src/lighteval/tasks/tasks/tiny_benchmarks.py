@@ -116,7 +116,8 @@ class TinyCorpusAggregator(SampleLevelComputation, CorpusLevelComputation):
             return self.estimates[self.task]
 
         # We load the weights for the relevant examples
-        with open("extended_tasks/tiny_benchmarks/tinyBenchmarks.pkl", "rb") as handle:
+        path_dld = os.path.join(pathlib.Path(__file__).parent.resolve(), "tinyBenchmarks.pkl")
+        with open(path_dld, "rb") as handle:
             tinyBenchmarks = pickle.load(handle)
 
         seen_examples = tinyBenchmarks[self.scenario]["seen_examples"]
