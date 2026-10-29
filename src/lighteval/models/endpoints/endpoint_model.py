@@ -405,7 +405,7 @@ class InferenceEndpointModel(LightevalModel):
             )
         except IndexError:
             raise Exception(
-                "To avoid accidental costs, we do not upgrade the current endpoint above 4 a100 automatically, please request it explicitely."
+                "To avoid accidental costs, we do not upgrade the current endpoint above 4 a100 automatically, please request it explicitly."
             )
 
     @staticmethod

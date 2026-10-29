@@ -176,7 +176,7 @@ class VLLMModelConfig(ModelConfig):
     gpu_memory_utilization: NonNegativeFloat = 0.9  # lower this if you are running out of memory
     enable_prefix_caching: bool = None  # whether to enable prefix caching to speed up generation. May use more memory. Should be disabled for LFM2
     max_model_length: PositiveInt | None = (
-        None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
+        None  # maximum length of the model, usually inferred automatically. reduce this if you encounter OOM issues, 4096 is usually enough
     )
     quantization: str | None = None
     load_format: str | None = None
@@ -188,7 +188,7 @@ class VLLMModelConfig(ModelConfig):
         True  # whether to add a space at the start of each continuation in multichoice generation
     )
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
-    max_num_seqs: PositiveInt = 128  # maximum number of sequences per iteration; This variable and `max_num_batched_tokens` effectively control the batch size at prefill stage. See https://github.com/vllm-project/vllm/issues/2492 for detailed explaination.
+    max_num_seqs: PositiveInt = 128  # maximum number of sequences per iteration; This variable and `max_num_batched_tokens` effectively control the batch size at prefill stage. See https://github.com/vllm-project/vllm/issues/2492 for detailed explanation.
     max_num_batched_tokens: PositiveInt = 2048  # maximum number of tokens per batch
     subfolder: str | None = None
     is_async: bool = False  # Whether to use the async version or sync version of the model
@@ -293,7 +293,7 @@ class VLLMModel(LightevalModel):
                 logger.warning(
                     "The model max_length was not set in the model arguments. Since the model is using data parallelism, it is created later "
                     " with `ray`, so we can't infer the max_length automatically atm. It might raise issues later on: if it does, relaunch your "
-                    "run, but set `max_model_length` explicitely in the model args."
+                    "run, but set `max_model_length` explicitly in the model args."
                 )
             return None
 
@@ -352,7 +352,7 @@ class VLLMModel(LightevalModel):
                 stop_tokens = []
             else:
                 # NOTE: we are assuming all items in a batch behave similarly (same
-                # stop_tokens and max_tokens genrated) which is not necessarily
+                # stop_tokens and max_tokens generated) which is not necessarily
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = split[0].stop_sequences or []
 

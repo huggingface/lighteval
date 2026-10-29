@@ -57,7 +57,7 @@ from lighteval.utils.timeout import timeout
 
 def safe_sympy_doit(a: Basic | MatrixBase):
     """Safely execute doit() on a sympy expression, catching exceptions.
-      Doit in sympy will evaluate expressions it will pass the expression tree and evluate nodes.
+      Doit in sympy will evaluate expressions it will pass the expression tree and evaluate nodes.
       For example for 1+1+1 it will evaluate the additions and return 3. One issue with it is that it maybe
       evaluates too much as integrals will also be evaluated.
 

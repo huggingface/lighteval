@@ -194,7 +194,7 @@ class SampleCache:
         return self.cache_dir / task_id.task_name / task_id.task_hash / f"{task_id.sampling_method.name}.parquet"
 
     def get_task_id(self, task_name: str, sampling_method: SamplingMethod) -> TaskID:
-        """Returns a unique task indentifier. Depends on the task name,
+        """Returns a unique task identifier. Depends on the task name,
         task version and parameters (from which a hash is derived), and
         current sampling method (current metric we look at).
 

@@ -333,7 +333,7 @@ class VLMTransformersModel(LightevalModel):
 
         logger.warning(
             "No max_length attribute found in the model config. Using the default max sequence length setting `2048`. "
-            "It is recommended to set max_length trough the model args: max_length=..."
+            "It is recommended to set max_length through the model args: max_length=..."
         )
 
         return 2048

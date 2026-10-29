@@ -260,7 +260,7 @@ class TransformersModel(LightevalModel):
         if config is None:
             raise ValueError("Config must be provided to initialize the TransformersModel via `from_model` method.")
 
-        # Instanciate the object without using __init__
+        # Instantiate the object without using __init__
         self = cls.__new__(cls)
 
         self.transformers_config = model.config
@@ -482,7 +482,7 @@ class TransformersModel(LightevalModel):
 
         logger.warning(
             "No max_length attribute found in the model config. Using the default max sequence length setting `2048`. "
-            "It is recommended to set max_length trough the model args: max_length=..."
+            "It is recommended to set max_length through the model args: max_length=..."
         )
 
         return 2048
@@ -556,7 +556,7 @@ class TransformersModel(LightevalModel):
                 stop_tokens = []
             else:
                 # NOTE: we are assuming all items in a batch behave similarly (same
-                # stop_tokens and max_tokens genrated) which is not necessarily
+                # stop_tokens and max_tokens generated) which is not necessarily
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = split[0].stop_sequence
 
@@ -695,7 +695,7 @@ class TransformersModel(LightevalModel):
                     stop_tokens = [self.tokenizer.eos_token]
                 else:
                     # NOTE: we are assuming all items in a batch behave similarly (same
-                    # stop_tokens and max_tokens genrated) which is not necessarily
+                    # stop_tokens and max_tokens generated) which is not necessarily
                     # the case! Because of that we only use batch size of 1
                     stop_tokens = [self.tokenizer.eos_token] + batch[0].stop_sequences
 
