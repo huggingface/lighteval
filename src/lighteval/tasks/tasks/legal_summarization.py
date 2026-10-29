@@ -27,10 +27,10 @@ from lighteval.tasks.requests import Doc
 def legal_summarization_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
-        query=f"###\nArticle:{line['text']}\n\nSummarize the above article in 3 sentences.\n",
+        query=f"###\nArticle:{line['article']}\n\nSummarize the above article in 3 sentences.\n",
         choices=[str(line["summary"])],
         gold_index=0,
-        specific={"text": line["text"]},
+        specific={"text": line["article"]},
     )
 
 
