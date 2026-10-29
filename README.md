@@ -108,7 +108,7 @@ hf auth login
 
 Lighteval offers the following entry points for model evaluation:
 
-- `lighteval eval`: Evaluation models using [inspect-ai](https://inspect.aisi.org.uk/) as a backend (prefered).
+- `lighteval eval`: Evaluation models using [inspect-ai](https://inspect.aisi.org.uk/) as a backend (preferred).
 - `lighteval accelerate`: Evaluate models on CPU or one or more GPUs using [🤗
   Accelerate](https://github.com/huggingface/accelerate)
 - `lighteval nanotron`: Evaluate models in distributed settings using [⚡️

@@ -384,7 +384,7 @@ class JudgeLM:
 
         try:
             loop = asyncio.get_running_loop()
-            logger.debug("Exting event loop is found, using loop.create_task")
+            logger.debug("Existing event loop is found, using loop.create_task")
             result = loop.run_until_complete(run_all())
         except RuntimeError:
             logger.debug("No running event loop found, using asyncio.run")

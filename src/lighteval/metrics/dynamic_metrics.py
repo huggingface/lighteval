@@ -185,7 +185,7 @@ class MultilingualExtractiveMatchMetric(SampleLevelComputation):
             fallback_mode: Literal["no_fallback", "first_match"]
                 How to perform extraction. Defaults to "first_match".
                 - "no_fallback": Only use first successfully parsed matches
-                - "first_match": Use the first successfully parsed match + first match irregardless the parsing success
+                - "first_match": Use the first successfully parsed match + first match regardless of the parsing success
             extraction_mode: Literal["first_match", "any_match"]
                 - "first_match": Only tries to extract the first regex match if it fails no other matches are tried
                 - "any_match": Tries to extract any regex match

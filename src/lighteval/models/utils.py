@@ -45,7 +45,7 @@ def _get_dtype(dtype: Union[str, torch.dtype, None], config: Optional[AutoConfig
         torch.dtype: The torch dtype based on the input arguments.
     """
     if config is not None and hasattr(config, "quantization_config"):
-        # must be infered
+        # must be inferred
         return None
 
     if dtype is not None:

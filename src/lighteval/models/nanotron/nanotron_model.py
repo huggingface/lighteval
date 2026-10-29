@@ -397,7 +397,7 @@ class NanotronLightevalModel(LightevalModel):
             logger.warning(f"Testing batch size {batch_size}")
             test_batch = torch.ones(
                 (batch_size + int(0.1 * batch_size), max_input_length), device=self.device
-            ).long()  # We add 10% for marging :)
+            ).long()  # We add 10% for margin :)
             F.log_softmax(self._model_call(test_batch).float(), dim=-1).cpu()
             return batch_size
 
@@ -1025,7 +1025,7 @@ class NanotronLightevalModel(LightevalModel):
                 sample_index, batch = zip(*indexed_batch)
 
                 # NOTE: we are assuming all items in a batch behave similarly (same
-                # stop_tokens and max_tokens genrated) which is not necessarily
+                # stop_tokens and max_tokens generated) which is not necessarily
                 # the case! Because of that we should only use batch size of 1
 
                 # Since items are sorted by inverse length, the first one always has

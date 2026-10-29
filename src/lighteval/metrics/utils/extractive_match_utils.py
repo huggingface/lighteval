@@ -131,7 +131,7 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
     currency_units = re.escape("$€£¥₹₽₪₩₫฿₡₢₣₤₥₦₧₨₩₪₫₭₮₯₰₱₲₳₴₵₶₷₸₹₺₻₼₽₾₿")
     expr_prefix_re = rf"(?:^|{space_re}|\=)(?:\*\*)?"
     expr_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|\s?{colon_re}|{space_re}|\)|\$|$)"
-    # Expressions must be prefixed and suffixed while, digits don't need suffix and can have currency units preceeded, this is to ensure
+    # Expressions must be prefixed and suffixed while, digits don't need suffix and can have currency units preceded, this is to ensure
     # That we can extract stuff like $100 or 100m2, while we don't extract XDY2K as 2
     expr_with_anchors = rf"(?:{expr_prefix_re}{expr_re}{expr_suffix_re})"
     number_with_anchors = rf"(?:{expr_prefix_re}[{currency_units}]?{number_re})"
@@ -274,7 +274,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
         latex_re_boxed = rf"{latex_re_boxed}{next_groups}"
         regexes.append((latex_re_boxed, latex_config.boxed_match_priority))
         # Match plain boxed, the issue with plain boxed is that it's impossible to know where it stops, so if there are
-        # till last }. We do the actuall extraction in the normalization step.
+        # till last }. We do the actual extraction in the normalization step.
         regexes.append((r"(?P<first_latexBoxed>\\boxed{.+})", latex_config.boxed_match_priority))
 
     return [(re.compile(pattern, re.DOTALL), priority) for pattern, priority in regexes]
@@ -402,7 +402,7 @@ def get_extraction_regexes(
     return extraction_regexes
 
 
-# Small cache, to catche repeated calls invalid parsing
+# Small cache, to catch repeated calls invalid parsing
 @lru_cache(maxsize=20)
 @requires("latex2sympy2_extended")
 def parse_latex_with_timeout(latex: str, timeout_seconds: int):
@@ -575,7 +575,7 @@ def extract_target_from_pred(
         target_res (list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]]): List of regex patterns and their priorities for each target type
         fallback_mode (Literal["no_fallback", "first_match"], optional): How to handle extraction failures. Defaults to "no_fallback".
             - "no_fallback": Return only successfully parsed match
-            - "first_match": Additionaly Include the first string match no matter how parsing finished
+            - "first_match": Additionally include the first string match no matter how parsing finished
         extraction_mode (Literal["first_match", "any_match"], optional): How to handle extraction failures. Defaults to "any_match".
             - "first_match": Only tries to extract the first match
             - "any_match": Tries to extract any match
