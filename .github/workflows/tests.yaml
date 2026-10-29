@@ -71,3 +71,9 @@ jobs:
           HF_HOME: "cache/models"
           HF_DATASETS_CACHE: "cache/datasets"
         run: python -m pytest -x --disable-pytest-warnings
+
+      - name: Run ROUGE tests with rouge-score-rs
+        run: |
+          uv pip install --system --break-system-packages -e ".[fast_rouge]"
+          python -c "from rouge_score_rs import rouge_scorer"
+          python -m pytest -x --disable-pytest-warnings tests/unit/metrics -k rouge
