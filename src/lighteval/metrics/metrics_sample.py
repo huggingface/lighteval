@@ -1055,27 +1055,38 @@ class JudgeLLMMTBench(JudgeLLM):
         model_responses = as_list(model_response)
         docs = as_list(doc)
 
-        # If we are evaluating a multiturn task, we need to have specific field in the formatted doc
-        questions = [doc.specific["multi_turn_queries"] for doc in docs]
-        golds = [doc.specific.get("reference", None) for doc in docs]
-        predictions = [response.final_text[0] for response in model_responses]
+        results = []
+        for d, response in zip(docs, model_responses):
+            questions = d.specific["multi_turn_queries"]
+            golds = d.specific.get("reference", [])
+            predictions = response.final_text
 
-        query_context_1 = {"query": questions[0], "context": ""}
-        query_context_2 = {"query": questions[1], "context": predictions[0]}
+            # Turn 1
+            query_context_1 = {"query": questions[0], "context": ""}
+            score_turn_1, message_turn_1, judgement_turn_1 = self.judge.evaluate_answer(
+                question=json.dumps(query_context_1, indent=2),
+                answer=predictions[0],
+                gold=golds[0] if golds else None
+            )
 
-        score_turn_1, message_turn_1, judgement_turn_1 = self.judge.evaluate_answer(
-            question=json.dumps(query_context_1, indent=2), answer=predictions[0], gold=golds[0] if golds else None
-        )
-        score_turn_2, message_turn_2, judgement_turn_2 = self.judge.evaluate_answer(
-            question=json.dumps(query_context_2, indent=2), answer=predictions[1], gold=golds[1] if golds else None
-        )
+            # Turn 2
+            score_turn_2, message_turn_2, judgement_turn_2 = np.nan, "", ""
+            if len(questions) > 1 and len(predictions) > 1:
+                query_context_2 = {"query": questions[1], "context": predictions[0]}
+                score_turn_2, message_turn_2, judgement_turn_2 = self.judge.evaluate_answer(
+                    question=json.dumps(query_context_2, indent=2),
+                    answer=predictions[1],
+                    gold=golds[1] if golds else None
+                )
 
-        return {
-            "judge_score_turn_1": score_turn_1,
-            "judge_score_turn_2": score_turn_2,
-            "user_prompt": [message_turn_1, message_turn_2],
-            "judgement": [judgement_turn_1, judgement_turn_2],
-        }
+            results.append({
+                "judge_score_turn_1": score_turn_1,
+                "judge_score_turn_2": score_turn_2,
+                "user_prompt": [message_turn_1, message_turn_2],
+                "judgement": [judgement_turn_1, judgement_turn_2],
+            })
+
+        return results
 
 
 class JudgeLLMMixEval(JudgeLLM):
