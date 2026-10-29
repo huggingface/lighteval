@@ -40,3 +40,42 @@ Example:
 ```bash
 lighteval tasks inspect truthfulqa:mc
 ```
+
+### Multilingual tasks
+
+Multilingual tasks (for example `xnli_*` or `tumlu:*`) live in
+`src/lighteval/tasks/multilingual/tasks/` and are not loaded by default.
+To run one:
+
+1. Install the multilingual extra:
+
+```bash
+pip install "lighteval[multilingual]"
+```
+
+2. Add `--load-tasks-multilingual` to the evaluation command:
+
+```bash
+lighteval accelerate \
+     "model_name=openai-community/gpt2" \
+     "tumlu:azerbaijani|0" \
+     --load-tasks-multilingual
+```
+
+Without the flag the task is not registered, and the command fails with
+`Cannot find task tumlu:azerbaijani in task list or in custom task registry`.
+The flag is accepted by `accelerate`, `vllm`, `sglang`, `nanotron`, `custom`,
+`baseline` and the `endpoint` commands.
+
+To see the names of the multilingual tasks, dump the registry with them loaded:
+
+```bash
+lighteval tasks dump --load-tasks-multilingual > tasks.json
+```
+
+To inspect a multilingual task, note that the option is called
+`--load-multilingual` for this command:
+
+```bash
+lighteval tasks inspect --load-multilingual "tumlu:azerbaijani"
+```
