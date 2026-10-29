@@ -64,6 +64,27 @@
       },
       "tolerance": 0.01,
       "description": "Test pass at k letters with multiple attempts"
+    },
+    {
+      "name": "Pass at K Letters - Boxed Final Answer",
+      "metric_class": "pass_at_k_letters",
+      "metric_params": {"k": 1, "n": 1},
+      "doc": {
+        "query": "Which conclusion follows from the observed blueshift?",
+        "choices": ["A", "B", "C", "D"],
+        "gold_index": 2,
+        "task_name": "mmlu_redux"
+      },
+      "model_response": {
+        "text": ["### Final Answer\n\n$$\n\\boxed{C}\n$$"],
+        "logprobs": [],
+        "output_tokens": []
+      },
+      "expected_output": {
+        "pass@k:k=1&n=1": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "A chain-of-thought answer that gives its final choice as \\boxed{C} (as Qwen3-style thinking models do) must be graded correct, matching MMLU-Redux letter-index docs (choices=['A','B','C','D'])"
     }
   ]
 }

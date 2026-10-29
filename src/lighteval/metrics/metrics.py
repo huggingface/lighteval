@@ -487,8 +487,12 @@ class Metrics(Enum):
         sample_level_fn=PassAtK(
             sample_scoring_function=MultilingualExtractiveMatchMetric(
                 language=Language.ENGLISH,
-                gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                gold_extraction_target=[
+                    IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=True)
+                ],
+                pred_extraction_target=[
+                    IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=True)
+                ],
                 precision=6,
             ),
         ),
