@@ -278,7 +278,8 @@ class LightevalTask:
         if len(stored_splits) > 0:
             return stored_splits[0]
 
-        logger.warning(f"Careful, the task {self.name} is using evaluation data to build the few shot examples.")
+        if self.config.num_fewshots > 0:
+            logger.warning(f"Careful, the task {self.name} is using evaluation data to build the few shot examples.")
         return None
 
     def _get_docs_from_split(self, splits: list[str], few_shots=False) -> list[Doc]:
