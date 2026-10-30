@@ -112,7 +112,6 @@ class VLMTransformersModelConfig(ModelConfig):
         cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
     """
 
-    model_name: str
     processor: str | None = None
     use_fast_image_processor: bool | None = None
     subfolder: str | None = None

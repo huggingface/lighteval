@@ -24,6 +24,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from lighteval.models.model_input import ChatTemplateParameters
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 
@@ -46,6 +47,22 @@ class TestPromptManager:
         assert pm.use_chat_template is True
         assert pm.tokenizer == tokenizer
         assert pm.system_prompt == system_prompt
+
+    def test_init_with_chat_template_and_chat_template_parameters(self):
+        """Test PromptManager initialization with chat template enabled and chat template parameters."""
+        tokenizer = Mock()
+        system_prompt = "You are a helpful assistant."
+        pm = PromptManager(
+            use_chat_template=True,
+            tokenizer=tokenizer,
+            system_prompt=system_prompt,
+            chat_template_parameters=ChatTemplateParameters(reasoning_effort="medium"),
+        )
+        assert pm.use_chat_template is True
+        assert pm.tokenizer == tokenizer
+        assert pm.system_prompt == system_prompt
+        assert pm.chat_template_parameters is not None
+        assert pm.chat_template_parameters.reasoning_effort == "medium"
 
     def test_prepare_prompt_plain_text_basic(self):
         """Test prepare_prompt with plain text format and basic document."""
