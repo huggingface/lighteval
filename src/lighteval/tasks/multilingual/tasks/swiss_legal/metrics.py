@@ -53,12 +53,6 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 # lighteval requires numpy>=2 while stable unbabel-comet releases require numpy<2.
 _DISABLED_COMET_METRICS = {"wmt22-comet-da", "xcomet_xl", "xcomet_xxl"}
 
-if device == "cuda":
-    torch.backends.cudnn.benchmark = True
-    torch.backends.cuda.matmul.allow_tf32 = True
-    if torch.cuda.get_device_capability()[0] >= 7:
-        torch.set_float32_matmul_precision("medium")
-
 
 def _load_comet():
     try:
