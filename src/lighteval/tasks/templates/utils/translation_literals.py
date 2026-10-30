@@ -23,7 +23,7 @@
 from dataclasses import dataclass, field
 from string import ascii_uppercase
 
-from lighteval.utils.language import Language
+from lighteval.utils.language import Language, LanguageWithScript, Script
 
 
 # TODO(hynky1999): The typing still is not great, it should be able to infer that you can't access the
@@ -31,7 +31,7 @@ from lighteval.utils.language import Language
 @dataclass
 class TranslationLiterals:
     # This is just to create nice error messages
-    language: Language
+    language: Language | LanguageWithScript
 
     question_word: str = None  # type: ignore
     answer: str = None  # type: ignore
@@ -74,7 +74,14 @@ the 'src/lighteval/tasks/templates/utils/translation_literals.py'
         return value
 
 
-TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
+class TranslationLiteralsDict(dict):
+    def __missing__(self, language):
+        if isinstance(language, LanguageWithScript):
+            return self[language.language]
+        raise KeyError(language)
+
+
+TRANSLATION_LITERALS: dict[Language | LanguageWithScript, TranslationLiterals] = {
     Language.ACEHNESE: TranslationLiterals(language=Language.ACEHNESE),
     Language.AFRIKAANS: TranslationLiterals(language=Language.AFRIKAANS),
     Language.AKAN: TranslationLiterals(language=Language.AKAN),
@@ -289,6 +296,30 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         no="不是",
         also="而且",
         cause_word="因为",
+        effect_word="所以",
+        true="真",
+        false="假",
+        neither="都不是",
+        or_word="或",
+        and_word="和",
+        full_stop="。",
+        comma="，",
+        question_mark="？",
+        exclamation_mark="！",
+        word_space="",
+        sentence_space="",
+        colon="：",
+        indices=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+    ),
+    LanguageWithScript(language=Language.CHINESE, script=Script.HAN_TRADITIONAL): TranslationLiterals(
+        language=LanguageWithScript(language=Language.CHINESE, script=Script.HAN_TRADITIONAL),
+        question_word="問題",
+        answer="答案",
+        confirmation_word="對嗎",
+        yes="是的",
+        no="不是",
+        also="而且",
+        cause_word="因為",
         effect_word="所以",
         true="真",
         false="假",
@@ -1426,3 +1457,5 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
     Language.YUE_CHINESE: TranslationLiterals(language=Language.YUE_CHINESE),
     Language.ZULU: TranslationLiterals(language=Language.ZULU),
 }
+
+TRANSLATION_LITERALS = TranslationLiteralsDict(TRANSLATION_LITERALS)

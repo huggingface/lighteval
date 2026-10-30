@@ -22,7 +22,7 @@
 
 from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
 from lighteval.tasks.templates.utils.formulation import CFFormulation, MCFFormulation
-from lighteval.utils.language import Language
+from lighteval.utils.language import Language, LanguageWithScript, Script
 
 
 def test_multichoice_prompt_mcf():
@@ -113,6 +113,35 @@ def test_chinese_multichoice_prompt():
 A。北京
 B。上海
 C。广州
+D。深圳
+答案：\
+"""
+    )
+
+
+def test_traditional_chinese_multichoice_prompt():
+    """Test multichoice prompt generation for Traditional Chinese."""
+    test_input = {
+        "question": "什麼是中國的首都?",
+        "choices": ["北京", "上海", "廣州", "深圳"],
+        "gold_idx": 0,
+    }
+
+    prompt_fn = get_mcq_prompt_function(
+        LanguageWithScript(language=Language.CHINESE, script=Script.HAN_TRADITIONAL),
+        {"question": "question", "choices": "choices", "gold_idx": "gold_idx"},
+        MCFFormulation(),
+    )
+
+    doc = prompt_fn(test_input, "test_task")
+
+    assert (
+        doc.query
+        == """\
+問題：什麼是中國的首都？
+A。北京
+B。上海
+C。廣州
 D。深圳
 答案：\
 """
