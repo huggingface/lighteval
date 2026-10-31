@@ -981,7 +981,7 @@ class JudgeLLM(SampleLevelComputation):
             case "transformers" | "vllm":
                 logger.debug("Checking availability of Transformers or VLLM model")
                 api = HfApi()
-                models = api.list_models(model_name=judge_model_name)
+                models = api.list_models(search=judge_model_name)
                 if not models:
                     raise ValueError(f"{judge_model_name} not found on Hugging Face Hub")
 

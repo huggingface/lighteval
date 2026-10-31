@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import json
+import numbers
 import os
 
 import pytest
@@ -38,6 +39,24 @@ from lighteval.utils.utils import as_list
 
 
 PATH_TO_HARNESS_METRICS = os.path.join(os.path.dirname(__file__), "reference_scores/harness_metrics.json")
+
+
+def approx_equal(result, reference, rel: float = 1e-8) -> bool:
+    """Recursively compares results to references, using `pytest.approx` on scalar leaves.
+
+    `pytest.approx` does not support nested data structures (since pytest 9.2 this raises a
+    TypeError), but corpus-level metric inputs (e.g. mcc's `{"golds": [...], "preds": ...}`)
+    are dicts that contain lists, so we walk the structure ourselves.
+    """
+    if isinstance(result, dict) and isinstance(reference, dict):
+        return result.keys() == reference.keys() and all(approx_equal(result[k], reference[k], rel) for k in result)
+    if isinstance(result, (list, tuple)) and isinstance(reference, (list, tuple)):
+        return len(result) == len(reference) and all(
+            approx_equal(res, ref, rel) for res, ref in zip(result, reference)
+        )
+    if isinstance(reference, numbers.Number):
+        return result == pytest.approx(reference, rel=rel)
+    return result == reference
 
 
 def pytest_generate_tests(metafunc: pytest.Metafunc):
@@ -124,14 +143,14 @@ def test_model_prediction(prompt_inputs: tuple[str, str, list]):  # noqa: C901
             if isinstance(cur_result_list[0], list):
                 for res, ref in zip(cur_result_list, cur_ref_list):
                     try:
-                        assert res == pytest.approx(ref, rel=1e-8), error_msg
+                        assert approx_equal(res, ref), error_msg
                     except Exception:
                         assert False, (
                             key + "\n" + str(cur_result_list) + "\n" + str(cur_ref_list) + "\n" + task_name + "\n"
                         )
             else:
                 try:
-                    assert cur_result_list == pytest.approx(cur_ref_list, rel=1e-8), error_msg
+                    assert approx_equal(cur_result_list, cur_ref_list), error_msg
                 except Exception:
                     # assert False, error_msg + "\n" + str(e)
                     assert False, (
