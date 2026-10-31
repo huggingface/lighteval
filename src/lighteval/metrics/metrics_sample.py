@@ -402,7 +402,8 @@ class Probability(SampleLevelComputation):
             else logprobs
         )
         probs = np.exp(normalized_log_probs)
-        return self.aggregation_function(probs)
+        gold_ixs = as_list(doc.gold_index)
+        return self.aggregation_function(probs[gold_ixs])
 
 
 class Recall(SampleLevelComputation):
