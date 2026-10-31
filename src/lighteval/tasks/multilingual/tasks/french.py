@@ -129,4 +129,27 @@ bac_fr_task = LightevalTaskConfig(
 )
 
 # STORE YOUR EVALS
-TASKS_TABLE = [ifeval_fr_task, gpqa_fr_task, bac_fr_task]
+TASKS_TABLE = [
+    # FIXME: fr-gouv-coordination-ia repos were deleted
+    # LightevalTaskConfig(
+    #     name="ifeval-fr",
+    #     hf_repo="fr-gouv-coordination-ia/IFEval-fr",
+    #     ...
+    # ),
+    # LightevalTaskConfig(
+    #     name="gpqa-fr",
+    #     hf_repo="fr-gouv-coordination-ia/gpqa-fr",
+    #     ...
+    # ),
+    # LightevalTaskConfig(
+    #     name="bac-fr",
+    #     hf_repo="fr-gouv-coordination-ia/bac-fr",
+    #     ...
+    # ),
+    
+    LightevalTaskConfig(
+        name="some-other-working-task",
+        hf_repo="working/repo",
+        # ... keep everything for this working task UNCOMMENTED
+    )
+]

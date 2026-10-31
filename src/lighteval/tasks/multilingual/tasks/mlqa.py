@@ -44,9 +44,15 @@ TASKS_TABLE = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        hf_repo="facebook/mlqa",
-        hf_subset=f"mlqa.{standardize_tag(lang.value)}.{standardize_tag(lang.value)}",
-        hf_revision="397ed406c1a7902140303e7faf60fff35b58d285",
+        # --------------------------------------------------------
+        # Bypass the deprecated script by loading the parquet directly
+        hf_repo="parquet",
+        hf_subset="default",
+        hf_data_files={
+            "test": f"hf://datasets/facebook/mlqa@refs%2Fconvert%2Fparquet/mlqa.{standardize_tag(lang.value)}.{standardize_tag(lang.value)}/test/*.parquet"
+        },
+        # (Removed hf_revision since the parquet URL handles it)
+        # --------------------------------------------------------
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
         generation_size=400,
