@@ -73,6 +73,13 @@ def _set_litellm_cache(cache_dir: str | None = None) -> None:
         litellm.cache = Cache(type=LiteLLMCacheType.DISK, disk_cache_dir=os.path.expanduser(cache_dir))
 
 
+def _configure_litellm_cache_if_requested(cache_dir: str | None) -> None:
+    """Keep the existing process-wide cache unless a directory is configured."""
+    configured_dir = _get_litellm_cache_dir(cache_dir)
+    if configured_dir is not None:
+        _set_litellm_cache(configured_dir)
+
+
 if is_package_available("litellm"):
     _set_litellm_cache(_get_litellm_cache_dir())
 
@@ -166,7 +173,7 @@ class LiteLLMClient(LightevalModel):
         If a base_url is not set, it will default to the public API.
         """
         self.config = config
-        _set_litellm_cache(_get_litellm_cache_dir(config.litellm_cache_dir))
+        _configure_litellm_cache_if_requested(config.litellm_cache_dir)
         self.model = config.model_name
         self.provider = config.provider or config.model_name.split("/")[0]
         self.base_url = config.base_url

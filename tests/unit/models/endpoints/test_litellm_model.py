@@ -58,3 +58,43 @@ def test_set_litellm_cache_uses_configured_directory_and_can_reset(monkeypatch, 
         {"type": "disk"},
     ]
     assert fake_litellm.cache is not None
+
+
+def test_unconfigured_client_does_not_replace_process_cache(monkeypatch):
+    # A second client using defaults must not reset another component's cache.
+    monkeypatch.delenv(litellm_model.LITELLM_CACHE_LOCATION_ENV, raising=False)
+    sentinel = object()
+    fake_litellm = SimpleNamespace(cache=sentinel)
+    monkeypatch.setattr(litellm_model, "litellm", fake_litellm)
+
+    def fail_if_reconstructed(**kwargs):
+        raise AssertionError("unconfigured client must reuse the global cache")
+
+    monkeypatch.setattr(litellm_model, "Cache", fail_if_reconstructed, raising=False)
+    litellm_model._configure_litellm_cache_if_requested(None)
+
+    assert fake_litellm.cache is sentinel
+
+
+def test_explicit_or_environment_cache_override_is_applied(monkeypatch):
+    created = []
+
+    class FakeCache:
+        def __init__(self, **kwargs):
+            created.append(kwargs)
+
+    monkeypatch.setattr(litellm_model, "Cache", FakeCache, raising=False)
+    monkeypatch.setattr(litellm_model, "LiteLLMCacheType", SimpleNamespace(DISK="disk"), raising=False)
+    fake_litellm = SimpleNamespace(cache=object())
+    monkeypatch.setattr(litellm_model, "litellm", fake_litellm)
+    monkeypatch.setenv(litellm_model.LITELLM_CACHE_LOCATION_ENV, "/env/cache")
+
+    litellm_model._configure_litellm_cache_if_requested(None)
+    litellm_model._configure_litellm_cache_if_requested("/config/cache")
+
+    assert created == [
+        {"type": "disk", "disk_cache_dir": "/env/cache"},
+        {"type": "disk", "disk_cache_dir": "/config/cache"},
+    ]
+    assert isinstance(fake_litellm.cache, FakeCache)
+
