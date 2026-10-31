@@ -1264,6 +1264,10 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
     def __init__(self, k: int | None = None, n: int | None = None, **kwargs):
         """Computing pass at k with an estimator
 
+        k must be <= n: pass@k is undefined otherwise, and this metric raises a
+        ValueError rather than report a number. See GPassAtK for the variant that
+        returns 0.0 when k > n.
+
         Args:
             k (int | None): Number of correct samples threshold
             n (int | None): Total number of samples to generate.
@@ -1298,6 +1302,10 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
         elif len(predictions) < self.n:
             logger.warning(f"Number of predictions is less than {self.n} for pass@k.")
 
+        # Fail before scoring every prediction: when k > n this always raises, and the
+        # scores computed below would be discarded anyway.
+        self._check_k_le_n()
+
         processed_choices = [self.preprocess(g) for g in doc.choices]
         new_doc = Doc(
             choices=processed_choices,
@@ -1315,8 +1323,24 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
 
         return self.pass_at_k(all_scores)
 
+    def _check_k_le_n(self) -> None:
+        """Guard the estimator: pass@k is undefined for k > n.
+
+        `n - c < k` is then true for every input, so a sample with zero correct answers
+        would score a perfect pass@k. `GPassAtK` in this file returns 0.0 instead.
+        """
+        if self.k > self.n:
+            raise ValueError(
+                f"pass@{self.k} is undefined when k > n (k={self.k}, n={self.n}). "
+                "Lower k to at most n, or use GPassAtK, which returns 0.0 when k > n."
+            )
+
     def pass_at_k(self, all_scores: list[int]) -> float:
         """Algo from https://arxiv.org/pdf/2107.03374"""
+        # Also checked at the top of compute(); this method is callable on its own and
+        # must not return a value that is undefined for k > n.
+        self._check_k_le_n()
+
         c: int = all_scores.count(1)
         if self.n - c < self.k:
             return 1.0
