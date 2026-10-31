@@ -200,10 +200,17 @@ class TestBaseMetrics:
         result = prob_metric.compute_sample(doc=doc, model_response=model_response)
         assert result[prob_metric.metric_name] == pytest.approx(0.7)
 
-        # Aggregation function test
-        model_response = ModelResponse(logprobs=np.log([0.7, 0.1]))
+        # Aggregation function test over multiple golds
+        doc_multi_gold = Doc(query="Test query", choices=["A", "B", "C"], gold_index=[0, 1], task_name="test")
+        model_response = ModelResponse(logprobs=np.log([0.7, 0.1, 0.05]))
         prob_min_metric = ProbabilityMetric(aggregation_function=np.min)
-        result = prob_min_metric.compute_sample(doc=doc, model_response=model_response)
+        result = prob_min_metric.compute_sample(doc=doc_multi_gold, model_response=model_response)
+        assert result[prob_metric.metric_name] == pytest.approx(0.1)
+
+        # Gold is not the argmax: the metric must return the gold probability
+        doc_gold_not_argmax = Doc(query="Test query", choices=["A", "B", "C"], gold_index=1, task_name="test")
+        model_response = ModelResponse(logprobs=np.log([0.7, 0.1, 0.05]))
+        result = prob_metric.compute_sample(doc=doc_gold_not_argmax, model_response=model_response)
         assert result[prob_metric.metric_name] == pytest.approx(0.1)
 
     def test_mc_probability_metric(self):
