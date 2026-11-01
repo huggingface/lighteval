@@ -30,7 +30,7 @@ import zlib
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from decimal import Decimal
 from enum import Enum
-from io import StringIO
+from io import RawIOBase, StringIO
 from types import ModuleType
 from typing import Callable, Optional
 
@@ -66,6 +66,30 @@ def timeout_handler(signum, frame):
     raise TimeoutException
 
 
+class _StdoutBinaryBuffer(RawIOBase):
+    """The binary half of the fake stdout installed by `Capturing`.
+
+    The real `sys.stdout` exposes a `.buffer`, and solutions commonly write
+    through it (`sys.stdout.buffer.write(...)`) because it is faster than
+    `print`. Bytes written here are decoded into the text stream they belong
+    to, so the captured output is the same whichever half a solution uses.
+
+    Subclassing `RawIOBase` rather than `BytesIO` is deliberate: `BytesIO`
+    implements `writelines` in C against its own buffer, so it would bypass an
+    overridden `write` and drop that output silently.
+    """
+
+    def __init__(self, text_stream: StringIO):
+        self._text_stream = text_stream
+
+    def writable(self) -> bool:
+        return True
+
+    def write(self, data) -> int:  # type: ignore[override]
+        self._text_stream.write(bytes(data).decode(errors="replace"))
+        return len(data)
+
+
 # used to capture stdout as a list
 # from https://stackoverflow.com/a/16571630/6416660
 # alternative use redirect_stdout() from contextlib
@@ -73,6 +97,10 @@ class Capturing(list):
     def __enter__(self):
         self._stdout = sys.stdout
         sys.stdout = self._stringio = StringIO()
+        # Mirror the real sys.stdout, which has a binary `.buffer`. Without it
+        # a solution using sys.stdout.buffer.write() raises AttributeError and
+        # is graded as wrong even though it is correct.
+        self._stringio.buffer = _StdoutBinaryBuffer(self._stringio)  # type: ignore[attr-defined]
         # Make closing the StringIO a no-op
         self._stringio.close = lambda x: 1
         return self
