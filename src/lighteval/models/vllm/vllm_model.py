@@ -128,7 +128,8 @@ class VLLMModelConfig(ModelConfig):
         trust_remote_code (bool):
             Whether to trust remote code when loading models. Defaults to False.
         add_special_tokens (bool):
-            Whether to add special tokens during tokenization. Defaults to True.
+            Whether to add special tokens (e.g. BOS) when tokenizing plain-text prompts. Chat-template prompts
+            are tokenized as rendered, since the template writes its own special tokens. Defaults to True.
         multichoice_continuations_start_space (bool):
             Whether to add a space before multiple choice continuations. Defaults to True.
         pairwise_tokenization (bool):
@@ -247,7 +248,8 @@ class VLLMModel(LightevalModel):
 
     @property
     def add_special_tokens(self):
-        return self._add_special_tokens
+        # a rendered chat template already holds its special tokens (e.g. BOS)
+        return self._add_special_tokens and not self.use_chat_template
 
     @property
     def max_length(self) -> int:

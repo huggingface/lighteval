@@ -45,7 +45,10 @@ def test_loglikelihood_rolling_matches_manual_scoring():
     """Rolling perplexity on a `choices=None` doc (the_pile/wikitext style) should not
     crash and should match a plain autoregressive logits[:-1] vs ids[1:] scoring."""
     model_config = TransformersModelConfig(
-        model_name="hf-internal-testing/tiny-random-LlamaForCausalLM", model_parallel=False, revision="main"
+        model_name="hf-internal-testing/tiny-random-LlamaForCausalLM",
+        model_parallel=False,
+        revision="main",
+        override_chat_template=False,
     )
     model: TransformersModel = load_model(config=model_config)
 
