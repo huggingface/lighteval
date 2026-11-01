@@ -121,12 +121,12 @@ class DropMetrics(SampleLevelComputation):
             return True
         return False
 
-    def _align_bags(self, predicted: List[Set[str]], gold: List[Set[str]]) -> np.array:
+    def _align_bags(self, predicted: List[Set[str]], gold: List[Set[str]]) -> np.ndarray:
         """Takes gold and predicted answer sets and first finds the optimal 1-1 alignment
         between them and gets maximum metric values over all the answers.
 
         Returns:
-            np.array: Array of maximum F1 scores for each aligned bag pair
+            np.ndarray: Array of maximum F1 scores for each aligned bag pair
         """
         scores = np.zeros([len(gold), len(predicted)])
         for gold_index, gold_item in enumerate(gold):
