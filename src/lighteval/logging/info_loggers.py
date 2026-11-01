@@ -372,7 +372,8 @@ class MetricsLogger:
                         logger.warning(f"{task_name}, {metric_name} got an OVERFLOW ERROR when computing stderr.")
 
         # We group subtasks which belong to the same parent task, like MMLU, to compute an average on them
-        # and compute an average of all metrics
+        # and compute an average of all metrics. The subtasks are evaluated on disjoint samples, so the stderr of
+        # an average of G subtask scores is sqrt(sum_i stderr_i**2) / G.
         grouped_tasks = collections.defaultdict(list)
         suite_average = {}
         suite_nb = {}
@@ -383,7 +384,9 @@ class MetricsLogger:
                 task, fewshot = k.split("|")
                 grouped_tasks[f"{task.split(':')[0]}:_average|{fewshot}"].append(k)
             for metric, value in metrics.items():
-                suite_average[metric] = suite_average.get(metric, 0) + value
+                suite_average[metric] = suite_average.get(metric, 0) + (
+                    value**2 if metric.endswith("_stderr") else value
+                )
                 suite_nb[metric] = suite_nb.get(metric, 0) + 1
 
         # Compute average for sub groups
@@ -391,13 +394,18 @@ class MetricsLogger:
             if len(list_of_subtasks) > 1:
                 metrics = list(self.metric_aggregated[list_of_subtasks[0]].keys())
                 self.metric_aggregated[average_task] = {
-                    metric: sum(self.metric_aggregated[k][metric] for k in list_of_subtasks) / len(list_of_subtasks)
+                    metric: (
+                        sum(self.metric_aggregated[k][metric] ** 2 for k in list_of_subtasks) ** 0.5
+                        if metric.endswith("_stderr")
+                        else sum(self.metric_aggregated[k][metric] for k in list_of_subtasks)
+                    )
+                    / len(list_of_subtasks)
                     for metric in metrics
                 }
 
         # Compute average for all
         for metric, value in suite_average.items():
-            suite_average[metric] = value / suite_nb[metric]
+            suite_average[metric] = (value**0.5 if metric.endswith("_stderr") else value) / suite_nb[metric]
 
         self.metric_aggregated["all"] = suite_average
 
