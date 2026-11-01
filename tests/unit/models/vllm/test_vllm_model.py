@@ -28,6 +28,7 @@ from unittest.mock import Mock, patch
 from transformers import AutoTokenizer
 
 from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig, build_vllm_token_prompts
+from lighteval.tasks.requests import Doc
 
 
 class TestVLLMPromptConstruction(unittest.TestCase):
@@ -84,3 +85,32 @@ class TestVLLMModelUseChatTemplate(unittest.TestCase):
 
                 self.assertEqual(model.use_chat_template, expected_result)
                 self.assertEqual(model.use_chat_template, model._tokenizer.chat_template is not None)
+
+
+class TestVLLMModelPromptTokens(unittest.TestCase):
+    @patch("lighteval.models.vllm.vllm_model.VLLMModel._create_auto_model")
+    def test_prompt_starts_with_one_bos(self, mock_create_model):
+        """The token ids sent to vLLM start with exactly one BOS: chat templates that write BOS (Llama 3) do not get
+        a second one from the tokenizer, plain-text prompts keep the tokenizer's BOS, and tokenizers that add none
+        (Qwen) are unchanged."""
+
+        def generate(prompts, sampling_params, use_tqdm):
+            return [
+                Mock(outputs=[Mock(token_ids=[], text="")], prompt_token_ids=p["prompt_token_ids"]) for p in prompts
+            ]
+
+        mock_create_model.return_value = Mock(generate=generate)
+        doc = Doc(query="What is 2 + 2?", choices=[""], gold_index=0, generation_size=1, stop_sequences=[])
+        test_cases = [
+            ("unsloth/Llama-3.2-1B-Instruct", {}, [128000, 128006]),  # chat: <|begin_of_text|><|start_header_id|>
+            ("unsloth/Llama-3.2-1B-Instruct", {"override_chat_template": False}, [128000, 3923]),  # plain text
+            ("Qwen/Qwen3-0.6B", {}, [151644, 872]),  # chat, no BOS: <|im_start|>user
+        ]
+
+        for model_name, extra_args, expected_start in test_cases:
+            with self.subTest(model_name=model_name, **extra_args):
+                config = VLLMModelConfig(model_name=model_name, **extra_args)
+                model = VLLMModel(config)
+
+                (response,) = model._greedy_until([doc])
+                self.assertEqual(response.input_tokens[:2], expected_start)

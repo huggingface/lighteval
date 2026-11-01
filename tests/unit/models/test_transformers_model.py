@@ -426,5 +426,38 @@ class TestTransformersModelUseChatTemplate(unittest.TestCase):
                 self.assertEqual(model.use_chat_template, model._tokenizer.chat_template is not None)
 
 
+class TestTransformersModelPromptTokens(unittest.TestCase):
+    @patch("lighteval.models.transformers.transformers_model.Accelerator")
+    @patch("lighteval.models.transformers.transformers_model.TransformersModel._create_auto_model")
+    @patch("lighteval.models.transformers.transformers_model.TransformersModel._generate")
+    def test_prompt_starts_with_one_bos(self, mock_generate, mock_create_model, mock_accelerator):
+        """The input ids passed to generation start with exactly one BOS: chat templates that write BOS (Llama 3) do
+        not get a second one from the tokenizer, plain-text prompts keep the tokenizer's BOS, and tokenizers that add
+        none (Qwen) are unchanged."""
+        mock_accelerator_instance = Mock()
+        mock_accelerator_instance.device = torch.device("cpu")
+        mock_accelerator_instance.is_main_process = True
+        mock_accelerator_instance.prepare = lambda x: x
+        mock_accelerator.return_value = mock_accelerator_instance
+        mock_generate.side_effect = lambda batch, **kwargs: [ModelResponse(text=[""]) for _ in batch.input_ids]
+        doc = Doc(query="What is 2 + 2?", choices=[""], gold_index=0, generation_size=1, stop_sequences=[])
+        test_cases = [
+            ("unsloth/Llama-3.2-1B-Instruct", {}, [128000, 128006]),  # chat: <|begin_of_text|><|start_header_id|>
+            ("unsloth/Llama-3.2-1B-Instruct", {"override_chat_template": False}, [128000, 3923]),  # plain text
+            ("Qwen/Qwen3-0.6B", {}, [151644, 872]),  # chat, no BOS: <|im_start|>user
+        ]
+
+        for model_name, extra_args, expected_start in test_cases:
+            with self.subTest(model_name=model_name, **extra_args):
+                config = TransformersModelConfig(
+                    model_name=model_name, batch_size=1, model_parallel=True, compile=False, **extra_args
+                )
+                model = TransformersModel(config)
+
+                model._padded_greedy_until([doc])
+                input_ids = mock_generate.call_args.kwargs["batch"].input_ids[0].tolist()
+                self.assertEqual(input_ids[:2], expected_start)
+
+
 if __name__ == "__main__":
     unittest.main()

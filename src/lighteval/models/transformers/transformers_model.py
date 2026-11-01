@@ -94,7 +94,8 @@ class TransformersModelConfig(ModelConfig):
         model_loading_kwargs (dict):
             Additional keyword arguments passed to `from_pretrained`. Defaults to empty dict.
         add_special_tokens (bool):
-            Whether to add special tokens during tokenization. Defaults to True.
+            Whether to add special tokens (e.g. BOS) when tokenizing plain-text prompts. Chat-template prompts
+            are tokenized as rendered, since the template writes its own special tokens. Defaults to True.
         skip_special_tokens (bool):
             Whether the tokenizer should output special tokens back during generation. Needed for reasoning models. Defaults to True
         model_parallel (bool | None):
@@ -317,7 +318,8 @@ class TransformersModel(LightevalModel):
 
     @property
     def add_special_tokens(self):
-        return self._add_special_tokens
+        # a rendered chat template already holds its special tokens (e.g. BOS)
+        return self._add_special_tokens and not self.use_chat_template
 
     @property
     def max_length(self) -> int:

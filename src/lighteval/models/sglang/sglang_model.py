@@ -83,7 +83,8 @@ class SGLangModelConfig(ModelConfig):
         kv_cache_dtype (str):
             Data type for key-value cache. Defaults to "auto".
         add_special_tokens (bool):
-            Whether to add special tokens during tokenization. Defaults to True.
+            Whether to add special tokens (e.g. BOS) when tokenizing plain-text prompts. Chat-template prompts
+            are tokenized as rendered, since the template writes its own special tokens. Defaults to True.
         pairwise_tokenization (bool):
             Whether to tokenize context and continuation separately for loglikelihood evals. Defaults to False.
         sampling_backend (str | None):
@@ -180,7 +181,8 @@ class SGLangModel(LightevalModel):
 
     @property
     def add_special_tokens(self):
-        return self._add_special_tokens
+        # a rendered chat template already holds its special tokens (e.g. BOS)
+        return self._add_special_tokens and not self.use_chat_template
 
     @property
     def max_length(self) -> int:
