@@ -23,6 +23,7 @@
 import functools
 import logging
 import random
+import types
 from dataclasses import asdict, dataclass, field
 from typing import Callable, Mapping, Sequence
 
@@ -43,6 +44,76 @@ from lighteval.utils.utils import ListLike, as_list
 
 
 logger = logging.getLogger(__name__)
+
+
+def _stable_solver_repr(value, seen=None):  # noqa: C901
+    """Return a process-independent representation for solver configuration values."""
+    if value is None or isinstance(value, (str, int, float, bool, bytes)):
+        return repr(value)
+
+    if seen is None:
+        seen = set()
+    value_id = id(value)
+    value_type = type(value)
+    type_name = f"{value_type.__module__}.{value_type.__qualname__}"
+    if value_id in seen:
+        return f"<{type_name}: recursive>"
+
+    seen.add(value_id)
+    try:
+        if isinstance(value, functools.partial):
+            return (
+                f"partial({_stable_solver_repr(value.func, seen)}, "
+                f"args={_stable_solver_repr(value.args, seen)}, "
+                f"keywords={_stable_solver_repr(value.keywords or {}, seen)})"
+            )
+        if isinstance(value, types.FunctionType):
+            closure = {}
+            if value.__closure__:
+                for name, cell in zip(value.__code__.co_freevars, value.__closure__):
+                    try:
+                        closure[name] = _stable_solver_repr(cell.cell_contents, seen)
+                    except ValueError:
+                        closure[name] = "<empty>"
+            code = value.__code__
+            return (
+                f"{value.__module__}.{value.__qualname__}"
+                f"[code={code.co_code.hex()}, constants={_stable_solver_repr(code.co_consts, seen)}, "
+                f"defaults={_stable_solver_repr(value.__defaults__, seen)}, "
+                f"kwdefaults={_stable_solver_repr(value.__kwdefaults__, seen)}, closure={closure!r}]"
+            )
+        if isinstance(value, types.CodeType):
+            return (
+                f"code[{value.co_code.hex()}, names={value.co_names!r}, "
+                f"constants={_stable_solver_repr(value.co_consts, seen)}]"
+            )
+        if isinstance(value, Mapping):
+            items = sorted(value.items(), key=lambda item: _stable_solver_repr(item[0], seen))
+            return (
+                "{"
+                + ", ".join(
+                    f"{_stable_solver_repr(key, seen)}: {_stable_solver_repr(item, seen)}" for key, item in items
+                )
+                + "}"
+            )
+        if isinstance(value, (list, tuple)):
+            left, right = ("[", "]") if isinstance(value, list) else ("(", ")")
+            items = ", ".join(_stable_solver_repr(item, seen) for item in value)
+            return f"{left}{items}{',' if isinstance(value, tuple) and len(value) == 1 else ''}{right}"
+        if isinstance(value, (set, frozenset)):
+            items = sorted(_stable_solver_repr(item, seen) for item in value)
+            return f"{type_name}({items!r})"
+        if callable(value):
+            identity = f"{getattr(value, '__module__', value_type.__module__)}."
+            identity += getattr(value, "__qualname__", value_type.__qualname__)
+            state = getattr(value, "__dict__", None)
+            return f"{identity}{_stable_solver_repr(state, seen) if state else ''}"
+        state = getattr(value, "__dict__", None)
+        if state:
+            return f"{type_name}{_stable_solver_repr(state, seen)}"
+        return f"<{type_name}>"
+    finally:
+        seen.remove(value_id)
 
 
 @dataclass
@@ -184,6 +255,8 @@ class LightevalTaskConfig:
                         else:
                             repr_v = repr(metric_v)
                         values.append([f"{k} {ix}: {metric_k}", repr_v])
+            elif k == "solver":
+                values.append([k, _stable_solver_repr(v)])
 
             else:
                 if isinstance(v, functools.partial):

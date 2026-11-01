@@ -20,10 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from types import SimpleNamespace
+
 import pytest
 
+from lighteval.models.dummy.dummy_model import DummyModelConfig
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.registry import Registry
+from lighteval.utils.cache_management import SampleCache
 
 
 def test_superset_expansion():
@@ -120,3 +124,36 @@ def test_task_creation():
 
     assert isinstance(task, LightevalTask)
     assert task.name == "storycloze:2016"
+
+
+def test_task_hash_is_stable_and_tracks_solver_closure_values(tmp_path):
+    def make_solver(template: str):
+        async def solve(state, generate):
+            return template
+
+        return solve
+
+    def config_for(solver):
+        return LightevalTaskConfig(
+            name="solver_repr",
+            prompt_function=lambda row, name: row,
+            hf_repo="test/repo",
+            hf_subset="default",
+            metrics=[],
+            solver=[solver],
+        )
+
+    first = config_for(make_solver("Use the concise prompt."))
+    same_config = config_for(make_solver("Use the concise prompt."))
+    different_config = config_for(make_solver("Use the detailed prompt."))
+
+    def task_hash(config):
+        cache = SampleCache(DummyModelConfig(model_name="test", cache_dir=str(tmp_path)))
+        cache._init_registry(SimpleNamespace(task_to_configs={"solver_repr": [config]}))
+        return cache._get_task_hash("solver_repr")
+
+    assert repr(first.solver[0]) != repr(same_config.solver[0])
+    assert first.__str__(lite=True) == same_config.__str__(lite=True)
+    assert first.__str__(lite=True) != different_config.__str__(lite=True)
+    assert task_hash(first) == task_hash(same_config)
+    assert task_hash(first) != task_hash(different_config)
