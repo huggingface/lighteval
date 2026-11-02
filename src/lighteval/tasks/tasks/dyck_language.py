@@ -19,8 +19,8 @@ https://aclanthology.org/W19-3905/
 """
 
 from inspect_ai.dataset import Sample
-from inspect_ai.scorer import exact
-from inspect_ai.solver import generate
+from inspect_ai.scorer import CORRECT, INCORRECT, Score, Target, mean, scorer, stderr
+from inspect_ai.solver import TaskState, generate
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -28,6 +28,16 @@ from lighteval.tasks.requests import Doc
 
 
 PROMPT = "Please complete the rest of the following Dyck sequences, making sure that the parentheses are closed properly.\n Input: {prompt}"
+
+
+@scorer(metrics=[mean(), stderr()])
+def dyck_exact_match():
+    async def score(state: TaskState, target: Target) -> Score:
+        answer = state.output.completion
+        is_correct = any(answer.strip() == expected.strip() for expected in target)
+        return Score(value=CORRECT if is_correct else INCORRECT, answer=answer)
+
+    return score
 
 
 def record_to_sample(record):
@@ -51,7 +61,7 @@ dyck_language_2 = LightevalTaskConfig(
     hf_subset="2",
     sample_fields=record_to_sample,
     solver=[generate(cache=True)],
-    scorer=exact(),
+    scorer=dyck_exact_match(),
     hf_avail_splits=["train", "test"],
     evaluation_splits=["test"],
     few_shots_split=None,
@@ -70,7 +80,7 @@ dyck_language_3 = LightevalTaskConfig(
     hf_subset="3",
     sample_fields=record_to_sample,
     solver=[generate(cache=True)],
-    scorer=exact(),
+    scorer=dyck_exact_match(),
     hf_avail_splits=["train", "test"],
     evaluation_splits=["test"],
     few_shots_split=None,
@@ -89,7 +99,7 @@ dyck_language_4 = LightevalTaskConfig(
     hf_subset="4",
     sample_fields=record_to_sample,
     solver=[generate(cache=True)],
-    scorer=exact(),
+    scorer=dyck_exact_match(),
     hf_avail_splits=["train", "test"],
     evaluation_splits=["test"],
     few_shots_split=None,
