@@ -147,7 +147,8 @@ class JudgeLLMHLE(JudgeLLM):
         accuracy = round(100 * sum(correct) / n, 2)
         # Wald estimator, 95% confidence interval
         confidence_half_width = round(1.96 * math.sqrt(accuracy * (100 - accuracy) / n), 2)
-        calibration_error = round(calib_err(confidence, correct, p="2", beta=100), 2)
+        # confidences are percentages, calib_err expects 0-1 values (as in the official HLE judge)
+        calibration_error = round(100 * calib_err(confidence / 100, correct, p="2", beta=100), 2)
 
         return {
             "accuracy": accuracy,
