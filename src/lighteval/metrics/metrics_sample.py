@@ -28,9 +28,9 @@ import inspect
 import logging
 import os
 from abc import ABC, abstractmethod
+from collections import Counter
 from typing import Callable, Literal, Union
 
-import nltk
 import numpy as np
 from huggingface_hub import HfApi
 from nltk.metrics.distance import edit_distance
@@ -222,7 +222,7 @@ class F1_score(SampleLevelComputation):
             pred (str): One of the possible predictions
 
         Returns:
-            float: The f1 score over the bag of words, computed using nltk.
+            float: The f1 score over the bag of words, counting repeated tokens.
         """
         if self.normalize_gold:
             gold = self.normalize_gold(gold)
@@ -230,14 +230,16 @@ class F1_score(SampleLevelComputation):
         if self.normalize_pred:
             pred = self.normalize_pred(pred)
 
-        gold_bow = set(gold.split())
-        pred_bow = set(pred.split())
-
-        ret = nltk.scores.f_measure(gold_bow, pred_bow)
-
-        if ret is None:
+        gold_tokens = gold.split()
+        pred_tokens = pred.split()
+        common = Counter(gold_tokens) & Counter(pred_tokens)
+        num_same = sum(common.values())
+        if num_same == 0:
             return 0.0
-        return ret
+
+        precision = num_same / len(pred_tokens)
+        recall = num_same / len(gold_tokens)
+        return 2 * precision * recall / (precision + recall)
 
 
 class LoglikelihoodAcc(SampleLevelComputation):
