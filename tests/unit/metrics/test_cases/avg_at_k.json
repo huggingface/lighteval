@@ -5,15 +5,25 @@
     {
       "name": "Avg at K - Correct in Top K",
       "metric_class": "avg_at_k",
-      "metric_params": {"k": 2},
+      "metric_params": {
+        "k": 2
+      },
       "doc": {
         "query": "What is the capital of France?",
-        "choices": ["London", "Paris", "Berlin"],
+        "choices": [
+          "London",
+          "Paris",
+          "Berlin"
+        ],
         "gold_index": 1,
         "task_name": "geography"
       },
       "model_response": {
-        "text": ["Paris", "London", "Berlin"]
+        "text": [
+          "Paris",
+          "London",
+          "Berlin"
+        ]
       },
       "expected_output": {
         "avg@k:k=2": 0.5
@@ -24,15 +34,25 @@
     {
       "name": "Avg at K - Not in Top K",
       "metric_class": "avg_at_k",
-      "metric_params": {"k": 1},
+      "metric_params": {
+        "k": 1
+      },
       "doc": {
         "query": "What is the capital of France?",
-        "choices": ["London", "Paris", "Berlin"],
+        "choices": [
+          "London",
+          "Paris",
+          "Berlin"
+        ],
         "gold_index": 1,
         "task_name": "geography"
       },
       "model_response": {
-        "text": ["London", "Berlin", "Paris"]
+        "text": [
+          "London",
+          "Berlin",
+          "Paris"
+        ]
       },
       "expected_output": {
         "avg@k:k=1": 0.0
@@ -43,21 +63,65 @@
     {
       "name": "Avg at K - Multiple Correct",
       "metric_class": "avg_at_k",
-      "metric_params": {"k": 3},
+      "metric_params": {
+        "k": 3
+      },
       "doc": {
         "query": "Which are European capitals?",
-        "choices": ["London", "Paris", "Tokyo", "Berlin"],
-        "gold_index": [0, 1, 3],
+        "choices": [
+          "London",
+          "Paris",
+          "Tokyo",
+          "Berlin"
+        ],
+        "gold_index": [
+          0,
+          1,
+          3
+        ],
         "task_name": "geography"
       },
       "model_response": {
-        "text": ["Paris", "London", "Berlin", "Tokyo"]
+        "text": [
+          "Paris",
+          "London",
+          "Berlin",
+          "Tokyo"
+        ]
       },
       "expected_output": {
         "avg@k:k=3": 0.33
       },
       "tolerance": 0.01,
       "description": "Test avg at k with multiple correct answers"
+    },
+    {
+      "name": "Avg at K - Strips Whitespace Before Matching",
+      "metric_class": "avg_at_k",
+      "metric_params": {
+        "k": 2
+      },
+      "doc": {
+        "query": "What is the capital of France?",
+        "choices": [
+          "London",
+          "Paris",
+          "Berlin"
+        ],
+        "gold_index": 1,
+        "task_name": "geography"
+      },
+      "model_response": {
+        "text": [
+          "Paris\n",
+          " Paris"
+        ]
+      },
+      "expected_output": {
+        "avg@k:k=2": 1.0
+      },
+      "tolerance": 0.01,
+      "description": "avg_at_k is configured with strip_strings=True, so surrounding whitespace must be stripped before the exact-match; both predictions equal the gold once stripped. Regression guard: before the preprocess fix this scored 0.0."
     }
   ]
 }
