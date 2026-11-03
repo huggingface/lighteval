@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import pytest
+
 from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
 from lighteval.tasks.templates.utils.formulation import CFFormulation, MCFFormulation
 from lighteval.utils.language import Language
@@ -186,3 +188,37 @@ Question: What is the capital of France?
 Answer:\
 """
     )
+
+
+@pytest.mark.parametrize(
+    ("language", "question_word", "answer_word"),
+    [
+        (Language.LATVIAN, "Jautājums", "Atbilde"),
+        (Language.LITHUANIAN, "Klausimas", "Atsakymas"),
+        (Language.MALTESE, "Mistoqsija", "Tweġiba"),
+        (Language.SLOVENIAN, "Vprašanje", "Odgovor"),
+    ],
+)
+def test_multichoice_prompt_cf_uses_language_literals(language, question_word, answer_word):
+    """Test that the CF prompt labels the question and the answer in the task's own language."""
+    test_input = {
+        "question": "What is the capital of France?",
+        "choices": ["London", "Paris", "Berlin", "Madrid"],
+        "gold_idx": 1,
+    }
+
+    prompt_fn = get_mcq_prompt_function(
+        language,
+        {
+            "question": "question",
+            "choices": "choices",
+            "gold_idx": "gold_idx",
+        },
+        CFFormulation(),
+    )
+
+    doc = prompt_fn(test_input, "test_task")
+
+    assert doc.query == f"{question_word}: What is the capital of France?\n{answer_word}:"
+    assert doc.unconditioned_query == f"{answer_word}:"
+    assert doc.choices == [" London", " Paris", " Berlin", " Madrid"]
