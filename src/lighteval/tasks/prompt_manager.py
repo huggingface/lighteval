@@ -261,7 +261,9 @@ class FewShotSampler:
     def _init_fewshot_sampling_sequential(self, num_fewshot: int, variance_seed: int):
         # No balancing of the few-shot examples, we take the first items of the set
         # We rotate by num_fewshot * seed (seed >= 0) to be able to have different series of sequential few-shots
-        fewshotpool = self.task.fewshot_docs()
+        # Copy the pool first: task.fewshot_docs() returns the memoized list by reference, and rotating it in
+        # place would mutate shared state and alias it across variance seeds (mirrors the random path below).
+        fewshotpool = list(self.task.fewshot_docs())
         for _ in range(num_fewshot * variance_seed):
             fewshotpool.append(fewshotpool.pop(0))
         self._fewshot_cache[variance_seed] = fewshotpool  # Store few shot examples
@@ -282,7 +284,9 @@ class FewShotSampler:
     ):
         fewshotpool = self.task.fewshot_docs()
 
-        random.seed(variance_seed)
+        # Use a local RNG seeded by variance_seed rather than seeding the global module, so selection is
+        # reproducible per seed and does not depend on or perturb global random state.
+        rnd = random.Random(variance_seed)
 
         # Build up balanced selection based on fewshot_sorting_class
         # (or the gold target, if the class is undefined)
@@ -301,7 +305,7 @@ class FewShotSampler:
         for count in sorted(counts_to_labels, reverse=True):
             labels = counts_to_labels[count]
             # Break ties by randomly shuffling labels that have the same number of Instances
-            random.shuffle(labels)
+            rnd.shuffle(labels)
             sorted_labels.extend(labels)
 
         examples = []
@@ -311,7 +315,9 @@ class FewShotSampler:
         labels_iterable = cycle(sorted_labels)
         while num_instances_to_sample > 0:
             next_label = next(labels_iterable, None)
-            if not next_label:
+            # Stop only when the label cycle is exhausted (empty pool). A plain falsy check would also fire on
+            # a present-but-falsy label (int 0, empty string, False) and truncate the balanced selection.
+            if next_label is None:
                 break
 
             instances = label_to_instances[next_label]
@@ -320,7 +326,7 @@ class FewShotSampler:
                 continue
 
             # Randomly sample without replacement
-            examples.append(instances.pop(random.randrange(len(instances))))
+            examples.append(instances.pop(rnd.randrange(len(instances))))
             num_instances_to_sample -= 1
 
         self._fewshot_cache[variance_seed] = examples  # Store few shot examples
