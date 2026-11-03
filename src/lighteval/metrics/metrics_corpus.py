@@ -102,6 +102,9 @@ class CorpusLevelF1Score(CorpusLevelComputation):
             fscore = sklearn.metrics.f1_score(golds, preds, average=self.average)
             return np.max(fscore)
 
+        if self.average is not None:
+            return float(sklearn.metrics.f1_score(golds, preds, average=self.average))
+
         # Multi f1
         f1s = []
         for i in range(self.num_classes):
