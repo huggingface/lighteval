@@ -426,5 +426,49 @@ class TestTransformersModelUseChatTemplate(unittest.TestCase):
                 self.assertEqual(model.use_chat_template, model._tokenizer.chat_template is not None)
 
 
+class TestTransformersModelTruncatedTokensCount(unittest.TestCase):
+    """`truncated_tokens_count` must count tokens, not `len(context) - token_count`."""
+
+    @patch("lighteval.models.transformers.transformers_model.Accelerator")
+    def setUp(self, mock_accelerator):
+        """Set up shared model instance for all tests."""
+        mock_accelerator_instance = Mock()
+        mock_accelerator_instance.device = torch.device("cpu")
+        mock_accelerator_instance.is_main_process = True
+        mock_accelerator_instance.prepare = lambda x: x
+        mock_accelerator_instance.gather = lambda x: x
+        mock_accelerator_instance.gather_for_metrics = lambda x: x
+        mock_accelerator.return_value = mock_accelerator_instance
+        # batch_size is set explicitly so the model is not run to detect the largest batch size
+        self.model = TransformersModel(TransformersModelConfig(model_name="gpt2", batch_size=1))
+
+    def _truncated_for(self, query: str) -> list[int]:
+        """Runs _padded_greedy_until with generation stubbed out and returns Batch.truncated."""
+        doc = Doc(query=query, choices=[], gold_index=0, generation_size=4, stop_sequences=["Question:"])
+        captured = {}
+
+        def fake_generate(**kwargs):
+            captured["truncated"] = list(kwargs["batch"].truncated)
+            return [ModelResponse(text=["stub"], output_tokens=[[0]], input_tokens=[0])]
+
+        with patch("lighteval.models.transformers.transformers_model.DataLoader") as mock_dataloader:
+            mock_dataloader.return_value = [[doc]]
+            with patch.object(self.model, "_generate", side_effect=fake_generate):
+                self.model._padded_greedy_until([doc])
+
+        return captured["truncated"]
+
+    def test_context_fitting_the_context_window_is_not_reported_as_truncated(self):
+        query = "The capital of France is"
+        self.assertLess(len(self.model.tokenizer(query)["input_ids"]), self.model.max_length)
+        self.assertEqual(self._truncated_for(query), [0])
+
+    def test_truncated_tokens_count_matches_the_dropped_token_count(self):
+        query = "hello world " * 700
+        token_count = len(self.model.tokenizer(query)["input_ids"])
+        self.assertGreater(token_count, self.model.max_length)
+        self.assertEqual(self._truncated_for(query), [token_count - self.model.max_length])
+
+
 if __name__ == "__main__":
     unittest.main()
