@@ -235,15 +235,14 @@ class LiteLLMClient(LightevalModel):
                     content = response.choices[0].message.content
 
                 return response
-            except litellm.BadRequestError as e:
-                if "message" in e.__dict__:
+            except Exception as e:
+                if isinstance(e, litellm.BadRequestError) and "message" in e.__dict__:
                     error_string = (
                         "The response was filtered due to the prompt triggering Microsoft's content management policy"
                     )
                     if error_string in e.__dict__["message"]:
                         logger.warning(f"{error_string}. Returning empty response.")
                         return LitellmModelResponse()
-            except Exception as e:
                 wait_time = min(
                     64, self.API_RETRY_SLEEP * (self.API_RETRY_MULTIPLIER**attempt)
                 )  # Exponential backoff with max 64s
