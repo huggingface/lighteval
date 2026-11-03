@@ -334,7 +334,18 @@ class SampleCache:
             if cache_file.exists():
                 try:
                     existing_dataset = load_dataset("parquet", data_files=str(cache_file), split="train")
-                    existing_data = existing_dataset.to_list()
+                    invalid_count = 0
+                    for row in existing_dataset:
+                        try:
+                            # Match index loading: rejected responses must not
+                            # prevent their successfully recomputed replacements.
+                            self._load_sample(row)
+                        except Exception:
+                            invalid_count += 1
+                            continue
+                        existing_data.append(row)
+                    if invalid_count:
+                        logger.warning(f"Discarding {invalid_count} invalid cached responses from {cache_file}.")
                 except KeyError:
                     logger.info(f"No data was cached for {str(task_id)}")
                 except Exception as e:
@@ -346,7 +357,7 @@ class SampleCache:
                         "Unexpected behavior: You have reprocessed already cached items - we will ignore the new version."
                     )
 
-            # Merge with new data (new data overwrites existing)
+            # Preserve valid existing data and append new or repaired responses.
             # We look at id + sampling method
             new_data = [row for row in task_data if (row["sample_id"], sampling_method) not in existing_samples]
             all_samples = existing_data + new_data
