@@ -20,10 +20,48 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import importlib.util
+import sys
+from types import ModuleType
+
 import pytest
 
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.registry import Registry
+
+
+def test_create_custom_tasks_module_reuses_previously_imported_file(tmp_path, monkeypatch):
+    custom_tasks_path = tmp_path / "custom_tasks.py"
+    custom_tasks_path.write_text(
+        "import custom_tasks_import_state\ncustom_tasks_import_state.import_count += 1\nTASKS_TABLE = []\n",
+        encoding="utf-8",
+    )
+
+    import_state = ModuleType("custom_tasks_import_state")
+    import_state.import_count = 0
+    monkeypatch.setitem(sys.modules, import_state.__name__, import_state)
+
+    spec = importlib.util.spec_from_file_location("preloaded_custom_tasks", custom_tasks_path)
+    assert spec is not None
+    assert spec.loader is not None
+
+    preloaded_module = importlib.util.module_from_spec(spec)
+    monkeypatch.setitem(sys.modules, spec.name, preloaded_module)
+    spec.loader.exec_module(preloaded_module)
+
+    loaded_module = Registry.create_custom_tasks_module(custom_tasks_path)
+
+    assert loaded_module is preloaded_module
+    assert import_state.import_count == 1
+
+
+def test_create_custom_tasks_module_loads_new_file(tmp_path):
+    custom_tasks_path = tmp_path / "custom_tasks.py"
+    custom_tasks_path.write_text("TASKS_TABLE = []\n", encoding="utf-8")
+
+    loaded_module = Registry.create_custom_tasks_module(custom_tasks_path)
+
+    assert loaded_module.TASKS_TABLE == []
 
 
 def test_superset_expansion():
