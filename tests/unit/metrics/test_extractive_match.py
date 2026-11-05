@@ -1146,3 +1146,26 @@ def test_math_extraction_additional_cases(gold, pred, expected):
 )
 def test_math_numina_cases(gold, pred, expected):
     assert compare_strings(gold, pred, match_types=["latex", "expr"]) == expected
+
+
+@pytest.mark.parametrize(
+    "gold,pred,expected",
+    [
+        # No-break, narrow no-break and thin spaces are digit-group separators, like the ASCII space and the comma
+        ("2500", "ANSWER: 2\u202f500", 1),
+        ("2", "ANSWER: 2\u202f500", 0),
+        ("2500", "ANSWER: 2\u00a0500", 1),
+        ("2", "ANSWER: 2\u00a0500", 0),
+        ("2500", "The total is 2\u2009500.", 1),
+        ("500", "The total is 2\u2009500.", 0),
+        ("1250000", "ANSWER: 1\u202f250\u202f000", 1),
+        ("1234.5", "ANSWER: 1\u202f234.5", 1),
+        ("2500", "ANSWER: 2 500", 1),
+        # A group that is not exactly three digits is not joined
+        ("7", "ANSWER: 7\u202f1234", 1),
+        ("7", "ANSWER: 7 1234", 1),
+        ("12", "ANSWER: 12\u202fapples", 1),
+    ],
+)
+def test_typographic_digit_group_spaces(gold, pred, expected):
+    assert compare_strings(gold, pred, match_types=["latex", "expr"]) == expected

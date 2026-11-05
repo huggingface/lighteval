@@ -103,9 +103,10 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
 
     # Basic number patterns (no LaTeX)
     number_re = (
-        # Format 1: Numbers with thousand separators (e.g., "1,234.56" or "1 234.56")
+        # Format 1: Numbers with thousand separators (e.g., "1,234.56" or "1 234.56"). The space can also be a no-break,
+        # narrow no-break or thin space (U+00A0, U+202F, U+2009). The last group must not be followed by another digit.
         r"(?:"
-        r"(?P<integer1>-?\d{1,3}(?:[ ,]\d{3})+)(?P<decimal1>\.\d+)?|"
+        r"(?P<integer1>-?\d{1,3}(?:[ ,\u00a0\u202f\u2009]\d{3})+(?!\d))(?P<decimal1>\.\d+)?|"
         # Format 2: Simple numbers with decimal point or comma (e.g., "123.45" or "123,45")
         r"(?P<integer2>-?\d+)(?P<decimal2>[.,]\d+)|"
         # Format 3: Decimal part only (e.g., ".123")
@@ -430,7 +431,7 @@ def extract_expr(match: re.Match, timeout_seconds: int) -> tuple[str | sympy.Exp
 
     if integer or decimal:
         # This makes sure we can convert numbers like 0001 to 1. Do note that this can convert 0 to '', so we assume an empty string was 0 and convert it back afterwards.
-        integer = integer.translate(str.maketrans("", "", ", ")).lstrip("0")
+        integer = integer.translate(str.maketrans("", "", ", \u00a0\u202f\u2009")).lstrip("0")
         if len(integer) == 0:
             integer = "0"
 
