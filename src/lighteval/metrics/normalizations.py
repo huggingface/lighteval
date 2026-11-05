@@ -471,6 +471,21 @@ def get_multilingual_normalizer(lang: Language, lower: bool = True) -> Callable[
 class LogProbPMINorm:
     """Performs Pointwise mutual information normalization. log_likelihood_conditioned - log_likelihood_unconditioned.
     Useful when answer contains generally unlikely tokens.
+
+    This normalization requires the task's `prompt_function` to set `Doc.unconditioned_query` to a
+    version of the prompt that contains no task-specific context (e.g. an empty string, or just
+    `"Answer:"`), so that the unconditioned log-likelihood of each choice can be computed:
+
+    ```python
+    Doc(
+        query=f"Question: {question}\\nAnswer:",
+        choices=choices,
+        gold_index=gold_index,
+        unconditioned_query="Answer:",
+    )
+    ```
+
+    If `Doc.unconditioned_query` is not set, this normalization cannot be applied.
     """
 
     name: str = "norm_pmi"
