@@ -44,6 +44,24 @@ def test_token_norm():
     assert result == pytest.approx([3.333333, 10.0])
 
 
+def test_token_norm_excludes_padding():
+    # continuations padded with -1 must not count padding toward the token length (#1170)
+    choices_logprob = [10.0, 20.0]
+    choices_tokens = [[1, 2, -1], [4, 5, 6]]  # 2 real tokens vs 3
+
+    result = normalize_log_probs(LogProbTokenNorm(), choices_logprob, None, None, choices_tokens)
+    assert result == pytest.approx([5.0, 6.666667])
+
+
+def test_token_norm_length_mismatch_raises():
+    # a backend returning fewer token lists than logprobs must fail loudly, not IndexError (#1170)
+    choices_logprob = [1.0, 2.0, 3.0, 4.0]
+    choices_tokens = [[1, 2], [3, 4], [5, 6]]  # 3 vs 4
+
+    with pytest.raises(ValueError):
+        normalize_log_probs(LogProbTokenNorm(), choices_logprob, None, None, choices_tokens)
+
+
 def test_pmi_norm():
     choices_logprob = [10.0, 20.0]
     unconditioned_logprob = [5.0, 8.0]
