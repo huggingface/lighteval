@@ -119,8 +119,9 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
     operators = [r"\+", r"\-", r"\*", r"\×", r"\/", r"\^", r"\(", r"\)", r"\÷"]
     operators_re = "".join(operators)
     all_expr_chars = r"[\d\.\s" + operators_re + r"]"
-    # Expression should have at minimum at least one operator and must start with a digit
-    expr_re = rf"(?P<expr>-?\(?-?\d{all_expr_chars}*[{operators_re}]{all_expr_chars}+\)?)"
+    # Expression should have at minimum at least one operator, must start with a digit and must end with a digit or a
+    # closing parenthesis, so that markdown bold around a number ("**18**") is not read as the expression "18**"
+    expr_re = rf"(?P<expr>-?\(?-?\d{all_expr_chars}*[{operators_re}]{all_expr_chars}*[\d\)])"
 
     # Punctuation regexes
     full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
