@@ -92,6 +92,37 @@ class EnhancedJSONEncoder(json.JSONEncoder):
             return type(o).__name__
 
 
+def scored_sample_counts(details: dict[str, list]) -> dict[str, int]:
+    """Count scored samples for each row of the results table.
+
+    Leaf counts are the number of details logged for that task. Those details are written once per
+    document that reached metric computation, so filters and ``max_samples`` are already applied.
+    Suite averages and ``all`` use the same keys as ``MetricsLogger.aggregate``. A suite with one
+    task does not get an average row.
+
+    Args:
+        details: Task name (``name|fewshot``) to the list of scored sample details.
+
+    Returns:
+        Sample count per results-table row, still using ``|`` as the few-shot separator.
+    """
+    leaves = {task_name: len(samples) for task_name, samples in details.items()}
+    counts = dict(leaves)
+    grouped: dict[str, list[int]] = {}
+    for task_name, count in leaves.items():
+        if "|" not in task_name:
+            continue
+        # Same split MetricsLogger.aggregate uses to name suite-average rows.
+        task, fewshot = task_name.split("|")
+        grouped.setdefault(f"{task.split(':')[0]}:_average|{fewshot}", []).append(count)
+    for average_name, child_counts in grouped.items():
+        if len(child_counts) > 1:
+            counts[average_name] = sum(child_counts)
+    if leaves:
+        counts["all"] = sum(leaves.values())
+    return counts
+
+
 class EvaluationTracker:
     """Tracks and manages evaluation results, metrics, and logging for model evaluations.
 
@@ -368,6 +399,8 @@ class EvaluationTracker:
         """Aggregates and returns all the logger's experiment information in a dictionary.
 
         This function should be used to gather and display said information at the end of an evaluation run.
+        ``n_samples`` is display data: one scored document per details-logger entry. It is not part of
+        ``results``, which is the document written to disk and to the Hub.
 
         Returns:
             dict: Dictionary containing all experiment information including config, results, versions, and summaries
@@ -379,6 +412,7 @@ class EvaluationTracker:
             "config_tasks": self.task_config_logger.tasks_configs,
             "summary_tasks": self.details_logger.compiled_details,
             "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
+            "n_samples": scored_sample_counts(self.details_logger.details),
         }
 
         final_dict = {
