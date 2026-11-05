@@ -17,6 +17,7 @@ knowledge, multilingual, multiple-choice
 paper:
 """
 
+import ast
 import random
 import re
 from string import ascii_uppercase
@@ -600,7 +601,7 @@ copa_ext_ar_task = LightevalTaskConfig(
 def hellaswag_arabic_pfn(line, task_name: str = None):
     ctx = re.sub(r"\[.*?\]", "", line["ctx"])  # Remove latin words within brackets
     endings = [
-        re.sub(r"\[.*?\]", "", e) for e in eval(line["endings"])
+        re.sub(r"\[.*?\]", "", e) for e in ast.literal_eval(line["endings"])
     ]  # endings is a string representation of a list
     answer_index = line["label"]
     instruction = "بناء على السياق التالي، اختر النهاية الصحيحة من الاقتراحات التالية"
