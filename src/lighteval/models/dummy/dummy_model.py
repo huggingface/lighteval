@@ -108,10 +108,11 @@ class DummyModel(LightevalModel):
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         model_responses = []
         for doc in docs:
+            num_choices = len(doc.choices) if doc.choices else 1
             model_responses.append(
                 ModelResponse(
-                    logprobs=[-self._random.random() for _ in doc.choices],
-                    argmax_logits_eq_gold=[False for _ in doc.choices],
+                    logprobs=[-self._random.random() for _ in range(num_choices)],
+                    argmax_logits_eq_gold=[False for _ in range(num_choices)],
                 )
             )
 
