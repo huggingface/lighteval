@@ -58,6 +58,7 @@ class TestTGIModelConfig:
                         "top_p": None,
                         "truncate_prompt": None,
                         "response_format": None,
+                        "reasoning_effort": None,
                     },
                     "cache_dir": "~/.cache/huggingface/lighteval",
                 },
