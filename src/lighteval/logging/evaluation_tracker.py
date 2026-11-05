@@ -219,6 +219,9 @@ class EvaluationTracker:
         results = {
             "config_general": config_general,
             "results": self.metrics_logger.metric_aggregated,
+            "num_samples": {
+                task_name: len(task_details) for task_name, task_details in self.details_logger.details.items()
+            },
             "versions": self.versions_logger.versions,
             "config_tasks": self.task_config_logger.tasks_configs,
             "summary_tasks": self.details_logger.compiled_details,
@@ -375,6 +378,9 @@ class EvaluationTracker:
         to_dump = {
             "config_general": asdict(self.general_config_logger),
             "results": self.metrics_logger.metric_aggregated,
+            "num_samples": {
+                task_name: len(task_details) for task_name, task_details in self.details_logger.details.items()
+            },
             "versions": self.versions_logger.versions,
             "config_tasks": self.task_config_logger.tasks_configs,
             "summary_tasks": self.details_logger.compiled_details,

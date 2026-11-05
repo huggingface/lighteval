@@ -22,7 +22,7 @@
 
 import unittest
 
-from lighteval.utils.utils import remove_reasoning_tags
+from lighteval.utils.utils import make_results_table, remove_reasoning_tags
 
 
 class TestRemoveReasoningTags(unittest.TestCase):
@@ -61,3 +61,45 @@ class TestRemoveReasoningTags(unittest.TestCase):
         tag_pairs = [("<think>", "</think>")]
         result = remove_reasoning_tags(text, tag_pairs)
         self.assertEqual(result, "<think> Reasoning section. Answer section")
+
+
+class TestMakeResultsTable(unittest.TestCase):
+    def test_count_column_shows_num_samples_on_first_metric_row(self):
+        results = {
+            "results": {
+                "squad": {"accuracy": 0.85, "accuracy_stderr": 0.02, "f1": 0.90, "f1_stderr": 0.01},
+            },
+            "versions": {"squad": "2.0"},
+            "num_samples": {"squad": 100},
+        }
+        table = make_results_table(results)
+        self.assertIn("Count", table)
+        squad_rows = [line for line in table.splitlines() if "squad" in line]
+        self.assertEqual(len(squad_rows), 1)
+        self.assertIn("100", squad_rows[0])
+        # The count is a per-task value: it must not repeat on the second metric row.
+        f1_rows = [line for line in table.splitlines() if "f1" in line]
+        self.assertEqual(len(f1_rows), 1)
+        self.assertNotIn("100", f1_rows[0])
+
+    def test_missing_num_samples_renders_blank_count(self):
+        results = {
+            "results": {"squad": {"accuracy": 0.85, "accuracy_stderr": 0.02}},
+            "versions": {"squad": "2.0"},
+        }
+        table = make_results_table(results)
+        self.assertIn("Count", table)
+        self.assertIn("squad", table)
+
+    def test_partial_num_samples(self):
+        results = {
+            "results": {
+                "glue": {"f1": 0.92, "f1_stderr": 0.01},
+                "squad": {"accuracy": 0.85, "accuracy_stderr": 0.02},
+            },
+            "versions": {"squad": "2.0", "glue": "1.0"},
+            "num_samples": {"squad": 100},
+        }
+        table = make_results_table(results)
+        squad_rows = [line for line in table.splitlines() if "squad" in line]
+        self.assertIn("100", squad_rows[0])
