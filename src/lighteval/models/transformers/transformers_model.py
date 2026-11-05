@@ -179,14 +179,14 @@ class TransformersModelConfig(ModelConfig):
                 "You set `multichoice_continuations_start_space` to false. This will remove a leading space from multichoice continuations, if present."
             )
 
-    def get_transformers_config(self) -> PretrainedConfig:
+    def get_transformers_config(self, model_name: str | None = None) -> PretrainedConfig:
         revision = self.revision
 
         if self.subfolder:
             revision = f"{self.revision}/{self.subfolder}"
 
         auto_config = AutoConfig.from_pretrained(
-            self.model_name,
+            model_name or self.model_name,
             revision=revision,
             trust_remote_code=self.trust_remote_code,
         )

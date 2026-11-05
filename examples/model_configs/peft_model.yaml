@@ -1,14 +1,12 @@
 model_parameters:
-  model_name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True ... For a PEFT model, the pretrained model should be the one trained with PEFT and the base model below will contain the original model on which the adapters will be applied.
-  tokenizer: null # name of tokenizer to use if different from the model's default
-  subfolder: null # subfolder in the model's directory to use
-  dtype: "float16"  # Specifying the model to be loaded in 4 bit uses BitsAndBytesConfig. The other option is to use "8bit" quantization.
-  compile: true
-  revision: "main" # revision to use
-  trust_remote_code: true # Trust remote code
-  model_parallel: null # Model parallel
-  max_length: 2048 # maximum length of the input text and the generated text
-
-  # should go in generation
-  max_generation_toks: 256 # maximum number of tokens to generate
-  batch_size: 10 # batch size to use
+  adapter_weights: true # Select PEFT adapter loading rather than the standard Transformers backend.
+  model_name: "ybelkada/opt-350m-lora" # Hub ID or local path containing the adapter weights.
+  base_model: "facebook/opt-350m" # Base model on which the adapter was trained.
+  revision: "main"
+  dtype: "float16"
+  compile: false
+  model_parallel: false
+  batch_size: 1
+  generation_parameters:
+    max_new_tokens: 256
+    temperature: 0.0
