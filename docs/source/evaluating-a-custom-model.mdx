@@ -59,7 +59,7 @@ You can evaluate your custom model using either the command-line interface or th
 lighteval custom \
     "google-translate" \
     "examples/custom_models/google_translate_model.py" \
-    "wmt20:fr-de \
+    "wmt20:fr-de" \
     --max-samples 10
 ```
 
@@ -94,7 +94,7 @@ model_config = CustomModelConfig(
 
 # Create and run the pipeline
 pipeline = Pipeline(
-    tasks=truthfulqa:mc,
+    tasks="truthfulqa:mc",
     pipeline_parameters=pipeline_params,
     evaluation_tracker=evaluation_tracker,
     model_config=model_config
