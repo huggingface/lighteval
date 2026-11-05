@@ -22,7 +22,21 @@
 
 import unittest
 
-from lighteval.utils.utils import remove_reasoning_tags
+import numpy as np
+
+from lighteval.utils.utils import flatten_dict, remove_reasoning_tags
+
+
+class TestFlattenDict(unittest.TestCase):
+    def test_numpy_array_value(self):
+        result = flatten_dict({"scores": np.array([1, 2])})
+
+        self.assertEqual(result, {"scores": [1, 2]})
+
+    def test_numpy_array_value_does_not_reuse_list_index(self):
+        result = flatten_dict({"items": ["a", "b"], "scores": np.array([1, 2])})
+
+        self.assertEqual(result, {"items/0": "a", "items/1": "b", "scores": [1, 2]})
 
 
 class TestRemoveReasoningTags(unittest.TestCase):
