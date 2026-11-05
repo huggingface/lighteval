@@ -98,8 +98,12 @@ def record_to_sample_multichoice(record):
 
 def process_judge_response(x):
     try:
-        search = re.search(r"<score>\s(\d)\s</score>", x)
-        return int(search.group(1)) if search else 0
+        # Security: take the LAST <score> match, not the first. The model-
+        # under-test's output is interpolated verbatim into the judge prompt
+        # (judge_prompts.py), so an injected <score> tag echoed early in the
+        # judge's response must not win over the judge's actual final verdict.
+        matches = re.findall(r"<score>\s(\d)\s</score>", x)
+        return int(matches[-1]) if matches else 0
     except Exception as e:
         logger.warning(f"Error processing judge response for flow: {e}")
         return 0
@@ -107,8 +111,9 @@ def process_judge_response(x):
 
 def process_judge_response_multichoice_gpt(x):
     try:
-        search = re.search(r"\[\[([01])\]\]", x)
-        return int(search.group(1)) if search else 0
+        # Security: take the LAST [[N]] match (see process_judge_response).
+        matches = re.findall(r"\[\[([01])\]\]", x)
+        return int(matches[-1]) if matches else 0
     except Exception as e:
         logger.warning(f"Error processing judge response for multichoice GPT: {e}")
         return 0
@@ -116,8 +121,9 @@ def process_judge_response_multichoice_gpt(x):
 
 def process_judge_response_freeform_gpt(x):
     try:
-        search = re.search(r"\[\[(\d.\d)\]\]", x)
-        return float(search.group(1)) if search else 0
+        # Security: take the LAST [[N.N]] match (see process_judge_response).
+        matches = re.findall(r"\[\[(\d.\d)\]\]", x)
+        return float(matches[-1]) if matches else 0
     except Exception as e:
         logger.warning(f"Error processing judge response for freeform GPT: {e}")
         return 0
