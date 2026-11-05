@@ -70,6 +70,29 @@
       },
       "tolerance": 0.01,
       "description": "Test DROP with partial match"
+    },
+    {
+      "name": "DROP - One copy of a repeated span is not exact",
+      "metric_class": "drop",
+      "metric_params": {},
+      "doc": {
+        "query": "Which name is repeated?",
+        "specific": {
+          "golds_no_preprocessing": [["cat", "cat"]]
+        },
+        "choices": ["cat, cat"],
+        "gold_index": 0,
+        "task_name": "drop"
+      },
+      "model_response": {
+        "text": ["cat"]
+      },
+      "expected_output": {
+        "em": 0.0,
+        "f1": 0.5
+      },
+      "tolerance": 0.01,
+      "description": "A repeated gold span is not an exact match of a single copy"
     }
   ]
 }
