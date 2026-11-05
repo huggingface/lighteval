@@ -61,3 +61,12 @@ class TestRemoveReasoningTags(unittest.TestCase):
         tag_pairs = [("<think>", "</think>")]
         result = remove_reasoning_tags(text, tag_pairs)
         self.assertEqual(result, "<think> Reasoning section. Answer section")
+
+    def test_only_closing_tag_opening_in_prompt(self):
+        # Some chat templates prefill the opening "<think>" tag in the prompt, so
+        # only the closing tag appears in the generation (e.g. Qwen3). The
+        # reasoning section should still be removed. Regression test for #1453.
+        text = "Reasoning section. </think> Answer section"
+        tag_pairs = [("<think>", "</think>")]
+        result = remove_reasoning_tags(text, tag_pairs)
+        self.assertEqual(result, " Answer section")
