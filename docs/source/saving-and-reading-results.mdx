@@ -6,19 +6,24 @@ Lighteval provides comprehensive logging and result management through the `Eval
 
 Lighteval automatically saves results and evaluation details in the
 directory specified with the `--output-dir` option. The results are saved in
-`{output_dir}/results/{model_name}/results_{timestamp}.json`. [Here is an
+`{output_dir}/results/{model_name}/{revision}/results_{timestamp}.json`. [Here is an
 example of a result file](#example-of-a-result-file). The output path can be
 any [fsspec](https://filesystem-spec.readthedocs.io/en/latest/index.html)
 compliant path (local, S3, Hugging Face Hub, Google Drive, FTP, etc.).
 
 To save detailed evaluation information, you can use the `--save-details`
 option. The details are saved in Parquet files at
-`{output_dir}/details/{model_name}/{timestamp}/details_{task}_{timestamp}.parquet`.
+`{output_dir}/details/{model_name}/{revision}/{timestamp}/details_{task}_{timestamp}.parquet`.
+
+The `{revision}` segment keeps evaluations of different versions of the same model apart.
+It is the `--revision` passed to the model, and defaults to `main` for backends that do not
+support pinning a revision.
 
 If you want results to be saved in a custom path structure, you can set the `results-path-template` option.
-This allows you to specify a string template for the path. The template must contain the following
-variables: `output_dir`, `model_name`, `org`. For example:
-`{output_dir}/{org}_{model}`. The template will be used to create the path for the results file.
+This allows you to specify a string template for the path. The following variables are available:
+`output_dir`, `model`, `org` and `revision`. For example:
+`{output_dir}/{org}_{model}/{revision}`. The template will be used to create the path for the results
+file. Templates that do not use every variable remain valid.
 
 ## Pushing Results to the Hugging Face Hub
 
@@ -68,16 +73,17 @@ import glob
 
 output_dir = "evals_doc"
 model_name = "HuggingFaceH4/zephyr-7b-beta"
+revision = "main"
 timestamp = "latest"
 task = "gsm8k"
 
 if timestamp == "latest":
-    path = f"{output_dir}/details/{model_name}/*/"
+    path = f"{output_dir}/details/{model_name}/{revision}/*/"
     timestamps = glob.glob(path)
     timestamp = sorted(timestamps)[-1].split("/")[-2]
     print(f"Latest timestamp: {timestamp}")
 
-details_path = f"{output_dir}/details/{model_name}/{timestamp}/details_{task}_{timestamp}.parquet"
+details_path = f"{output_dir}/details/{model_name}/{revision}/{timestamp}/details_{task}_{timestamp}.parquet"
 
 # Load the details
 details = load_dataset("parquet", data_files=details_path, split="train")
@@ -135,7 +141,7 @@ tracker = EvaluationTracker(
 ```python
 tracker = EvaluationTracker(
     output_dir="./results",
-    results_path_template="{output_dir}/custom/{org}_{model}",
+    results_path_template="{output_dir}/custom/{org}_{model}/{revision}",
     save_details=True,
     push_to_hub=True,
     push_to_tensorboard=True,
