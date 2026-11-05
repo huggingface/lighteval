@@ -107,3 +107,43 @@ def dump(
     modules_data = registry.get_tasks_dump()
 
     print(json.dumps(modules_data, indent=2, default=str))
+
+
+@app.command()
+def lint(
+    custom_task_file: Annotated[str, Argument(help="Path to the custom task Python file to lint")],
+):
+    """Statically validate custom tasks for structural and module export errors"""
+    import importlib.util
+    import os
+    import sys
+
+    from rich import print
+
+    from lighteval.tasks.linter import validate_task_module
+
+    custom_tasks_path = os.path.abspath(custom_task_file)
+
+    if not os.path.exists(custom_tasks_path):
+        print(f"[red]Error: Custom task file not found at {custom_tasks_path}[/red]")
+        sys.exit(1)
+
+    print(f"Linting custom tasks file: [bold]{custom_tasks_path}[/bold]")
+
+    try:
+        spec = importlib.util.spec_from_file_location("custom_task_module", custom_tasks_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    except Exception as e:
+        print(f"[red]Failed to import module: {e}[/red]")
+        sys.exit(1)
+
+    errors = validate_task_module(module)
+
+    if errors:
+        print(f"\n[red]Found {len(errors)} structural error(s) in custom tasks:[/red]")
+        for err in errors:
+            print(f"  - {err}")
+        sys.exit(1)
+    else:
+        print("\n[green]Linting passed! Custom tasks are structurally valid and correctly exported.[/green]")
