@@ -227,12 +227,16 @@ def make_results_table(result_dict):
 
     Creates a formatted markdown table displaying task results with metrics, values,
     and standard errors. The table includes columns for task name, version, metric,
-    value, and standard error.
+    value, standard error, and (when available) the number of samples evaluated
+    for the task.
 
     Args:
         result_dict (dict): Dictionary containing evaluation results with the structure:
             - 'results': Dict mapping task names to metric dictionaries
             - 'versions': Dict mapping task names to version strings
+            - 'num_samples': Optional dict mapping task names to the number of
+              samples that were actually evaluated for the task. When a task has
+              no entry, its Count cell is left blank.
 
     Returns:
         str: A markdown-formatted table string displaying the results.
@@ -249,24 +253,27 @@ def make_results_table(result_dict):
         # Returns markdown table with task, version, metric, value, ±, stderr columns
     """
     md_writer = MarkdownTableWriter()
-    md_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr"]
+    md_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr", "Count"]
 
     values = []
+    num_samples = result_dict.get("num_samples", {})
 
     for k in sorted(result_dict["results"].keys()):
         dic = result_dict["results"][k]
         version = result_dict["versions"][k] if k in result_dict["versions"] else ""
+        count = num_samples.get(k, "")
         for m, v in dic.items():
             if m.endswith("_stderr"):
                 continue
 
             if m + "_stderr" in dic:
                 se = dic[m + "_stderr"]
-                values.append([k, version, m, "%.4f" % v, "±", "%.4f" % se])
+                values.append([k, version, m, "%.4f" % v, "±", "%.4f" % se, count])
             else:
-                values.append([k, version, m, "%.4f" % v, "", ""])
+                values.append([k, version, m, "%.4f" % v, "", "", count])
             k = ""
             version = ""
+            count = ""
     md_writer.value_matrix = values
 
     return md_writer.dumps()
