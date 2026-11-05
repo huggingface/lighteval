@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import torch
 
@@ -137,6 +138,7 @@ class ModelResponse:
     # Other metadata
     truncated_tokens_count: int = 0  # How many tokens truncated
     padded_tokens_count: int = 0  # How many tokens of padding
+    usage_metadata: dict[str, Any] = field(default_factory=dict)  # Provider-reported billing/token usage fields
 
     @property
     def final_text(self) -> list[str]:
@@ -156,6 +158,7 @@ class ModelResponse:
             unconditioned_logprobs=[self.unconditioned_logprobs[index]] if self.unconditioned_logprobs else None,
             truncated_tokens_count=self.truncated_tokens_count,
             padded_tokens_count=self.padded_tokens_count,
+            usage_metadata=self.usage_metadata,
         )
 
 

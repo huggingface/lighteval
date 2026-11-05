@@ -22,6 +22,8 @@
 
 import asyncio
 import logging
+from collections.abc import Mapping
+from dataclasses import asdict, is_dataclass
 from typing import Any, List, Optional
 
 from huggingface_hub import AsyncInferenceClient, ChatCompletionOutput
@@ -40,6 +42,28 @@ from lighteval.utils.cache_management import SampleCache, cached
 
 
 logger = logging.getLogger(__name__)
+
+
+def _jsonable_usage_value(value: Any) -> Any:
+    if value is None:
+        return None
+    if hasattr(value, "model_dump"):
+        return _jsonable_usage_value(value.model_dump(exclude_none=True))
+    if hasattr(value, "dict"):
+        return _jsonable_usage_value(value.dict(exclude_none=True))
+    if is_dataclass(value):
+        return _jsonable_usage_value(asdict(value))
+    if isinstance(value, Mapping):
+        return {str(key): _jsonable_usage_value(item) for key, item in value.items() if item is not None}
+    if isinstance(value, (list, tuple)):
+        return [_jsonable_usage_value(item) for item in value]
+    return value
+
+
+def _usage_metadata_from_response(response: Any) -> dict[str, Any]:
+    usage = response.get("usage") if isinstance(response, Mapping) else getattr(response, "usage", None)
+    metadata = _jsonable_usage_value(usage)
+    return metadata if isinstance(metadata, dict) else {}
 
 
 class InferenceProvidersModelConfig(ModelConfig):
@@ -234,6 +258,7 @@ class InferenceProvidersClient(LightevalModel):
                     # In empty responses, the model should return an empty string instead of None
                     text=result if result[0] else [""],
                     input=context,
+                    usage_metadata=_usage_metadata_from_response(response),
                 )
                 results.append(cur_response)
 
