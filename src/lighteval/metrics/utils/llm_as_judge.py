@@ -80,7 +80,8 @@ class JudgeLM:
         hf_provider (Literal["black-forest-labs", "cerebras", "cohere", "fal-ai", "fireworks-ai",
             "inference-providers", "hyperbolic", "nebius", "novita", "openai", "replicate", "sambanova", "together"] | None):
             The HuggingFace provider when using the inference-providers backend.
-        backend_options (dict | None): Options for the backend. Currently only supported for litellm.
+        backend_options (dict | None): Options for the backend. The "concurrent_requests" key (default 10)
+            is honored by every backend; the rest of the options are currently only supported for litellm.
 
     Methods:
         evaluate_answer: Evaluates an answer using the OpenAI API or Transformers library.
@@ -416,7 +417,8 @@ class JudgeLM:
 
     def __call_api_parallel(self, prompts):
         results = []
-        with ThreadPoolExecutor(10) as executor:
+        concurrent_requests = self.backend_options.get("concurrent_requests", 10)
+        with ThreadPoolExecutor(concurrent_requests) as executor:
             for entry in tqdm(executor.map(self.__call_api, prompts), total=len(prompts)):
                 results.append(entry)
 
