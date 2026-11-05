@@ -22,7 +22,9 @@
 
 import unittest
 
-from lighteval.utils.utils import remove_reasoning_tags
+import numpy as np
+
+from lighteval.utils.utils import flatten_dict, remove_reasoning_tags
 
 
 class TestRemoveReasoningTags(unittest.TestCase):
@@ -61,3 +63,24 @@ class TestRemoveReasoningTags(unittest.TestCase):
         tag_pairs = [("<think>", "</think>")]
         result = remove_reasoning_tags(text, tag_pairs)
         self.assertEqual(result, "<think> Reasoning section. Answer section")
+
+
+class TestFlattenDict(unittest.TestCase):
+    def test_bare_ndarray_value(self):
+        # A standalone ndarray previously hit the list-loop variable `i`, which
+        # is unbound here -> UnboundLocalError.
+        result = flatten_dict({"a": np.array([1, 2, 3])})
+        self.assertEqual(result, {"a": [1, 2, 3]})
+
+    def test_ndarray_after_list_key(self):
+        # A preceding list key leaks a stale `i`, which produced a bogus indexed
+        # key (e.g. "arr/2") for the ndarray.
+        result = flatten_dict({"lst": [10, 20, 30], "arr": np.array([7, 8, 9])})
+        self.assertEqual(
+            result,
+            {"lst/0": 10, "lst/1": 20, "lst/2": 30, "arr": [7, 8, 9]},
+        )
+
+    def test_list_of_ndarrays_still_indexed(self):
+        result = flatten_dict({"m": [np.array([1, 2]), np.array([3, 4])]})
+        self.assertEqual(result, {"m/0": [1, 2], "m/1": [3, 4]})
