@@ -327,6 +327,21 @@ class TestBaseMetrics:
         )
         assert result[em_metric.metric_name] == 0
 
+    def test_sampling_metric_normalize_by_name(self):
+        # Regression: SamplingMetric resolved the `normalize` string against a
+        # list of (name, fn) tuples from inspect.getmembers, so every valid name
+        # raised ValueError. It must resolve to the named normalization function.
+        from lighteval.metrics import normalizations
+        from lighteval.metrics.metrics_sample import AvgAtN
+
+        metric = AvgAtN(n=1, normalize="gsm8k_normalizer")
+        assert metric.normalize is normalizations.gsm8k_normalizer
+        # and it actually applies the resolved normalizer
+        assert metric.preprocess("The answer is #### 18") == "18"
+        # unknown names still raise
+        with pytest.raises(ValueError):
+            AvgAtN(n=1, normalize="definitely_not_a_normalizer")
+
     @pytest.mark.skip(reason="Need to understand what it does.")
     def test_pass_at_k_estimator(self):
         assert False
