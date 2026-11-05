@@ -62,7 +62,19 @@ def get_inspect_ai_task(
     dataset_subset = lighteval_task_config.hf_subset
     dataset_split = lighteval_task_config.evaluation_splits[0]
 
-    dataset = hf_dataset(dataset_repo, name=dataset_subset, split=dataset_split, sample_fields=sample_fields)
+    if lighteval_task_config.hf_data_files is not None:
+        # Tasks that ship their data files with the definition (e.g. tau_bench,
+        # whose upstream dataset is no longer available on the Hub) load them
+        # from disk instead of from the Hub.
+        from datasets import load_dataset as load_local_dataset
+        from inspect_ai.dataset import MemoryDataset
+
+        hf_dataset_dict = load_local_dataset("json", data_files=lighteval_task_config.hf_data_files)
+        split = dataset_split if dataset_split in hf_dataset_dict else next(iter(hf_dataset_dict))
+        samples = [sample_fields(dict(row)) for row in hf_dataset_dict[split]]
+        dataset = MemoryDataset(samples=samples, name=name)
+    else:
+        dataset = hf_dataset(dataset_repo, name=dataset_subset, split=dataset_split, sample_fields=sample_fields)
     if lighteval_task_config.filter is not None:
         dataset = dataset.filter(lighteval_task_config.filter)
     solver = lighteval_task_config.solver or [

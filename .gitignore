@@ -12,6 +12,8 @@ work
 runs
 *.parquet
 *.json
+# tau_bench vendored domain data (issue #741)
+!src/lighteval/tasks/tasks/tau_bench/data/*.json
 cache/
 fastspeech_output
 .hydra
