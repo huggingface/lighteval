@@ -84,3 +84,33 @@ def test_hf_data_files(tmp_path):
 
     eval_docs = task.eval_docs()
     assert [doc.query for doc in eval_docs] == src_docs
+
+
+def test_fewshot_docs_can_be_selected_by_dataset_ids(tmp_path):
+    train_file = tmp_path / "train.jsonl"
+    train_file.write_text(
+        '\n'.join(
+            [
+                '{"id": "first", "text": "one"}',
+                '{"id": "second", "text": "two"}',
+            ]
+        )
+    )
+    validation_file = tmp_path / "validation.jsonl"
+    validation_file.write_text('{"id": "eval", "text": "evaluate"}')
+
+    cfg = LightevalTaskConfig(
+        name="test_fewshot_ids",
+        prompt_function=dummy_prompt_function,
+        hf_repo="json",
+        hf_subset="default",
+        metrics=[],
+        evaluation_splits=["validation"],
+        few_shots_split="train",
+        few_shots_id_column="id",
+        few_shots_id_list=["second"],
+        hf_data_files={"train": str(train_file), "validation": str(validation_file)},
+    )
+    task = LightevalTask(cfg)
+
+    assert [doc.query for doc in task.fewshot_docs()] == ["two"]
