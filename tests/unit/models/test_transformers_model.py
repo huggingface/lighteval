@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
 import unittest
 from unittest.mock import Mock, patch
 
@@ -424,6 +425,53 @@ class TestTransformersModelUseChatTemplate(unittest.TestCase):
 
                 self.assertEqual(model.use_chat_template, expected_result)
                 self.assertEqual(model.use_chat_template, model._tokenizer.chat_template is not None)
+
+
+class TestInitModelParallel(unittest.TestCase):
+    def _model(self, cls):
+        model = cls.__new__(cls)
+        accelerator = Mock()
+        accelerator.process_index = 0
+        model.accelerator = accelerator
+        return model
+
+    def _run(self, cls, module: str, local_world_size: str, device_count: int, model_parallel):
+        model = self._model(cls)
+        memory = {0: "10GiB", 1: "10GiB"}
+        with (
+            patch.dict(os.environ, {"LOCAL_WORLD_SIZE": local_world_size}),
+            patch(f"{module}.torch.cuda.device_count", return_value=device_count),
+            patch(f"{module}.get_max_memory", return_value=dict(memory)),
+        ):
+            return model.init_model_parallel(model_parallel)
+
+    def test_explicit_model_parallel_is_kept_when_each_process_has_one_gpu(self):
+        from lighteval.models.transformers.transformers_model import TransformersModel
+        from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModel
+
+        cases = [
+            (TransformersModel, "lighteval.models.transformers.transformers_model"),
+            (VLMTransformersModel, "lighteval.models.transformers.vlm_transformers_model"),
+        ]
+        for cls, module in cases:
+            with self.subTest(cls=cls.__name__):
+                enabled, max_memory, device_map = self._run(cls, module, "2", 2, True)
+                self.assertTrue(enabled)
+                self.assertEqual(device_map, "auto")
+                self.assertEqual(max_memory, {0: "10GiB"})
+
+                enabled, max_memory, device_map = self._run(cls, module, "2", 2, None)
+                self.assertFalse(enabled)
+                self.assertIsNone(max_memory)
+                self.assertIsNone(device_map)
+
+    def test_unset_model_parallel_uses_every_gpu_from_one_process(self):
+        enabled, max_memory, device_map = self._run(
+            TransformersModel, "lighteval.models.transformers.transformers_model", "1", 2, None
+        )
+        self.assertTrue(enabled)
+        self.assertEqual(device_map, "auto")
+        self.assertEqual(max_memory, {0: "10GiB", 1: "10GiB"})
 
 
 if __name__ == "__main__":
