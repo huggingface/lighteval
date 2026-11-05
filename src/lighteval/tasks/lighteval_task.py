@@ -134,6 +134,11 @@ class LightevalTaskConfig:
     few_shots_split: str | None = None
     few_shots_select: str | None = None
 
+    # ID-based few-shot selection: specify exact dataset rows to use as few-shot examples.
+    # See: https://github.com/huggingface/lighteval/issues/634
+    few_shots_id_column: str | None = None
+    few_shots_id_list: ListLike[str] | None = None
+
     # Generation args
     generation_size: int | None = None
     generation_grammar: TextGenerationInputGrammarType | None = None
@@ -235,6 +240,8 @@ class LightevalTask:
             config.hf_avail_splits or []
         )
         self.fewshot_selection = config.few_shots_select
+        self.fewshot_id_column = config.few_shots_id_column
+        self.fewshot_id_list = config.few_shots_id_list
         self.must_remove_duplicate_docs = config.must_remove_duplicate_docs
 
         self.formatter = config.prompt_function

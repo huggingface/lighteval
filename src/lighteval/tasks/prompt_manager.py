@@ -237,7 +237,10 @@ class FewShotSampler:
     ):
         # If there is no cache, we initialize it
         if variance_seed not in self._fewshot_cache:
-            if self.few_shots_select.value.sorting == "sequential":
+            # ID-based selection takes priority when configured
+            if self.task.fewshot_id_list is not None:
+                self._init_fewshot_sampling_by_id(variance_seed=variance_seed)
+            elif self.few_shots_select.value.sorting == "sequential":
                 self._init_fewshot_sampling_sequential(num_fewshot=num_fewshot, variance_seed=variance_seed)
             elif self.few_shots_select.value.sorting == "random":
                 self._init_fewshot_sampling_random(variance_seed=variance_seed)
@@ -324,6 +327,52 @@ class FewShotSampler:
             num_instances_to_sample -= 1
 
         self._fewshot_cache[variance_seed] = examples  # Store few shot examples
+
+
+    def _init_fewshot_sampling_by_id(self, variance_seed: int):
+        """Select few-shot examples by matching specific IDs from the dataset.
+
+        Uses ``task.fewshot_id_list`` and ``task.fewshot_id_column`` to pick exact
+        rows from the few-shot split. The order of examples follows the order
+        given in ``fewshot_id_list``, making selection fully deterministic and
+        reproducible.
+
+        See: https://github.com/huggingface/lighteval/issues/634
+        """
+        fewshot_id_list = [str(x) for x in self.task.fewshot_id_list]
+        fewshotpool = self.task.fewshot_docs()
+
+        # Build a lookup: id_value -> Doc
+        id_to_doc = {}
+        for doc in fewshotpool:
+            doc_id = doc.specific.get("__fewshot_id") if doc.specific else None
+            if doc_id is not None and doc_id in fewshot_id_list:
+                id_to_doc[doc_id] = doc
+
+        # Preserve the order specified in fewshot_id_list
+        selected = []
+        missing_ids = []
+        for target_id in fewshot_id_list:
+            if target_id in id_to_doc:
+                selected.append(id_to_doc[target_id])
+            else:
+                missing_ids.append(target_id)
+
+        if missing_ids:
+            logger.warning(
+                f"Task {self.task.name}: could not find few-shot examples for IDs: {missing_ids}. "
+                f"Check that `few_shots_id_column` ('{self.task.fewshot_id_column}') exists in the dataset "
+                f"and contains these values."
+            )
+
+        if not selected:
+            raise ValueError(
+                f"Task {self.task.name}: no few-shot examples matched the provided "
+                f"`few_shots_id_list` {fewshot_id_list}. Ensure `few_shots_id_column` "
+                f"('{self.task.fewshot_id_column}') is correct."
+            )
+
+        self._fewshot_cache[variance_seed] = selected
 
     def get_fewshot_seeds(self, few_shot_iterations: int = None) -> list[int]:
         """Return a list of seeds for sampling several times the few shots"""
