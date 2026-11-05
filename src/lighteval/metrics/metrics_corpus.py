@@ -34,6 +34,7 @@ import numpy as np
 import sacrebleu
 import sklearn.metrics
 
+from lighteval.metrics.bayes_at_n import bayes_at_n
 from lighteval.metrics.sample_preparator import (
     GenerativeCorpusMetricInput,
     LogprobCorpusMetricInput,
@@ -60,6 +61,42 @@ class CorpusLevelComputation(ABC):
                 val_str = str(v)
             attr_strs.append(f"{k}={val_str}")
         return f"{self.__class__.__name__}({', '.join(attr_strs)})"
+
+
+class BayesAtNCorpus(CorpusLevelComputation):
+    def __init__(self, statistic: Literal["mu", "sigma"]):
+        if statistic not in {"mu", "sigma"}:
+            raise ValueError("BayesAtNCorpus statistic must be either 'mu' or 'sigma'.")
+        self.statistic = statistic
+
+    def compute_corpus(self, items: list[dict]) -> float:
+        """Combine question rows, retaining their own prior observations."""
+        if not items:
+            raise ValueError("Bayes@N needs at least one row.")
+        weights = items[0].get("weights")
+        priors = [item.get("prior") for item in items]
+        for item in items:
+            if "scores" not in item:
+                raise ValueError("Bayes@N payloads must contain a 'scores' row.")
+            if not np.array_equal(weights, item.get("weights")):
+                raise ValueError("Bayes@N received inconsistent weights across rows.")
+            if np.asarray(item["scores"]).ndim != 1:
+                raise ValueError("Bayes@N payloads must contain one scores row.")
+        has_prior = [prior is not None for prior in priors]
+        if any(has_prior) and not all(has_prior):
+            raise ValueError("Bayes@N prior observations must be supplied for every row or omitted for every row.")
+        if all(has_prior) and any(np.asarray(prior).ndim != 1 for prior in priors):
+            raise ValueError("Bayes@N prior payloads must contain one prior row.")
+        mu, sigma = bayes_at_n(
+            [item["scores"] for item in items], weights=weights, prior=priors if all(has_prior) else None
+        )
+        return mu if self.statistic == "mu" else sigma
+
+    def aggregate_tasks(self, values: list[float]) -> float:
+        """Return moments of the equal-task mean for independent question sets."""
+        if self.statistic == "sigma":
+            return math.hypot(*values) / len(values)
+        return float(np.mean(values))
 
 
 # General aggregations

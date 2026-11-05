@@ -26,6 +26,7 @@ These metrics need the model to generate an output. They are therefore slower.
         - normalization on string pre-comparision on whitespace, articles, capitalization, ....
         - comparing the full string, or only subsets (prefix, suffix, ...)
     - `maj_at_k`: Model majority vote. Samples k generations from the model and assumes the most frequent is the actual prediction.
+    - `bayes_at_n`: Corpus-level Bayes@N for repeated generations. It reports `bayes@n`, the posterior mean, and `bayes@n_sigma`, the posterior standard deviation; multi-category outcomes require category weights.
     - `f1_score`:  Average F1 score in terms of word overlap between the model output and gold (normalisation optional).
     - `f1_score_macro`: Corpus level macro F1 score.
     - `f1_score_macro`: Corpus level micro F1 score.
@@ -54,10 +55,82 @@ These metrics need the model to generate an output. They are therefore slower.
         - `edit_distance`: Average Levenshtein edit distance between model generation and reference,
         - `edit_similarity`: Average Levenshtein edit similarity (normalized by the length of longer sequence) between model generation and reference.
 - Math:
-    - Both `exact_match` and `maj_at_k` can be used to evaluate mathematics tasks with math specific normalization to remove and filter latex.
+    - `exact_match`, `maj_at_k`, and `bayes_at_n` can be used to evaluate mathematics tasks with math specific normalization to remove and filter latex.
 
 ## LLM-as-Judge
 - `llm_judge_gpt3p5`: Can be used for any generative task, the model will be scored by a GPT3.5 model using the OpenAI API.
 - `llm_judge_llama_3_405b`: Can be used for any generative task, the model will be scored by a Llama 3.405B model using the HuggingFace API.
 - `llm_judge_multi_turn_gpt3p5`: Can be used for any generative task, the model will be scored by a GPT3.5 model using the OpenAI API. It is used for multiturn tasks like mt-bench.
 - `llm_judge_multi_turn_llama_3_405b`: Can be used for any generative task, the model will be scored by a Llama 3.405B model using the HuggingFace API. It is used for multiturn tasks like mt-bench.
+
+## Bayes@N
+
+[Bayes@N](https://arxiv.org/abs/2510.04265) reports the posterior mean rubric score
+(`bayes@n`) and its posterior standard deviation (`bayes@n_sigma`) over a fixed
+set of questions. For each question, the metric scores N generated candidates
+and adds one prior count per category. The binary default uses exact-match
+outcomes and weights `[0, 1]`. The standard deviation measures uncertainty about
+the mean latent score; it is separate from bootstrap standard errors and pass@k.
+
+Use it in a generative task configuration:
+
+```python
+from lighteval.metrics.metrics import Metrics
+
+# In LightevalTaskConfig(...):
+metrics = [Metrics.bayes_at_n(sample_params={"n": 16})]
+```
+
+The task requests 16 candidates per question and retains every correctness
+outcome until corpus aggregation. Use `Metrics.bayes_at_n_math` for the same
+outputs with the existing math answer extraction, under the names
+`math-bayes@n` and `math-bayes@n_sigma`. A custom task using either metric also
+accepts the usual CLI task parameter, for example `my_task@n=16|0`. Choose one N
+for each Bayes metric in a task; the output names do not encode N.
+
+For question i and category c, let `a_ic = 1 + observed_count_ic + prior_count_ic`
+and `T = number_of_categories + N + D`. With category weights `w`, the row mean
+is `m_i = sum_c(a_ic * w_c) / T`, and its variance is
+`v_i = (sum_c(a_ic * w_c**2) / T - m_i**2) / (T + 1)`.
+The task reports `sum_i(m_i) / M` and `sqrt(sum_i(v_i)) / M`.
+It uses an independent posterior for each question rather than pooling trials
+across questions.
+
+A custom scorer can return category ids when the rubric has more than two
+categories. Supply one weight for every category, including unobserved categories:
+
+```python
+from lighteval.metrics.bayes_at_n import bayes_at_n
+
+mean, sigma = bayes_at_n(
+    [[0, 1, 2, 2, 1], [1, 1, 0, 2, 2]],
+    weights=[0.0, 0.5, 1.0],
+    prior=[[0, 2], [1, 2]],
+)
+# mean = 0.575; sigma = 0.084274983...
+```
+
+For task-level scoring, pass `weights` and `sample_scoring_function` in
+`sample_params`. The scorer receives the current `Doc` and a single-candidate
+`ModelResponse`. It must return an integer category id. Continuous scores need
+an explicit rubric mapping before they can be used here.
+
+Optional prior observations must belong to the same question and use the same
+rubric. In a task, pass a callable that retrieves the current question's prior
+row, for example `"prior": lambda doc: doc.specific["prior_outcomes"]`. The row
+travels with that document's scores, so document ordering does not determine its
+alignment. The low-level `bayes_at_n` function instead accepts the full aligned
+prior matrix. Omission keeps the one-count-per-category prior.
+
+Every question in a task must have the same positive number of scored trials
+and the same number of prior observations. Missing generations, ragged rows,
+invalid category ids, mixed prior availability and inconsistent weights raise
+`ValueError`. Repeated trials should use comparable, independently sampled
+completions; adaptively allocated or interrupted sampling is outside this API.
+
+Lighteval's subtask and `all` summaries give each task equal weight, even when
+the tasks have different question counts. Bayes means follow that convention.
+For independent tasks, the summary SD is `sqrt(sum_t(sigma_t**2)) / number_of_tasks`.
+These summaries assume non-overlapping question sets and independent task
+posteriors. Use each task's reported moments when those assumptions do not hold.
+No credible interval is added by this metric.
