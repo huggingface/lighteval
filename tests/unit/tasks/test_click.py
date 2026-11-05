@@ -23,7 +23,7 @@ def row():
     }
 
 
-def test_u01_four_options_exact_snapshot(row):
+def test_four_options_exact_snapshot(row):
     doc = click_prompt(row, "click:society")
     assert doc.query == (
         "주어진 질문을 천천히 읽고, 적절한 정답을 A, B, C, D 중에 골라 알파벳 하나로 답하시오.\n\n"
@@ -38,7 +38,7 @@ def test_u01_four_options_exact_snapshot(row):
     assert row["id"] not in doc.query
 
 
-def test_u02_five_options_exact_snapshot(row):
+def test_five_options_exact_snapshot(row):
     row.update(paragraph="도시를 골라 보세요.\n지문 두 번째 줄.", choices=["부산", "대구", "인천", "대전", "서울"])
     doc = click_prompt(row, "click:geography")
     assert doc.query == (
@@ -53,7 +53,7 @@ def test_u02_five_options_exact_snapshot(row):
 
 
 @pytest.mark.parametrize("count,index", [(n, i) for n in (4, 5) for i in range(n)])
-def test_u03_every_gold_position_ignores_id(row, count, index):
+def test_every_gold_position_ignores_id(row, count, index):
     options = ["하나", "둘", "셋", "넷", "다섯"][:count]
     row.update(id="Grammar_CSAT_4_5", choices=options, answer=options[index])
     payload = build_click_payload(row)
@@ -62,7 +62,7 @@ def test_u03_every_gold_position_ignores_id(row, count, index):
     assert payload["choices"][index] == f" {'ABCDE'[index]}. {options[index]}"
 
 
-def test_u04_preserve_unicode_spaces_internal_options_and_newlines(row):
+def test_preserve_unicode_spaces_internal_options_and_newlines(row):
     row.update(
         paragraph=" \t漢字·한글\n끝  ",
         question="  질문\nㄱ. 내부 보기\nㄴ. 다음 보기\t",
@@ -83,12 +83,12 @@ def test_u04_preserve_unicode_spaces_internal_options_and_newlines(row):
 
 
 @pytest.mark.parametrize("paragraph", ["", " ", "\n\t\r", "\u3000"])
-def test_u04_blank_paragraph_is_omitted(row, paragraph):
+def test_blank_paragraph_is_omitted(row, paragraph):
     row["paragraph"] = paragraph
     assert "[지문]" not in build_click_payload(row)["query"]
 
 
-def test_u05_answer_and_id_do_not_leak_into_model_input(row):
+def test_answer_and_id_do_not_leak_into_model_input(row):
     original = build_click_payload(row)
     row["answer"] = "부산"
     changed = build_click_payload(row)
@@ -98,7 +98,7 @@ def test_u05_answer_and_id_do_not_leak_into_model_input(row):
 
 
 @pytest.mark.parametrize("field", ["id", "paragraph", "question", "choices", "answer"])
-def test_u06_missing_fields_raise(row, field):
+def test_missing_fields_raise(row, field):
     del row[field]
     with pytest.raises(ValueError):
         click_prompt(row, "click:society")
@@ -106,7 +106,7 @@ def test_u06_missing_fields_raise(row, field):
 
 @pytest.mark.parametrize("field", ["id", "paragraph", "question", "answer"])
 @pytest.mark.parametrize("value", [None, 1, True, [], {}])
-def test_u06_string_fields_reject_other_types(row, field, value):
+def test_string_fields_reject_other_types(row, field, value):
     row[field] = value
     with pytest.raises(ValueError, match=f"{field} must be a string"):
         build_click_payload(row)
@@ -129,33 +129,33 @@ def test_u06_string_fields_reject_other_types(row, field, value):
         ["서울", "서울", "부산", "대구"],
     ],
 )
-def test_u06_invalid_options_raise(row, choices):
+def test_invalid_options_raise(row, choices):
     row["choices"] = choices
     with pytest.raises(ValueError):
         build_click_payload(row)
 
 
 @pytest.mark.parametrize("question", ["", " \n\t"])
-def test_u06_blank_question_raises(row, question):
+def test_blank_question_raises(row, question):
     row["question"] = question
     with pytest.raises(ValueError, match="question must be nonempty"):
         build_click_payload(row)
 
 
 @pytest.mark.parametrize("bad_row", [None, [], "not a row", 0])
-def test_u06_non_mapping_raises(bad_row):
+def test_non_mapping_raises(bad_row):
     with pytest.raises(ValueError, match="row must be a mapping"):
         build_click_payload(bad_row)
 
 
 @pytest.mark.parametrize("answer", [" 서울", "서울 ", "서울"])
-def test_u06_answer_is_not_normalized(row, answer):
+def test_answer_is_not_normalized(row, answer):
     row["answer"] = answer
     with pytest.raises(ValueError, match="exactly one"):
         build_click_payload(row)
 
 
-def test_u07_duplicate_ids_and_distractors_are_not_removed(row):
+def test_duplicate_ids_and_distractors_are_not_removed(row):
     other = {**row, "choices": ["부산", "부산", "서울", "대전"]}
     first, second = (click_prompt(r, "click:society") for r in (row, other))
     assert first.specific["original_id"] == second.specific["original_id"]
