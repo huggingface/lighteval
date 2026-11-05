@@ -1146,3 +1146,41 @@ def test_math_extraction_additional_cases(gold, pred, expected):
 )
 def test_math_numina_cases(gold, pred, expected):
     assert compare_strings(gold, pred, match_types=["latex", "expr"]) == expected
+
+
+@pytest.mark.parametrize(
+    "gold,pred,expected",
+    [
+        # Markdown bold around the answer must not turn the number into an unparsable expression ("18**"),
+        # which made extraction fall through to the last unanchored number in the text
+        ("18", "ANSWER: **18**", 1),
+        ("18", "**ANSWER: 18**", 1),
+        ("18", "ANSWER: **18**\n\nThis took 3 steps.", 1),
+        ("3", "ANSWER: **18**\n\nThis took 3 steps.", 0),
+        ("18", "The answer is **18**, found in 3 steps.", 1),
+        ("18", "Final answer: **18** (after 4 attempts)", 1),
+        ("1/2", "ANSWER: **1/2**", 1),
+        ("6", "ANSWER: **2*3**", 1),
+        # Expressions are still extracted
+        ("3", "ANSWER: (1+2)", 1),
+        ("7", "ANSWER: 3 + 4", 1),
+        ("1024", "ANSWER: 2^10", 1),
+    ],
+)
+def test_bold_answer_extraction(gold, pred, expected):
+    assert compare_strings(gold, pred, match_types=["latex", "expr"]) == expected
+
+
+@pytest.mark.parametrize("pred", ["ANSWER: **18**", "**ANSWER: 18**"])
+def test_inspect_math_scorer_bold_answer(pred):
+    import asyncio
+
+    from inspect_ai.model import ModelName, ModelOutput
+    from inspect_ai.scorer import Target
+    from inspect_ai.solver import TaskState
+
+    from lighteval.metrics.metrics import math_scorer
+
+    state = TaskState(model=ModelName("mockllm/model"), sample_id=1, epoch=1, input="", messages=[])
+    state.output = ModelOutput.from_content(model="mockllm/model", content=pred)
+    assert asyncio.run(math_scorer()(state, Target("18"))).value == "C"
