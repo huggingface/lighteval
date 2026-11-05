@@ -137,6 +137,62 @@ class TestPromptManager:
         assert result == "<|user|>\nWhat is 2+2?<|assistant|>"
         tokenizer.apply_chat_template.assert_called_once()
 
+    def test_init_chat_template_kwargs_defaults_to_empty_dict(self):
+        """chat_template_kwargs defaults to {} (not None) so it can always be **-unpacked."""
+        pm = PromptManager()
+        assert pm.chat_template_kwargs == {}
+
+    def test_prepare_prompt_forwards_chat_template_kwargs(self):
+        """chat_template_kwargs (e.g. enable_thinking=False for Qwen3) reach apply_chat_template.
+
+        Regression coverage for issue #855: toggling a reasoning model's thinking mode
+        requires these kwargs to actually arrive at the tokenizer's chat template.
+        """
+        tokenizer = Mock()
+        tokenizer.apply_chat_template.return_value = "rendered"
+
+        pm = PromptManager(
+            use_chat_template=True,
+            tokenizer=tokenizer,
+            chat_template_kwargs={"enable_thinking": False},
+        )
+        doc = Doc(query="What is 2+2?", choices=["3", "4", "5"], gold_index=1)
+
+        pm.prepare_prompt(doc)
+
+        tokenizer.apply_chat_template.assert_called_once()
+        assert tokenizer.apply_chat_template.call_args.kwargs["enable_thinking"] is False
+
+    def test_prepare_prompt_api_does_not_forward_chat_template_kwargs(self):
+        """prepare_prompt_api never calls apply_chat_template (no local tokenizer render for
+        API backends), so chat_template_kwargs has nothing to attach to here — it's a no-op
+        by design, not a bug: passing it must not raise or otherwise leak into the message dicts.
+        """
+        pm = PromptManager(chat_template_kwargs={"enable_thinking": False})
+        doc = Doc(query="What is 2+2?", choices=["3", "4", "5"], gold_index=1)
+
+        result = pm.prepare_prompt_api(doc)
+        assert result == [{"role": "user", "content": "What is 2+2?"}]
+
+    def test_prepare_prompt_multimodal_forwards_chat_template_kwargs(self):
+        """chat_template_kwargs also reach apply_chat_template in the multimodal path."""
+        tokenizer = Mock()
+        tokenizer.apply_chat_template.return_value = "rendered"
+
+        pm = PromptManager(
+            use_chat_template=True,
+            tokenizer=tokenizer,
+            chat_template_kwargs={"enable_thinking": False},
+        )
+        mock_image = Mock()
+        doc = Doc(
+            query="What is in this image?", choices=["A cat", "A dog", "A bird"], gold_index=0, images=[mock_image]
+        )
+
+        pm.prepare_prompt_multimodal(doc)
+
+        assert tokenizer.apply_chat_template.call_args.kwargs["enable_thinking"] is False
+
     def test_prepare_prompt_chat_template_with_system_prompt(self):
         """Test prepare_prompt with chat template format and system prompt."""
         tokenizer = Mock()

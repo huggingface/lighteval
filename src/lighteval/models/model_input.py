@@ -118,6 +118,29 @@ class GenerationParameters(BaseModel, extra="forbid"):
             "seed": self.seed,
             "repetition_penalty": self.repetition_penalty,
             "frequency_penalty": self.frequency_penalty,
+            "presence_penalty": self.presence_penalty,
+        }
+        return {k: v for k, v in args.items() if v is not None}
+
+    def to_litellm_text_completion_dict(self) -> dict:
+        """Selects parameters relevant to the ``/v1/completions`` (text completion) endpoint.
+
+        Used by the LiteLLM loglikelihood implementation which calls
+        ``litellm.atext_completion``.  The caller always overrides ``max_tokens``,
+        ``echo``, ``logprobs``, and ``temperature`` for deterministic scoring, so
+        those are intentionally excluded here.
+
+        Doc: https://docs.litellm.ai/docs/text_completion
+
+        Returns:
+            dict: Parameters forwarded to ``litellm.atext_completion``.
+        """
+        args = {
+            "seed": self.seed,
+            "stop": self.stop_tokens,
+            "top_p": self.top_p,
+            "frequency_penalty": self.frequency_penalty,
+            "presence_penalty": self.presence_penalty,
         }
         return {k: v for k, v in args.items() if v is not None}
 

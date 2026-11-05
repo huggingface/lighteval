@@ -123,6 +123,10 @@ class TransformersModelConfig(ModelConfig):
         override_chat_template (bool):
             If True, we force the model to use a chat template. If alse, we prevent the model from using
             a chat template. If None, we use the default (true if present in the tokenizer, false otherwise)
+        chat_template_kwargs (dict | None):
+            Extra keyword arguments forwarded to the tokenizer's `apply_chat_template`. Useful for
+            template-specific flags such as `{"enable_thinking": False}` to disable a reasoning
+            model's (e.g. Qwen3) thinking mode. Defaults to None.
         generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
             Configuration parameters that control text generation behavior, including
             temperature, top_p, max_new_tokens, etc.
@@ -168,6 +172,7 @@ class TransformersModelConfig(ModelConfig):
     pairwise_tokenization: bool = False
     continuous_batching: bool = False
     override_chat_template: bool = None
+    chat_template_kwargs: dict | None = None
 
     def model_post_init(self, __context):
         if self.multichoice_continuations_start_space is True:
@@ -238,7 +243,10 @@ class TransformersModel(LightevalModel):
             model_size = -1
 
         self.prompt_manager = PromptManager(
-            use_chat_template=self.use_chat_template, tokenizer=self.tokenizer, system_prompt=config.system_prompt
+            use_chat_template=self.use_chat_template,
+            tokenizer=self.tokenizer,
+            system_prompt=config.system_prompt,
+            chat_template_kwargs=config.chat_template_kwargs,
         )
 
         # Initialize cache for tokenization and predictions
@@ -304,6 +312,7 @@ class TransformersModel(LightevalModel):
             use_chat_template=self.use_chat_template,
             tokenizer=self.tokenizer,
             system_prompt=config.system_prompt if config else None,
+            chat_template_kwargs=config.chat_template_kwargs if config else None,
         )
 
         # Initialize cache for tokenization and predictions

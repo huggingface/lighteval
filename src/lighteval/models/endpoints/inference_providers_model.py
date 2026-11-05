@@ -258,12 +258,30 @@ class InferenceProvidersClient(LightevalModel):
 
     @cached(SamplingMethod.LOGPROBS)
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
-        """Tokenize the context and continuation and compute the log likelihood of those
-        tokenized sequences.
+        """Not supported for HuggingFace Inference Providers.
+
+        The HF Inference Providers API exposes only ``/v1/chat/completions``.
+        That endpoint does not support ``echo=True`` or per-prompt token
+        log-probabilities, which are required for loglikelihood evaluation
+        (MCQ benchmarks such as MMLU, ARC, HellaSwag).
+
+        Use the LiteLLM backend (``lighteval endpoint litellm``) with a
+        model that supports the ``/v1/completions`` endpoint — for example
+        ``gpt-3.5-turbo-instruct`` or any OpenAI-compatible local server —
+        to run loglikelihood evaluations over a remote API.
         """
-        raise NotImplementedError
+        raise NotImplementedError(
+            "loglikelihood is not supported for the HuggingFace Inference Providers backend. "
+            "The provider API exposes only /v1/chat/completions, which does not return "
+            "per-prompt token log-probabilities. "
+            "Use `lighteval endpoint litellm` with a completion-capable model instead "
+            "(e.g. gpt-3.5-turbo-instruct or a local OpenAI-compatible server)."
+        )
 
     @cached(SamplingMethod.PERPLEXITY)
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
-        """This function is used to compute the log likelihood of the context for perplexity metrics."""
-        raise NotImplementedError
+        """Not supported for HuggingFace Inference Providers — see ``loglikelihood`` for details."""
+        raise NotImplementedError(
+            "loglikelihood_rolling is not supported for the HuggingFace Inference Providers backend. "
+            "See loglikelihood() for the full explanation."
+        )
