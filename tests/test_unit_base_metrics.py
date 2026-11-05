@@ -95,6 +95,15 @@ class TestBaseMetrics:
         res = em.compute_one_item("", "")
         assert res == 0
 
+    def test_quasi_exact_match_numbers(self):
+        em = ExactMatches(normalize_gold=helm_normalizer, normalize_pred=helm_normalizer)
+
+        # Numbers that are equal but formatted differently must match (homogeneize_numbers' goal).
+        assert em.compute_one_item("1.0", "1") == 1
+        # Distinct numbers must NOT be scored as an exact match.
+        assert em.compute_one_item("10", "1.0") == 0
+        assert em.compute_one_item("3.14", "314") == 0
+
     def test_prefix_exact_match(self):
         em = ExactMatches(
             strip_strings=True,
