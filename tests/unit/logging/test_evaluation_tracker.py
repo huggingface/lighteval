@@ -30,7 +30,7 @@ import pytest
 from datasets import Dataset
 from huggingface_hub import HfApi
 
-from lighteval.logging.evaluation_tracker import EvaluationTracker
+from lighteval.logging.evaluation_tracker import EvaluationTracker, missing_detail_tasks
 from lighteval.logging.info_loggers import DetailsLogger
 
 # ruff: noqa
@@ -80,6 +80,24 @@ def mock_datetime(monkeypatch):
 
     monkeypatch.setattr("lighteval.logging.evaluation_tracker.datetime", MockDatetime)
     return mock_date
+
+
+class TestMissingDetailTasks(unittest.TestCase):
+    def test_strips_fewshot_suffix_before_matching(self):
+        missing = missing_detail_tasks(
+            ["gsm8k", "hellaswag"],
+            ["gsm8k|0", "mmlu:college_chemistry|5"],
+        )
+
+        self.assertEqual(missing, ["hellaswag"])
+
+    def test_does_not_treat_a_prefix_as_a_match(self):
+        missing = missing_detail_tasks(["gsm"], ["gsm8k|0"])
+
+        self.assertEqual(missing, ["gsm"])
+
+    def test_reports_nothing_when_every_task_was_loaded(self):
+        self.assertEqual(missing_detail_tasks(["gsm8k"], ["gsm8k|0"]), [])
 
 
 class TestLogging:
