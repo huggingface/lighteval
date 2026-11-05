@@ -11,6 +11,8 @@
     title: Examples using Inspect-AI
   - local: saving-and-reading-results
     title: Save and read results
+  - local: comparing-runs
+    title: Compare evaluation runs
   - local: caching
     title: Caching
   - local: using-the-python-api

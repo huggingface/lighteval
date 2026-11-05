@@ -27,6 +27,7 @@ import typer
 
 import lighteval.main_accelerate
 import lighteval.main_baseline
+import lighteval.main_compare
 import lighteval.main_custom
 import lighteval.main_endpoint
 import lighteval.main_inspect
@@ -66,6 +67,7 @@ logging.captureWarnings(capture=True)
 
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_accelerate.accelerate)
 app.command(rich_help_panel="Evaluation Utils")(lighteval.main_baseline.baseline)
+app.command(rich_help_panel="Evaluation Utils")(lighteval.main_compare.compare)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_nanotron.nanotron)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_vllm.vllm)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_custom.custom)
