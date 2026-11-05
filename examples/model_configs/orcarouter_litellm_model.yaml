@@ -1,0 +1,10 @@
+model_parameters:
+  model_name: "orcarouter/fusion-flash"
+  provider: "orcarouter"
+  generation_parameters:
+    temperature: 0.5
+    max_new_tokens: 256
+    top_p: 0.9
+    seed: 0
+    repetition_penalty: 1.0
+    frequency_penalty: 0.0
