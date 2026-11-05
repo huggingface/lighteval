@@ -100,7 +100,11 @@ class CorpusLevelF1Score(CorpusLevelComputation):
         # Single f1
         if self.num_classes == 2:
             fscore = sklearn.metrics.f1_score(golds, preds, average=self.average)
-            return np.max(fscore)
+            # average=None returns a per-class F1 array: report the positive class, not the
+            # best class (np.max inflated the score). Scalar averages pass through unchanged.
+            if self.average is None:
+                return float(fscore[1])
+            return float(fscore)
 
         # Multi f1
         f1s = []
