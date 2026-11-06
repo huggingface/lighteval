@@ -102,14 +102,21 @@ class CorpusLevelF1Score(CorpusLevelComputation):
             fscore = sklearn.metrics.f1_score(golds, preds, average=self.average)
             return np.max(fscore)
 
-        # Multi f1
-        f1s = []
-        for i in range(self.num_classes):
-            f1s.append(
-                sklearn.metrics.f1_score(
-                    y_true=[g == i for g in golds], y_pred=[p == i for p in preds], average=self.average
-                )
+        # Multi f1: delegate the requested averaging to scikit-learn over all
+        # classes. Averaging per-class binary f1 scores is not multi-class
+        # micro/macro/weighted f1.
+        if self.average is not None:
+            return float(
+                sklearn.metrics.f1_score(golds, preds, average=self.average, labels=list(range(self.num_classes)))
             )
+
+        # Multi f1 without a requested average: unchanged per-class computation.
+        f1s = [
+            sklearn.metrics.f1_score(
+                y_true=[g == i for g in golds], y_pred=[p == i for p in preds], average=self.average
+            )
+            for i in range(self.num_classes)
+        ]
         return float(np.mean(f1s))
 
 

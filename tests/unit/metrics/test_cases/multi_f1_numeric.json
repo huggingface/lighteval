@@ -119,9 +119,9 @@
           "logprobs": [-0.1, -1.9, -0.2]
         }
       ],
-      "expected_output": 0.33,
+      "expected_output": 0.0,
       "tolerance": 0.01,
-      "description": "Poor performance - 1 correct, 2 incorrect (low F1 across classes)"
+      "description": "Poor performance - 1 correct, 2 incorrect, no true positives, so multiclass micro F1 = 0"
     },
     {
       "name": "Multi F1 Numeric - Random Performance",
@@ -159,9 +159,9 @@
           "logprobs": [-0.5, -0.5, -0.5]
         }
       ],
-      "expected_output": 0.55,
-      "tolerance": 0.1,
-      "description": "Random performance - equal logprobs lead to random predictions (F1 ≈ 0.0)"
+      "expected_output": 0.3333333333333333,
+      "tolerance": 0.01,
+      "description": "Random performance - equal logprobs all pick class 0, one of three golds matches, so micro F1 = 1/3"
     }
   ]
 }
