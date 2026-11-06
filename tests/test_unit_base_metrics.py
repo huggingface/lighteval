@@ -30,7 +30,7 @@ from lighteval.metrics.dynamic_metrics import (
     NormalizedMultiChoiceProbMetric,
     ProbabilityMetric,
 )
-from lighteval.metrics.metrics_sample import ExactMatches
+from lighteval.metrics.metrics_sample import ExactMatches, PassAtK
 from lighteval.metrics.normalizations import LogProbCharNorm, helm_normalizer
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
@@ -330,6 +330,25 @@ class TestBaseMetrics:
     @pytest.mark.skip(reason="Need to understand what it does.")
     def test_pass_at_k_estimator(self):
         assert False
+
+    def test_pass_at_k_with_fewer_samples_than_n(self):
+        # 10 samples were requested, only 5 came back and 3 of them are correct.
+        scores = [1, 1, 1, 0, 0]
+        assert PassAtK(k=1, n=10).pass_at_k(scores) == pytest.approx(0.6)
+        assert PassAtK(k=2, n=10).pass_at_k(scores) == pytest.approx(0.9)
+        assert PassAtK(k=3, n=10).pass_at_k(scores) == pytest.approx(1.0)
+
+    def test_pass_at_k_with_n_samples_is_unchanged(self):
+        # Same 3 correct out of 5, but 5 samples is what was requested.
+        scores = [1, 1, 1, 0, 0]
+        assert PassAtK(k=1, n=5).pass_at_k(scores) == pytest.approx(0.6)
+        assert PassAtK(k=2, n=5).pass_at_k(scores) == pytest.approx(0.9)
+        assert PassAtK(k=3, n=5).pass_at_k(scores) == pytest.approx(1.0)
+        # n larger than k and more samples than needed: unchanged too.
+        assert PassAtK(k=1, n=10).pass_at_k([1, 1, 0, 0, 0, 0, 0, 0, 0, 0]) == pytest.approx(0.2)
+
+    def test_pass_at_k_without_any_sample_is_zero(self):
+        assert PassAtK(k=1, n=10).pass_at_k([]) == 0.0
 
     @pytest.mark.skip(reason="Using nltk metric function, no need to test.")
     def test_f1_score_quasi(self):
