@@ -1318,10 +1318,17 @@ class PassAtK(SamplingMetric, SampleLevelComputation):
     def pass_at_k(self, all_scores: list[int]) -> float:
         """Algo from https://arxiv.org/pdf/2107.03374"""
         c: int = all_scores.count(1)
-        if self.n - c < self.k:
+        # `all_scores` only holds the samples that are actually available (`compute`
+        # passes `predictions[: self.n]`), while `self.n` is the number of samples that
+        # was requested. Using `self.n` here counts the missing samples as failures and
+        # underestimates pass@k whenever fewer than n samples came back.
+        n = len(all_scores)
+        if n == 0:
+            return 0.0
+        if n - c < self.k:
             return 1.0
 
-        return 1.0 - np.prod(1.0 - self.k / np.arange(self.n - c + 1, self.n + 1))
+        return 1.0 - np.prod(1.0 - self.k / np.arange(n - c + 1, n + 1))
 
     def num_samples(self):
         return self.n if self.n is not None else self.k
