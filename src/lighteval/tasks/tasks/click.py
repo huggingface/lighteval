@@ -2,16 +2,36 @@
 
 # Copyright (c) 2026 The HuggingFace Team
 
-"""CLIcK input contract; task registration and metrics are a separate contribution.
+"""
+name:
+CLIcK
 
-No dataset access or model loading occurs when importing or formatting a row.
-Files, not the non-unique original IDs, define the eleven categories.
+dataset:
+EunsuKim/CLIcK
+
+abstract:
+CLIcK is a benchmark of 1,995 multiple-choice questions on Korean culture and language,
+collected from official Korean exams and textbooks and grouped into eleven categories.
+These tasks score every full answer string by summed log-likelihood, with one fixed Korean
+prompt, the original option order and no few-shot examples, so results are not a
+reproduction of the rotated-prompt setup in the paper.
+
+languages:
+korean
+
+tags:
+knowledge, language, multiple-choice
+
+paper:
+https://aclanthology.org/2024.lrec-main.296/
 """
 
 import hashlib
 import json
 from collections.abc import Mapping
 
+from lighteval.metrics.metrics import Metrics
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
@@ -21,6 +41,7 @@ PROMPT_VERSION = "click_paper_example_v2"
 RAW_FIELDS = ("id", "paragraph", "question", "choices", "answer")
 
 # Explicit paths at HF_REVISION, sorted within each category. Preserve array order.
+# Categories come from file paths, because original IDs are not unique.
 CATEGORY_FILES = {
     "society": (
         "Dataset/Culture/Korean Society/Society_KIIP.json",
@@ -134,3 +155,26 @@ def click_prompt(line: dict, task_name: str) -> Doc:
         specific={"original_id": line["id"], "raw_row_sha256": raw_row_sha256(line)},
         **payload,
     )
+
+
+TASKS_TABLE = [
+    LightevalTaskConfig(
+        name=f"click:{category}",
+        prompt_function=click_prompt,
+        hf_repo=HF_REPO,
+        hf_subset="default",
+        hf_revision=HF_REVISION,
+        hf_data_files={"train": list(files)},
+        hf_avail_splits=["train"],
+        evaluation_splits=["train"],
+        few_shots_split=None,
+        few_shots_select=None,
+        num_fewshots=0,
+        generation_size=None,
+        metrics=[Metrics.loglikelihood_acc],
+        stop_sequence=None,
+        must_remove_duplicate_docs=False,
+        version=0,
+    )
+    for category, files in CATEGORY_FILES.items()
+]
