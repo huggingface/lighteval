@@ -12,7 +12,10 @@ multiple-choice subsets of the original benchmark (standard nomenclature,
 loan words, rare words, general knowledge, history; 1,091 questions), which are
 the same subsets as the `haerae` group of EleutherAI lm-evaluation-harness.
 `haerae` scores the answer label like lm-evaluation-harness does. `haerae_cf`
-scores the text of each option appended to the question, as in the paper.
+scores the text of each option appended to the question. The paper describes
+its evaluation as the log-likelihood of each option concatenated to the
+question, run with lm-evaluation-harness; it does not give the prompt text, so
+the "질문: ... 정답:" wording here is ours.
 
 languages:
 korean
@@ -37,15 +40,7 @@ from lighteval.tasks.requests import Doc
 # Dataset commit pinned so scores stay comparable (main on 2026-11-03).
 HAERAE_REVISION = "b480e81024913f27783d2b05d2f0b10089db19ad"
 
-# HF config -> task suffix. lm-eval names the same subsets haerae_<suffix> with the singular
-# "loan_word" / "rare_word" spelling.
-HAERAE_SUBSETS = {
-    "standard_nomenclature": "standard_nomenclature",
-    "loan_words": "loan_words",
-    "rare_words": "rare_words",
-    "general_knowledge": "general_knowledge",
-    "history": "history",
-}
+HAERAE_SUBSETS = ["standard_nomenclature", "loan_words", "rare_words", "general_knowledge", "history"]
 
 _LABELS = ["(A)", "(B)", "(C)", "(D)", "(E)"]
 
@@ -66,7 +61,8 @@ _QUESTION_RE = re.compile(r"### 질문:\s*(.*?)\s*### 선택지:", re.DOTALL)
 
 
 def haerae_cf_prompt(line, task_name: str = None):
-    # Closed-form: the question followed by the option text, as in the paper's log-likelihood evaluation.
+    # Closed-form: the question followed by the option text. The general_knowledge `query` can carry a
+    # literal "### 참고:nan" line inside the question block (98 of 176 questions); it is passed through as is.
     options = ast.literal_eval(line["options"])
     question = _QUESTION_RE.search(line["query"]).group(1)
     return Doc(
@@ -94,18 +90,17 @@ def _task(name: str, prompt_function, subset: str, metrics: list) -> LightevalTa
 
 
 HAERAE_TASKS = [
-    _task(f"haerae:{suffix}", haerae_prompt, subset, [Metrics.loglikelihood_acc])
-    for subset, suffix in HAERAE_SUBSETS.items()
+    _task(f"haerae:{subset}", haerae_prompt, subset, [Metrics.loglikelihood_acc]) for subset in HAERAE_SUBSETS
 ]
 
 HAERAE_CF_TASKS = [
     _task(
-        f"haerae_cf:{suffix}",
+        f"haerae_cf:{subset}",
         haerae_cf_prompt,
         subset,
         [Metrics.loglikelihood_acc, LogLikelihoodAccMetric(normalization=LogProbCharNorm())],
     )
-    for subset, suffix in HAERAE_SUBSETS.items()
+    for subset in HAERAE_SUBSETS
 ]
 
 TASKS_TABLE = HAERAE_TASKS + HAERAE_CF_TASKS

@@ -69,4 +69,6 @@ def test_closed_form_prompt():
 
 def test_task_table():
     assert len(HAERAE_TASKS) == len(HAERAE_CF_TASKS) == len(HAERAE_SUBSETS) == 5
+    assert [t.name for t in HAERAE_TASKS] == [f"haerae:{s}" for s in HAERAE_SUBSETS]
+    assert [t.name for t in HAERAE_CF_TASKS] == [f"haerae_cf:{s}" for s in HAERAE_SUBSETS]
     assert all(task.hf_revision for task in HAERAE_TASKS + HAERAE_CF_TASKS)
