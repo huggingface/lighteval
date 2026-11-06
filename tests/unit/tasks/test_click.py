@@ -26,9 +26,9 @@ def row():
 def test_four_options_exact_snapshot(row):
     doc = click_prompt(row, "click:society")
     assert doc.query == (
-        "주어진 질문을 천천히 읽고, 적절한 정답을 A, B, C, D 중에 골라 알파벳 하나로 답하시오.\n\n"
-        "[질문]\n대한민국의 수도는 어디인가?\n\n"
-        "[선택지]\nA. 부산\nB. 대구\nC. 서울\nD. 대전\n\n정답:"
+        "주어진 질문을 천천히 읽고, 적절한 정답을 A, B, C, D 중에 골라 알파벳 하나로 답하시오.\n"
+        "질문 (Question): 대한민국의 수도는 어디인가?\n"
+        "보기 (Options):\nA: 부산, B: 대구, C: 서울, D: 대전\n정답 (Answer):"
     )
     assert doc.choices == [" A. 부산", " B. 대구", " C. 서울", " D. 대전"]
     assert doc.gold_index == 2
@@ -42,14 +42,14 @@ def test_five_options_exact_snapshot(row):
     row.update(paragraph="도시를 골라 보세요.\n지문 두 번째 줄.", choices=["부산", "대구", "인천", "대전", "서울"])
     doc = click_prompt(row, "click:geography")
     assert doc.query == (
-        "주어진 질문을 천천히 읽고, 적절한 정답을 A, B, C, D, E 중에 골라 알파벳 하나로 답하시오.\n\n"
-        "[지문]\n도시를 골라 보세요.\n지문 두 번째 줄.\n\n"
-        "[질문]\n대한민국의 수도는 어디인가?\n\n"
-        "[선택지]\nA. 부산\nB. 대구\nC. 인천\nD. 대전\nE. 서울\n\n정답:"
+        "주어진 맥락을 천천히 읽고, 질문에 대한 적절한 정답을 A, B, C, D, E 중에 골라 알파벳 하나로 답하시오.\n"
+        "맥락 (Context): 도시를 골라 보세요.\n지문 두 번째 줄.\n"
+        "질문 (Question): 대한민국의 수도는 어디인가?\n"
+        "보기 (Options):\nA: 부산, B: 대구, C: 인천, D: 대전, E: 서울\n정답 (Answer):"
     )
     assert doc.choices == [" A. 부산", " B. 대구", " C. 인천", " D. 대전", " E. 서울"]
     assert doc.gold_index == 4
-    assert (doc.query + doc.choices[4]).endswith("정답: E. 서울")
+    assert (doc.query + doc.choices[4]).endswith("정답 (Answer): E. 서울")
 
 
 @pytest.mark.parametrize("count,index", [(n, i) for n in (4, 5) for i in range(n)])
@@ -72,10 +72,10 @@ def test_preserve_unicode_spaces_internal_options_and_newlines(row):
     before = copy.deepcopy(row)
     doc = click_prompt(row, "click:grammar")
     assert doc.query == (
-        "주어진 질문을 천천히 읽고, 적절한 정답을 A, B, C, D 중에 골라 알파벳 하나로 답하시오.\n\n"
-        "[지문]\n \t漢字·한글\n끝  \n\n"
-        "[질문]\n  질문\nㄱ. 내부 보기\nㄴ. 다음 보기\t\n\n"
-        "[선택지]\nA.   한글  \nB. 漢字\nC. 가\n나\nD. 가\n\n정답:"
+        "주어진 맥락을 천천히 읽고, 질문에 대한 적절한 정답을 A, B, C, D 중에 골라 알파벳 하나로 답하시오.\n"
+        "맥락 (Context):  \t漢字·한글\n끝  \n"
+        "질문 (Question):   질문\nㄱ. 내부 보기\nㄴ. 다음 보기\t\n"
+        "보기 (Options):\nA:   한글  , B: 漢字, C: 가\n나, D: 가\n정답 (Answer):"
     )
     assert doc.choices == [" A.   한글  ", " B. 漢字", " C. 가\n나", " D. 가"]
     assert doc.gold_index == 2
@@ -85,7 +85,7 @@ def test_preserve_unicode_spaces_internal_options_and_newlines(row):
 @pytest.mark.parametrize("paragraph", ["", " ", "\n\t\r", "\u3000"])
 def test_blank_paragraph_is_omitted(row, paragraph):
     row["paragraph"] = paragraph
-    assert "[지문]" not in build_click_payload(row)["query"]
+    assert "맥락 (Context):" not in build_click_payload(row)["query"]
 
 
 def test_answer_and_id_do_not_leak_into_model_input(row):
@@ -198,3 +198,19 @@ def test_category_files_are_explicit_sorted_and_nonoverlapping():
     for files in CATEGORY_FILES.values():
         assert list(files) == sorted(files)
     assert "Dataset/Language/Functional/Functional_CSAT.json" in CATEGORY_FILES["functional"]
+
+
+@pytest.mark.parametrize("count", [4, 5])
+@pytest.mark.parametrize("paragraph", ["", "합성 지문"])
+def test_instruction_matches_context_for_each_option_count(row, count, paragraph):
+    row.update(paragraph=paragraph, choices=["가", "나", "다", "라", "마"][:count], answer="다")
+    query = build_click_payload(row)["query"]
+    if paragraph:
+        assert query.startswith("주어진 맥락을 천천히 읽고, 질문에 대한 적절한 정답을 ")
+        assert "\n맥락 (Context): 합성 지문\n" in query
+    else:
+        assert query.startswith("주어진 질문을 천천히 읽고, 적절한 정답을 ")
+        assert "맥락 (Context):" not in query
+    assert ("D, E 중에" in query) == (count == 5)
+    assert (", E: 마" in query) == (count == 5)
+    assert all(marker not in query for marker in ("[지문]", "[질문]", "[선택지]"))

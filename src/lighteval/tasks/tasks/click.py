@@ -17,7 +17,7 @@ from lighteval.tasks.requests import Doc
 
 HF_REPO = "EunsuKim/CLIcK"
 HF_REVISION = "d61627859645b5e6edc03fd9f835735d8226fa4e"
-PROMPT_VERSION = "click_ko_single_v1"
+PROMPT_VERSION = "click_paper_example_v2"
 RAW_FIELDS = ("id", "paragraph", "question", "choices", "answer")
 
 # Explicit paths at HF_REVISION, sorted within each category. Preserve array order.
@@ -95,15 +95,25 @@ def build_click_payload(row: Mapping[str, object]) -> dict:
     _validate_row(row)
     options = row["choices"]
     labels = "ABCDE"[: len(options)]
-    blocks = ["주어진 질문을 천천히 읽고, 적절한 정답을 " + ", ".join(labels) + " 중에 골라 알파벳 하나로 답하시오."]
-    if row["paragraph"].strip():
-        blocks.append("[지문]\n" + row["paragraph"])
-    blocks.append("[질문]\n" + row["question"])
-    labeled = [f"{label}. {option}" for label, option in zip(labels, options)]
-    blocks.extend(["[선택지]\n" + "\n".join(labeled), "정답:"])
+    # Section 4, Type 1/2: https://aclanthology.org/2024.lrec-main.296.pdf#page=5
+    # Follow the printed bilingual field labels and comma-separated options.
+    # The parenthesized English translation of the instruction is not appended.
+    has_context = bool(row["paragraph"].strip())
+    prefix = (
+        "주어진 맥락을 천천히 읽고, 질문에 대한 적절한 정답을 "
+        if has_context
+        else "주어진 질문을 천천히 읽고, 적절한 정답을 "
+    )
+    blocks = [prefix + ", ".join(labels) + " 중에 골라 알파벳 하나로 답하시오."]
+    if has_context:
+        blocks.append("맥락 (Context): " + row["paragraph"])
+    blocks.append("질문 (Question): " + row["question"])
+    displayed_options = [f"{label}: {option}" for label, option in zip(labels, options)]
+    blocks.extend(["보기 (Options):", ", ".join(displayed_options), "정답 (Answer):"])
     return {
-        "query": "\n\n".join(blocks),
-        "choices": [" " + option for option in labeled],
+        "query": "\n".join(blocks),
+        # Scoring continuations retain the separately specified full-answer format.
+        "choices": [f" {label}. {option}" for label, option in zip(labels, options)],
         "gold_index": options.index(row["answer"]),
     }
 
