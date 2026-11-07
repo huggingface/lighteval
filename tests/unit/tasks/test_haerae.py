@@ -67,6 +67,24 @@ def test_closed_form_prompt():
     assert doc.choices[doc.gold_index] == " 서울"
 
 
+def make_note_line(note: str) -> dict:
+    line = make_line("(B)")
+    line["query"] = QUERY.replace("\n### 선택지:", f"\n### 참고:{note}\n\n### 선택지:")
+    return line
+
+
+def test_empty_note_dropped_in_closed_form_only():
+    line = make_note_line("nan")
+    assert "### 참고:nan" in haerae_prompt(line, "haerae:general_knowledge").query
+    doc = haerae_cf_prompt(line, "haerae_cf:general_knowledge")
+    assert doc.query == "질문: 우리나라의 수도는 어디인가?\n정답:"
+
+
+def test_real_note_kept_in_closed_form():
+    doc = haerae_cf_prompt(make_note_line("서울은 한강이 흐른다."), "haerae_cf:general_knowledge")
+    assert doc.query == "질문: 우리나라의 수도는 어디인가?\n### 참고:서울은 한강이 흐른다.\n정답:"
+
+
 def test_task_table():
     assert len(HAERAE_TASKS) == len(HAERAE_CF_TASKS) == len(HAERAE_SUBSETS) == 5
     assert [t.name for t in HAERAE_TASKS] == [f"haerae:{s}" for s in HAERAE_SUBSETS]

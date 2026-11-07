@@ -58,13 +58,15 @@ def haerae_prompt(line, task_name: str = None):
 
 # The question block of `query` sits between "### 질문:" and "### 선택지:".
 _QUESTION_RE = re.compile(r"### 질문:\s*(.*?)\s*### 선택지:", re.DOTALL)
+_EMPTY_NOTE_RE = re.compile(r"^### 참고:nan[ \t]*\n?", re.MULTILINE)
 
 
 def haerae_cf_prompt(line, task_name: str = None):
     # Closed-form: the question followed by the option text. The general_knowledge `query` can carry a
-    # literal "### 참고:nan" line inside the question block (98 of 176 questions); it is passed through as is.
+    # literal "### 참고:nan" line (an empty note, 98 of 176 questions); it is dropped here. The label prompt
+    # keeps the `query` untouched. Notes with real text are kept.
     options = ast.literal_eval(line["options"])
-    question = _QUESTION_RE.search(line["query"]).group(1)
+    question = _EMPTY_NOTE_RE.sub("", _QUESTION_RE.search(line["query"]).group(1)).strip()
     return Doc(
         task_name=task_name,
         query=f"질문: {question}\n정답:",
