@@ -43,6 +43,30 @@ def test_superset_expansion():
         assert task_info[0].num_fewshots == 0
 
 
+@pytest.mark.parametrize("task_name", ["bbq", "bold", "boolq", "imdb", "lsat_qa"])
+def test_exact_task_name_is_not_expanded_into_its_subsets(task_name):
+    """
+    Tests that a task that is also the prefix of its own subsets (e.g. boolq and
+    boolq:contrastset) loads only itself, not every task sharing that prefix.
+    """
+    registry = Registry(tasks=f"{task_name}|0")
+
+    assert set(registry.task_to_configs.keys()) == {task_name}
+    assert len(registry.task_to_configs[task_name]) == 1
+
+
+def test_base_task_and_its_subset_are_not_duplicated():
+    """
+    Tests that requesting a base task and one of its subsets loads each config once.
+    """
+    registry = Registry(tasks="boolq|0,boolq:contrastset|0")
+
+    assert {task_name: len(configs) for task_name, configs in registry.task_to_configs.items()} == {
+        "boolq": 1,
+        "boolq:contrastset": 1,
+    }
+
+
 def test_superset_with_subset_task():
     """
     Tests that task info selector correctly handles if both superset and one of subset tasks are provided.
