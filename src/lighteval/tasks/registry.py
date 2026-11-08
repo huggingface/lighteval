@@ -282,6 +282,13 @@ class Registry:
         Returns:
             list[str]: List of task names (suite|task)
         """
+        # An exact task name always wins. Some tasks (e.g. boolq, bbq, bold) are
+        # also the prefix of their own subsets (boolq:contrastset, bbq:Age, ...),
+        # so expanding first would run the subsets instead of, or in addition to,
+        # the task that was asked for.
+        if task_definition in self._task_registry:
+            return [task_definition]
+
         # Try if it's a task superset
         tasks = self._task_superset_dict.get(task_definition, None)
         if tasks is not None:
