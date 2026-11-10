@@ -79,6 +79,12 @@ class LightevalTaskConfig:
             from. Defaults to None.
         few_shots_select (str | None, optional): Method for selecting few-shot
             examples. Defaults to None.
+        few_shots_id_column (str | None, optional): Name of the dataset column
+            used to identify few-shot examples when ``few_shots_id_list`` is set.
+            Defaults to None.
+        few_shots_id_list (list[str] | None, optional): Explicit list of identifiers
+            (matched against ``few_shots_id_column``) restricting which samples from
+            the few-shot split may be used as few-shot examples. Defaults to None.
 
     Generation Parameters:
         generation_size (int | None, optional): Maximum token length for generated
@@ -133,6 +139,8 @@ class LightevalTaskConfig:
     evaluation_splits: ListLike[str] = field(default_factory=lambda: ["validation"])
     few_shots_split: str | None = None
     few_shots_select: str | None = None
+    few_shots_id_column: str | None = None
+    few_shots_id_list: list[str] | None = None
 
     # Generation args
     generation_size: int | None = None
@@ -158,6 +166,12 @@ class LightevalTaskConfig:
         self.evaluation_splits = tuple(self.evaluation_splits)
         self.stop_sequence = self.stop_sequence if self.stop_sequence is not None else ()
         self.full_name = f"{self.name}|{self.num_fewshots}"  # todo clefourrier: this is likely incorrect
+
+        if self.few_shots_id_list is not None and self.few_shots_id_column is None:
+            raise ValueError(
+                "`few_shots_id_column` must be set when `few_shots_id_list` is provided, "
+                "so that few-shot samples can be matched against the given identifiers."
+            )
 
     def __str__(self, lite: bool = False):  # noqa: C901
         md_writer = MarkdownTableWriter()
@@ -235,6 +249,8 @@ class LightevalTask:
             config.hf_avail_splits or []
         )
         self.fewshot_selection = config.few_shots_select
+        self.fewshot_id_column = config.few_shots_id_column
+        self.fewshot_id_list = config.few_shots_id_list
         self.must_remove_duplicate_docs = config.must_remove_duplicate_docs
 
         self.formatter = config.prompt_function
@@ -297,9 +313,26 @@ class LightevalTask:
 
         assert self.dataset is not None, f"Dataset {self.dataset_path} not found."
 
+        # When an explicit list of few-shot identifiers is provided, restrict the few-shot
+        # pool to the samples whose `few_shots_id_column` value is in that list.
+        restrict_to_ids = few_shots and self.fewshot_id_list is not None
+        wanted_ids = {str(i) for i in self.fewshot_id_list} if restrict_to_ids else None
+        seen_ids = set()
+
         docs = []
         for split in splits:
             for ix, item in enumerate(self.dataset[split]):
+                if restrict_to_ids:
+                    if self.fewshot_id_column not in item:
+                        raise KeyError(
+                            f"few_shots_id_column '{self.fewshot_id_column}' was not found in the dataset "
+                            f"columns for task {self.name}. Available columns: {list(item.keys())}."
+                        )
+                    item_id = str(item[self.fewshot_id_column])
+                    if item_id not in wanted_ids:
+                        continue
+                    seen_ids.add(item_id)
+
                 # Some tasks formatting is applied differently when the document is used for fewshot examples
                 # vs when it's used for the actual prompt. That's why we store whether we are currently using the
                 # doc for a fewshot sample (few_shots=True) or not, which then leads to the creation of a different Doc.
@@ -319,6 +352,14 @@ class LightevalTask:
                 doc.stop_sequences = self.stop_sequence
 
                 docs.append(doc)
+
+        if restrict_to_ids:
+            missing_ids = wanted_ids - seen_ids
+            if missing_ids:
+                logger.warning(
+                    f"The following few-shot ids were requested for task {self.name} but not found in "
+                    f"split(s) {splits} using column '{self.fewshot_id_column}': {sorted(missing_ids)}."
+                )
 
         return docs
 

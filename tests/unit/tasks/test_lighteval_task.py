@@ -21,6 +21,8 @@
 # SOFTWARE.
 
 
+import pytest
+
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
@@ -84,3 +86,74 @@ def test_hf_data_files(tmp_path):
 
     eval_docs = task.eval_docs()
     assert [doc.query for doc in eval_docs] == src_docs
+
+
+def _write_id_dataset(tmp_path):
+    data_file = tmp_path / "data.jsonl"
+    rows = [
+        '{"id": "a", "text": "doc a"}',
+        '{"id": "b", "text": "doc b"}',
+        '{"id": "c", "text": "doc c"}',
+    ]
+    data_file.write_text("\n".join(rows))
+    return data_file
+
+
+def test_few_shots_id_list_selection(tmp_path):
+    # Only the samples whose `id` is in few_shots_id_list should be used as few-shot examples.
+    data_file = _write_id_dataset(tmp_path)
+
+    cfg = LightevalTaskConfig(
+        name="test_fewshot_ids",
+        prompt_function=dummy_prompt_function,
+        hf_repo="json",
+        hf_subset="default",
+        metrics=[],
+        evaluation_splits=["train"],
+        few_shots_split="train",
+        few_shots_id_column="id",
+        few_shots_id_list=["a", "c"],
+        hf_data_files=str(data_file),
+    )
+    task = LightevalTask(cfg)
+
+    fewshot_docs = task.fewshot_docs()
+    assert [doc.query for doc in fewshot_docs] == ["doc a", "doc c"]
+
+    # Eval docs are unaffected by the few-shot id restriction.
+    eval_docs = task.eval_docs()
+    assert sorted(doc.query for doc in eval_docs) == ["doc a", "doc b", "doc c"]
+
+
+def test_few_shots_id_list_without_column_raises():
+    with pytest.raises(ValueError):
+        LightevalTaskConfig(
+            name="test_fewshot_ids_invalid",
+            prompt_function=dummy_prompt_function,
+            hf_repo="json",
+            hf_subset="default",
+            metrics=[],
+            evaluation_splits=["train"],
+            few_shots_id_list=["a"],
+        )
+
+
+def test_few_shots_id_list_missing_column_raises(tmp_path):
+    data_file = _write_id_dataset(tmp_path)
+
+    cfg = LightevalTaskConfig(
+        name="test_fewshot_ids_missing_col",
+        prompt_function=dummy_prompt_function,
+        hf_repo="json",
+        hf_subset="default",
+        metrics=[],
+        evaluation_splits=["train"],
+        few_shots_split="train",
+        few_shots_id_column="does_not_exist",
+        few_shots_id_list=["a"],
+        hf_data_files=str(data_file),
+    )
+    task = LightevalTask(cfg)
+
+    with pytest.raises(KeyError):
+        task.fewshot_docs()
