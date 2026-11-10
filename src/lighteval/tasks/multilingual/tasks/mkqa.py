@@ -50,60 +50,39 @@ MKQA_TASK_TO_ID = {
 
 TASKS_TABLE = [
     LightevalTaskConfig(
-        name=f"mkqa_{language.value}:{subset}",
-        prompt_function=get_qa_prompt_function(language, partial(get_mkqa_adapter, language)),
-        hf_repo="apple/mkqa",
-        hf_subset="mkqa",
-        hf_revision="325131889721ae0ed885b76ecb8011369d75abad",
-        hf_filter=partial(
-            lambda language, subset, line: (
-                line["answers"]["zh_cn" if language == Language.CHINESE else standardize_tag(language.value)][0][
-                    "type"
-                ]
-                == MKQA_TASK_TO_ID[subset]
-            ),
-            language,
-            subset,
+        name=f"mlqa_{lang.value}",
+        prompt_function=get_qa_prompt_function(
+            lang,
+            lambda line: {
+                "context": line["context"],
+                "question": line["question"],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
         ),
-        evaluation_splits=("train",),
-        hf_avail_splits=["train"],
+        # --------------------------------------------------------
+        # Bypass the deprecated script by loading the parquet directly
+        hf_repo="parquet",
+        hf_subset="default",
+        hf_data_files={
+            "test": f"hf://datasets/facebook/mlqa@refs%2Fconvert%2Fparquet/mlqa.{standardize_tag(lang.value)}.{standardize_tag(lang.value)}/test/*.parquet"
+        },
+        # (Removed hf_revision since the parquet URL handles it)
+        # --------------------------------------------------------
+        evaluation_splits=("test",),
+        hf_avail_splits=["test"],
+        generation_size=400,
         stop_sequence=("\n",),
         metrics=[
-            MultilingualQuasiExactMatchMetric(language, "prefix"),
-            MultilingualQuasiF1ScoreMetric(language),
-        ]
-        if subset in ["entity", "long_answer", "short_phrase"]
-        else [
-            MultilingualQuasiExactMatchMetric(language, "full"),
+            MultilingualQuasiExactMatchMetric(lang, "prefix"),
+            MultilingualQuasiF1ScoreMetric(lang),
         ],
     )
-    for subset in MKQA_TASK_TO_ID.keys()
-    for language in [
+    for lang in [
         Language.ARABIC,
-        Language.DANISH,
         Language.GERMAN,
-        Language.ENGLISH,
         Language.SPANISH,
-        Language.FINNISH,
-        Language.FRENCH,
-        Language.HEBREW,
-        Language.HUNGARIAN,
-        Language.ITALIAN,
-        Language.JAPANESE,
-        Language.KOREAN,
-        Language.KHMER,
-        Language.MALAY,
-        Language.DUTCH,
-        Language.NORWEGIAN,
-        Language.POLISH,
-        Language.PORTUGUESE,
-        Language.RUSSIAN,
-        Language.SWEDISH,
-        Language.THAI,
-        Language.TURKISH,
+        Language.CHINESE,
+        Language.HINDI,
         Language.VIETNAMESE,
-        Language.CHINESE,  # Simplified
-        # Language.CHINESE_HONG_KONG,
-        # Language.CHINESE_TRADITIONAL,
     ]
 ]

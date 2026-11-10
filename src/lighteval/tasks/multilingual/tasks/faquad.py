@@ -29,26 +29,41 @@ from lighteval.utils.language import Language
 
 TASKS_TABLE = [
     LightevalTaskConfig(
-        name=f"faquad_{Language.PORTUGUESE.value}",
+        name=f"mlqa_{lang.value}",
         prompt_function=get_qa_prompt_function(
-            Language.PORTUGUESE,
+            lang,
             lambda line: {
-                "question": line["question"],
                 "context": line["context"],
+                "question": line["question"],
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        hf_repo="eraldoluis/faquad",
-        hf_subset="plain_text",
-        hf_revision="205ba826a2282a4a5aa9bd3651e55ee4f2da1546",
-        hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
-        evaluation_splits=("validation",),
-        few_shots_split="train",
-        metrics=(
-            MultilingualQuasiExactMatchMetric(Language.PORTUGUESE, "prefix"),
-            MultilingualQuasiF1ScoreMetric(Language.PORTUGUESE),
-        ),
+        # --------------------------------------------------------
+        # Bypass the deprecated script by loading the parquet directly
+        # Replace the original hf_repo and hf_subset with this:
+        hf_repo="parquet",
+        hf_subset="default",
+        hf_data_files={
+            "train": "hf://datasets/eraldoluis/faquad@refs%2Fconvert%2Fparquet/default/train/*.parquet",
+            "validation": "hf://datasets/eraldoluis/faquad@refs%2Fconvert%2Fparquet/default/validation/*.parquet"
+        },
+        # (Removed hf_revision since the parquet URL handles it)
+        # --------------------------------------------------------
+        evaluation_splits=("test",),
+        hf_avail_splits=["test"],
         generation_size=400,
         stop_sequence=("\n",),
+        metrics=[
+            MultilingualQuasiExactMatchMetric(lang, "prefix"),
+            MultilingualQuasiF1ScoreMetric(lang),
+        ],
     )
+    for lang in [
+        Language.ARABIC,
+        Language.GERMAN,
+        Language.SPANISH,
+        Language.CHINESE,
+        Language.HINDI,
+        Language.VIETNAMESE,
+    ]
 ]
