@@ -84,3 +84,28 @@ def test_hf_data_files(tmp_path):
 
     eval_docs = task.eval_docs()
     assert [doc.query for doc in eval_docs] == src_docs
+
+
+def test_fewshot_examples_exclude_the_evaluated_doc(tmp_path):
+    # When the few-shot pool is the evaluation split, a doc must not be its own few-shot example.
+    data_file = tmp_path / "data.jsonl"
+    data_file.write_text("\n".join([f'{{"text": "document {i}"}}' for i in range(10)]))
+
+    for few_shots_select in ["balanced", "sequential", "random_sampling"]:
+        cfg = LightevalTaskConfig(
+            name="test_fewshot_self_exclusion",
+            prompt_function=dummy_prompt_function,
+            hf_repo="json",
+            hf_subset="default",
+            metrics=[],
+            evaluation_splits=["train"],
+            hf_avail_splits=["train"],
+            hf_data_files=str(data_file),
+            num_fewshots=3,
+            few_shots_select=few_shots_select,
+        )
+        docs = LightevalTask(cfg).get_docs()
+
+        for doc in docs:
+            assert len(doc.fewshot_samples) == 3
+            assert doc.query not in [fewshot.query for fewshot in doc.fewshot_samples], few_shots_select

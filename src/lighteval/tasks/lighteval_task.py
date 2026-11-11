@@ -393,10 +393,12 @@ class LightevalTask:
 
         for doc in eval_docs[:n_samples]:
             num_fewshots = self.dataset_config.num_fewshots
-            doc.task_name = self.full_name
+            # Sample few-shots before renaming the doc: the sampler drops the doc from its own
+            # few-shot examples by equality, which a different task_name would break.
             doc.fewshot_samples = self.fewshot_sampler.sample_fewshot_examples(
                 num_fewshots, 0, formatted_doc=doc, sampler=rnd
             )
+            doc.task_name = self.full_name
             doc.sampling_methods.extend(self.sampling_methods)
             doc.generation_size = self.generation_size
             doc.use_logits = doc.use_logits if doc.use_logits is not None else True
