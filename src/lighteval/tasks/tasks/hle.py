@@ -38,6 +38,7 @@ from pydantic import BaseModel
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.metrics_sample import JudgeLLM
 from lighteval.metrics.utils.metric_utils import CorpusLevelMetricGrouping
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc, SamplingMethod
 
@@ -106,17 +107,16 @@ class JudgeLLMHLE(JudgeLLM):
             response_format=ExtractedAnswer,
         )
 
-    def compute(self, sample_ids: list[str], responses: list, formatted_docs: list[Doc]) -> list[dict[str, float]]:
-        # If we are evaluating a multiturn task, we need to have specific field in the formatted doc
-        questions = [formatted_doc.specific["question"] for formatted_doc in formatted_docs]
-        golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
-        predictions = [response[0].result[0] for response in responses]
+    def compute(self, responses: list[ModelResponse], docs: list[Doc], **kwargs) -> list[dict[str, float]]:
+        questions = [doc.specific["question"] for doc in docs]
+        golds = [doc.get_golds()[0] for doc in docs]
+        predictions = [response.final_text[0] for response in responses]
         options = [None] * len(questions)
 
         score, _, _ = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
 
         metrics = []
-        for i in range(len(sample_ids)):
+        for i in range(len(docs)):
             score[i]["correct_answer"] = golds[i]
             metrics.append(
                 {
@@ -219,6 +219,7 @@ hle_metrics = CorpusLevelMetricGrouping(
     category=SamplingMethod.GENERATIVE,
     sample_level_fn=JudgeLLMHLE(),
     corpus_level_fn=JudgeLLMHLE(),
+    batched_compute=True,
 )
 extend_enum(Metrics, "hle_metrics", hle_metrics)
 
