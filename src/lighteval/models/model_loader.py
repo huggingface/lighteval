@@ -37,6 +37,7 @@ from lighteval.models.endpoints.inference_providers_model import (
 )
 from lighteval.models.endpoints.litellm_model import LiteLLMClient, LiteLLMModelConfig
 from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
+from lighteval.models.file.file_model import FileModel, FileModelConfig
 from lighteval.models.sglang.sglang_model import SGLangModel, SGLangModelConfig
 from lighteval.models.transformers.adapter_model import AdapterModel, AdapterModelConfig
 from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConfig
@@ -74,6 +75,9 @@ def load_model(  # noqa: C901
 
     if isinstance(config, DummyModelConfig):
         return load_dummy_model(config)
+
+    if isinstance(config, FileModelConfig):
+        return load_file_model(config)
 
     if isinstance(config, VLLMModelConfig):
         return load_model_with_accelerate_or_default(config)
@@ -161,6 +165,10 @@ def load_model_with_accelerate_or_default(
 
 def load_dummy_model(config: DummyModelConfig):
     return DummyModel(config=config)
+
+
+def load_file_model(config: FileModelConfig):
+    return FileModel(config=config)
 
 
 def load_inference_providers_model(config: InferenceProvidersModelConfig):

@@ -23,6 +23,8 @@
     title: Add a custom metric
   - local: evaluating-a-custom-model
     title: Evaluate a custom model
+  - local: evaluate-stored-responses
+    title: Evaluate responses stored in a file
   - local: use-inference-providers-as-backend
     title: Use HF's inference providers as backend
   - local: use-litellm-as-backend
