@@ -149,6 +149,27 @@ class TestLogging:
             assert int(dataset[0]["truncated"]) == task_details[task][0].truncated
             assert int(dataset[0]["padded"]) == task_details[task][0].padded
 
+    @pytest.mark.evaluation_tracker(save_details=True)
+    def test_details_logging_task_name_with_path_unsafe_characters(self, mock_evaluation_tracker, mock_datetime):
+        """Task names such as "truthfulqa:mc|0" are not valid Windows file names. The details file name must not
+        contain them, and loading the details back must return the original task name."""
+        task_name = "truthfulqa:mc|0"
+        mock_evaluation_tracker.details_logger.details = {
+            task_name: [DetailsLogger.CompiledDetail(hashes=None, truncated=10, padded=5)]
+        }
+
+        mock_evaluation_tracker.save()
+
+        date_id = mock_datetime.isoformat().replace(":", "-")
+        details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model" / date_id
+        (file_path,) = details_dir.iterdir()
+        assert not set(file_path.name) & set('<>:"/\\|?*'), f"{file_path.name!r} is not a valid Windows file name"
+        assert len(Dataset.from_parquet(str(file_path))) == 1
+
+        details = mock_evaluation_tracker.load_details_datasets(date_id, ["truthfulqa:mc"])
+        assert list(details) == [task_name]
+        assert int(details[task_name][0]["truncated"]) == 10
+
     @pytest.mark.evaluation_tracker(save_details=False)
     def test_no_details_output(self, mock_evaluation_tracker: EvaluationTracker):
         mock_evaluation_tracker.save()

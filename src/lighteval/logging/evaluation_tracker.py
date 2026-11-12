@@ -30,6 +30,7 @@ from datetime import datetime
 from enum import Enum
 from io import BytesIO
 from pathlib import Path
+from urllib.parse import quote, unquote
 
 import torch
 from datasets import Dataset, load_dataset
@@ -341,7 +342,7 @@ class EvaluationTracker:
         date_id = output_dir_details_sub_folder.name  # Overwrite date_id in case of latest
         details_datasets = {}
         for file in self.fs.glob(str(output_dir_details_sub_folder / f"details_*_{date_id}.parquet")):
-            task_name = Path(file).stem.replace("details_", "").replace(f"_{date_id}", "")
+            task_name = unquote(Path(file).stem.replace("details_", "").replace(f"_{date_id}", ""))
             if "|".join(task_name.split("|")[:-1]) not in task_names:
                 logger.info(f"Skipping {task_name} because it is not in the task_names list")
                 continue
@@ -360,7 +361,10 @@ class EvaluationTracker:
         self.fs.mkdirs(output_dir_details_sub_folder, exist_ok=True)
         logger.info(f"Saving details to {output_dir_details_sub_folder}")
         for task_name, dataset in details_datasets.items():
-            output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
+            # Task names such as "gsm8k|0" or "truthfulqa:mc|0" are not valid Windows file names (on NTFS, the ":"
+            # even redirects the data into an alternate data stream), so they are percent-encoded here
+            file_task_name = quote(task_name, safe="")
+            output_file_details = output_dir_details_sub_folder / f"details_{file_task_name}_{date_id}.parquet"
             with self.fs.open(str(output_file_details), "wb") as f:
                 dataset.to_parquet(f)
 

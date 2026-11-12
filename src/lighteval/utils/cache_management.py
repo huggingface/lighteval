@@ -28,6 +28,7 @@ import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Callable, List, Set, Tuple, Union
+from urllib.parse import quote, unquote
 
 import pandas as pd
 from datasets import Dataset, load_dataset
@@ -70,7 +71,7 @@ class SampleCache:
     - {cache_dir}/
         - {model_name}/
             - {model_hash}/
-                - {task_name}/
+                - {task_name}/ (percent-encoded, e.g. "gsm8k%7C0" for "gsm8k|0")
                     - {task_hash}/ dataset dict, where splits are SamplingMethod
     """
 
@@ -114,9 +115,11 @@ class SampleCache:
             try:
                 # cache_file.parts gives all the subfolders of the url, up to the file name
                 # last 3 are task_name/task_hash/file_name.parquet, so we take -3 and -2
-                task_name, task_hash = cache_file.parts[-3:-1]
+                task_dir, task_hash = cache_file.parts[-3:-1]
                 sampling_method = SamplingMethod[cache_file.stem]  # removes the file extension
-                task_id = TaskID(task_name, task_hash, sampling_method)
+                task_id = TaskID(unquote(task_dir), task_hash, sampling_method)
+                if self.get_cache_path(task_id) != cache_file:
+                    continue  # written under a different directory name, e.g. by a version that did not encode it
 
                 full_dataset = load_dataset("parquet", data_files=str(cache_file), split="train")
                 sample_ids = []
@@ -191,7 +194,10 @@ class SampleCache:
         Returns:
             Path: Path to the cache file for the given task and sample type
         """
-        return self.cache_dir / task_id.task_name / task_id.task_hash / f"{task_id.sampling_method.name}.parquet"
+        # Task names such as "gsm8k|0" or "truthfulqa:mc|0" contain characters that are not allowed in Windows
+        # paths, so the name is percent-encoded into a single directory name (and decoded when the cache is loaded)
+        task_dir = quote(task_id.task_name, safe="")
+        return self.cache_dir / task_dir / task_id.task_hash / f"{task_id.sampling_method.name}.parquet"
 
     def get_task_id(self, task_name: str, sampling_method: SamplingMethod) -> TaskID:
         """Returns a unique task indentifier. Depends on the task name,
