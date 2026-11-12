@@ -1,0 +1,54 @@
+# Evaluate responses stored in a file
+
+If the responses of a model were generated elsewhere (by another inference
+stack, an API batch job, or a previous run), you can score them with lighteval
+without loading the model, using the `file` backend:
+
+```bash
+lighteval file responses.jsonl "gsm8k|0" --model-name my-model
+```
+
+The responses go through the same pipeline as any other backend: they are
+post-processed (e.g. reasoning tags are removed), scored with the task's
+metrics, and saved with `--output-dir` / `--push-to-hub` as usual.
+
+## File format
+
+The file can be JSON Lines (`.jsonl` or `.json`, one object per line) or CSV
+(`.csv`), with one row per sample:
+
+| Column | Description |
+|--------|-------------|
+| `id` | Index of the sample in the task's evaluation split. This is the `doc.id` saved in lighteval's details files. |
+| `response` | The model output. In JSON Lines files it can also be a list of strings, for metrics using several samples per document. |
+| `task` | Optional. Task the row belongs to, as `gsm8k` or `gsm8k\|0`. Required when the file holds responses for several tasks. |
+
+```json
+{"task": "gsm8k", "id": 0, "response": "... The answer is 72."}
+{"task": "gsm8k", "id": 1, "response": "..."}
+```
+
+With the Python API, the column names can be changed through
+`FileModelConfig`:
+
+```python
+from lighteval.models.file.file_model import FileModelConfig
+
+model_config = FileModelConfig(
+    model_name="my-model",
+    responses_path="responses.csv",
+    id_column="sample_id",
+    response_column="output",
+)
+```
+
+Every evaluated sample must have a response, otherwise the run stops and lists
+the missing ones. Rows for samples that are not evaluated (for example when
+using `--max-samples`) are ignored.
+
+<Tip>
+
+Only generative metrics can be computed this way. Log-likelihood based metrics
+(for example multiple-choice accuracy on loglikelihoods) need the model itself.
+
+</Tip>
