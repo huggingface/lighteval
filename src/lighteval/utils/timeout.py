@@ -32,7 +32,8 @@ def timeout(timeout_seconds: int = 10):  # noqa: C901
 
     Notes:
         On Unix systems, uses a signal-based alarm approach which is more efficient as it doesn't require spawning a new process.
-        On Windows systems, uses a multiprocessing-based approach since signal.alarm is not available. This will incur a huge performance penalty.
+        On Windows systems, signal.alarm is not available, so the function runs in a worker thread instead.
+        If it times out, the caller gets a TimeoutError, but the thread cannot be stopped and finishes in the background.
 
     Returns:
         Callable: A decorator function that wraps the original function with timeout functionality
@@ -61,37 +62,34 @@ def timeout(timeout_seconds: int = 10):  # noqa: C901
         return decorator
 
     else:
-        # Windows approach: use multiprocessing
-        from multiprocessing import Process, Queue
+        # Windows approach: run the function in a worker thread.
+        # A child process cannot be used here: Windows starts processes with "spawn", which has to pickle
+        # the target, and the decorated functions are often closures or local functions that cannot be
+        # pickled. That made every call fail, and the callers turned the error into a wrong answer.
+        import threading
 
         def decorator(func):
             def wrapper(*args, **kwargs):
-                q = Queue()
+                outcome = {}
 
-                def run_func(q, args, kwargs):
+                def run_func():
                     try:
-                        result = func(*args, **kwargs)
-                        q.put((True, result))
-                    except Exception as e:
-                        q.put((False, e))
+                        outcome["result"] = func(*args, **kwargs)
+                    except BaseException as e:
+                        outcome["error"] = e
 
-                p = Process(target=run_func, args=(q, args, kwargs))
-                p.start()
-                p.join(timeout_seconds)
+                worker = threading.Thread(target=run_func, daemon=True)
+                worker.start()
+                worker.join(timeout_seconds)
 
-                if p.is_alive():
-                    # Timeout: Terminate the process
-                    p.terminate()
-                    p.join()
+                if worker.is_alive():
+                    # A thread cannot be killed, so it is left to finish in the background. It is a daemon
+                    # thread, so it will not keep the interpreter alive at exit.
                     raise TimeoutError("Operation timed out!")
 
-                # If we got here, the process completed in time.
-                success, value = q.get()
-                if success:
-                    return value
-                else:
-                    # The child raised an exception; re-raise it here
-                    raise value
+                if "error" in outcome:
+                    raise outcome["error"]
+                return outcome["result"]
 
             return wrapper
 
