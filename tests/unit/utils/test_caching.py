@@ -214,6 +214,44 @@ class TestCaching(unittest.TestCase):
                 ],
             )
 
+    @patch("lighteval.models.transformers.transformers_model.TransformersModel._loglikelihood_tokens")
+    @patch("lighteval.models.transformers.transformers_model.TransformersModel._padded_greedy_until")
+    @patch("lighteval.models.transformers.transformers_model.Accelerator")
+    @patch("lighteval.models.transformers.transformers_model.TransformersModel._create_auto_model")
+    def test_cache_task_name_with_path_unsafe_characters(
+        self, mock_create_model, mock_accelerator, mock_greedy_until, mock_loglikelihood
+    ):
+        """Task names such as "truthfulqa:mc|0" contain ':' and '|', which Windows does not allow in paths.
+        The cache must not use them as raw directory names, and must still find the cached samples."""
+        from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
+
+        self.task_name = "truthfulqa:mc|0"
+        for doc in self.docs:
+            doc.task_name = self.task_name
+
+        mock_accelerator_instance = Mock()
+        mock_accelerator_instance.device = torch.device("cpu")
+        mock_accelerator.return_value = mock_accelerator_instance
+        mock_greedy_until.return_value = self.model_responses
+        mock_loglikelihood.return_value = self.model_responses
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = TransformersModelConfig(model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir)
+            model = TransformersModel(config)
+            cache: SampleCache = model._cache
+
+            task_id = cache.get_task_id(self.task_name, SamplingMethod.GENERATIVE)
+            relative_parts = cache.get_cache_path(task_id).relative_to(cache.cache_dir).parts
+            for part in relative_parts:
+                self.assertFalse(set(part) & set('<>:"/\\|?*'), f"{part!r} is not a valid Windows path component")
+
+            self._test_cache(
+                model,
+                [
+                    ("greedy_until", SamplingMethod.GENERATIVE),
+                    ("loglikelihood", SamplingMethod.LOGPROBS),
+                ],
+            )
+
     @patch("lighteval.models.transformers.transformers_model.TransformersModel._padded_greedy_until")
     @patch("lighteval.models.transformers.transformers_model.Accelerator")
     @patch("lighteval.models.transformers.transformers_model.TransformersModel._create_auto_model")
