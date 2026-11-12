@@ -104,7 +104,7 @@ def sglang(
     )
 
     if model_args.endswith(".yaml"):
-        with open(model_args, "r") as f:
+        with open(model_args, "r", encoding="utf-8") as f:
             metric_options = yaml.safe_load(f).get("metric_options", {})
         model_config = SGLangModelConfig.from_path(model_args)
     else:

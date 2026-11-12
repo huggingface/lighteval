@@ -162,7 +162,7 @@ class Registry:
     def _get_full_task_list_from_input_string(self, tasks: str | Path) -> list[str]:
         """Converts an input string (either a path to file with a list of tasks or a string of comma-separated tasks) into an actual list"""
         if os.path.exists(tasks):
-            with open(tasks, "r") as f:
+            with open(tasks, "r", encoding="utf-8") as f:
                 tasks_list = [line.strip() for line in f if line.strip() and not line.startswith("#")]
         else:
             tasks_list = tasks.split(",")

@@ -90,7 +90,7 @@ class ModelConfig(BaseModel, extra="forbid"):
 
     @classmethod
     def from_path(cls, path: str):
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
         return cls(**config["model_parameters"])
@@ -206,7 +206,7 @@ class InspectAIModelConfig(BaseModel):
 
     @classmethod
     def from_path(cls, path: str):
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
         return cls(**config["model_parameters"])

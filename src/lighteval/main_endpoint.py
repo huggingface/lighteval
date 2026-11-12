@@ -281,7 +281,7 @@ def litellm(
     parallelism_manager = ParallelismManager.NONE
 
     if model_args.endswith(".yaml"):
-        with open(model_args, "r") as f:
+        with open(model_args, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
         metric_options = config.get("metric_options", {})
         model_config = LiteLLMModelConfig.from_path(model_args)

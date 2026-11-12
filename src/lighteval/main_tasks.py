@@ -83,13 +83,13 @@ def create(template: str, task_name: str, dataset_name: str):
 
     logger.info(f"Creating task for dataset {dataset_name}")
 
-    with open(template, "r") as f:
+    with open(template, "r", encoding="utf-8") as f:
         content = f.read()
 
     content = content.replace("HF_TASK_NAME", task_name)
     content = content.replace("HF_DATASET_NAME", dataset_name)
 
-    with open(f"custom_{task_name}_task.py", "w+") as f:
+    with open(f"custom_{task_name}_task.py", "w+", encoding="utf-8") as f:
         f.write(content)
 
     logger.info(f"Task created in custom_{task_name}_task.py")

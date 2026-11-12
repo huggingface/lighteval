@@ -119,7 +119,7 @@ def accelerate(  # noqa C901
     )
 
     if model_args.endswith(".yaml"):
-        with open(model_args, "r") as f:
+        with open(model_args, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)["model_parameters"]
     else:
         # We extract the model args
