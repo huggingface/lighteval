@@ -43,7 +43,7 @@ def metric_tester():
 
 def load_test_suite_from_file(file_path: str) -> MetricTestSuite:
     """Load a test suite from a JSON file."""
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     return MetricTestSuite(**data)
 

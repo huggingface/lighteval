@@ -270,7 +270,7 @@ class AutomatedMetricTester:
 
     def run_test_suites_from_file(self, file_path: str | Path) -> list[dict[str, Any]]:
         """Run test suites from a JSON file."""
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         if isinstance(data, list):

@@ -65,7 +65,7 @@ def nanotron(
     if not checkpoint_config_path.endswith(".yaml"):
         raise ValueError("The checkpoint path should point to a YAML file")
 
-    with open(checkpoint_config_path) as f:
+    with open(checkpoint_config_path, encoding="utf-8") as f:
         nanotron_yaml = yaml.load(f, Loader=SafeLoader)
 
     model_config, tokenizer_config, general_config = [
