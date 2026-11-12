@@ -178,7 +178,7 @@ TOKENIZER_FACTORY: dict[Language, Callable[[], WordTokenizer]] = {
     Language.KOREAN: lambda: SpaCyTokenizer("ko"),
     Language.GERMAN: lambda: SpaCyTokenizer("de"),
     Language.FRENCH: lambda: SpaCyTokenizer("fr"),
-    Language.CZECH: lambda: SpaCyTokenizer("cz"),
+    Language.CZECH: lambda: SpaCyTokenizer("cs"),
     Language.DANISH: lambda: SpaCyTokenizer("da"),
     Language.DUTCH: lambda: SpaCyTokenizer("nl"),
     Language.ESTONIAN: lambda: SpaCyTokenizer("et"),
