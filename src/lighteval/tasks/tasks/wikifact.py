@@ -42,21 +42,6 @@ wikifact_applies_to_jurisdiction = LightevalTaskConfig(
     version=0,
 )
 
-wikifact_atomic_number = LightevalTaskConfig(
-    name="wikifact:atomic_number",
-    prompt_function=wikifact_prompt,
-    hf_repo="lighteval/wikifact",
-    hf_subset="atomic_number",
-    hf_avail_splits=["train", "test"],
-    evaluation_splits=["test"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=8,
-    metrics=[Metrics.exact_match],
-    stop_sequence=["\n"],
-    version=0,
-)
-
 wikifact_author = LightevalTaskConfig(
     name="wikifact:author",
     prompt_function=wikifact_prompt,
@@ -357,21 +342,6 @@ wikifact_educated_at = LightevalTaskConfig(
     version=0,
 )
 
-wikifact_electron_configuration = LightevalTaskConfig(
-    name="wikifact:electron_configuration",
-    prompt_function=wikifact_prompt,
-    hf_repo="lighteval/wikifact",
-    hf_subset="electron_configuration",
-    hf_avail_splits=["train", "test"],
-    evaluation_splits=["test"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=8,
-    metrics=[Metrics.exact_match],
-    stop_sequence=["\n"],
-    version=0,
-)
-
 wikifact_employer = LightevalTaskConfig(
     name="wikifact:employer",
     prompt_function=wikifact_prompt,
@@ -392,21 +362,6 @@ wikifact_field_of_work = LightevalTaskConfig(
     prompt_function=wikifact_prompt,
     hf_repo="lighteval/wikifact",
     hf_subset="field_of_work",
-    hf_avail_splits=["train", "test"],
-    evaluation_splits=["test"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=8,
-    metrics=[Metrics.exact_match],
-    stop_sequence=["\n"],
-    version=0,
-)
-
-wikifact_file_extension = LightevalTaskConfig(
-    name="wikifact:file_extension",
-    prompt_function=wikifact_prompt,
-    hf_repo="lighteval/wikifact",
-    hf_subset="file_extension",
     hf_avail_splits=["train", "test"],
     evaluation_splits=["test"],
     few_shots_split=None,
@@ -812,21 +767,6 @@ wikifact_native_language = LightevalTaskConfig(
     prompt_function=wikifact_prompt,
     hf_repo="lighteval/wikifact",
     hf_subset="native_language",
-    hf_avail_splits=["train", "test"],
-    evaluation_splits=["test"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=8,
-    metrics=[Metrics.exact_match],
-    stop_sequence=["\n"],
-    version=0,
-)
-
-wikifact_number_of_processor_cores = LightevalTaskConfig(
-    name="wikifact:number_of_processor_cores",
-    prompt_function=wikifact_prompt,
-    hf_repo="lighteval/wikifact",
-    hf_subset="number_of_processor_cores",
     hf_avail_splits=["train", "test"],
     evaluation_splits=["test"],
     few_shots_split=None,
@@ -1272,21 +1212,6 @@ wikifact_therapeutic_area = LightevalTaskConfig(
     version=0,
 )
 
-wikifact_time_of_discovery_or_invention = LightevalTaskConfig(
-    name="wikifact:time_of_discovery_or_invention",
-    prompt_function=wikifact_prompt,
-    hf_repo="lighteval/wikifact",
-    hf_subset="time_of_discovery_or_invention",
-    hf_avail_splits=["train", "test"],
-    evaluation_splits=["test"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=8,
-    metrics=[Metrics.exact_match],
-    stop_sequence=["\n"],
-    version=0,
-)
-
 wikifact_twinned_administrative_body = LightevalTaskConfig(
     name="wikifact:twinned_administrative_body",
     prompt_function=wikifact_prompt,
@@ -1319,11 +1244,9 @@ wikifact_work_location = LightevalTaskConfig(
 
 TASKS_TABLE = [
     wikifact_applies_to_jurisdiction,
-    wikifact_atomic_number,
     wikifact_author,
     wikifact_employer,
     wikifact_field_of_work,
-    wikifact_file_extension,
     wikifact_genetic_association,
     wikifact_instrument,
     wikifact_language_of_work_or_name,
@@ -1341,7 +1264,6 @@ TASKS_TABLE = [
     wikifact_industry,
     wikifact_named_after,
     wikifact_native_language,
-    wikifact_number_of_processor_cores,
     wikifact_occupation,
     wikifact_original_language_of_film_or_TV_show,
     wikifact_original_network,
@@ -1365,7 +1287,6 @@ TASKS_TABLE = [
     wikifact_subsidiary,
     wikifact_symptoms_and_signs,
     wikifact_therapeutic_area,
-    wikifact_time_of_discovery_or_invention,
     wikifact_twinned_administrative_body,
     wikifact_work_location,
 ]

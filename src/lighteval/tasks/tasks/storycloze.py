@@ -37,7 +37,7 @@ storycloze_2016 = LightevalTaskConfig(
     name="storycloze:2016",
     prompt_function=storycloze_prompt,
     hf_repo="MoE-UNC/story_cloze",
-    hf_subset="2016",
+    hf_subset="default",  # this dataset is the 2016 release of Story Cloze
     hf_avail_splits=["validation"],
     evaluation_splits=["validation"],
     few_shots_split=None,
@@ -48,23 +48,7 @@ storycloze_2016 = LightevalTaskConfig(
     version=0,
 )
 
-
-storycloze_2018 = LightevalTaskConfig(
-    name="storycloze:2018",
-    prompt_function=storycloze_prompt,
-    hf_repo="MoE-UNC/story_cloze",
-    hf_subset="2018",
-    hf_avail_splits=["validation"],
-    evaluation_splits=["validation"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=-1,
-    metrics=[Metrics.exact_match],
-    stop_sequence=["\n"],
-    version=0,
-)
 
 TASKS_TABLE = [
     storycloze_2016,
-    storycloze_2018,
 ]

@@ -30,15 +30,15 @@ def test_superset_expansion():
     """
     Tests that task info selector correctly handles supersets.
     """
-    registry = Registry(tasks="storycloze|0")
+    registry = Registry(tasks="arc|0")
 
     # The task list is saved as provided by the user
-    assert registry.tasks_list == ["storycloze|0"]
+    assert registry.tasks_list == ["arc|0"]
 
     # But we expand the superset when loading the configurations
-    assert set(registry.task_to_configs.keys()) == {"storycloze:2016", "storycloze:2018"}
+    assert set(registry.task_to_configs.keys()) == {"arc:challenge", "arc:easy"}
 
-    for task_name in {"storycloze:2016", "storycloze:2018"}:
+    for task_name in {"arc:challenge", "arc:easy"}:
         task_info: list[LightevalTaskConfig] = registry.task_to_configs[task_name]
         assert task_info[0].num_fewshots == 0
 
