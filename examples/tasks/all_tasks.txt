@@ -533,7 +533,6 @@ helm|truthfulqa|0
 helm|twitterAAE:aa|0
 helm|twitterAAE:white|0
 helm|wikifact:applies_to_jurisdiction|0
-helm|wikifact:atomic_number|0
 helm|wikifact:author|0
 helm|wikifact:award_received|0
 helm|wikifact:basic_form_of_government|0
@@ -554,10 +553,8 @@ helm|wikifact:director|0
 helm|wikifact:discoverer_or_inventor|0
 helm|wikifact:drug_or_therapy_used_for_treatment|0
 helm|wikifact:educated_at|0
-helm|wikifact:electron_configuration|0
 helm|wikifact:employer|0
 helm|wikifact:field_of_work|0
-helm|wikifact:file_extension|0
 helm|wikifact:genetic_association|0
 helm|wikifact:genre|0
 helm|wikifact:has_part|0
@@ -585,7 +582,6 @@ helm|wikifact:member_of|0
 helm|wikifact:movement|0
 helm|wikifact:named_after|0
 helm|wikifact:native_language|0
-helm|wikifact:number_of_processor_cores|0
 helm|wikifact:occupation|0
 helm|wikifact:office_held_by_head_of_government|0
 helm|wikifact:office_held_by_head_of_state|0
@@ -615,7 +611,6 @@ helm|wikifact:subclass_of|0
 helm|wikifact:subsidiary|0
 helm|wikifact:symptoms_and_signs|0
 helm|wikifact:therapeutic_area|0
-helm|wikifact:time_of_discovery_or_invention|0
 helm|wikifact:twinned_administrative_body|0
 helm|wikifact:work_location|0
 helm|wikitext:103|0
@@ -846,7 +841,6 @@ lighteval|qasper|0
 lighteval|race:high|0
 lighteval|sciq|0
 lighteval|storycloze:2016|0
-lighteval|storycloze:2018|0
 lighteval|super_glue:boolq|0
 lighteval|super_glue:cb|0
 lighteval|super_glue:copa|0
@@ -1054,7 +1048,6 @@ lighteval|wmt20:ru-en|0
 lighteval|wmt20:ta-en|0
 lighteval|wmt20:zh-en|0
 lighteval|wsc273|0
-lighteval|xcopa:en|0
 lighteval|xcopa:et|0
 lighteval|xcopa:ht|0
 lighteval|xcopa:id|0

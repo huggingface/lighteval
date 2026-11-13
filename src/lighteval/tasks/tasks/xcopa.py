@@ -11,7 +11,7 @@ Choice of Plausible Alternatives dataset is a benchmark to evaluate the ability
 of machine learning models to transfer commonsense reasoning across languages.
 
 languages:
-english
+estonian, haitian creole, indonesian, italian, quechua, swahili, tamil, thai, turkish, vietnamese, chinese
 
 tags:
 commonsense, multilingual, multiple-choice, reasoning
@@ -33,10 +33,6 @@ def xcopa_prompt(line, connectors: dict, task_name: str = None):
     choices = [f" {line['choice1']}", f" {line['choice2']}"]
     gold_index = int(line["label"]) - 1 if isinstance(line["label"], str) else int(line["label"])
     return Doc(task_name=task_name, query=query, choices=choices, gold_index=gold_index)
-
-
-def xcopa_en_prompt(line, task_name: str = None):
-    return xcopa_prompt(line, {"cause": "because", "effect": "therefore"}, task_name)
 
 
 def xcopa_et_prompt(line, task_name: str = None):
@@ -82,21 +78,6 @@ def xcopa_tr_prompt(line, task_name: str = None):
 def xcopa_vi_prompt(line, task_name: str = None):
     return xcopa_prompt(line, {"cause": "b\u1edfi v\u00ec", "effect": "v\u00ec v\u1eady"}, task_name)
 
-
-xcopa_en = LightevalTaskConfig(
-    name="xcopa:en",
-    prompt_function=xcopa_en_prompt,
-    hf_repo="cambridgeltl/xcopa",
-    hf_subset="default",
-    hf_avail_splits=["test", "train", "validation"],
-    evaluation_splits=["test"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=-1,
-    metrics=[Metrics.loglikelihood_acc],
-    stop_sequence=["\n"],
-    version=0,
-)
 
 xcopa_et = LightevalTaskConfig(
     name="xcopa:et",
@@ -264,7 +245,6 @@ xcopa_vi = LightevalTaskConfig(
 )
 
 TASKS_TABLE = [
-    xcopa_en,
     xcopa_et,
     xcopa_ht,
     xcopa_it,
