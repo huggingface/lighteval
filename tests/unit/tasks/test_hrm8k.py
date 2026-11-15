@@ -122,6 +122,23 @@ def test_metric_falls_back_to_rightmost_number_without_boxed():
     assert _score(12.0, "최종 답변: 12\n(참고로 문제에서 사과는 5개였습니다.)") == 0.0
 
 
+@pytest.mark.parametrize(
+    "prediction",
+    [
+        "최종 답은 19입니다. 18번 방법을 사용했습니다.",
+        "최종 답은 19입니다. 이 답에 대한 신뢰도는 18%입니다.",
+    ],
+)
+def test_metric_accepts_wrong_answer_followed_by_gold_number_without_boxed(prediction):
+    # Known limitation: without \\boxed{}, a later number equal to the gold is scored as correct.
+    assert _score(18.0, prediction) == 1.0
+
+
+def test_metric_ignores_later_numbers_when_boxed():
+    assert _score(18.0, "최종 답은 $\\boxed{19}$입니다. 18번 방법을 사용했습니다.") == 0.0
+    assert _score(18.0, "최종 답은 $\\boxed{18}$입니다. 2번 방법을 사용했습니다.") == 1.0
+
+
 def test_metric_rejects_korean_units_inside_boxed():
     # Known limitation: a Korean unit inside \boxed{} is not stripped.
     assert _score(18.0, "$\\boxed{18달러}$") == 0.0
