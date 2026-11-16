@@ -1,4 +1,4 @@
-"""Compare saved 23-prompt model responses with original Ko and the registered task.
+"""Compare selected or full-split saved responses with original Ko and the registered task.
 
 The run, reference evidence and original sources are read-only. No model weights
 are loaded, no responses are regenerated and no scoring rules are implemented.
@@ -36,8 +36,7 @@ from verify_registered_task import (
 from verify_scoring import KINDS, compare_flags, counts, read, require, sha
 
 
-EXPECTED_PROMPTS = 23
-EXPECTED_INSTRUCTIONS = 40
+SCOPES = {"selected": (23, 40), "full": (342, 481)}
 ROW_FIELDS = ("key", "prompt", "instruction_id_list", "kwargs")
 ENGINES = ("original", "direct_ported", "registered")
 METRICS = tuple(f"{level}_level_{mode}_acc" for mode in KINDS for level in ("prompt", "inst"))
@@ -63,7 +62,7 @@ def agreed_keys():
     for node in ast.parse(source.read_text(encoding="utf-8")).body:
         if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "KEYS" for t in node.targets):
             keys = ast.literal_eval(node.value)
-            require(len(keys) == len(set(keys)) == EXPECTED_PROMPTS, "Invalid generator selection contract")
+            require(len(keys) == len(set(keys)) == SCOPES["selected"][0], "Invalid generator selection contract")
             return keys
     raise ValueError("Generator selection contract not found")
 
@@ -126,13 +125,14 @@ def check_record(record):
     require(record["finish_reason"] in {"eos", "stop_string", "length", "unknown"}, f"Finish reason: {key}")
 
 
-def check_manifest(manifest, records):
+def check_manifest(manifest, records, scope="selected"):
+    expected_prompts, expected_instructions = SCOPES[scope]
     for field, expected in {
-        "expected_count": EXPECTED_PROMPTS,
-        "generated_count": EXPECTED_PROMPTS,
+        "expected_count": expected_prompts,
+        "generated_count": expected_prompts,
         "generation_error_count": 0,
         "unattempted_count": 0,
-        "instruction_occurrences": EXPECTED_INSTRUCTIONS,
+        "instruction_occurrences": expected_instructions,
     }.items():
         require(type(manifest[field]) is int and manifest[field] == expected, f"Manifest count differs: {field}")
     logging_only = manifest.get("error_stage") == "logging" and bool(manifest.get("logging_errors"))
@@ -149,7 +149,8 @@ def check_manifest(manifest, records):
         "Dataset subset/split differs",
     )
     require(manifest["num_fewshots"] == 0, "Expected zero-shot generation")
-    require(manifest["selected_keys"] == agreed_keys(), "Manifest selection differs")
+    require(manifest.get("evaluation_scope", "selected") == scope, "Manifest evaluation scope differs")
+    require(manifest["selected_keys"] == [row["key"] for row in records], "Manifest selection differs")
     require(
         manifest["empty_response_count"] == sum(not row["response"].strip() for row in records),
         "Empty-response count differs",
@@ -160,7 +161,8 @@ def check_manifest(manifest, records):
     )
 
 
-def load_run(directory, archive=None, archive_sha256=None):
+def load_run(directory, archive=None, archive_sha256=None, scope="selected"):
+    expected_prompts, expected_instructions = SCOPES[scope]
     checksums = check_run_hashes(directory)
     archive_info = check_archive(directory, archive, archive_sha256)
     manifest, selection = read(directory / "manifest.json"), read(directory / "selection.json")
@@ -172,11 +174,14 @@ def load_run(directory, archive=None, archive_sha256=None):
     selected = read(directory / "selected-samples.json")
     with (directory / "responses.jsonl").open(encoding="utf-8") as stream:
         records = [json.loads(line) for line in stream]
-    keys = agreed_keys()
-    require(selection["keys"] == keys, "Selection differs from the agreed 23 keys/order")
-    require(len(records) == len(selected) == EXPECTED_PROMPTS, "Missing or extra prompt records")
+    keys = [row["key"] for row in records]
+    require(len(keys) == len(set(keys)) == expected_prompts, "Missing or extra prompt records or duplicate keys")
+    require(selection.get("scope", "selected") == scope, "Selection evaluation scope differs")
+    if scope == "selected":
+        require(selection["keys"] == agreed_keys(), "Selection differs from the agreed 23 keys/order")
+    require(len(records) == len(selected) == expected_prompts, "Missing or extra prompt records")
     require(
-        [row["key"] for row in records] == [row["key"] for row in selected] == keys,
+        keys == [row["key"] for row in selected] == selection["keys"],
         "Duplicate, missing or reordered keys",
     )
     for record, source in zip(records, selected):
@@ -185,10 +190,11 @@ def load_run(directory, archive=None, archive_sha256=None):
             object_hash(raw_input(record)) == object_hash(raw_input(source)), f"Saved input differs: {record['key']}"
         )
     require(
-        sum(len(row["instruction_id_list"]) for row in records) == EXPECTED_INSTRUCTIONS, "Expected 40 instructions"
+        sum(len(row["instruction_id_list"]) for row in records) == expected_instructions,
+        f"Expected {expected_instructions} instructions",
     )
     require(len({iid for row in records for iid in row["instruction_id_list"]}) == 21, "Expected 21 instruction types")
-    check_manifest(manifest, records)
+    check_manifest(manifest, records, scope)
     return {
         "records": records,
         "manifest": manifest,
@@ -196,13 +202,15 @@ def load_run(directory, archive=None, archive_sha256=None):
     }
 
 
-def check_source_rows(records, source_rows):
+def check_source_rows(records, source_rows, scope="selected"):
     require(
         len(source_rows) == 342 and sum(len(row["instruction_id_list"]) for row in source_rows) == 481,
         "Unexpected pinned dataset size",
     )
     indexed = {row["key"]: row for row in source_rows}
     require(len(indexed) == 342, "Duplicate pinned dataset keys")
+    expected_keys = [row["key"] for row in source_rows] if scope == "full" else agreed_keys()
+    require([row["key"] for row in records] == expected_keys, "Pinned source key order or completeness differs")
     for record in records:
         require(
             object_hash(raw_input(record)) == object_hash(raw_input(indexed[record["key"]])),
@@ -351,14 +359,16 @@ def score_record(record, engines, mismatches):
     return row
 
 
-def score_records(records, reference, task, scoring, response_class, progress=None):
+def score_records(records, reference, task, scoring, response_class, progress=None, scope="selected"):
+    expected_prompts, expected_instructions = SCOPES[scope]
+    keys = [row["key"] for row in records]
     require(
-        len(records) == EXPECTED_PROMPTS and [row["key"] for row in records] == agreed_keys(),
-        "Scoring requires all 23 unique prompts in order",
+        len(records) == len(set(keys)) == expected_prompts and (scope == "full" or keys == agreed_keys()),
+        f"Scoring requires all {expected_prompts} unique prompts in order",
     )
     require(
-        sum(len(row["instruction_id_list"]) for row in records) == EXPECTED_INSTRUCTIONS,
-        "Scoring requires all 40 instructions",
+        sum(len(row["instruction_id_list"]) for row in records) == expected_instructions,
+        f"Scoring requires all {expected_instructions} instructions",
     )
     engines = {
         "original": lambda raw, text: reference.process_results(raw, [text]),
@@ -444,7 +454,7 @@ def environment_info():
 def run(args, report):
     report["stage"] = "input"
     print("Validating the saved run, archive checksums, response hashes and selected keys.")
-    saved = load_run(args.run_dir, args.archive, args.archive_sha256)
+    saved = load_run(args.run_dir, args.archive, args.archive_sha256, args.scope)
     records = saved["records"]
     report.update(integrity=saved["integrity"], generation_manifest=saved["manifest"])
     report["stage"] = "loading evaluators"
@@ -453,7 +463,7 @@ def run(args, report):
     import pyarrow.parquet as pq
 
     source = args.source_root / "sources/ko/data/train-00000-of-00001.parquet"
-    check_source_rows(records, pq.read_table(source).to_pylist())
+    check_source_rows(records, pq.read_table(source).to_pylist(), args.scope)
     report["integrity"].update(pinned_source_inputs="PASS", dataset_sha256=sha(source))
     task, scoring, response_class, code_hashes = load_task()
     report["environment"].update(
@@ -468,31 +478,34 @@ def run(args, report):
         }
     report["environment"]["registered_task"] = task.name
     report["stage"] = "scoring"
-    print("Replaying 23 identical saved responses through original Ko, direct ported scorer and registered task.")
-    report.update(score_records(records, reference, task, scoring, response_class, progress=report))
+    print(
+        f"Replaying {len(records)} identical saved responses through original Ko, direct ported scorer and registered task."
+    )
+    report.update(score_records(records, reference, task, scoring, response_class, progress=report, scope=args.scope))
     report["length_limited_keys"] = [record["key"] for record in records if record["finish_reason"] == "length"]
     report["status"] = "PASS" if report["passed"] else "FAIL"
     report["stage"] = "complete"
     print(
-        f"{report['status']}: {report['matched_cases']}/23 cases agree; scoring errors={report['scoring_errors']}, aggregation errors={report['aggregation_errors']}, mismatches={len(report['mismatches'])}."
+        f"{report['status']}: {report['matched_cases']}/{report['expected_prompts']} cases agree; scoring errors={report['scoring_errors']}, aggregation errors={report['aggregation_errors']}, mismatches={len(report['mismatches'])}."
     )
 
 
 def render_markdown(report):
+    prompts, instructions = report["expected_prompts"], report["expected_instructions"]
     lines = [
         "# IFEval-Ko saved-model-response comparison",
         "",
         f"Result: **{report['status']}**",
         "",
-        "Scope: selected 23 prompts / 40 instructions; no model inference.",
-        "Full-split model evaluation: **not run**.",
+        f"Scope: {report['evaluation_scope']} {prompts} prompts / {instructions} instructions; saved responses.",
+        "Native Lighteval model inference: **not run**.",
         "",
         "Agreement measures evaluator compatibility; it is not a claim of 100% model accuracy.",
         "",
     ]
     for mode, values in report.get("matched_decisions", {}).items():
         lines.append(
-            f"- {mode}: {values['prompts']}/23 prompt and {values['instructions']}/40 instruction judgments agree across all three paths."
+            f"- {mode}: {values['prompts']}/{prompts} prompt and {values['instructions']}/{instructions} instruction judgments agree across all three paths."
         )
     lines += [
         "",
@@ -513,7 +526,7 @@ def render_markdown(report):
     if report.get("metrics_status") != "COMPLETE":
         lines += [
             "",
-            "Expected denominators remain 23 prompts and 40 instructions. Failed or missing scoring produces no aggregate scores; native aggregation errors are recorded per metric.",
+            f"Expected denominators remain {prompts} prompts and {instructions} instructions. Failed or missing scoring produces no aggregate scores; native aggregation errors are recorded per metric.",
         ]
     lines += [
         "",
@@ -555,6 +568,9 @@ def write_reports(directory, report):
 
 def parse_args(argv):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--scope", choices=SCOPES, default="selected", help="Selected 23 prompts or the full 342-prompt split"
+    )
     for name in ("run-dir", "audit-dir", "source-root", "output-dir"):
         parser.add_argument("--" + name, required=True, type=Path)
     parser.add_argument(
@@ -577,6 +593,7 @@ def parse_args(argv):
 
 def main(argv=None):
     args = parse_args(argv)
+    expected_prompts, expected_instructions = SCOPES[args.scope]
     args.output_dir.mkdir(parents=True, exist_ok=False)
     sys.dont_write_bytecode = True
     os.environ.setdefault("HF_HOME", str(args.output_dir / ".cache/huggingface"))
@@ -587,9 +604,10 @@ def main(argv=None):
         "stage": "starting",
         "command": [sys.executable, str(Path(__file__)), *(argv if argv is not None else sys.argv[1:])],
         "started_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "scope": "23 saved model responses; original Ko vs ported scorer vs registered task; no model inference",
-        "expected_prompts": EXPECTED_PROMPTS,
-        "expected_instructions": EXPECTED_INSTRUCTIONS,
+        "scope": f"{expected_prompts} saved responses; original Ko vs ported scorer vs registered task; no model inference",
+        "evaluation_scope": args.scope,
+        "expected_prompts": expected_prompts,
+        "expected_instructions": expected_instructions,
         "metrics_status": "NOT_RUN",
         "metrics": {},
         "mismatches": [],

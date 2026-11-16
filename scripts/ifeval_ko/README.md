@@ -1,9 +1,13 @@
-# IFEval-Ko: selected 23-prompt response generation
+# IFEval-Ko: selected and full-split response generation
 
 Generate and save one Qwen response per selected prompt so the team can pass
 the same saved responses to the original Ko evaluator and registered Lighteval
 task. This stage runs Transformers generation only. It does not invoke either
 scorer or establish model-response scoring parity.
+
+The default remains the agreed 23-prompt selection. `--scope full` generates all
+342 prompts and 481 instruction occurrences at the same pinned dataset revision,
+using the same model, chat template, decoding settings and MPS backend below.
 
 ## Recorded run
 
@@ -71,6 +75,63 @@ generation. An existing output directory is rejected; use a new name for another
 run. The script checks the selection against the recorded 23 keys, 40
 instruction occurrences, and 21 instruction types before loading the model.
 
+## Generate the full 342-prompt split
+
+Run from the repository root in the same Python environment:
+
+```bash
+python scripts/ifeval_ko/generate_responses.py \
+  --scope full --output-dir outputs/ifeval_ko/qwen-342-001
+```
+
+On macOS, prefix the command with `caffeinate -i` to keep the machine awake.
+The full scope does not need the operations repository or a selection file.
+`--selection` is rejected with `--scope full` so a partial selection cannot
+accidentally be labelled as full-split evaluation.
+
+All 342 original rows are processed in the pinned dataset's existing `train`
+order, without sorting keys, modifying prompts/kwargs, reusing the old 23
+responses, or dropping token-limited or empty generated responses. The script
+checks the source size, 481 instruction occurrences, all 21 instruction types,
+unique keys and instruction/kwargs alignment before loading the model.
+
+The seven-file artifact contract below is unchanged. For full runs,
+`selection.json` is generated from the source order with `scope: full`, and
+`selected-samples.json` contains all 342 original rows. The manifest records
+`evaluation_scope: full`, `expected_count: 342` and
+`instruction_occurrences: 481`; `selection_source` is null. Generation and log
+failures retain the same accounting policy with a denominator of 342.
+
+Full-split scoring uses the same saved responses in all three evaluator paths:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python tests/ifeval_ko/verify_model_responses.py \
+  --scope full --run-dir outputs/ifeval_ko/qwen-342-001 \
+  --audit-dir "$KO_AUDIT" --source-root "$KO_SOURCES" \
+  --output-dir outputs/ifeval_ko/qwen-342-parity-001
+```
+
+Prepare the pinned audit sources and NLTK data as described in
+[`tests/ifeval_ko/README.md`](../../tests/ifeval_ko/README.md#reproduction).
+The registered task registry imports other built-in tasks; its first load can
+also download the existing TinyBenchmarks cache into the checkout. Prepare this
+cache during setup when validation must run offline. Cache/output files are not
+part of the source changes.
+
+For archive verification, also pass `--archive` and the independently recorded
+`--archive-sha256` digest, as for selected runs. Archive checking is optional and
+reported separately; source inputs and all run-file hashes are always checked.
+
+### Recorded full-split run
+
+Results for `qwen-342-001`, including generation accounting, token-limited keys,
+tokenizer replay and scoring comparisons, are maintained in the
+[full-split validation record](../../tests/ifeval_ko/README.md#validation-with-full-split-saved-responses-342-prompts).
+
+Download the response and parity ZIPs from the
+[public attachments and checksums](../../tests/ifeval_ko/README.md#public-attachments-and-checksums).
+These files are attached to PR #7 rather than checked into the repository.
+
 ## Saved artifacts and integrity
 
 The run directory contains:
@@ -133,8 +194,8 @@ cross-evaluation input. A blank response, if generated in another run, is also
 retained. Runtime exceptions are saved as errors and stop the run; they are not
 replaced with blank successful responses.
 
-The one-item hardware smoke test is separate from this 23-prompt run. The
-remaining team work is to score these identical saved responses with both
-evaluators, compare per-instruction/per-prompt strict and loose judgments and
-all four aggregate metrics, and investigate mismatches. Model-response scoring
-parity and full-split model evaluation are not claimed by this run.
+The one-item hardware smoke test is separate from the recorded 23-prompt run.
+The generation stage reports no scoring result. Compare identical saved text
+through original Ko, direct ported scoring and the registered task with the
+matching verifier scope, and investigate every mismatch. Saved-response scoring
+and native Lighteval model inference are separate validation stages.

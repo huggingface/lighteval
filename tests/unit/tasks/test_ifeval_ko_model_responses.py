@@ -96,11 +96,12 @@ class ModelResponseTests(unittest.TestCase):
             encoding="utf-8",
         )
 
-    def make_run(self):
+    def make_run(self, scope="selected"):
         self.next_run += 1
         directory = self.root / f"input-{self.next_run}"
         directory.mkdir()
-        rows = copy.deepcopy(self.source_rows[:23])
+        rows = copy.deepcopy(self.source_rows if scope == "full" else self.source_rows[:23])
+        keys = [row["key"] for row in rows]
         records = []
         for row in rows:
             response = f"\n  \u1100\u1161 response {row['key']} \n"
@@ -120,22 +121,23 @@ class ModelResponseTests(unittest.TestCase):
             )
         self.write_records(directory, records)
         self.write_json(directory / "selected-samples.json", rows)
-        self.write_json(directory / "selection.json", {"keys": self.keys})
+        self.write_json(directory / "selection.json", {"keys": keys, "scope": scope})
         self.write_json(
             directory / "manifest.json",
             {
                 "status": "responses_generated",
-                "expected_count": 23,
-                "generated_count": 23,
+                "evaluation_scope": scope,
+                "expected_count": len(rows),
+                "generated_count": len(rows),
                 "generation_error_count": 0,
                 "unattempted_count": 0,
-                "instruction_occurrences": 40,
+                "instruction_occurrences": sum(len(row["instruction_id_list"]) for row in rows),
                 "dataset_id": "allganize/IFEval-Ko",
                 "dataset_revision": self.verifier.KO_REVISION,
                 "dataset_subset": "default",
                 "dataset_split": "train",
                 "num_fewshots": 0,
-                "selected_keys": self.keys,
+                "selected_keys": keys,
                 "empty_response_count": 0,
                 "length_limited_count": 1,
                 "code_revision": "generation-revision",
@@ -519,8 +521,10 @@ class ModelResponseTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self.verifier.score_records(records, reference, task, scoring, response_class)
 
-    def cli_args(self, directory, output):
+    def cli_args(self, directory, output, scope="selected"):
         return [
+            "--scope",
+            scope,
             "--run-dir",
             str(directory),
             "--audit-dir",
@@ -531,7 +535,7 @@ class ModelResponseTests(unittest.TestCase):
             str(output),
         ]
 
-    def run_scoring_cli(self, directory, output, reference, task, scoring, response_class):
+    def run_scoring_cli(self, directory, output, reference, task, scoring, response_class, scope="selected"):
         source = self.root / "sources/sources/ko/data/train-00000-of-00001.parquet"
         source.parent.mkdir(parents=True, exist_ok=True)
         source.write_bytes(b"unit-test dataset stand-in")
@@ -547,12 +551,101 @@ class ModelResponseTests(unittest.TestCase):
             patch.dict(os.environ),
             contextlib.redirect_stdout(io.StringIO()),
         ):
-            code = self.verifier.main(self.cli_args(directory, output))
+            code = self.verifier.main(self.cli_args(directory, output, scope))
         report = json.loads((output / "model-response-parity.json").read_text())
         for line in (output / "SHA256SUMS").read_text().splitlines():
             digest, name = line.split(maxsplit=1)
             self.assertEqual(self.verifier.sha(output / name), digest)
         return code, report
+
+    def test_full_split_archive_and_three_scoring_paths_use_342_and_481(self):
+        directory, records = self.make_run(scope="full")
+        archive = self.make_archive(directory)
+        saved = self.verifier.load_run(directory, archive, self.verifier.sha(archive), scope="full")
+        self.verifier.check_source_rows(saved["records"], self.source_rows, scope="full")
+        reference, task, scoring, response_class, seen = self.engines()
+        code, report = self.run_scoring_cli(
+            directory, self.root / "full-parity", reference, task, scoring, response_class, scope="full"
+        )
+        self.assertEqual(code, 0)
+        self.assertTrue(report["passed"])
+        self.assertEqual(report["expected_prompts"], 342)
+        self.assertEqual(report["expected_instructions"], 481)
+        self.assertEqual(report["length_limited_keys"], [1127])
+        self.assertEqual(
+            report["matched_decisions"], {mode: {"prompts": 342, "instructions": 481} for mode in ("strict", "loose")}
+        )
+        self.assertEqual(report["metrics"]["inst_level_strict_acc"]["original"]["value"], 342 / 481)
+        self.assertEqual(len(seen), 342 * 3)
+        self.assertEqual([text for _, _, text in seen], [row["response"] for row in records for _ in range(3)])
+        markdown = (self.root / "full-parity/model-response-parity.md").read_text()
+        self.assertIn("342 prompts / 481 instructions", markdown)
+        self.assertIn("342/342 prompt and 481/481 instruction", markdown)
+
+    def test_full_split_cannot_be_used_as_selected_run_or_vice_versa(self):
+        full, _ = self.make_run(scope="full")
+        selected, _ = self.make_run()
+        with self.assertRaises(ValueError):
+            self.verifier.load_run(full)
+        with self.assertRaises(ValueError):
+            self.verifier.load_run(selected, scope="full")
+
+    def test_full_split_rejects_self_consistent_reordering_against_pinned_source(self):
+        directory, records = self.make_run(scope="full")
+        records.reverse()
+        keys = [row["key"] for row in records]
+        self.write_records(directory, records)
+        self.write_json(directory / "selected-samples.json", [self.verifier.raw_input(row) for row in records])
+        self.write_json(directory / "selection.json", {"scope": "full", "keys": keys})
+        manifest = json.loads((directory / "manifest.json").read_text())
+        manifest["selected_keys"] = keys
+        self.write_json(directory / "manifest.json", manifest)
+        self.refresh_hashes(directory)
+        saved = self.verifier.load_run(directory, scope="full")
+        with self.assertRaisesRegex(ValueError, "key order"):
+            self.verifier.check_source_rows(saved["records"], self.source_rows, scope="full")
+
+    def test_full_split_missing_duplicate_and_changed_instruction_count_fail(self):
+        for change in ("missing", "duplicate", "instruction"):
+            with self.subTest(change=change):
+                directory, records = self.make_run(scope="full")
+                if change == "missing":
+                    records.pop()
+                elif change == "duplicate":
+                    records[-1] = records[0]
+                else:
+                    records[0]["instruction_id_list"].pop()
+                    records[0]["kwargs"].pop()
+                self.write_records(directory, records)
+                self.refresh_hashes(directory)
+                with self.assertRaises(ValueError):
+                    self.verifier.load_run(directory, scope="full")
+                reference, task, scoring, response_class, _ = self.engines()
+                with self.assertRaises(ValueError):
+                    self.verifier.score_records(records, reference, task, scoring, response_class, scope="full")
+
+    def test_full_split_scoring_failure_keeps_full_denominators_and_no_aggregate(self):
+        directory, _ = self.make_run(scope="full")
+        reference, task, scoring, response_class, _ = self.engines()
+        original = reference.process_results
+
+        def fail_one(raw, texts):
+            if raw["key"] == self.source_rows[-1]["key"]:
+                raise RuntimeError("full-split scoring failure")
+            return original(raw, texts)
+
+        reference.process_results = fail_one
+        code, report = self.run_scoring_cli(
+            directory, self.root / "full-error", reference, task, scoring, response_class, scope="full"
+        )
+        self.assertEqual(code, 1)
+        self.assertEqual(len(report["results"]), 342)
+        self.assertEqual(report["expected_prompts"], 342)
+        self.assertEqual(report["expected_instructions"], 481)
+        self.assertEqual(report["scoring_errors"], 1)
+        self.assertEqual(report["metrics_status"], "INCOMPLETE")
+        self.assertEqual(report["metrics"], {})
+        task.aggregation.assert_not_called()
 
     def test_aggregation_setup_failure_keeps_all_decisions_in_failure_artifacts(self):
         directory, _ = self.make_run()

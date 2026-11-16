@@ -1,4 +1,4 @@
-"""Generate the selected 23 IFEval-Ko responses, without running either scorer."""
+"""Generate selected or full-split IFEval-Ko responses without running a scorer."""
 
 import argparse
 import contextlib
@@ -46,6 +46,7 @@ KEYS = [
     1800,
 ]
 STOPS = ["<end_of_turn>", "<|im_end|>"]
+SCOPES = {"selected": (23, 40), "full": (342, 481)}
 
 
 def digest(path):
@@ -81,17 +82,28 @@ def command(*args):
     return subprocess.check_output(args, text=True).strip()
 
 
-def select_rows(rows, keys):
-    if keys != KEYS or len(set(keys)) != 23:
-        raise ValueError("Selection must match the agreed 23 keys in their recorded order.")
+def select_rows(rows, keys=None, scope="selected"):
     by_key = {row["key"]: row for row in rows}
     if len(rows) != 342 or len(by_key) != 342:
         raise ValueError("Expected 342 source rows with unique keys.")
     if sum(len(row["instruction_id_list"]) for row in rows) != 481:
         raise ValueError("Expected 481 source instruction occurrences.")
-    selected = [by_key[key] for key in keys]
-    if sum(len(row["instruction_id_list"]) for row in selected) != 40:
-        raise ValueError("Expected 40 instructions in the selected prompts.")
+    if scope == "full":
+        if keys is not None:
+            raise ValueError("Full-split generation uses the pinned dataset order, not a selection file.")
+        selected = rows
+    elif scope == "selected":
+        if keys != KEYS or len(set(keys)) != 23:
+            raise ValueError("Selection must match the agreed 23 keys in their recorded order.")
+        selected = [by_key[key] for key in keys]
+    else:
+        raise ValueError(f"Unknown evaluation scope: {scope}")
+    expected_count, expected_instructions = SCOPES[scope]
+    if (
+        len(selected) != expected_count
+        or sum(len(row["instruction_id_list"]) for row in selected) != expected_instructions
+    ):
+        raise ValueError(f"Expected {expected_count} prompts and {expected_instructions} instructions.")
     if len({iid for row in selected for iid in row["instruction_id_list"]}) != 21:
         raise ValueError("Expected all 21 instruction types in the selection.")
     if any(len(row["instruction_id_list"]) != len(row["kwargs"]) for row in selected):
@@ -150,14 +162,19 @@ def generate(args, manifest):
 
     if not torch.backends.mps.is_available():
         raise RuntimeError("MPS unavailable; this run will not silently switch to CPU.")
-    selection = json.loads(args.selection.read_text(encoding="utf-8"))
     dataset = load_dataset("allganize/IFEval-Ko", "default", split="train", revision=DATA_REVISION)
-    rows = select_rows(list(dataset), selection["keys"])
-    shutil.copyfile(args.selection, args.output_dir / "selection.json")
+    if args.scope == "full":
+        rows = select_rows(list(dataset), scope="full")
+        selection = {"scope": "full", "order": "pinned train split", "keys": [row["key"] for row in rows]}
+        write_json(args.output_dir / "selection.json", selection)
+    else:
+        selection = json.loads(args.selection.read_text(encoding="utf-8"))
+        rows = select_rows(list(dataset), selection["keys"])
+        shutil.copyfile(args.selection, args.output_dir / "selection.json")
     write_json(args.output_dir / "selected-samples.json", rows)
     manifest.update(
         selected_keys=selection["keys"],
-        instruction_occurrences=40,
+        instruction_occurrences=sum(len(row["instruction_id_list"]) for row in rows),
         code_revision=command("git", "rev-parse", "HEAD"),
         worktree_status=command("git", "status", "--short"),
         chip=command("sysctl", "-n", "machdep.cpu.brand_string"),
@@ -169,7 +186,7 @@ def generate(args, manifest):
             name: version(name)
             for name in ("lighteval", "torch", "transformers", "accelerate", "datasets", "huggingface_hub", "numpy")
         },
-        selection_source=str(args.selection.resolve()),
+        selection_source=str(args.selection.resolve()) if args.selection is not None else None,
     )
     frozen = command(sys.executable, "-m", "pip", "freeze", "--exclude-editable")
     (args.output_dir / "requirements.lock.txt").write_text(frozen + "\n", encoding="utf-8")
@@ -205,7 +222,7 @@ def generate(args, manifest):
     write_json(args.output_dir / "manifest.json", manifest)
     with (args.output_dir / "responses.jsonl").open("x", encoding="utf-8") as responses:
         for index, row in enumerate(rows, 1):
-            log_message(manifest, f"[{index}/23] Generating key {row['key']}...")
+            log_message(manifest, f"[{index}/{manifest['expected_count']}] Generating key {row['key']}...")
             record = copy.deepcopy(row)
             record["status"] = "started"
             try:
@@ -243,24 +260,32 @@ def generate(args, manifest):
     manifest["status"] = "responses_generated"
 
 
-def main():
+def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, required=True)
-    parser.add_argument(
-        "--selection",
-        type=Path,
-        default=Path("../k-llm-eval-sprint/teams/team-c-ifeval-ko/evidence/sample-coverage/selection.json"),
-    )
+    parser.add_argument("--scope", choices=SCOPES, default="selected", help="Selected 23 prompts or all 342 prompts")
+    parser.add_argument("--selection", type=Path, help="Selection JSON for --scope selected only")
     args = parser.parse_args()
+    if args.scope == "full" and args.selection is not None:
+        parser.error("--selection cannot be used with --scope full; the pinned dataset order is required.")
+    if args.scope == "selected" and args.selection is None:
+        args.selection = Path("../k-llm-eval-sprint/teams/team-c-ifeval-ko/evidence/sample-coverage/selection.json")
     if not Path("pyproject.toml").is_file():
         parser.error("Run from the Lighteval repository root.")
     if args.output_dir.exists():
         parser.error("Output directory already exists; choose another name to preserve earlier runs.")
+    return args
+
+
+def main():
+    args = parse_args()
+    expected_count, _ = SCOPES[args.scope]
     args.output_dir.mkdir(parents=True, exist_ok=False)
     shutil.copyfile(__file__, args.output_dir / "generate_responses.py")
     manifest = {
         "status": "running",
-        "scope": "selected 23 prompts; response generation only",
+        "scope": f"{args.scope} {expected_count} prompts; response generation only",
+        "evaluation_scope": args.scope,
         "model_id": MODEL_ID,
         "model_revision": MODEL_REVISION,
         "tokenizer_revision": MODEL_REVISION,
@@ -274,7 +299,7 @@ def main():
         "requested_dtype": "float16",
         "batch_size": 1,
         "seed": 0,
-        "expected_count": 23,
+        "expected_count": expected_count,
         "generated_count": 0,
         "generation_error_count": 0,
         "logging_errors": [],
@@ -310,7 +335,7 @@ def main():
             manifest.update(
                 ended_at_utc=datetime.now(timezone.utc).isoformat(),
                 elapsed_seconds=time.perf_counter() - started,
-                unattempted_count=23 - manifest["generated_count"] - manifest["generation_error_count"],
+                unattempted_count=expected_count - manifest["generated_count"] - manifest["generation_error_count"],
             )
     write_artifacts(args.output_dir, manifest)
     if not manifest["logging_errors"]:

@@ -36,17 +36,18 @@ class Inputs(dict):
 
 
 class Terminal(io.StringIO):
-    def __init__(self, attempts, *, success_at=None, progress_at=None, fail_summary=False, failure="write"):
+    def __init__(self, attempts, *, success_at=None, progress_at=None, fail_summary=False, failure="write", total=23):
         super().__init__()
         self.attempts = attempts
         self.success_at = success_at
         self.progress_at = progress_at
         self.fail_summary = fail_summary
         self.failure = failure
+        self.total = total
 
     def write(self, message):
         success_error = self.failure == "write" and self.attempts() == self.success_at and message.startswith("  ")
-        progress_error = self.progress_at is not None and message.startswith(f"[{self.progress_at}/23]")
+        progress_error = self.progress_at is not None and message.startswith(f"[{self.progress_at}/{self.total}]")
         if success_error or progress_error or (self.fail_summary and message.startswith("{")):
             raise BrokenPipeError("terminal write failed")
         return super().write(message)
@@ -87,6 +88,7 @@ class GenerationTests(unittest.TestCase):
         fail_summary=False,
         terminal_failure=None,
         legacy_loader=False,
+        scope="selected",
     ):
         self.run_index += 1
         output = self.root / f"run-{self.run_index}"
@@ -144,8 +146,13 @@ class GenerationTests(unittest.TestCase):
             progress_at=fail_progress_at,
             fail_summary=fail_summary,
             failure=terminal_failure or "write",
+            total=self.generator.SCOPES[scope][0],
         )
-        argv = [str(SCRIPT), "--selection", str(self.selection), "--output-dir", str(output)]
+        argv = [str(SCRIPT), "--output-dir", str(output)]
+        if scope == "selected":
+            argv += ["--selection", str(self.selection)]
+        else:
+            argv += ["--scope", scope]
         previous_directory = Path.cwd()
         try:
             os.chdir(SCRIPT.parents[2])
@@ -172,14 +179,52 @@ class GenerationTests(unittest.TestCase):
         records = [json.loads(line) for line in path.read_text().splitlines()] if path.exists() else []
         return code, manifest, records
 
-    def assert_accounting(self, manifest, records, expected):
+    def assert_accounting(self, manifest, records, expected, total=23):
         counts = tuple(manifest[name] for name in ("generated_count", "generation_error_count", "unattempted_count"))
         self.assertEqual(counts, expected)
-        self.assertEqual(sum(counts), 23)
+        self.assertEqual(sum(counts), total)
         self.assertTrue(all(count >= 0 for count in counts))
         self.assertEqual(manifest["generated_count"], sum(record["status"] == "generated" for record in records))
         self.assertEqual(manifest["generation_error_count"], sum(record["status"] == "error" for record in records))
-        self.assertEqual(manifest["unattempted_count"], 23 - len(records))
+        self.assertEqual(manifest["unattempted_count"], total - len(records))
+
+    def test_full_split_keeps_dataset_order_without_selection_file(self):
+        self.selection.unlink()
+        code, manifest, records = self.run_generation(scope="full", legacy_loader=True)
+        self.assertEqual(code, 0)
+        self.assertEqual(manifest["evaluation_scope"], "full")
+        self.assertEqual(manifest["expected_count"], 342)
+        self.assertEqual(manifest["instruction_occurrences"], 481)
+        self.assertIsNone(manifest["selection_source"])
+        for row, record in zip(self.rows, records):
+            self.assertEqual({field: record[field] for field in row}, row)
+        self.assertEqual([row["key"] for row in records], [row["key"] for row in self.rows])
+        self.assert_accounting(manifest, records, (342, 0, 0), total=342)
+
+    def test_full_split_failure_counts_do_not_use_selected_denominator(self):
+        code, manifest, records = self.run_generation(scope="full", fail_generation_at=200)
+        self.assertEqual(code, 1)
+        self.assert_accounting(manifest, records, (199, 1, 142), total=342)
+        code, manifest, records = self.run_generation(scope="full", fail_log_at=342)
+        self.assertEqual(code, 1)
+        self.assertEqual(manifest["error_stage"], "logging")
+        self.assert_accounting(manifest, records, (342, 0, 0), total=342)
+
+    def test_full_split_rejects_selection_and_misaligned_unselected_row(self):
+        with self.assertRaisesRegex(ValueError, "not a selection file"):
+            self.generator.select_rows(self.rows, self.generator.KEYS, scope="full")
+        self.rows[-1]["kwargs"] = []
+        with self.assertRaisesRegex(ValueError, "alignment"):
+            self.generator.select_rows(self.rows, scope="full")
+
+    def test_full_scope_cli_rejects_selection_before_creating_output(self):
+        output = self.root / "rejected"
+        argv = [str(SCRIPT), "--scope", "full", "--selection", str(self.selection), "--output-dir", str(output)]
+        with patch.object(sys, "argv", argv), contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as caught:
+                self.generator.main()
+        self.assertEqual(caught.exception.code, 2)
+        self.assertFalse(output.exists())
 
     def test_success_with_legacy_loader_keyword(self):
         code, manifest, records = self.run_generation(legacy_loader=True)
