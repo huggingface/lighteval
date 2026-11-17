@@ -103,6 +103,10 @@ class SGLangModelConfig(ModelConfig):
         system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
             This prompt sets the behavior and context for the model during evaluation.
         cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
+        chat_template_kwargs (dict | None):
+            Extra keyword arguments forwarded to the tokenizer's `apply_chat_template`. Useful for
+            template-specific flags such as `{"enable_thinking": False}` to disable a reasoning
+            model's (e.g. Qwen3) thinking mode. Defaults to None.
 
     Example:
         ```python
@@ -136,6 +140,7 @@ class SGLangModelConfig(ModelConfig):
     mem_fraction_static: PositiveFloat = 0.8
     chunked_prefill_size: PositiveInt = 4096
     override_chat_template: bool = None
+    chat_template_kwargs: dict | None = None
 
 
 class SGLangModel(LightevalModel):
@@ -161,7 +166,9 @@ class SGLangModel(LightevalModel):
         self.sampling_backend = config.sampling_backend
         self.attention_backend = config.attention_backend
         self.pairwise_tokenization = config.pairwise_tokenization
-        self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer, config.system_prompt)
+        self.prompt_manager = PromptManager(
+            self.use_chat_template, self.tokenizer, config.system_prompt, config.chat_template_kwargs
+        )
 
         # Initialize cache for tokenization and predictions
         self._cache = SampleCache(config)

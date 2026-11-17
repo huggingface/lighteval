@@ -22,6 +22,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 **.pyc
+claude.md
 
 # C extensions
 *.so
@@ -183,3 +184,4 @@ prod_env
 logs
 _logs
 outputs
+.litellm_cache/

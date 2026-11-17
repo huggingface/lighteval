@@ -102,6 +102,20 @@ correspond to the fields of the model configurations.
 
 The model configurations can be found [here](./package_reference/models).
 
+Fields are comma-separated (`key=value,key=value`), so a value that itself
+contains a comma — a `system_prompt` with punctuation, for example — must be
+quoted, or the comma will be read as the start of a new field:
+
+```bash
+lighteval vllm \
+    'model_name=gpt2,system_prompt="Be helpful, concise, and friendly"' \
+    gsm8k
+```
+
+For anything more than one or two fields, a YAML config file
+(`lighteval vllm my_config.yaml ...`) avoids this class of issue entirely and
+is generally easier to read.
+
 All models allow you to post-process your reasoning model predictions
 to remove the thinking tokens from the trace used to compute the metrics,
 using `--remove-reasoning-tags` and `--reasoning-tags` to specify which
@@ -117,6 +131,25 @@ lighteval vllm \
     --remove-reasoning-tags \
     --reasoning-tags="[('[THINK]','[/THINK]')]"
 ```
+
+That controls the *output* side (stripping thinking tokens after generation).
+To control the *input* side — whether the model thinks at all — pass
+`chat_template_kwargs` in your model config. It forwards arbitrary keyword
+arguments to the tokenizer's `apply_chat_template`, which is how models like
+Qwen3 expose an `enable_thinking` switch in their chat template:
+
+```yaml
+model_parameters:
+    model_name: "Qwen/Qwen3-8B"
+    chat_template_kwargs:
+      enable_thinking: false
+```
+
+This is supported by every backend that renders prompts with a local
+tokenizer (`accelerate`/`transformers`, `vllm`, `sglang`, and the
+`endpoint`/`tgi` backends). It has no effect on backends that never apply a
+chat template locally (e.g. `litellm`), since those send raw messages to the
+provider's own API instead.
 
 ### Nanotron
 

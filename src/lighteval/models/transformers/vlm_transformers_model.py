@@ -110,6 +110,10 @@ class VLMTransformersModelConfig(ModelConfig):
         system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
             This prompt sets the behavior and context for the model during evaluation.
         cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
+        chat_template_kwargs (dict | None):
+            Extra keyword arguments forwarded to the tokenizer's `apply_chat_template`. Useful for
+            template-specific flags such as `{"enable_thinking": False}` to disable a reasoning
+            model's thinking mode. Defaults to None.
     """
 
     model_name: str
@@ -127,6 +131,7 @@ class VLMTransformersModelConfig(ModelConfig):
     trust_remote_code: bool = False
     compile: bool = False
     device_map: str | None = None
+    chat_template_kwargs: dict | None = None
 
     def get_model_sha(self):
         return _get_model_sha(repo_id=self.model_name, revision=self.revision)
@@ -174,7 +179,10 @@ class VLMTransformersModel(LightevalModel):
         self.generation_config_dict["renormalize_logits"] = True
 
         self.prompt_manager = PromptManager(
-            use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
+            use_chat_template=True,
+            tokenizer=self.tokenizer,
+            system_prompt=config.system_prompt,
+            chat_template_kwargs=config.chat_template_kwargs,
         )
 
         # Initialize cache for tokenization and predictions

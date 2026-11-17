@@ -1,0 +1,26 @@
+# LiteLLM configuration for a model that supports loglikelihood evaluation.
+#
+# loglikelihood() and loglikelihood_rolling() require the /v1/completions
+# endpoint with echo=True and logprobs=1.  Only "completion-style" models
+# expose this endpoint.  Examples:
+#   - OpenAI:               gpt-3.5-turbo-instruct
+#   - Local (llama.cpp):    openai/local-model  (with base_url pointing to server)
+#   - Local (vLLM serve):   openai/local-model  (with base_url pointing to server)
+#
+# Chat-only models (gpt-4o, claude-*, gemini-*) do NOT support this endpoint
+# and will produce -inf loglikelihoods.  Use the standard litellm_model.yaml
+# for generative (greedy_until) evaluations with those models.
+#
+# Usage:
+#   lighteval endpoint litellm examples/model_configs/litellm_completion_model.yaml \
+#     "mmlu|0" "arc|0" "hellaswag|0"
+
+model_parameters:
+  model_name: "gpt-3.5-turbo-instruct"
+  provider: "openai"
+  concurrent_requests: 10
+  api_max_retry: 8
+  api_retry_sleep: 1.0
+  api_retry_multiplier: 2.0
+  generation_parameters:
+    seed: 42

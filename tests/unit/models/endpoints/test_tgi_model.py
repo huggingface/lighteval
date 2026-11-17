@@ -60,6 +60,7 @@ class TestTGIModelConfig:
                         "response_format": None,
                     },
                     "cache_dir": "~/.cache/huggingface/lighteval",
+                    "chat_template_kwargs": None,
                 },
             ),
         ],

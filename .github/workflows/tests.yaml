@@ -60,7 +60,7 @@ jobs:
 
       - name: Install the project
         # Install into the image's Python so the preinstalled torch is reused
-        run: uv pip install --system --break-system-packages -e ".[dev-gpu]"
+        run: uv pip install --system --break-system-packages -e ".[dev-gpu,litellm]"
 
       - name: Ensure cache directories exist
         run: mkdir -p cache/models cache/datasets
