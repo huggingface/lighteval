@@ -25,8 +25,8 @@ true
 """
 
 import re
+from collections import Counter
 
-import numpy as np
 from inspect_ai.dataset import Sample
 from inspect_ai.model import get_model
 from inspect_ai.scorer import Metric, SampleScore, Score, Target, metric, scorer, stderr
@@ -145,54 +145,55 @@ Just return the letters "A", "B", "C", or "D", with no text around it.
 """.strip()
 
 
+def count_grades(scores: list[SampleScore]) -> Counter:
+    # The grade is read from metadata because inspect_ai's epoch reducer turns
+    # the letter in `score.value` into a float before the metrics run.
+    return Counter(score.score.metadata["grade"] for score in scores)
+
+
 @metric
 def hallucination_rate() -> Metric:
-    """percentage incorrect of incorrect/abstentions
+    """incorrect / (incorrect + partial + not attempted): how often the model answers wrongly when it does not know
 
     Returns:
         hallucination rate metric
     """
 
     def metric(scores: list[SampleScore]) -> float:
-        incorrect = [score for score in scores if score.score.explanation in ["B", "C"]]
-        not_attempted = [score for score in scores if score.score.explanation == "D"]
+        grades = count_grades(scores)
+        not_correct = grades["B"] + grades["C"] + grades["D"]
 
-        return (len(incorrect) + len(not_attempted)) / len(scores)
+        return grades["B"] / not_correct if not_correct else 0.0
 
     return metric
 
 
 @metric
 def accuracy() -> Metric:
-    """percentage correct of correct/abstentions
+    """correct / all questions
 
     Returns:
         accuracy metric
     """
 
     def metric(scores: list[SampleScore]) -> float:
-        correct = [score for score in scores if score.score.explanation == "A"]
-
-        return len(correct) / len(scores)
+        return count_grades(scores)["A"] / len(scores)
 
     return metric
 
 
 @metric
 def omniscience_index() -> Metric:
-    """percentage correct of correct/abstentions
+    """(correct - incorrect) / all questions: partial answers and abstentions count 0
 
     Returns:
-        accuracy metric
+        omniscience index metric
     """
 
     def metric(scores: list[SampleScore]) -> float:
-        correct = [1 for score in scores if score.score.explanation == "A"]
-        incorrect = [-1 for score in scores if score.score.explanation == "B"]
-        partial = [-1 for score in scores if score.score.explanation == "C"]
-        not_attempted = [0 for score in scores if score.score.explanation == "D"]
+        grades = count_grades(scores)
 
-        return np.mean(correct + incorrect + partial + not_attempted).item()
+        return (grades["A"] - grades["B"]) / len(scores)
 
     return metric
 
@@ -217,10 +218,15 @@ def aa_omniscience_scorer(ignore_case: bool = True):
 
         if not match:
             return Score(
-                value="D", answer=answer, explanation="Grade not found in model output: " + f"{result.completion}"
+                value="D",
+                answer=answer,
+                explanation="Grade not found in model output: " + f"{result.completion}",
+                metadata={"grade": "D"},
             )
 
-        return Score(value=match.group(0), answer=answer, explanation=result.completion)
+        return Score(
+            value=match.group(0), answer=answer, explanation=result.completion, metadata={"grade": match.group(0)}
+        )
 
     return score
 
