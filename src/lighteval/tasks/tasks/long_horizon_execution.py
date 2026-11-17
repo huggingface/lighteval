@@ -142,6 +142,11 @@ def scorer():
                     parsed_outputs.append(parsed_value)
                 except ValueError:
                     parsed_outputs.append(None)
+            else:
+                # A turn without an <answer> tag is wrong, but it must keep its place so the
+                # later turns are still compared with their own targets (the reference parser
+                # marks it as a NoOp).
+                parsed_outputs.append(None)
 
         turn_results = []
         for turn_output, target in zip(parsed_outputs, targets_per_turn):
