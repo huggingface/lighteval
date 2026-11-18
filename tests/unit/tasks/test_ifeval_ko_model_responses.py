@@ -389,9 +389,11 @@ class ModelResponseTests(unittest.TestCase):
     def test_native_prompt_averaging_of_instruction_scores_is_rejected(self):
         _, records = self.make_run()
         reference, task, scoring, response_class, _ = self.engines()
-        task.aggregation.return_value["inst_level_strict_acc"] = lambda groups: sum(
-            sum(group) / len(group) for group in groups
-        ) / len(groups)
+
+        def incorrect_instruction_aggregation(groups):
+            return sum(sum(group) / len(group) for group in groups) / len(groups)
+
+        task.aggregation.return_value["inst_level_strict_acc"] = incorrect_instruction_aggregation
         report = self.verifier.score_records(records, reference, task, scoring, response_class)
         self.assertFalse(report["passed"])
         self.assertFalse(report["metrics"]["inst_level_strict_acc"]["passed"])
