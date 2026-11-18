@@ -426,5 +426,47 @@ class TestTransformersModelUseChatTemplate(unittest.TestCase):
                 self.assertEqual(model.use_chat_template, model._tokenizer.chat_template is not None)
 
 
+class TestTransformersModelStopSequences(unittest.TestCase):
+    def test_padded_greedy_until_handles_tuple_and_none_stop_sequences(self):
+        """Ensure _padded_greedy_until converts tuple/None stop_sequences cleanly when use_chat_template=False."""
+        for stop_sequences, expected_stop_tokens in [
+            ((), ["</s>"]),
+            (("\n", "END"), ["</s>", "\n", "END"]),
+            (["\n"], ["</s>", "\n"]),
+            (None, ["</s>"]),
+        ]:
+            with self.subTest(stop_sequences=stop_sequences):
+                model = TransformersModel.__new__(TransformersModel)
+                model.config = Mock(batch_size=1, generation_parameters=Mock(max_new_tokens=None))
+                model.generation_config_dict = {}
+                model._max_length = 64
+                model.use_chat_template = False
+                model._add_special_tokens = True
+                model._device = torch.device("cpu")
+                model.accelerator = Mock(is_main_process=True, prepare=lambda x: x)
+                model.prompt_manager = Mock()
+                model.prompt_manager.prepare_prompt.return_value = "Question: 1+1?"
+
+                encoded = Mock()
+                tensors = {
+                    "input_ids": torch.tensor([[1, 2, 3]]),
+                    "attention_mask": torch.tensor([[1, 1, 1]]),
+                }
+                encoded.__getitem__ = lambda _self, key, t=tensors: t[key]
+                encoded.to.return_value = encoded
+                tokenizer = Mock(eos_token="</s>", return_value=encoded)
+                model._tokenizer = tokenizer
+
+                expected_response = ModelResponse(text=["2"])
+                model._generate = Mock(return_value=[expected_response])
+
+                doc = Doc(query="1+1?", choices=[], gold_index=0, generation_size=5, stop_sequences=stop_sequences)
+                responses = model._padded_greedy_until([doc])
+
+                self.assertEqual(responses, [expected_response])
+                model._generate.assert_called_once()
+                self.assertEqual(model._generate.call_args.kwargs["stop_tokens"], expected_stop_tokens)
+
+
 if __name__ == "__main__":
     unittest.main()
