@@ -1453,4 +1453,4 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
         return metrics
 
     def num_samples(self):
-        return self.n if self.n is not None else self.k
+        return self.n if self.n is not None else max(self.k)
