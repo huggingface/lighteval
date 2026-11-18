@@ -149,6 +149,45 @@ class TestLogging:
             assert int(dataset[0]["truncated"]) == task_details[task][0].truncated
             assert int(dataset[0]["padded"]) == task_details[task][0].padded
 
+    @pytest.mark.evaluation_tracker(save_details=True)
+    def test_details_logging_mixed_metric_types(self, mock_evaluation_tracker, mock_datetime):
+        from lighteval.models.model_output import ModelResponse
+        from lighteval.tasks.requests import Doc
+
+        doc = Doc(query="Which option is correct?", choices=["A", "B"], gold_index=0)
+        generative_response = ModelResponse(
+            input="Which option is correct?",
+            input_tokens=[1, 2, 3],
+            text=["A"],
+            output_tokens=[[4, 5]],
+        )
+        logprob_response = ModelResponse(
+            input=["Which option is correct?", "Which option is correct?"],
+            input_tokens=[[1, 2, 3], [1, 2, 3]],
+            logprobs=[-0.1, -1.2],
+            argmax_logits_eq_gold=[True, False],
+            output_tokens=[[4], [5]],
+        )
+        mock_evaluation_tracker.details_logger.log("mixed_task", doc, generative_response, {"exact_match": 1.0})
+        mock_evaluation_tracker.details_logger.log("mixed_task", doc, logprob_response, {"acc": 1.0})
+
+        mock_evaluation_tracker.save()
+
+        date_id = mock_datetime.isoformat().replace(":", "-")
+        file_path = (
+            Path(mock_evaluation_tracker.output_dir)
+            / "details"
+            / "test_model"
+            / date_id
+            / f"details_mixed_task_{date_id}.parquet"
+        )
+        dataset = Dataset.from_parquet(str(file_path))
+        assert len(dataset) == 2
+        assert dataset[0]["model_response"]["input_tokens"] == [[1, 2, 3]]
+        assert dataset[1]["model_response"]["input_tokens"] == [[1, 2, 3], [1, 2, 3]]
+        assert dataset[0]["model_response"]["input"] == ["Which option is correct?"]
+        assert dataset[1]["model_response"]["input"] == ["Which option is correct?", "Which option is correct?"]
+
     @pytest.mark.evaluation_tracker(save_details=False)
     def test_no_details_output(self, mock_evaluation_tracker: EvaluationTracker):
         mock_evaluation_tracker.save()
