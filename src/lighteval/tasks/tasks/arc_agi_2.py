@@ -76,15 +76,18 @@ def arc_agi_2_prompt(line, task_name: str = None):
         training_examples += __convert_2d_list_to_string(pair["output"]) + "\n\n"
 
     test_input = __convert_2d_list_to_string(line["question"][0]["input"])
+    test_output = line["question"][0]["output"]
 
-    gold = str(line["question"][0]["output"])
+    # The prompt shows every grid one row per line and asks for an answer "in the format of the
+    # training output examples", so accept that format as well as the one-line list.
+    golds = [__convert_2d_list_to_string(test_output).strip(), str(test_output)]
     query = PROMPT_TEMPLATE.format(training_examples=training_examples, test_input=test_input)
 
     return Doc(
         task_name=task_name,
         query=query,
-        choices=[gold],
-        gold_index=0,
+        choices=golds,
+        gold_index=[0, 1],
     )
 
 
