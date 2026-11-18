@@ -30,6 +30,7 @@ from datetime import datetime
 from enum import Enum
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 
 import torch
 from datasets import Dataset, load_dataset
@@ -56,6 +57,59 @@ try:
     from fsspec import url_to_fs
 except ImportError:
     from fsspec.core import url_to_fs
+
+
+def _list_depth(value: Any) -> int:
+    """Return the maximum list-nesting depth of a value (0 for non-lists)."""
+    if not isinstance(value, list):
+        return 0
+    return 1 + max((_list_depth(item) for item in value), default=0)
+
+
+def _wrap_to_depth(value: Any, target_depth: int) -> Any:
+    """Wrap a non-empty value in nested lists until it reaches target_depth."""
+    if isinstance(value, list) and not value:
+        return value
+    depth = _list_depth(value)
+    while depth < target_depth:
+        value = [value]
+        depth += 1
+    return value
+
+
+def _harmonize_detail_dicts(rows: list[dict[str, Any]]) -> None:
+    """Align nested list depths across rows in place so Arrow serialization succeeds when metrics mix sampling types.
+
+    Args:
+        rows (list[dict[str, Any]]): Serialized detail dictionaries for a single task.
+    """
+    if len(rows) <= 1:
+        return
+
+    all_keys = {key for row in rows for key in row}
+    for key in all_keys:
+        entries = [(row, row[key]) for row in rows if key in row and row[key] is not None]
+        if len(entries) <= 1:
+            continue
+
+        values = [value for _, value in entries]
+        if all(isinstance(value, dict) for value in values):
+            _harmonize_detail_dicts(values)
+            continue
+
+        if any(isinstance(value, dict) for value in values):
+            for row, value in entries:
+                if not isinstance(value, str):
+                    row[key] = json.dumps(value, cls=EnhancedJSONEncoder)
+            continue
+
+        depths = [_list_depth(value) for value in values]
+        max_depth = max(depths)
+        if max_depth == 0 or all(depth == max_depth for depth in depths):
+            continue
+
+        for row, value in entries:
+            row[key] = _wrap_to_depth(value, max_depth)
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
@@ -258,8 +312,9 @@ class EvaluationTracker:
         # Create the details datasets for later upload
         details_datasets: dict[str, Dataset] = {}
         for task_name, task_details in self.details_logger.details.items():
-            # Create a dataset from the dictionary - we force cast to str to avoid formatting problems for nested objects
-            dataset = Dataset.from_list([asdict(detail) for detail in task_details])
+            detail_dicts = [asdict(detail) for detail in task_details]
+            _harmonize_detail_dicts(detail_dicts)
+            dataset = Dataset.from_list(detail_dicts)
 
             # We don't keep 'id' around if it's there
             column_names = dataset.column_names
