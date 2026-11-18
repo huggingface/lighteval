@@ -21,12 +21,46 @@
 # SOFTWARE.
 
 
+import pytest
+from datasets import Dataset, DatasetDict
+
+from lighteval.metrics.metrics import Metrics
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
 def dummy_prompt_function(item, task_name):
     return Doc(query=item["text"], choices=["A", "B"], gold_index=0, task_name=task_name)
+
+
+@pytest.mark.parametrize(
+    "k,n,expected_samples",
+    [(1, None, 1), (4, None, 4), ([4, 1, 2], None, 4), (4, 8, 8), ([4, 1, 2], 8, 8)],
+)
+def test_gpass_sample_count(k, n, expected_samples):
+    sample_params = {"k": k}
+    if n is not None:
+        sample_params["n"] = n
+    metric = Metrics.g_pass_at_k(sample_params=sample_params)
+    cfg = LightevalTaskConfig(
+        name="gpass_sample_count",
+        prompt_function=dummy_prompt_function,
+        hf_repo="unused",
+        hf_subset="default",
+        metrics=[metric],
+        evaluation_splits=["test"],
+    )
+    task = LightevalTask(cfg)
+    task.dataset = DatasetDict({"test": Dataset.from_list([{"text": "Pick A."}])})
+
+    [doc] = task.get_docs()
+
+    assert doc.num_samples == expected_samples
+    response = ModelResponse(text=["A"] * doc.num_samples)
+    scores = metric.compute_sample(doc=doc, model_response=response)
+    for requested_k in [k] if isinstance(k, int) else k:
+        assert scores[f"g-pass@{requested_k}_1.0"] == pytest.approx(1.0)
 
 
 def test_revision_check():
