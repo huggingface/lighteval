@@ -22,7 +22,19 @@
 
 import pytest
 
-from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm, normalize_log_probs
+from lighteval.metrics.dynamic_metrics import MultilingualQuasiExactMatchMetric
+from lighteval.metrics.normalizations import (
+    LogProbCharNorm,
+    LogProbPMINorm,
+    LogProbTokenNorm,
+    get_multilingual_normalizer,
+    normalize_log_probs,
+    remove_articles,
+)
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.requests import Doc
+from lighteval.utils.imports import Extra, is_package_available
+from lighteval.utils.language import Language
 
 
 def test_char_norm():
@@ -61,3 +73,52 @@ def test_empty_input():
     assert normalize_log_probs(LogProbCharNorm(), empty_logprob, None, empty_text, None) == []
     assert normalize_log_probs(LogProbTokenNorm(), empty_logprob, None, None, empty_tokens) == []
     assert normalize_log_probs(LogProbPMINorm(), empty_logprob, empty_logprob, None, None) == []
+
+
+needs_multilingual = pytest.mark.skipif(
+    not is_package_available(Extra.MULTILINGUAL), reason="requires lighteval[multilingual]"
+)
+
+
+@pytest.mark.parametrize(
+    "language, text, expected_words",
+    [
+        (Language.ENGLISH, "The Beatles", ["Beatles"]),
+        (Language.ENGLISH, "An apple", ["apple"]),
+        (Language.FRENCH, "Le chat", ["chat"]),
+        (Language.FRENCH, "L'été", ["été"]),
+        (Language.GERMAN, "Der Hund", ["Hund"]),
+        (Language.SPANISH, "El perro", ["perro"]),
+        (Language.ITALIAN, "Il cane", ["cane"]),
+        # Lowercase articles were always removed; words that merely start with an article are untouched
+        (Language.ENGLISH, "the Beatles", ["Beatles"]),
+        (Language.ENGLISH, "Theater", ["Theater"]),
+    ],
+)
+def test_remove_articles_ignores_case(language, text, expected_words):
+    assert remove_articles(text, language).split() == expected_words
+
+
+@needs_multilingual
+@pytest.mark.parametrize(
+    "language, with_article, without_article",
+    [
+        (Language.ENGLISH, "The Beatles", "beatles"),
+        (Language.ENGLISH, "A dog.", "dog"),
+        (Language.FRENCH, "Le chat", "chat"),
+        (Language.GERMAN, "Der Hund", "hund"),
+        (Language.SPANISH, "El perro", "perro"),
+        (Language.ITALIAN, "Il cane", "cane"),
+    ],
+)
+def test_multilingual_normalizer_drops_capitalized_articles(language, with_article, without_article):
+    normalizer = get_multilingual_normalizer(language)
+    assert normalizer(with_article) == normalizer(without_article) == without_article
+
+
+@needs_multilingual
+def test_multilingual_quasi_exact_match_ignores_capitalized_article():
+    doc = Doc(query="Which band recorded Abbey Road?", choices=["Beatles"], gold_index=0)
+    metric = MultilingualQuasiExactMatchMetric(Language.ENGLISH, "full").sample_level_fn
+    assert metric.compute(doc, ModelResponse(text=["The Beatles"])) == 1
+    assert metric.compute(doc, ModelResponse(text=["The Rolling Stones"])) == 0
