@@ -5,9 +5,9 @@ the same saved responses to the original Ko evaluator and registered Lighteval
 task. This stage runs Transformers generation only. It does not invoke either
 scorer or establish model-response scoring parity.
 
-The default remains the agreed 23-prompt selection. `--scope full` generates all
-342 prompts and 481 instruction occurrences at the same pinned dataset revision,
-using the same model, chat template, decoding settings and MPS backend below.
+The default uses the agreed 23-prompt selection. `--scope full` generates
+responses for all 342 prompts, containing 481 instruction occurrences, at the
+same pinned dataset revision and with the same generation settings below.
 
 The 23 selected prompts contain 40 instruction occurrences and cover all 21
 instruction types in the pinned dataset, along with the 25 normal-input paths
@@ -34,7 +34,7 @@ defined in the [selection coverage audit](https://github.com/Hugging-Face-KREW/k
 | Empty responses | 0 |
 | Token-limit termination | key `1127` |
 | Total script runtime | approximately 185.6 seconds |
-| Responses scored | 0 |
+| Responses scored by this script | 0 |
 
 The complete generation configuration, including inherited model settings and
 EOS/pad IDs, actual dtype, environment versions, execution timestamps and Git
@@ -147,8 +147,8 @@ The run directory contains:
 
 | File | Contents |
 | --- | --- |
-| `selection.json` | Copy of the selection file used by this run |
-| `selected-samples.json` | Original selected rows, including ordered IDs and unmodified kwargs |
+| `selection.json` | Selected keys and metadata; copied for selected runs and generated from source order for full runs |
+| `selected-samples.json` | Source rows used by the run, including ordered instruction IDs and unmodified kwargs |
 | `responses.jsonl` | One record per attempted prompt, with source fields, rendered input, input/output token IDs, raw decoded text, scoring response, termination reason and generation time or error |
 | `manifest.json` | Revisions, actual generation settings, environment, stage counts and artifact hashes |
 | `requirements.lock.txt` | Installed dependency versions, excluding editable packages |
@@ -156,8 +156,8 @@ The run directory contains:
 | `run.log` | Execution log |
 | `SHA256SUMS` | SHA-256 checksums for the seven files above |
 
-The saved run passed checksum verification for all seven files. Additional
-checks confirmed 23 unique keys in the selected order, 23 generated responses,
+The recorded 23-prompt run passed checksum verification for all seven files.
+Additional checks confirmed 23 unique keys in the selected order, 23 generated responses,
 40 instructions, unchanged original input fields, matching response hashes,
 and identical `response` / `scoring_response` fields. There were no generation
 errors, unattempted prompts or empty responses.
@@ -208,7 +208,7 @@ Reproduction requires an MPS-capable Mac. File checksums verify saved artifacts;
 new runs have different timestamps and logs, and cross-environment generation
 is not guaranteed to be byte-identical.
 
-## Response contract and remaining work
+## Response contract and scoring
 
 For both evaluators, use each generated record's `response` or equivalent
 `scoring_response` verbatim, together with its original `key`, `prompt`,
@@ -224,7 +224,8 @@ cross-evaluation input. A blank response, if generated in another run, is also
 retained. Runtime exceptions are saved as errors and stop the run; they are not
 replaced with blank successful responses.
 
-The one-item hardware smoke test is separate from the recorded 23-prompt run.
+The initial single-prompt hardware smoke test is separate from the recorded
+23-prompt run.
 The generation stage reports no scoring result. Compare identical saved text
 through original Ko, direct ported scoring and the registered task with the
 matching verifier scope, and investigate every mismatch. Saved-response scoring

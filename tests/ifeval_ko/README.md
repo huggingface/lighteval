@@ -29,6 +29,10 @@ original Ko results and a live run of the pinned original evaluator.
   See [validation with saved model responses](#validation-with-saved-model-responses-23-selected-prompts).
 - Full saved Qwen split: generation results, strict/loose agreement and all four
   metrics are recorded in [full-split validation](#validation-with-full-split-saved-responses-342-prompts).
+- A [small Apple M5/MPS GPU run](https://github.com/Hugging-Face-KREW/lighteval/pull/8#pullrequestreview-5970474156)
+  confirmed that native Lighteval generation, scoring and aggregation ran
+  successfully for 3 prompts and 5 instruction occurrences, with results
+  matching the original Ko evaluator.
 
 The following table shows the **156 fixed response regression results**.
 
@@ -50,14 +54,14 @@ The registered-task results attached to
 also matched by `case_id`, instruction index, and input/response hashes.
 This optional attachment comparison is separate from locally executing the task.
 
-## Remaining validation
+## Validation scope
 
-English and French runtime regression and native Lighteval model inference remain
-pending. The verifier supports both the default 23-prompt selection and explicit
-`--scope full` for all 342 prompts and 481 instruction occurrences. Use the same
-saved assistant responses for the original Ko evaluator and both Lighteval paths,
-and record the generation settings and any errors. Full-split execution results
-are recorded separately from the historical 23-prompt results below.
+Native model inference was checked in the three-prompt MPS run linked above.
+The saved-response verifier supports both the default 23-prompt selection and
+explicit `--scope full` for all 342 prompts and 481 instruction occurrences.
+Use the same saved assistant responses for the original Ko evaluator and both
+Lighteval paths, and record the generation settings and any errors. Full-split
+results are recorded separately from the historical 23-prompt results below.
 
 `verify_registered_task.py` checks dataset formatting through the task API.
 Output from `lighteval tasks inspect` is tracked separately as PR evidence.
@@ -210,8 +214,8 @@ There were **0 scoring errors, 0 aggregation errors and 0 mismatches**. The full
 denominators include every token-limited response. All seven run checksums
 passed. An independent tokenizer replay matched every rendered input, input
 token sequence, raw decoded output, scoring response, hash and finish reason.
-These are saved-response scoring results, with native Lighteval model inference
-still outside this validation.
+These full-split results cover scoring of saved responses. The native MPS
+inference check is recorded separately in the [validation status](#current-validation-status).
 
 This run used a local working tree based on `9731595bb95455aa442403516114a44a39d740bd`.
 The manifest records that base and the uncommitted file list; the exact generator
@@ -235,8 +239,8 @@ into the repository. Download them using the links below:
 
 ### Reproduce full-split validation
 
-Generate a fresh run with `scripts/ifeval_ko/generate_responses.py --scope full`,
-then select the same scope in the saved-response verifier:
+Use `--scope full` to replay the published saved responses or score a new
+full-split generation run:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python tests/ifeval_ko/verify_model_responses.py \
@@ -245,9 +249,10 @@ PYTHONDONTWRITEBYTECODE=1 python tests/ifeval_ko/verify_model_responses.py \
   --output-dir outputs/ifeval_ko/qwen-342-parity-001
 ```
 
-See the [generation guide](../../scripts/ifeval_ko/README.md#generate-the-full-342-prompt-split)
-for the pinned model/configuration and artifact contract. The verifier does not
-generate new responses or load model weights. `--scope selected` remains the
+For published responses, set `--run-dir` to the extracted response directory.
+To generate new responses, see the [generation guide](../../scripts/ifeval_ko/README.md#generate-the-full-342-prompt-split)
+for the pinned model, configuration and artifact contract. The verifier does not
+generate responses or load model weights. `--scope selected` remains the
 default, including support for the original PR #5 manifest without a scope field.
 Selected and full artifacts cannot be mixed.
 
@@ -343,7 +348,7 @@ python3 -m pip install -e . 'langdetect==1.0.9' 'immutabledict==4.3.1' \
 ```
 
 On WSL, use a Linux-filesystem virtual environment. A CPU build of PyTorch is
-sufficient; neither verifier generates model responses.
+sufficient for these verifiers, which do not generate model responses.
 
 Run the historical direct scorer regression using the audit environment at
 `$KO_AUDIT/.venv` (or substitute the path to your restored audit Python):
@@ -427,7 +432,7 @@ creation/build/call traces and input immutability against the archived reference
 Supplementary strict and loose entry points are each checked, including when
 strict raises; the combined entry's exception propagation is checked separately.
 
-## Environment and result artifact
+## Environment and result artifacts
 
 The historical 156-case runs used Python 3.12.3; NLTK 3.10.3; langdetect 1.0.9;
 immutabledict 4.3.1; packaging 26.3; pyarrow 26.0.0. The registered-task run used
@@ -450,6 +455,6 @@ not unhandled scoring failures.
 command/environment, source/evidence/verifier hashes, each case's flags, metric
 counts, auxiliary outcomes and mismatch list. They are local artifacts ignored by
 the repository's existing `*.json` rule. Keep these reports as PR attachments
-rather than committing machine-specific runtime paths. On failure, the report includes
-the first mismatch's original input and old/new judgments; instruction-level
-differences include `key`, `instruction_index`, and `instruction_id`.
+rather than committing machine-specific runtime paths. On failure, the report
+includes the first mismatch's original input and old/new judgments.
+Instruction-level differences include `key`, `instruction_index`, and `instruction_id`.
