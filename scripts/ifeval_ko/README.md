@@ -55,10 +55,15 @@ Selected keys, in generation order:
 
 ## Run from the repository root
 
-Use the team's merged `team-c/ifeval-ko` code and an activated Python 3.11
-environment with the required dependencies installed. The task merge commit is
-`bc7bc0beaee028e0e2f16a734c36048c121609c6`; the actual run's code revision is in
-the manifest, and an exact generator snapshot is included in the run artifacts.
+For new runs, use the current checkout in an activated Python 3.11 virtual
+environment and install its dependencies:
+
+```bash
+python -m pip install -e .
+```
+
+For the recorded environment, follow
+[historical generation reproduction](#historical-generation-reproduction).
 
 The default selection path expects the operations repository next to the code
 repository:
@@ -167,20 +172,41 @@ Preserve the original run directory. Package it as a PR attachment; the
 repository ignores `outputs/` and JSON runtime artifacts. The generator and
 this README are source changes that can be committed separately.
 
-To reproduce generation in a fresh checkout and Python 3.11 environment, point
-`KO_RUN_DIR` at the extracted original run directory:
+### Historical generation reproduction
+
+The archived generation lock files pin NLTK `3.10.3`, while the current project
+requires `3.10.4`. Restore the archived environment in a separate checkout at
+the `code_revision` recorded in its `manifest.json`. Install that checkout with
+the archived lock file in a fresh Python 3.11 virtual environment. Keep the
+original archive and lock file unchanged.
+
+The example below restores the 23-prompt run. Use absolute paths and ensure the
+recorded commit is available locally before creating the detached worktree:
 
 ```bash
-python -m pip install -e . -r "$KO_RUN_DIR/requirements.lock.txt"
-python "$KO_RUN_DIR/generate_responses.py" \
+KO_RUN_DIR=/absolute/path/to/qwen-23-001
+KO_REPRO_DIR=/absolute/path/to/lighteval-generation-reproduction
+KO_RUN_REVISION=$(python3 -c \
+  'import json, sys; print(json.load(open(sys.argv[1]))["code_revision"])' \
+  "$KO_RUN_DIR/manifest.json")
+git worktree add --detach "$KO_REPRO_DIR" "$KO_RUN_REVISION"
+cd "$KO_REPRO_DIR"
+python3.11 -m venv .venv
+.venv/bin/python -m pip install -e . -r "$KO_RUN_DIR/requirements.lock.txt"
+.venv/bin/python "$KO_RUN_DIR/generate_responses.py" \
   --selection "$KO_RUN_DIR/selection.json" \
   --output-dir outputs/ifeval_ko/qwen-23-reproduction-001
 ```
 
-Run these commands from the Lighteval repository root. Reproduction requires an
-MPS-capable Mac. File checksums verify saved artifacts; new runs have different
-timestamps and logs, and cross-environment generation is not guaranteed to be
-byte-identical.
+Run the setup from the current repository root; installation and generation
+then run from the historical worktree. The archived generator snapshot preserves
+any generator changes that were uncommitted at the recorded revision. For a
+full-split archive, replace `--selection "$KO_RUN_DIR/selection.json"` with
+`--scope full` and choose a new full-split output directory.
+
+Reproduction requires an MPS-capable Mac. File checksums verify saved artifacts;
+new runs have different timestamps and logs, and cross-environment generation
+is not guaranteed to be byte-identical.
 
 ## Response contract and remaining work
 
