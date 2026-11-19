@@ -314,14 +314,27 @@ Read-only audit revision:
 `Hugging-Face-KREW/k-llm-eval-sprint@da7053db1d4858239856695a2cfed702173234b6`,
 `teams/team-c-ifeval-ko/evidence/checker-audit/`.
 Original Ko revision: `54199e3801116897697babf341865741dcd06fc8`.
-The verifier checks all `SHA256SUMS` entries, source hashes, dependency versions
-and NLTK resource hashes before evaluation. Audit inputs and expected results
-are read-only.
+The historical direct verifier checks all `SHA256SUMS` entries, source hashes,
+dependency versions and NLTK resource hashes before evaluation. Audit inputs and
+expected results are read-only.
 
-Run commands from the Lighteval repository root. If the audit inputs, pinned
-sources and dependencies are already available, activate the appropriate Python
-environment and supply your own directories. The registered-task verifier needs
-an installed Lighteval environment, including its declared optional Ko packages:
+### Historical audit and current runtime
+
+| Purpose | NLTK version | Dependencies |
+| --- | --- | --- |
+| Reproduce the archived 156-case audit with `verify_scoring.py` and `test_audit.py` | `3.10.3` | The pinned audit's `requirements.lock.txt` |
+| Run `verify_registered_task.py` or replay saved model responses with `verify_model_responses.py` | `3.10.4` | The current [`pyproject.toml`](../../pyproject.toml) and Ko packages below |
+
+Use separate virtual environments. `verify_scoring.py` requires the checked
+package versions to match the archived `ko_results.json`; with NLTK `3.10.4`,
+it stops before scoring with `Dependency versions differ from the stored Ko run`.
+Restore its environment from the audit lock file using the fresh-environment
+example below. Do not install the current Lighteval package into that environment.
+Preserve the pinned lock file, audit inputs and archived results.
+
+Run commands from the Lighteval repository root and supply your own audit/source
+directories. For registered-task and saved-model-response validation, activate a
+separate current Lighteval environment and install the Ko packages:
 
 ```bash
 python3 -m pip install --upgrade pip
@@ -332,25 +345,27 @@ python3 -m pip install -e . 'langdetect==1.0.9' 'immutabledict==4.3.1' \
 On WSL, use a Linux-filesystem virtual environment. A CPU build of PyTorch is
 sufficient; neither verifier generates model responses.
 
-Run the direct scorer regression using the ported checkers:
+Run the historical direct scorer regression using the audit environment at
+`$KO_AUDIT/.venv` (or substitute the path to your restored audit Python):
 
 ```bash
 KO_AUDIT=/path/to/checker-audit
 KO_SOURCES=/path/to/restored-audit-sources
-PYTHONDONTWRITEBYTECODE=1 python3 tests/ifeval_ko/verify_scoring.py \
+PYTHONDONTWRITEBYTECODE=1 "$KO_AUDIT/.venv/bin/python" tests/ifeval_ko/verify_scoring.py \
   --audit-dir "$KO_AUDIT" --source-root "$KO_SOURCES" \
   --checker-mode ported \
   --output results/ifeval_ko/scoring-parity-ported.json
-PYTHONDONTWRITEBYTECODE=1 python3 "$KO_AUDIT/test_audit.py"
-python3 tests/unit/tasks/test_ifeval_ko_scoring.py
+PYTHONDONTWRITEBYTECODE=1 "$KO_AUDIT/.venv/bin/python" "$KO_AUDIT/test_audit.py"
 ```
 
-Run the real registered task with the same fixtures:
+Run the real registered task with the same fixtures in the current Lighteval
+environment:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 tests/ifeval_ko/verify_registered_task.py \
   --audit-dir "$KO_AUDIT" --source-root "$KO_SOURCES" \
   --output results/ifeval_ko/registered-task-results.json
+python3 tests/unit/tasks/test_ifeval_ko_scoring.py
 ```
 
 This independently executes the original Ko evaluator, direct ported scorer,
@@ -377,9 +392,10 @@ an existing output; choose new output names when preserving previous reports.
 `--source-root` identifies the directory containing `sources/` and
 `.cache/nltk_data/`. These may be different directories.
 
-For a fresh environment, set the path to your documentation repository checkout
-and export the pinned audit into a separate validation directory. The pinned
-commit must be available in that checkout. Setup requires network access:
+For a fresh historical audit environment (NLTK `3.10.3`), set the path to your
+documentation repository checkout and export the pinned audit into a separate
+validation directory. The pinned commit must be available in that checkout.
+Setup requires network access:
 
 ```bash
 KO_DOCS_REPO=/path/to/k-llm-eval-sprint
@@ -413,12 +429,22 @@ strict raises; the combined entry's exception propagation is checked separately.
 
 ## Environment and result artifact
 
-Validated with Python 3.12.3; nltk 3.10.3; langdetect 1.0.9; immutabledict 4.3.1;
-packaging 26.3; pyarrow 26.0.0. The registered-task run used CPU PyTorch
-2.14.1+cpu, transformers 5.19.0 and inspect-ai 0.3.280 in a separate Linux
-environment. The result records its package versions. Numeric-text language detection logs from `123`
-are emitted by the original checker, which internally catches the exception
-and returns True; these are not unhandled scoring failures.
+The historical 156-case runs used Python 3.12.3; NLTK 3.10.3; langdetect 1.0.9;
+immutabledict 4.3.1; packaging 26.3; pyarrow 26.0.0. The registered-task run used
+CPU PyTorch 2.14.1+cpu, transformers 5.19.0 and inspect-ai 0.3.280 in a separate
+Linux environment. These versions describe the archived runs.
+
+Saved-response replays at `f5feb8fe9d30000986cd9667e872ff7602022c9a` passed on
+CPU with NLTK `3.10.4` for both 23 prompts / 40 instruction occurrences and
+342 prompts / 481 instruction occurrences. All strict/loose judgments and all
+four metrics matched the earlier results. These replays used the live original
+Ko evaluator in the same environment and did not regenerate model responses.
+Each new report records its actual package versions; the archived reports
+retain their original environment metadata.
+
+Numeric-text language detection logs from `123` are emitted by the original
+checker, which internally catches the exception and returns True; these are
+not unhandled scoring failures.
 
 `scoring-parity-ported.json` and `registered-task-results.json` contain the actual
 command/environment, source/evidence/verifier hashes, each case's flags, metric
