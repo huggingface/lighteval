@@ -454,7 +454,7 @@ class JudgeSwissLegalTranslation(JudgeLLM):
         questions = [doc.specific["source"] for doc in docs]
         options = [doc.choices for doc in docs]
         golds = [doc.get_golds()[0] for doc in docs]
-        predictions = [response.text[0] for response in responses]
+        predictions = [response.final_text[0] for response in responses]
 
         scores, _, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
         # Exclude the messages (user prompt) because they are too long
@@ -549,7 +549,7 @@ class JudgeSwissLandmarkDecisionSummarization(JudgeLLM):
 
         not_considered = [None for _ in docs]
         original_headnotes = [doc.get_golds()[0] for doc in docs]
-        generated_headnotes = [response.text[0] for response in responses]
+        generated_headnotes = [response.final_text[0] for response in responses]
 
         # Exclude the messages (user prompt) because they are too long
         scores, _, judgements = self.judge.evaluate_answer_batch(
