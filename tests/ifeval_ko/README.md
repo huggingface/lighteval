@@ -29,6 +29,10 @@ original Ko results and a live run of the pinned original evaluator.
   See [validation with saved model responses](#validation-with-saved-model-responses-23-selected-prompts).
 - Full saved Qwen split: generation results, strict/loose agreement and all four
   metrics are recorded in [full-split validation](#validation-with-full-split-saved-responses-342-prompts).
+- A [small Apple M5/MPS GPU run](https://github.com/Hugging-Face-KREW/lighteval/pull/8#pullrequestreview-5970474156)
+  confirmed that native Lighteval generation, scoring and aggregation ran
+  successfully for 3 prompts and 5 instruction occurrences, with results
+  matching the original Ko evaluator.
 
 The following table shows the **156 fixed response regression results**.
 
@@ -50,14 +54,14 @@ The registered-task results attached to
 also matched by `case_id`, instruction index, and input/response hashes.
 This optional attachment comparison is separate from locally executing the task.
 
-## Remaining validation
+## Validation scope
 
-English and French runtime regression and native Lighteval model inference remain
-pending. The verifier supports both the default 23-prompt selection and explicit
-`--scope full` for all 342 prompts and 481 instruction occurrences. Use the same
-saved assistant responses for the original Ko evaluator and both Lighteval paths,
-and record the generation settings and any errors. Full-split execution results
-are recorded separately from the historical 23-prompt results below.
+Native model inference was checked in the three-prompt MPS run linked above.
+The saved-response verifier supports both the default 23-prompt selection and
+explicit `--scope full` for all 342 prompts and 481 instruction occurrences.
+Use the same saved assistant responses for the original Ko evaluator and both
+Lighteval paths, and record the generation settings and any errors. Full-split
+results are recorded separately from the historical 23-prompt results below.
 
 `verify_registered_task.py` checks dataset formatting through the task API.
 Output from `lighteval tasks inspect` is tracked separately as PR evidence.
@@ -210,8 +214,8 @@ There were **0 scoring errors, 0 aggregation errors and 0 mismatches**. The full
 denominators include every token-limited response. All seven run checksums
 passed. An independent tokenizer replay matched every rendered input, input
 token sequence, raw decoded output, scoring response, hash and finish reason.
-These are saved-response scoring results, with native Lighteval model inference
-still outside this validation.
+These full-split results cover scoring of saved responses. The native MPS
+inference check is recorded separately in the [validation status](#current-validation-status).
 
 This run used a local working tree based on `9731595bb95455aa442403516114a44a39d740bd`.
 The manifest records that base and the uncommitted file list; the exact generator
@@ -235,8 +239,8 @@ into the repository. Download them using the links below:
 
 ### Reproduce full-split validation
 
-Generate a fresh run with `scripts/ifeval_ko/generate_responses.py --scope full`,
-then select the same scope in the saved-response verifier:
+Use `--scope full` to replay the published saved responses or score a new
+full-split generation run:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python tests/ifeval_ko/verify_model_responses.py \
@@ -245,9 +249,10 @@ PYTHONDONTWRITEBYTECODE=1 python tests/ifeval_ko/verify_model_responses.py \
   --output-dir outputs/ifeval_ko/qwen-342-parity-001
 ```
 
-See the [generation guide](../../scripts/ifeval_ko/README.md#generate-the-full-342-prompt-split)
-for the pinned model/configuration and artifact contract. The verifier does not
-generate new responses or load model weights. `--scope selected` remains the
+For published responses, set `--run-dir` to the extracted response directory.
+To generate new responses, see the [generation guide](../../scripts/ifeval_ko/README.md#generate-the-full-342-prompt-split)
+for the pinned model, configuration and artifact contract. The verifier does not
+generate responses or load model weights. `--scope selected` remains the
 default, including support for the original PR #5 manifest without a scope field.
 Selected and full artifacts cannot be mixed.
 
@@ -314,14 +319,27 @@ Read-only audit revision:
 `Hugging-Face-KREW/k-llm-eval-sprint@da7053db1d4858239856695a2cfed702173234b6`,
 `teams/team-c-ifeval-ko/evidence/checker-audit/`.
 Original Ko revision: `54199e3801116897697babf341865741dcd06fc8`.
-The verifier checks all `SHA256SUMS` entries, source hashes, dependency versions
-and NLTK resource hashes before evaluation. Audit inputs and expected results
-are read-only.
+The historical direct verifier checks all `SHA256SUMS` entries, source hashes,
+dependency versions and NLTK resource hashes before evaluation. Audit inputs and
+expected results are read-only.
 
-Run commands from the Lighteval repository root. If the audit inputs, pinned
-sources and dependencies are already available, activate the appropriate Python
-environment and supply your own directories. The registered-task verifier needs
-an installed Lighteval environment, including its declared optional Ko packages:
+### Historical audit and current runtime
+
+| Purpose | NLTK version | Dependencies |
+| --- | --- | --- |
+| Reproduce the archived 156-case audit with `verify_scoring.py` and `test_audit.py` | `3.10.3` | The pinned audit's `requirements.lock.txt` |
+| Run `verify_registered_task.py` or replay saved model responses with `verify_model_responses.py` | `3.10.4` | The current [`pyproject.toml`](../../pyproject.toml) and Ko packages below |
+
+Use separate virtual environments. `verify_scoring.py` requires the checked
+package versions to match the archived `ko_results.json`; with NLTK `3.10.4`,
+it stops before scoring with `Dependency versions differ from the stored Ko run`.
+Restore its environment from the audit lock file using the fresh-environment
+example below. Do not install the current Lighteval package into that environment.
+Preserve the pinned lock file, audit inputs and archived results.
+
+Run commands from the Lighteval repository root and supply your own audit/source
+directories. For registered-task and saved-model-response validation, activate a
+separate current Lighteval environment and install the Ko packages:
 
 ```bash
 python3 -m pip install --upgrade pip
@@ -330,27 +348,29 @@ python3 -m pip install -e . 'langdetect==1.0.9' 'immutabledict==4.3.1' \
 ```
 
 On WSL, use a Linux-filesystem virtual environment. A CPU build of PyTorch is
-sufficient; neither verifier generates model responses.
+sufficient for these verifiers, which do not generate model responses.
 
-Run the direct scorer regression using the ported checkers:
+Run the historical direct scorer regression using the audit environment at
+`$KO_AUDIT/.venv` (or substitute the path to your restored audit Python):
 
 ```bash
 KO_AUDIT=/path/to/checker-audit
 KO_SOURCES=/path/to/restored-audit-sources
-PYTHONDONTWRITEBYTECODE=1 python3 tests/ifeval_ko/verify_scoring.py \
+PYTHONDONTWRITEBYTECODE=1 "$KO_AUDIT/.venv/bin/python" tests/ifeval_ko/verify_scoring.py \
   --audit-dir "$KO_AUDIT" --source-root "$KO_SOURCES" \
   --checker-mode ported \
   --output results/ifeval_ko/scoring-parity-ported.json
-PYTHONDONTWRITEBYTECODE=1 python3 "$KO_AUDIT/test_audit.py"
-python3 tests/unit/tasks/test_ifeval_ko_scoring.py
+PYTHONDONTWRITEBYTECODE=1 "$KO_AUDIT/.venv/bin/python" "$KO_AUDIT/test_audit.py"
 ```
 
-Run the real registered task with the same fixtures:
+Run the real registered task with the same fixtures in the current Lighteval
+environment:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 tests/ifeval_ko/verify_registered_task.py \
   --audit-dir "$KO_AUDIT" --source-root "$KO_SOURCES" \
   --output results/ifeval_ko/registered-task-results.json
+python3 tests/unit/tasks/test_ifeval_ko_scoring.py
 ```
 
 This independently executes the original Ko evaluator, direct ported scorer,
@@ -377,9 +397,10 @@ an existing output; choose new output names when preserving previous reports.
 `--source-root` identifies the directory containing `sources/` and
 `.cache/nltk_data/`. These may be different directories.
 
-For a fresh environment, set the path to your documentation repository checkout
-and export the pinned audit into a separate validation directory. The pinned
-commit must be available in that checkout. Setup requires network access:
+For a fresh historical audit environment (NLTK `3.10.3`), set the path to your
+documentation repository checkout and export the pinned audit into a separate
+validation directory. The pinned commit must be available in that checkout.
+Setup requires network access:
 
 ```bash
 KO_DOCS_REPO=/path/to/k-llm-eval-sprint
@@ -411,19 +432,29 @@ creation/build/call traces and input immutability against the archived reference
 Supplementary strict and loose entry points are each checked, including when
 strict raises; the combined entry's exception propagation is checked separately.
 
-## Environment and result artifact
+## Environment and result artifacts
 
-Validated with Python 3.12.3; nltk 3.10.3; langdetect 1.0.9; immutabledict 4.3.1;
-packaging 26.3; pyarrow 26.0.0. The registered-task run used CPU PyTorch
-2.14.1+cpu, transformers 5.19.0 and inspect-ai 0.3.280 in a separate Linux
-environment. The result records its package versions. Numeric-text language detection logs from `123`
-are emitted by the original checker, which internally catches the exception
-and returns True; these are not unhandled scoring failures.
+The historical 156-case runs used Python 3.12.3; NLTK 3.10.3; langdetect 1.0.9;
+immutabledict 4.3.1; packaging 26.3; pyarrow 26.0.0. The registered-task run used
+CPU PyTorch 2.14.1+cpu, transformers 5.19.0 and inspect-ai 0.3.280 in a separate
+Linux environment. These versions describe the archived runs.
+
+Saved-response replays at `f5feb8fe9d30000986cd9667e872ff7602022c9a` passed on
+CPU with NLTK `3.10.4` for both 23 prompts / 40 instruction occurrences and
+342 prompts / 481 instruction occurrences. All strict/loose judgments and all
+four metrics matched the earlier results. These replays used the live original
+Ko evaluator in the same environment and did not regenerate model responses.
+Each new report records its actual package versions; the archived reports
+retain their original environment metadata.
+
+Numeric-text language detection logs from `123` are emitted by the original
+checker, which internally catches the exception and returns True; these are
+not unhandled scoring failures.
 
 `scoring-parity-ported.json` and `registered-task-results.json` contain the actual
 command/environment, source/evidence/verifier hashes, each case's flags, metric
 counts, auxiliary outcomes and mismatch list. They are local artifacts ignored by
 the repository's existing `*.json` rule. Keep these reports as PR attachments
-rather than committing machine-specific runtime paths. On failure, the report includes
-the first mismatch's original input and old/new judgments; instruction-level
-differences include `key`, `instruction_index`, and `instruction_id`.
+rather than committing machine-specific runtime paths. On failure, the report
+includes the first mismatch's original input and old/new judgments.
+Instruction-level differences include `key`, `instruction_index`, and `instruction_id`.

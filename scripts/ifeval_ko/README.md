@@ -5,9 +5,13 @@ the same saved responses to the original Ko evaluator and registered Lighteval
 task. This stage runs Transformers generation only. It does not invoke either
 scorer or establish model-response scoring parity.
 
-The default remains the agreed 23-prompt selection. `--scope full` generates all
-342 prompts and 481 instruction occurrences at the same pinned dataset revision,
-using the same model, chat template, decoding settings and MPS backend below.
+The default uses the agreed 23-prompt selection. `--scope full` generates
+responses for all 342 prompts, containing 481 instruction occurrences, at the
+same pinned dataset revision and with the same generation settings below.
+
+The 23 selected prompts contain 40 instruction occurrences and cover all 21
+instruction types in the pinned dataset, along with the 25 normal-input paths
+defined in the [selection coverage audit](https://github.com/Hugging-Face-KREW/k-llm-eval-sprint/blob/da7053db1d4858239856695a2cfed702173234b6/teams/team-c-ifeval-ko/evidence/sample-coverage/README.en.md#confirmed-result).
 
 ## Recorded run
 
@@ -30,7 +34,7 @@ using the same model, chat template, decoding settings and MPS backend below.
 | Empty responses | 0 |
 | Token-limit termination | key `1127` |
 | Total script runtime | approximately 185.6 seconds |
-| Responses scored | 0 |
+| Responses scored by this script | 0 |
 
 The complete generation configuration, including inherited model settings and
 EOS/pad IDs, actual dtype, environment versions, execution timestamps and Git
@@ -51,10 +55,15 @@ Selected keys, in generation order:
 
 ## Run from the repository root
 
-Use the team's merged `team-c/ifeval-ko` code and an activated Python 3.11
-environment with the required dependencies installed. The task merge commit is
-`bc7bc0beaee028e0e2f16a734c36048c121609c6`; the actual run's code revision is in
-the manifest, and an exact generator snapshot is included in the run artifacts.
+For new runs, use the current checkout in an activated Python 3.11 virtual
+environment and install its dependencies:
+
+```bash
+python -m pip install -e .
+```
+
+For the recorded environment, follow
+[historical generation reproduction](#historical-generation-reproduction).
 
 The default selection path expects the operations repository next to the code
 repository:
@@ -138,8 +147,8 @@ The run directory contains:
 
 | File | Contents |
 | --- | --- |
-| `selection.json` | Copy of the selection file used by this run |
-| `selected-samples.json` | Original selected rows, including ordered IDs and unmodified kwargs |
+| `selection.json` | Selected keys and metadata; copied for selected runs and generated from source order for full runs |
+| `selected-samples.json` | Source rows used by the run, including ordered instruction IDs and unmodified kwargs |
 | `responses.jsonl` | One record per attempted prompt, with source fields, rendered input, input/output token IDs, raw decoded text, scoring response, termination reason and generation time or error |
 | `manifest.json` | Revisions, actual generation settings, environment, stage counts and artifact hashes |
 | `requirements.lock.txt` | Installed dependency versions, excluding editable packages |
@@ -147,8 +156,8 @@ The run directory contains:
 | `run.log` | Execution log |
 | `SHA256SUMS` | SHA-256 checksums for the seven files above |
 
-The saved run passed checksum verification for all seven files. Additional
-checks confirmed 23 unique keys in the selected order, 23 generated responses,
+The recorded 23-prompt run passed checksum verification for all seven files.
+Additional checks confirmed 23 unique keys in the selected order, 23 generated responses,
 40 instructions, unchanged original input fields, matching response hashes,
 and identical `response` / `scoring_response` fields. There were no generation
 errors, unattempted prompts or empty responses.
@@ -163,22 +172,43 @@ Preserve the original run directory. Package it as a PR attachment; the
 repository ignores `outputs/` and JSON runtime artifacts. The generator and
 this README are source changes that can be committed separately.
 
-To reproduce generation in a fresh checkout and Python 3.11 environment, point
-`KO_RUN_DIR` at the extracted original run directory:
+### Historical generation reproduction
+
+The archived generation lock files pin NLTK `3.10.3`, while the current project
+requires `3.10.4`. Restore the archived environment in a separate checkout at
+the `code_revision` recorded in its `manifest.json`. Install that checkout with
+the archived lock file in a fresh Python 3.11 virtual environment. Keep the
+original archive and lock file unchanged.
+
+The example below restores the 23-prompt run. Use absolute paths and ensure the
+recorded commit is available locally before creating the detached worktree:
 
 ```bash
-python -m pip install -e . -r "$KO_RUN_DIR/requirements.lock.txt"
-python "$KO_RUN_DIR/generate_responses.py" \
+KO_RUN_DIR=/absolute/path/to/qwen-23-001
+KO_REPRO_DIR=/absolute/path/to/lighteval-generation-reproduction
+KO_RUN_REVISION=$(python3 -c \
+  'import json, sys; print(json.load(open(sys.argv[1]))["code_revision"])' \
+  "$KO_RUN_DIR/manifest.json")
+git worktree add --detach "$KO_REPRO_DIR" "$KO_RUN_REVISION"
+cd "$KO_REPRO_DIR"
+python3.11 -m venv .venv
+.venv/bin/python -m pip install -e . -r "$KO_RUN_DIR/requirements.lock.txt"
+.venv/bin/python "$KO_RUN_DIR/generate_responses.py" \
   --selection "$KO_RUN_DIR/selection.json" \
   --output-dir outputs/ifeval_ko/qwen-23-reproduction-001
 ```
 
-Run these commands from the Lighteval repository root. Reproduction requires an
-MPS-capable Mac. File checksums verify saved artifacts; new runs have different
-timestamps and logs, and cross-environment generation is not guaranteed to be
-byte-identical.
+Run the setup from the current repository root; installation and generation
+then run from the historical worktree. The archived generator snapshot preserves
+any generator changes that were uncommitted at the recorded revision. For a
+full-split archive, replace `--selection "$KO_RUN_DIR/selection.json"` with
+`--scope full` and choose a new full-split output directory.
 
-## Response contract and remaining work
+Reproduction requires an MPS-capable Mac. File checksums verify saved artifacts;
+new runs have different timestamps and logs, and cross-environment generation
+is not guaranteed to be byte-identical.
+
+## Response contract and scoring
 
 For both evaluators, use each generated record's `response` or equivalent
 `scoring_response` verbatim, together with its original `key`, `prompt`,
@@ -194,7 +224,8 @@ cross-evaluation input. A blank response, if generated in another run, is also
 retained. Runtime exceptions are saved as errors and stop the run; they are not
 replaced with blank successful responses.
 
-The one-item hardware smoke test is separate from the recorded 23-prompt run.
+The initial single-prompt hardware smoke test is separate from the recorded
+23-prompt run.
 The generation stage reports no scoring result. Compare identical saved text
 through original Ko, direct ported scoring and the registered task with the
 matching verifier scope, and investigate every mismatch. Saved-response scoring
