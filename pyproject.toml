@@ -113,6 +113,7 @@ dev-gpu = ["lighteval[dev,multilingual,math,extended_tasks,vllm]"]
 docs = ["hf-doc-builder", "watchdog"]
 extended_tasks = [
   "langdetect", # ifeval
+  "immutabledict", # ifeval_ko
   "openai>1.87", # llm as a judge using openai models
   "tiktoken",
   "emoji", "spacy", "syllapy",  # ifbench
