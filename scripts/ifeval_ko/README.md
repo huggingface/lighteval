@@ -9,6 +9,10 @@ The default remains the agreed 23-prompt selection. `--scope full` generates all
 342 prompts and 481 instruction occurrences at the same pinned dataset revision,
 using the same model, chat template, decoding settings and MPS backend below.
 
+The 23 selected prompts contain 40 instruction occurrences and cover all 21
+instruction types in the pinned dataset, along with the 25 normal-input paths
+defined in the [selection coverage audit](https://github.com/Hugging-Face-KREW/k-llm-eval-sprint/blob/da7053db1d4858239856695a2cfed702173234b6/teams/team-c-ifeval-ko/evidence/sample-coverage/README.en.md#confirmed-result).
+
 ## Recorded run
 
 | Item | Value |
