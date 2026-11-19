@@ -433,7 +433,8 @@ def remove_articles(text: str, lang: Language) -> str:
         str: Text with articles removed for the specified language
     """
     pattern = _ARTICLE_PATTERNS.get(lang)
-    return re.sub(pattern, " ", text) if pattern else text
+    # Case-insensitive: the multilingual normalizer removes articles before it lowercases the text
+    return re.sub(pattern, " ", text, flags=re.IGNORECASE) if pattern else text
 
 
 def remove_punc(text: str) -> str:
