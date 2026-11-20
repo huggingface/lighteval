@@ -120,7 +120,9 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
     operators_re = "".join(operators)
     all_expr_chars = r"[\d\.\s" + operators_re + r"]"
     # Expression should have at minimum at least one operator and must start with a digit
-    expr_re = rf"(?P<expr>-?\(?-?\d{all_expr_chars}*[{operators_re}]{all_expr_chars}+\)?)"
+    # The expression must end with a digit or closing parenthesis, so that Markdown bold
+    # around an answer (`**129**`) is not read as the expression `129**`
+    expr_re = rf"(?P<expr>-?\(?-?\d{all_expr_chars}*[{operators_re}]{all_expr_chars}*[\d\)])"
 
     # Punctuation regexes
     full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
