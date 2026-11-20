@@ -1146,3 +1146,25 @@ def test_math_extraction_additional_cases(gold, pred, expected):
 )
 def test_math_numina_cases(gold, pred, expected):
     assert compare_strings(gold, pred, match_types=["latex", "expr"]) == expected
+
+
+# A final answer in Markdown bold must be read as that answer. `*` is an operator character
+# for plain expressions, so `129**` used to match as an expression, fail to parse, and leave
+# the value to an earlier number in the response.
+@pytest.mark.parametrize(
+    "gold,pred,expected",
+    [
+        ("129", "ANSWER: 18\nWait, I made an error.\nANSWER: **129**", 1),
+        ("18", "ANSWER: 18\nWait, I made an error.\nANSWER: **129**", 0),
+        ("129", "ANSWER: 18\nWait, I made an error.\n**ANSWER: 129**", 1),
+        ("18", "ANSWER: 18\nWait, I made an error.\n**ANSWER: 129**", 0),
+        ("129", "The answer is 18. Wait, I made an error. The final answer is **129**.", 1),
+        ("18", "The answer is 18. Wait, I made an error. The final answer is **129**.", 0),
+        ("129", "ANSWER: **129**", 1),
+        ("$\\frac{3}{4}$", "ANSWER: **3/4**", 1),
+        ("6", "The answer is **2*3**.", 1),
+        ("6", "The answer is 2*3.", 1),
+    ],
+)
+def test_bold_final_answer(gold, pred, expected):
+    assert compare_strings(gold, pred, match_types=["latex", "expr"]) == expected
