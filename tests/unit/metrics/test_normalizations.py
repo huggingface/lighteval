@@ -61,3 +61,24 @@ def test_empty_input():
     assert normalize_log_probs(LogProbCharNorm(), empty_logprob, None, empty_text, None) == []
     assert normalize_log_probs(LogProbTokenNorm(), empty_logprob, None, None, empty_tokens) == []
     assert normalize_log_probs(LogProbPMINorm(), empty_logprob, empty_logprob, None, None) == []
+
+
+def test_char_norm_requires_one_text_per_logprob():
+    choices_logprob = [-1.0, -2.0, -3.0]
+    choices_text = ["abc", "de"]
+    with pytest.raises(ValueError, match="same length"):
+        normalize_log_probs(LogProbCharNorm(ignore_first_space=False), choices_logprob, None, choices_text, None)
+    with pytest.raises(ValueError, match="same length"):
+        normalize_log_probs(LogProbCharNorm(ignore_first_space=True), choices_logprob, None, choices_text, None)
+
+
+def test_char_norm_rejects_empty_choice_text():
+    with pytest.raises(ValueError, match="non-empty"):
+        normalize_log_probs(LogProbCharNorm(), [-1.0], None, [""], None)
+    with pytest.raises(ValueError, match="non-empty"):
+        normalize_log_probs(LogProbCharNorm(ignore_first_space=True), [-1.0], None, [" "], None)
+
+
+def test_char_norm_ignores_only_a_leading_space():
+    result = normalize_log_probs(LogProbCharNorm(ignore_first_space=True), [-2.0], None, [" ab"], None)
+    assert result == pytest.approx([-1.0])
