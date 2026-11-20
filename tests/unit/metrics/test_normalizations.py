@@ -22,7 +22,13 @@
 
 import pytest
 
-from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm, normalize_log_probs
+from lighteval.metrics.normalizations import (
+    LogProbCharNorm,
+    LogProbPMINorm,
+    LogProbTokenNorm,
+    math_normalizer,
+    normalize_log_probs,
+)
 
 
 def test_char_norm():
@@ -61,3 +67,13 @@ def test_empty_input():
     assert normalize_log_probs(LogProbCharNorm(), empty_logprob, None, empty_text, None) == []
     assert normalize_log_probs(LogProbTokenNorm(), empty_logprob, None, None, empty_tokens) == []
     assert normalize_log_probs(LogProbPMINorm(), empty_logprob, empty_logprob, None, None) == []
+
+
+def test_math_normalizer_truncated_command_does_not_raise():
+    # These only reach _fix_fracs / _fix_sqrt once they have been pulled out of \\boxed{}.
+    # A generation that stops on the command used to raise IndexError.
+    assert math_normalizer(r"\boxed{\frac}") == r"\frac"
+    assert math_normalizer(r"\boxed{\frac12}") == r"\frac{1}{2}"
+    assert math_normalizer(r"\boxed{\frac{1}{2}\frac}") == r"\frac{1}{2}\frac"
+    assert math_normalizer(r"\boxed{\sqrt}") == r"\sqrt"
+    assert math_normalizer(r"\boxed{\sqrt3}") == r"\sqrt{3}"

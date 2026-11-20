@@ -203,6 +203,10 @@ def math_normalizer(text: str) -> str:  # noqa C901
             substrs = substrs[1:]
             for substr in substrs:
                 new_str += "\\frac"
+                # A truncated "\\frac" at the end of an answer splits into an empty piece.
+                # Indexing substr[0] raised IndexError and aborted scoring for that sample.
+                if not substr:
+                    continue
                 if substr[0] == "{":
                     new_str += substr
                 else:
@@ -305,6 +309,9 @@ def math_normalizer(text: str) -> str:  # noqa C901
         splits = text.split("\\sqrt")
         new_string = splits[0]
         for split in splits[1:]:
+            if not split:
+                new_string += "\\sqrt"
+                continue
             if split[0] != "{":
                 a = split[0]
                 new_substr = "\\sqrt{" + a + "}" + split[1:]
