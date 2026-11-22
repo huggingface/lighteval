@@ -325,6 +325,13 @@ expected results are read-only.
 
 ### Historical audit and current runtime
 
+The initial port retained `immutabledict` from the original Ko evaluator. The
+ported task now uses the standard library's `MappingProxyType` for its read-only
+language-code table, removing that external runtime dependency. The unchanged
+original Ko evaluator still uses `immutabledict`, so the comparison environments
+below install it for reference evaluation. Historical locks and source hashes
+remain unchanged.
+
 | Purpose | NLTK version | Dependencies |
 | --- | --- | --- |
 | Reproduce the archived 156-case audit with `verify_scoring.py` and `test_audit.py` | `3.10.3` | The pinned audit's `requirements.lock.txt` |
