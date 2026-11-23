@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import json
 import logging
 from collections import defaultdict
 from datetime import datetime
@@ -31,8 +32,10 @@ from inspect_ai import Epochs, Task, task
 from inspect_ai import eval_set as inspect_ai_eval_set
 from inspect_ai.dataset import hf_dataset
 from inspect_ai.log import bundle_log_dir
+from inspect_ai.model import ResponseSchema
 from inspect_ai.scorer import exact
 from inspect_ai.solver import generate, system_message
+from inspect_ai.util import JSONSchema
 from pytablewriter import MarkdownTableWriter
 from typer import Argument, Option
 from typing_extensions import Annotated
@@ -42,6 +45,29 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_response_schema(response_schema: str | None) -> ResponseSchema | None:
+    """Build an inspect-ai `ResponseSchema` from a JSON string passed on the command line.
+
+    Accepts either a full `ResponseSchema` object (with a `json_schema` key) or a bare
+    JSON schema, which is wrapped under the default name `response`.
+    """
+    if response_schema is None:
+        return None
+
+    try:
+        parsed = json.loads(response_schema)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"--response-schema must be a valid JSON string, got: {response_schema}") from e
+
+    if not isinstance(parsed, dict):
+        raise ValueError(f"--response-schema must be a JSON object, got: {type(parsed).__name__}")
+
+    if "json_schema" in parsed:
+        return ResponseSchema.model_validate(parsed)
+
+    return ResponseSchema(name="response", json_schema=JSONSchema.model_validate(parsed))
 
 
 @task
@@ -267,7 +293,7 @@ def eval(  # noqa C901
             rich_help_panel=HELP_PANEL_NAME_1,
         ),
     ] = None,
-    frequence_penalty: Annotated[
+    frequency_penalty: Annotated[
         float | None,
         Option(
             help="Number between -2.0 and 2.0, Penalizes tokens that appear in the text too frequently, reducing repetition.",
@@ -309,7 +335,7 @@ def eval(  # noqa C901
             rich_help_panel=HELP_PANEL_NAME_1,
         ),
     ] = None,
-    log_probs: Annotated[
+    logprobs: Annotated[
         bool | None,
         Option(
             help="Returns log probabilities for each token in the generated text", rich_help_panel=HELP_PANEL_NAME_1
@@ -336,8 +362,12 @@ def eval(  # noqa C901
             rich_help_panel=HELP_PANEL_NAME_1,
         ),
     ] = None,
-    response_format: Annotated[
-        str | None, Option(help="JSON schema for the response", rich_help_panel=HELP_PANEL_NAME_1)
+    response_schema: Annotated[
+        str | None,
+        Option(
+            help="JSON schema for the response, as a JSON string. Either a bare JSON schema object, or a full inspect-ai ResponseSchema object (`name`, `json_schema`, and optionally `description`/`strict`).",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
     ] = None,
     parallel_tool_calls: Annotated[
         bool | None, Option(help="Enable parallel tool calls", rich_help_panel=HELP_PANEL_NAME_1)
@@ -474,19 +504,19 @@ def eval(  # noqa C901
         temperature=temperature,
         top_p=top_p,
         top_k=top_k,
-        frequence_penalty=frequence_penalty,
+        frequency_penalty=frequency_penalty,
         presence_penalty=presence_penalty,
         seed=seed,
         stop_seqs=stop_seqs,
         num_choices=num_choices,
         best_of=best_of,
-        log_probs=log_probs,
+        logprobs=logprobs,
         top_logprobs=top_logprobs,
         cache_prompt=cache_prompt,
         reasoning_effort=reasoning_effort,
         reasoning_tokens=reasoning_tokens,
         reasoning_history=reasoning_history,
-        response_format=response_format,
+        response_schema=_parse_response_schema(response_schema),
         parallel_tool_calls=parallel_tool_calls,
         max_tool_output=max_tool_output,
         internal_tools=internal_tools,
