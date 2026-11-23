@@ -60,7 +60,6 @@ model_parameters:
     pipeline_parallel_size: 1
     gpu_memory_utilization: 0.9
     max_model_length: 2048
-    swap_space: 4
     seed: 1
     trust_remote_code: True
     add_special_tokens: True
@@ -91,7 +90,6 @@ model_parameters:
 ### Memory Management
 - `gpu_memory_utilization`: Controls how much GPU memory VLLM can use (default: 0.9)
 - `max_model_length`: Maximum sequence length for the model
-- `swap_space`: Amount of CPU memory to use for swapping (in GB)
 
 ### Parallelism Settings
 - `tensor_parallel_size`: Number of GPUs for tensor parallelism

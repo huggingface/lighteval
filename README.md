@@ -145,14 +145,9 @@ MODEL_NAME = "meta-llama/Meta-Llama-3-8B-Instruct"
 BENCHMARKS = "gsm8k"
 
 evaluation_tracker = EvaluationTracker(output_dir="./results")
-pipeline_params = PipelineParameters(
-    launcher_type=ParallelismManager.NONE,
-    max_samples=2
-)
+pipeline_params = PipelineParameters(launcher_type=ParallelismManager.NONE, max_samples=2)
 
-model = AutoModelForCausalLM.from_pretrained(
-  MODEL_NAME, device_map="auto"
-)
+model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, device_map="auto")
 config = TransformersModelConfig(model_name=MODEL_NAME, batch_size=1)
 model = TransformersModel.from_model(model, config)
 

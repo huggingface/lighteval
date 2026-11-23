@@ -29,7 +29,7 @@ from lighteval.tasks.tasks.gsm8k import gsm8k_prompt
 gsm8k_test = LightevalTaskConfig(
     name="gsm8k_test",
     prompt_function=gsm8k_prompt,
-    hf_repo="gsm8k",
+    hf_repo="openai/gsm8k",
     hf_subset="main",
     hf_avail_splits=["train", "test"],
     evaluation_splits=["test"],
