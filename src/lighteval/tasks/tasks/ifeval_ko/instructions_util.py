@@ -20,14 +20,13 @@
 
 import os
 import re
-
-import immutabledict
+from types import MappingProxyType
 
 
 RANK = os.environ.get("LOCAL_RANK", "0")
 
-# ISO 639-1 codes to language names.
-LANGUAGE_CODES = immutabledict.immutabledict(
+# Keep the reference's ISO 639-1 language table read-only with the standard library.
+LANGUAGE_CODES = MappingProxyType(
     {
         "en": "English",
         "es": "Spanish",

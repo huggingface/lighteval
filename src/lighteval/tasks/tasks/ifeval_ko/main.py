@@ -30,7 +30,7 @@ from lighteval.tasks.tasks.ifeval_ko.scoring import score_response
 from lighteval.utils.imports import requires
 
 
-@requires("langdetect", "immutabledict")
+@requires("langdetect")
 def ifeval_ko_prompt(line: dict, task_name: str = "") -> Doc:
     return Doc(
         task_name=task_name,
