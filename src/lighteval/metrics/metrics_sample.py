@@ -1425,6 +1425,9 @@ class GPassAtK(SamplingMetric, SampleLevelComputation):
             low, high = int(np.ceil(k * 0.5)), k
 
             mg_pass_at_k = 0.0
+            if k % 2:
+                # The integral starts at 0.5, halfway through the interval for ceil(k / 2) successes.
+                mg_pass_at_k += 0.5 * _compute_g_pass_at_k(n, c, k, low)
             for i in range(low + 1, high + 1):
                 mg_pass_at_k += _compute_g_pass_at_k(n, c, k, i)
             mg_pass_at_k = 2 * mg_pass_at_k / k
