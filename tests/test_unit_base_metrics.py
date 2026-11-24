@@ -30,7 +30,7 @@ from lighteval.metrics.dynamic_metrics import (
     NormalizedMultiChoiceProbMetric,
     ProbabilityMetric,
 )
-from lighteval.metrics.metrics_sample import ExactMatches
+from lighteval.metrics.metrics_sample import ExactMatches, GPassAtK
 from lighteval.metrics.normalizations import LogProbCharNorm, helm_normalizer
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
@@ -326,6 +326,20 @@ class TestBaseMetrics:
             model_response=model_response,
         )
         assert result[em_metric.metric_name] == 0
+
+    @pytest.mark.parametrize(
+        ("predictions", "expected"),
+        [
+            (["A", "A", "A", "A"], [1, 1, 1]),
+            (["A", "A", "A", "B"], [3 / 4, 1 / 2, 1 / 2]),
+        ],
+    )
+    def test_mean_g_pass_at_k(self, predictions, expected):
+        metric = GPassAtK(k=[1, 2, 3], n=4)
+        doc = Doc(query="", choices=["A"], gold_index=0)
+        scores = metric.compute(doc, ModelResponse(text=predictions))
+
+        assert [scores[f"mg-pass@{k}"] for k in (1, 2, 3)] == pytest.approx(expected)
 
     @pytest.mark.skip(reason="Need to understand what it does.")
     def test_pass_at_k_estimator(self):
