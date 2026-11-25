@@ -30,7 +30,7 @@ import zlib
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from decimal import Decimal
 from enum import Enum
-from io import StringIO
+from io import RawIOBase, StringIO
 from types import ModuleType
 from typing import Callable, Optional
 
@@ -66,6 +66,20 @@ def timeout_handler(signum, frame):
     raise TimeoutException
 
 
+class _DecodingBuffer(RawIOBase):
+    """Binary write-through buffer that decodes into the captured text stream."""
+
+    def __init__(self, text_stream: StringIO):
+        self._text_stream = text_stream
+
+    def writable(self) -> bool:
+        return True
+
+    def write(self, data) -> int:
+        self._text_stream.write(bytes(data).decode("utf-8", errors="replace"))
+        return len(data)
+
+
 # used to capture stdout as a list
 # from https://stackoverflow.com/a/16571630/6416660
 # alternative use redirect_stdout() from contextlib
@@ -73,6 +87,7 @@ class Capturing(list):
     def __enter__(self):
         self._stdout = sys.stdout
         sys.stdout = self._stringio = StringIO()
+        self._stringio.buffer = _DecodingBuffer(self._stringio)
         # Make closing the StringIO a no-op
         self._stringio.close = lambda x: 1
         return self
