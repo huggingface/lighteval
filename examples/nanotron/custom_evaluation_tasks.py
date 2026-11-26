@@ -341,7 +341,7 @@ GSM8K = LightevalTaskConfig(
     hf_subset="main",
     hf_avail_splits=["train", "test"],
     evaluation_splits=["test"],
-    metrics=[Metrics.perfect_exact_match],
+    metrics=[Metrics.exact_match],
     generation_size=10,
     stop_sequence=["\n"],
 )
