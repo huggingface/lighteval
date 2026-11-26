@@ -105,7 +105,7 @@ med_qa = LightevalTaskConfig(
     name="med_qa",
     prompt_function=med_qa_prompt,
     hf_repo="bigbio/med_qa",
-    hf_subset="med_qa_en_source",
+    hf_subset="med_qa_en_4options_source",
     hf_avail_splits=["train", "test", "validation"],
     evaluation_splits=["validation", "test"],
     few_shots_split=None,
@@ -115,7 +115,7 @@ med_qa = LightevalTaskConfig(
         Metrics.exact_match,
     ],
     stop_sequence=["\n"],
-    version=0,
+    version=1,
 )
 
 TASKS_TABLE = [
