@@ -142,17 +142,17 @@ llm_judge_mixeval_multichoice_flow_judge = SampleLevelMetricGrouping(
 
 llm_judge_mixeval_multichoice_gpt_judge = SampleLevelMetricGrouping(
     metric_name=["llm_judge_mixeval_gpt3"],
-    higher_is_better={"judge_score_gpt-3.5": True},
+    higher_is_better={"judge_score_gpt-5.6-terra": True},
     category=SamplingMethod.GENERATIVE,
     sample_level_fn=JudgeLLMMixEval(
-        judge_model_name="gpt-3.5-turbo",
+        judge_model_name="gpt-5.6-terra",
         template=gpt_judge_for_closeended_multiplechoice,
         process_judge_response=process_judge_response_multichoice_gpt,
         judge_backend="openai",
-        short_judge_name="gpt-3.5",
+        short_judge_name="gpt-5.6-terra",
     ),
     corpus_level_fn={
-        "judge_score_gpt-3.5": np.mean,
+        "judge_score_gpt-5.6-terra": np.mean,
     },
     batched_compute=True,
 )
@@ -181,17 +181,17 @@ llm_judge_mixeval_freeform_flow_judge = SampleLevelMetricGrouping(
 
 llm_judge_mixeval_freeform_gpt_judge = SampleLevelMetricGrouping(
     metric_name=["llm_judge_mixeval_gpt3"],
-    higher_is_better={"judge_score_gpt-3.5": True},
+    higher_is_better={"judge_score_gpt-5.6-terra": True},
     category=SamplingMethod.GENERATIVE,
     sample_level_fn=JudgeLLMMixEval(
-        judge_model_name="gpt-3.5-turbo",
+        judge_model_name="gpt-5.6-terra",
         template=gpt_judge_for_closeended_freeform,
         process_judge_response=process_judge_response_freeform_gpt,
         judge_backend="openai",
-        short_judge_name="gpt-3.5",
+        short_judge_name="gpt-5.6-terra",
     ),
     corpus_level_fn={
-        "judge_score_gpt-3.5": np.mean,
+        "judge_score_gpt-5.6-terra": np.mean,
     },
     batched_compute=True,
 )
