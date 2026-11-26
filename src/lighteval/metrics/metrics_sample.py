@@ -940,7 +940,7 @@ class StringDistance(SampleLevelComputation):
 
 
 class JudgeLLM(SampleLevelComputation):
-    available_models_openai = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-4o-2024-08-06"]
+    available_models_openai = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-4o-2024-08-06", "gpt-5.6-terra"]
 
     def __init__(
         self,

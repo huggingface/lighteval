@@ -426,6 +426,13 @@ class JudgeLM:
         return results
 
     def __call_api(self, prompt):
+        # GPT-5 models reject `max_tokens` and non-default `temperature`
+        is_gpt5 = self.model.startswith("gpt-5")
+        token_limit = {}
+        if self.max_tokens is not None:
+            token_limit["max_completion_tokens" if is_gpt5 else "max_tokens"] = self.max_tokens
+        sampling = {} if is_gpt5 else {"temperature": 0.0}
+
         for _ in range(self.API_MAX_RETRY):
             try:
                 # Base model
@@ -433,8 +440,8 @@ class JudgeLM:
                     model=self.model,
                     messages=as_list(prompt),
                     response_format=self.response_format,
-                    max_tokens=self.max_tokens,
-                    temperature=0.0,
+                    **token_limit,
+                    **sampling,
                     n=1,
                 )
                 answer = response.choices[0].message.parsed
@@ -446,7 +453,7 @@ class JudgeLM:
                         model=self.model,
                         messages=as_list(prompt),
                         response_format=self.response_format,
-                        max_tokens=self.max_tokens,
+                        **token_limit,
                         n=1,
                     )
                     text = response.choices[0].message.content
