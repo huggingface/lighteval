@@ -52,7 +52,7 @@ def mt_bench_prompt(line, task_name: str = ""):
 
 
 def process_judge_response(x):
-    search = re.search(r"<score>\s(\d)\s</score>", x)
+    search = re.search(r"<score>\s*(\d+)\s*</score>", x)
     return int(search.group(1)) if search else 0
 
 
