@@ -389,10 +389,12 @@ class MetricsLogger:
         # Compute average for sub groups
         for average_task, list_of_subtasks in grouped_tasks.items():
             if len(list_of_subtasks) > 1:
-                metrics = list(self.metric_aggregated[list_of_subtasks[0]].keys())
+                values_by_metric = collections.defaultdict(list)
+                for subtask in list_of_subtasks:
+                    for metric, value in self.metric_aggregated[subtask].items():
+                        values_by_metric[metric].append(value)
                 self.metric_aggregated[average_task] = {
-                    metric: sum(self.metric_aggregated[k][metric] for k in list_of_subtasks) / len(list_of_subtasks)
-                    for metric in metrics
+                    metric: sum(values) / len(values) for metric, values in values_by_metric.items()
                 }
 
         # Compute average for all
