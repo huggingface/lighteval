@@ -25,13 +25,14 @@ import os
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from statistics import mean
 
 import pytest
 from datasets import Dataset
 from huggingface_hub import HfApi
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
-from lighteval.logging.info_loggers import DetailsLogger
+from lighteval.logging.info_loggers import DetailsLogger, MetricsLogger
 
 # ruff: noqa
 from tests.fixtures import TESTING_EMPTY_HF_ORG_ID
@@ -83,6 +84,23 @@ def mock_datetime(monkeypatch):
 
 
 class TestLogging:
+    @pytest.mark.parametrize("order", [("suite:a|0", "suite:b|0"), ("suite:b|0", "suite:a|0")])
+    def test_group_average_with_different_metrics(self, order):
+        logger = MetricsLogger()
+        samples = {"suite:a|0": [{"acc": 1.0, "extra": 1.0}], "suite:b|0": [{"acc": 0.0}] * 9}
+        task = Mock()
+        task.aggregation.return_value = {"acc": mean, "extra": mean}
+        for name in order:
+            for scores in samples[name]:
+                logger.log(name, scores)
+
+        logger.aggregate(dict.fromkeys(order, task), bootstrap_iters=0)
+
+        expected = {"acc": 0.5, "extra": 1.0}
+        assert logger.metric_aggregated["suite:_average|0"] == expected
+        assert logger.metric_aggregated["all"] == expected
+        assert "extra" not in logger.metric_aggregated["suite:b|0"]
+
     def test_results_logging(self, mock_evaluation_tracker: EvaluationTracker):
         task_metrics = {
             "task1": {"accuracy": 0.8, "f1": 0.75},
