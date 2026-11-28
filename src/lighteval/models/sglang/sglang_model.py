@@ -368,7 +368,9 @@ class SGLangModel(LightevalModel):
             tokenized_contexts_batch = []
 
             for context, doc in zip(contexts, dataset):
-                tokenized_contexts, tokenized_continuations = self.tok_encode_pair(context, doc.choices, pairwise=True)
+                tokenized_contexts, tokenized_continuations = self.tok_encode_pair(
+                    context, doc.choices, pairwise=self.pairwise_tokenization
+                )
                 for tokenized_context, tokenized_continuation in zip(tokenized_contexts, tokenized_continuations):
                     inputs.append(tokenized_context + tokenized_continuation)
                     tokenized_continuations_batch.append(tokenized_continuation)
