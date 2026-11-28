@@ -22,7 +22,7 @@
 
 import unittest
 
-from lighteval.utils.utils import remove_reasoning_tags
+from lighteval.utils.utils import clean_s3_links, remove_reasoning_tags
 
 
 class TestRemoveReasoningTags(unittest.TestCase):
@@ -61,3 +61,26 @@ class TestRemoveReasoningTags(unittest.TestCase):
         tag_pairs = [("<think>", "</think>")]
         result = remove_reasoning_tags(text, tag_pairs)
         self.assertEqual(result, "<think> Reasoning section. Answer section")
+
+
+class TestCleanS3Links(unittest.TestCase):
+    def test_bucket_only_uri_links_to_bucket_without_prefix(self):
+        result = clean_s3_links("s3://my-bucket")
+        self.assertEqual(
+            result,
+            '<a href="https://s3.console.aws.amazon.com/s3/buckets/my-bucket" target="_blank"> s3://my-bucket </a>',
+        )
+
+    def test_uri_with_path_keeps_prefix_link(self):
+        result = clean_s3_links("s3://my-bucket/models/gpt2")
+        self.assertEqual(
+            result,
+            '<a href="https://s3.console.aws.amazon.com/s3/buckets/my-bucket?prefix=models/gpt2/" target="_blank"> s3://my-bucket/models/gpt2 </a>',
+        )
+
+    def test_uri_with_trailing_slash_keeps_single_prefix_separator(self):
+        result = clean_s3_links("s3://my-bucket/models/gpt2/")
+        self.assertEqual(
+            result,
+            '<a href="https://s3.console.aws.amazon.com/s3/buckets/my-bucket?prefix=models/gpt2/" target="_blank"> s3://my-bucket/models/gpt2/ </a>',
+        )

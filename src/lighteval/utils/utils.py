@@ -82,11 +82,14 @@ def clean_s3_links(value: str) -> str:
     Examples:
         >>> clean_s3_links("s3://my-bucket/models/gpt2")
         '<a href="https://s3.console.aws.amazon.com/s3/buckets/my-bucket?prefix=models/gpt2/" target="_blank"> s3://my-bucket/models/gpt2 </a>'
+        >>> clean_s3_links("s3://my-bucket")
+        '<a href="https://s3.console.aws.amazon.com/s3/buckets/my-bucket" target="_blank"> s3://my-bucket </a>'
     """
-    s3_bucket, s3_prefix = str(value).replace("s3://", "").split("/", maxsplit=1)
-    if not s3_prefix.endswith("/"):
+    s3_bucket, _, s3_prefix = str(value).replace("s3://", "").partition("/")
+    if s3_prefix and not s3_prefix.endswith("/"):
         s3_prefix += "/"
-    link_str = f"https://s3.console.aws.amazon.com/s3/buckets/{s3_bucket}?prefix={s3_prefix}"
+    prefix_query = f"?prefix={s3_prefix}" if s3_prefix else ""
+    link_str = f"https://s3.console.aws.amazon.com/s3/buckets/{s3_bucket}{prefix_query}"
     value = f'<a href="{link_str}" target="_blank"> {value} </a>'
     return value
 
