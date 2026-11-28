@@ -22,6 +22,7 @@
 
 import logging
 import random
+import re
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
@@ -44,6 +45,25 @@ class PromptManager:
         self.use_chat_template = use_chat_template
         self.tokenizer = tokenizer
         self.system_prompt = system_prompt  # System prompt to be used in chat templates
+        self._checked_chat_template = False
+
+    def _render_chat_template(self, messages) -> str:
+        if not self._checked_chat_template:
+            template = getattr(self.tokenizer, "chat_template", None)
+            if isinstance(template, dict):
+                template = template.get("default")
+            if isinstance(template, str) and re.search(r"\bstrftime_now\s*\(", template):
+                logger.warning(
+                    "The selected chat template can insert the current date or time. "
+                    "Prompts may differ across runs with identical settings."
+                )
+            self._checked_chat_template = True
+
+        return self.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
 
     def prepare_prompt(self, doc: Doc) -> str:
         """Prepare a prompt from a document, either using chat template or plain text format.
@@ -79,11 +99,7 @@ class PromptManager:
         else:
             message = [message]
 
-        return self.tokenizer.apply_chat_template(
-            message,
-            tokenize=False,
-            add_generation_prompt=True,
-        )
+        return self._render_chat_template(message)
 
     def prepare_prompt_api(self, doc: Doc) -> list[dict[str, str]]:
         """Prepare a prompt for API calls, using a chat-like format.
@@ -129,11 +145,7 @@ class PromptManager:
         if tokenize:  # for local models
             assert self.tokenizer is not None, "Tokenizer must be set for chat template formatting."
 
-            return self.tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True,
-            )
+            return self._render_chat_template(messages)
 
         else:  # for apis
             return messages
