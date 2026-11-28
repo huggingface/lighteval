@@ -47,6 +47,22 @@ class TestPromptManager:
         assert pm.tokenizer == tokenizer
         assert pm.system_prompt == system_prompt
 
+    @pytest.mark.parametrize("multimodal", [False, True])
+    def test_clock_dependent_chat_template_warns_once(self, caplog, multimodal):
+        tokenizer = Mock()
+        tokenizer.chat_template = "{{ strftime_now('%Y-%m-%d') }}"
+        tokenizer.apply_chat_template.return_value = "rendered"
+        pm = PromptManager(use_chat_template=True, tokenizer=tokenizer)
+        doc = Doc(query="question", choices=["answer"], gold_index=0, images=["image"])
+
+        pm.prepare_prompt_api(doc)
+        assert "current date or time" not in caplog.text
+
+        render = pm.prepare_prompt_multimodal if multimodal else pm.prepare_prompt
+        assert render(doc) == "rendered"
+        assert render(doc) == "rendered"
+        assert caplog.text.count("current date or time") == 1
+
     def test_prepare_prompt_plain_text_basic(self):
         """Test prepare_prompt with plain text format and basic document."""
         pm = PromptManager()
