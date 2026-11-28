@@ -270,6 +270,27 @@ class TestTransformersModelProcessing(unittest.TestCase):
                 )
 
     @patch("lighteval.models.transformers.transformers_model.DataLoader")
+    def test_loglikelihood_respects_pairwise_tokenization(self, mock_dataloader):
+        """Test that _loglikelihood_tokens encodes every document with the configured pairwise_tokenization."""
+        docs = [
+            Doc(query="What is the capital of France?", choices=["London", "Paris"], gold_index=1),
+            Doc(query="What is 2+2?", choices=["3", "4", "5"], gold_index=1),
+        ]
+        mock_dataloader.return_value = [docs]
+
+        for pairwise in (False, True):
+            with self.subTest(pairwise_tokenization=pairwise):
+                self.model.pairwise_tokenization = pairwise
+                with patch.object(
+                    self.model, "tok_encode_pair", wraps=self.model.tok_encode_pair
+                ) as mock_tok_encode_pair:
+                    self.model._loglikelihood_tokens(docs)
+
+                self.assertGreater(mock_tok_encode_pair.call_count, 0)
+                for call in mock_tok_encode_pair.call_args_list:
+                    self.assertEqual(call.kwargs["pairwise"], pairwise)
+
+    @patch("lighteval.models.transformers.transformers_model.DataLoader")
     def test_loglikelihood_padded_tensors_shapes(self, mock_dataloader):
         """Test the shapes of padded_logits_sums and padded_max_equals in _loglikelihood_tokens."""
         # Create test documents with different numbers of choices to test padding

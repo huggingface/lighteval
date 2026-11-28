@@ -962,7 +962,9 @@ class TransformersModel(LightevalModel):
                 batch_tokenized_continuations = []
 
                 for context, doc in zip(batch_contexts, batch):
-                    doc_contexts, doc_continuations = self.tok_encode_pair(context, doc.choices, pairwise=True)
+                    doc_contexts, doc_continuations = self.tok_encode_pair(
+                        context, doc.choices, pairwise=self.pairwise_tokenization
+                    )
                     batch_tokenized_contexts.append(doc_contexts)
                     batch_tokenized_continuations.append(doc_continuations)
 
